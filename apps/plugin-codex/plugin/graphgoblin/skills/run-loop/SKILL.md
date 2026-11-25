@@ -9,13 +9,15 @@ You drive the loop through the `graphgoblin` MCP tools. Never call the REST API 
 
 ## 1. Find the loop
 
-- If the user gave a loop id, use it. If they gave a name, call `list_loops` (optionally with `query` set to part of the name) and pick the loop whose name matches. `describe_loop`, `start_run`, and the other loop tools also accept the exact loop name.
+- If the user gave a loop id, use it. If they gave a loop name, call `list_loops` and pick the loop whose whole name matches theirs. Compare whole names after trimming each, collapsing each whitespace run to one space and lowercasing (no Unicode normalization or locale-dependent case folding). Part of a name does not match.
+- `query` is optional and only helps discovery. It is a case-insensitive substring filter over names and descriptions, and it does not collapse spacing. If it misses a name that differs only in spacing, call `list_loops` without `query` and compare the full name the user gave.
+- `describe_loop` and `start_run` also accept the full equivalent name, and an exact id of one of the user's loops takes priority.
 - If several loops match, or none does, show the candidates (name, id, published) and ask which one.
 - If the loop is not published, tell the user; start it from the draft (`allowDraft: true`) only if they agree.
 
 ## 2. Prepare the input
 
-- Call `describe_loop`. Read `triggers`: use the manual trigger (pass its `nodeId` as `triggerNodeId` only when there are several). If `startableFromMcp` is false, tell the user the loop is not exposed to MCP and stop.
+- Call `describe_loop` with the loop id. Read `triggers`: use the manual trigger (pass its `nodeId` as `triggerNodeId` only when there are several). If `startableFromMcp` is false, tell the user the loop is not exposed to MCP and stop.
 - Build `input` from what the user said so it matches the trigger's `inputSchema`. Ask for any required field you cannot infer. With no `inputSchema`, pass the user's request as input only if it is clearly useful, otherwise omit it.
 - Note `inputWaits`: these nodes will pause the run to ask a question later.
 

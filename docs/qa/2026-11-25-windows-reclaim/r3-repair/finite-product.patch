@@ -1,0 +1,102 @@
+diff --git a/apps/api/src/data-dir-lock-failures.test.ts b/apps/api/src/data-dir-lock-failures.test.ts
+index e280bdde..659f7dc0 100644
+--- a/apps/api/src/data-dir-lock-failures.test.ts
++++ b/apps/api/src/data-dir-lock-failures.test.ts
+@@ -8,6 +8,7 @@ import {
+   dataDirLockState,
+   StoreOwnershipRefusedError,
+ } from './data-dir-lock.js';
++import { shellFailureOutput, startupFailureCause } from './serve.js';
+ import * as identity from './windows-process-identity.js';
+ 
+ vi.mock('node:fs/promises', async (original) => {
+@@ -243,6 +244,46 @@ it.each([8, 7])(
+   },
+ );
+ 
++it('reports uncertainty after seven marker read losses and a final lost stale-marker unlink', async () => {
++  let marker = await seed();
++  let reads = 0;
++  vi.mocked(fs.readFile).mockImplementation(async (...args) => {
++    if (args[0] === path) return actual.readFile(...args);
++    expect(args[0]).toBe(marker);
++    if (++reads === 8) return actual.readFile(...args);
++    await actual.unlink(marker);
++    await actual.rmdir(guard);
++    marker = await seed();
++    return actual.readFile(...args);
++  });
++  vi.mocked(fs.unlink).mockImplementation(async (target) => {
++    if (target === marker) {
++      await actual.unlink(marker);
++      await actual.rmdir(guard);
++    }
++    await actual.unlink(target);
++  });
++
++  const refusal = await acquireDataDirLock(directory).catch((error: unknown) => error);
++  expect(refusal).toBeInstanceOf(StoreOwnershipRefusedError);
++  expect(reads).toBe(8);
++  expect(vi.mocked(fs.unlink).mock.calls.filter(([target]) => target === marker)).toEqual([
++    [marker],
++  ]);
++  expect(vi.mocked(fs.rmdir)).toHaveBeenCalledExactlyOnceWith(expect.stringMatching(/\.tmp$/));
++  expect(vi.mocked(fs.rename)).not.toHaveBeenCalled();
++  expect(await fs.readdir(directory)).toEqual([]);
++  await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
++
++  const output = shellFailureOutput(refusal);
++  expect(output).toContain(
++    `Store ownership could not be verified (reclamation guard marker disappeared during removal at the acquisition attempt limit): ${guard}`,
++  );
++  expect(output).not.toContain('another GraphGoblin process holds');
++  expect(output).not.toContain('stop it before retrying');
++  expect(startupFailureCause('store', refusal)).toBe('store-ownership-unverified');
++});
++
+ it('preserves a refused read when the recovery marker still exists', async () => {
+   Object.defineProperty(process, 'platform', { value: 'win32' });
+   const marker = await seed();
+diff --git a/apps/api/src/data-dir-lock.ts b/apps/api/src/data-dir-lock.ts
+index 770a0994..a5414c0f 100644
+--- a/apps/api/src/data-dir-lock.ts
++++ b/apps/api/src/data-dir-lock.ts
+@@ -404,7 +404,16 @@ async function acquireRecovery(
+         if (observed.marker) {
+           // The immutable UUID belongs only to the observed acquisition. If another contender
+           // removed it first, re-observe the guard before making any further changes to it.
+-          if (!(await removeMarker(join(path, observed.marker), 'stale-marker-unlink'))) continue;
++          if (!(await removeMarker(join(path, observed.marker), 'stale-marker-unlink'))) {
++            if (attempt + 1 === recoveryAttempts)
++              throw held(
++                path,
++                unknown(
++                  'reclamation guard marker disappeared during removal at the acquisition attempt limit',
++                ).detail,
++              );
++            continue;
++          }
+           reclaimed = true;
+         }
+         if (await removeEmptyRecovery(path, { stale: observed, token })) reclaimed = true;
+diff --git a/docs/11-security-and-distribution.md b/docs/11-security-and-distribution.md
+index 9d3d2973..ff4e12ca 100644
+--- a/docs/11-security-and-distribution.md
++++ b/docs/11-security-and-distribution.md
+@@ -147,11 +147,11 @@ See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
+ 
+ When an enumerated recovery marker disappears during a read, acquisition and read-only ownership
+ checks re-observe the guard within their attempt limits. This distinguishes a surviving empty
+-directory, a successor and a guard already removed by another contender. A marker that disappears
+-on the final acquisition attempt leaves ownership unverified. If the read reports `EPERM` on
+-Windows, a separate `lstat` must establish that the exact UUID path is absent before re-observing.
+-An unreadable marker that still exists keeps its original error. Reads of the main owner record
+-keep their errors.
++directory, a successor and a guard already removed by another contender. If the marker disappears
++during a read or removal on the final acquisition attempt, ownership remains unverified. If the
++read reports `EPERM` on Windows, a separate `lstat` must establish that the exact UUID path is
++absent before re-observing. An unreadable marker that still exists keeps its original error.
++Reads of the main owner record keep their errors.
+ 
+ Concurrent Windows deletion can report `EPERM` after another contender has removed the same
+ stale UUID marker or empty guard directory. A separate `lstat` can establish that the exact path

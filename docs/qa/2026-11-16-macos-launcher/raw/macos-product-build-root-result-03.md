@@ -1,0 +1,13 @@
+# Corrected owner Mac release build
+
+The exact corrected commit `370a12b5784252356807bfc7676f65f6cb19b5e0`, tree `2207dd91338e0bc3ffdb4f8fc81531eb0ae08b3c`, was built successfully using the existing sealed transport. Root compared all source-freeze changes to the sixteen reviewed correction paths. Source freeze03 contains 1765 regular Git blobs, 26,266,618 source bytes; archive 10,404,308 bytes SHA256 `0543d8ce880961a88457a111bead7b1bfccb719ab5b7d6ccc0c7360953825e85`, freeze SHA256 `a56e20ecb2a775f55f299bfe559bcb84f4f797c29b37dfe3ebaaa44fcb76e73d`.
+
+Fresh token `db37bfdf935746039f9030c4d49b10fb` admitted the new private physical stage `/Users/jake/Library/Caches/graphgoblin-456-product-build-db37bfdf935746039f9030c4d49b10fb`, inode178776825, device16777232, UID501, mode700, no ACL. The preview's request and remote command were verified identical to build02 except the fresh token and transport-manifest digest. Transport seal and fixed executor were unchanged. Separate admission03 was written once; unified9206 completed0. No unchanged retry or cleanup occurred.
+
+All five phases exited0, signalnull, both pipe EOFs, no overflow: frozen pnpm install, application build, Swift release app, Swift release installer, release-bin query. The application build passed12/12 without cache (13.624s). Actual Node22.22.2, pnpm12.8.1, macOS26.6.2arm64 and Swift6.3.1 were verified. Source was verified before and after the build; retained pnpm437file manifest matched before and after. The ten artifact checks passed.
+
+Native GraphGoblin:725816bytes SHA256 `85223b44f400256883b373bd8c956d9bee0f41173b9138dba99b25156c426ac0`; installer587616bytes SHA256 `b6c95adbbbfab49d25e6f7f8e45ac1862a4eb7773fc28dc7aec2d79ee7b2c897`. Both thinarm64 with minimum macOS15.0. Original eight JavaScript/web artifact bytes remain unchanged from build02.
+
+Receipt directory: `macos-product-build-transport-implementation-01/receipts/product-build-db37bfdf935746039f9030c4d49b10fb`. Result SHA256 `e78ab98e8ce4ecc58e4119f5cd9bbf498b4c47697bd397b476ff10b31bdc1316`; validation SHA256 `998d04b1094079aaf597d4b451db809b9a7e21f9933e07e7dac1d428508f6f85`. SSHstdout30787bytes SHA256 `bf40b831c1b88591e09b20a5fb24058bc4e98ea5071757b7223bdd0f9dff2642`; stderr empty. Root read phase receipts, validation, exact emitted native build output and source/tool verification fields.
+
+This is build evidence only. No installer, Swift tests, gateway, browser or GUI ran through the build transport. Fresh engineering acceptance and independent actual Claude behavior QA remain separate, followed by required interactive observations and final AstraMAX scan3. The first build/compiler failure and first installer acceptance failure remain preserved.

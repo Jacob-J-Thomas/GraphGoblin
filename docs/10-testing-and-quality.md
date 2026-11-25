@@ -1,5 +1,26 @@
 # 10 - Testing and quality
 
+`pnpm test:macos-launcher` is the additional built-app acceptance entry for the **macOS
+launcher** CI job on arm64 macOS 15. The job records the exact checkout and toolchain, builds
+the application, runs the affected API tests, runs the Swift engine/installer/presentation
+suites under full Xcode and exercises the public installer and real gateway with an alternate
+bundle, disposable stores and non-owner ports. It covers malformed inherited locales during
+public installation and concurrent cold launch. Native test output and failure evidence are
+retained for seven days. Swift coverage follows the separate accepted policy in ADR-0083. The
+`pnpm test:macos-coverage` collector/check is wired as a 10-minute step in the macOS CI job,
+before native installer and gateway acceptance. Hosted execution verifies the complete source
+inventory and enforces both native thresholds. The existing TypeScript/JavaScript V8 thresholds
+remain unchanged.
+
+The presentation tests use an injected clock, engine, opener and surface. Five offscreen
+window tests require an available Quartz session; report their actual skips separately.
+They do not establish Finder/Dock routing, real keyboard focus, VoiceOver or default-browser
+activation. These remain native acceptance observations, with post-merge owner acceptance
+tracked on #456 and #326. A Command Line Tools installation may require explicit compiler and
+linker search paths to its installed `Testing` framework, and runtime dependencies may still
+prevent test execution. A missing module, runtime-load failure or failed build is not a test
+pass; a build-only check does not establish test execution.
+
 The native helper lifetime checks (#459, ADR-0086) exercise clean completion, large stderr
 floods, ordinary delayed children, invalid UTF-8, oversized/malformed protocol, natural nonzero
 exit and bounded work. Generation-specific handshakes retain exact native handles to nested
@@ -150,11 +171,41 @@ The separate-process recovery check runs with `pnpm build` followed by `pnpm tes
 
 `apps/api/src/pinned-run-restart.test.ts` kills and restarts the built API on a disposable store. It verifies that an admitted child and Replay retain the original published definition while a new run selects the newer publish. API subprocess fixtures collect closed native SQLite objects before deleting their stores: on Windows, closed connections and statements can retain file handles until collection, including after read-only observers close.
 
-## Coverage policy (Decided)
+## TypeScript/JavaScript V8 coverage policy (Decided)
 
 - Every package, including `apps/web` and `tooling`, inherits the V8 coverage gate from `tooling/vitest.shared.mjs`: lines, branches, functions and statements each have a numerical threshold of 90. Vitest accepts exactly 90%; results below 90 fail. Package configs extend the shared configuration without lowering these four thresholds.
 - The shared denominator includes `src/**/*.ts` and `src/**/*.tsx`, including `src/testing` helpers. It excludes tests, type declarations, `src/**/__fixtures__/**` and `src/**/generated/**`. The generated OpenAPI declarations are excluded; handwritten API-client code is measured. SQL migrations are outside the TypeScript include and have migration/startup acceptance checks. No maintained source is excluded to raise its score.
 - Coverage uses Vitest's V8 provider. Each package writes its own text summary, `coverage-summary.json` and LCOV; the root Turbo gate runs these package gates. There is no aggregate repository percentage or merged cross-package report. CI uploads the package summaries, including tooling's.
+
+## Native Swift coverage policy (#456, accepted)
+
+The owner approved at least 90% line coverage and 90% region coverage for the macOS launcher's
+complete production source, plus explicit behavior tests of branch outcomes. Swift's current LLVM
+export has no branch denominator, so the policy uses tests for branch outcomes rather than a
+numeric branch percentage. This native policy is separate from, and does not change, the V8 policy above.
+See [ADR-0083](decisions/ADR-0083-swift-native-coverage.md) and the
+[CI #03 evidence](qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-03/README.md).
+
+The coverage inventory includes all 25 production source files across six targets. The collector
+must verify each source-to-object mapping and executable entry, combine the verified counters
+across targets, and stop if any production source or entry is missing or unmapped.
+Declaration-only sources with no executable regions remain inventoried with that status
+established from the complete object mapping. No production source may be excluded to raise
+coverage.
+
+CI #03 predates the collector/check step and maps only 21 of the 25 production files:
+2,177/3,588 lines (60.67%) and 1,015/2,040 regions (49.75%), with no branch denominator. The
+declaration and entry mapping gap makes these partial measurements; they do not establish a
+passing 90% result. The `pnpm test:macos-coverage` package command is now wired into the macOS
+CI job before `pnpm test:macos-launcher`. CI12 at `53f41045` accounted for all 25 sources and
+passed 154 Swift tests, then correctly failed the region threshold: 3,439/3,627 lines (94.82%)
+and 1,775/2,056 regions (86.33%). That result establishes complete measurement, not a passing
+native gate. CI13 at `4d725033` passed 168 Swift tests and the complete native gate with
+3,492/3,627 lines (96.28%) and 1,868/2,056 regions (90.86%). All five CI jobs passed; this does
+not establish the separate interactive Finder/Dock criteria or owner acceptance. See the
+[CI13 evidence](qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-13/README.md) and
+[current QA record](qa/2026-11-16-macos-launcher/README.md).
+The native evidence upload retains `.tmp/macos-launcher-*` and Swift `codecov` output for seven days.
 
 ## Maintained scripts and executable evidence (#264)
 
@@ -169,6 +220,19 @@ The MCP lifecycle suite builds its entry first, connects a disposable stdio chil
 The retained browser measurement seeds historical inbound rows through the repository interface: it does not post untargeted Events or start extra runs. Its append/recovery workload follows the reopened API's returned endpoint instead of fetching from the closed listener. Both corrections have negative baseline evidence and passing bounded workload checks.
 
 The [#264 QA record](qa/2026-10-26-wp-a5b-coverage-gaps/README.md) records exact counted files and exclusions per package, measured coverage, negative gate controls and platform/load limitations.
+
+## QA packet pre-publication check (#524)
+
+`pnpm check:qa --base <ref>` (`tooling/scripts/check-qa-packet.mjs`) is a local, read-only check of the QA packet paths selected for publication. The delivery orchestrator runs it before publishing a packet, under the file conventions in [15 - Issue workflow](15-issue-workflow.md#qa-packet-files-524). It is not part of `pnpm check` or CI and replaces neither: `pnpm format:check` and the CI jobs below remain the full gates, and a passing local check establishes nothing about them.
+
+- **Selection.** The `docs/qa` paths that differ between the merge base of `--base` and `HEAD` and the working tree: committed on the branch, staged, unstaged and untracked, each listed once. Git-ignored untracked files are not selected. The report names the base ref, its commit and the merge base.
+- **Checks.** Markdown, as Prettier infers it, is checked in memory with the repository Prettier configuration, even when `.gitignore` or `.prettierignore` hides it from `prettier --check .`; the report marks such pages as checked only here. Other files Prettier would check are checked as it would. Files Prettier would not check (no parser, or ignored raw evidence such as JSON) are retained untouched and listed with their SHA-256, as are `.md.txt` originals. A newly added Markdown file named as an original is refused without a format verdict, so its fix is never to format it.
+- **Coverage.** Every selected path is listed as formatted, unformatted, a Prettier error, refused original, retained, deleted or unavailable, with the counts. A path on which Prettier stops with an error, such as a parse error in malformed HTML, has no format verdict: it is listed as `CHECK-ERROR` and counted as a Prettier error, apart from the completed checks and the unavailable paths, with Prettier's message, position and code frame shown under its path on lines marked with an indented bar, and the remaining paths are still checked. The result counts Prettier errors and unavailable paths as not checked. A path that existed at the merge base and is removed from the working tree or the index is a deletion. Any other selected path missing from the working tree (outside a sparse checkout's cone, marked skip-worktree, or an addition committed or staged and then removed) is unavailable: it is reported as not checked and fails the check with scope guidance.
+- **Exit codes.** 0 when every selected path passed, including when none changed; 1 when any is unformatted, a Prettier error, a refused original or unavailable; 2 when the arguments, base, merge base or repository are unusable, with no partial report.
+- **Content changes only.** Without its index refresh, `git diff` lists every entry whose cached stat data is stale, and no cached predicate settles whether its content changed: Git's own check, behind `git ls-files --modified`, reports a changed cached size without comparing content, as after a CRLF rewrite that `text=auto eol=lf` normalizes back to the indexed blob. An unstaged modification of a path not also staged or committed on the branch is therefore kept only when `git diff --patch` for that path is not empty. To build the patch, Git hashes the work-tree file as it would store it, applying attributes, end-of-line normalization and the index, and compares the contents. A path whose timestamp alone changed, or whose bytes normalize to the indexed blob, is not selected. A real edit or a line-ending change Git stores as it is, such as one in a `-text` original, is.
+- **Read-only.** Git runs with `--no-optional-locks`, `--literal-pathspecs` and, for that command alone, `-c diff.autoRefreshIndex=false`: optional locks do not stop `git diff` from writing the index stat refresh it performs after comparing entries whose stat data is stale. Repository and global Git configuration are not changed, and the index and checked files keep their bytes. Prettier checks text in memory.
+
+`tooling/scripts/check-qa-packet.test.mjs` drives the public command over disposable Git repositories with spaced paths and no inherited Git configuration. It covers clean new prose; malformed new Markdown and HTML from a spaced subdirectory; an unformatted CRLF raw original stored as `.md.txt`, retained with unchanged bytes and hash; formatted and unformatted new Markdown originals refused, while a historical `README-original.md`, an `original-final-audit/` page and `original-hash-verification.md` are not; malformed new Markdown under an archive ignore rule, with the control that `prettier --check` passes it; no changed QA path; a cone-mode sparse checkout lacking a selected page beside a deletion; a malformed HTML page on which Prettier stops, sorted before a formatted page, with the control that `prettier --check` stops on it with the message, position and code frame the report carries verbatim under its path, checked from a full checkout and then from a cone-mode sparse checkout whose selected README is a skip-worktree entry rather than a deletion, reporting every selected path, the formatted page after it and the counts, with the index and file bytes unchanged, and then repaired, so that only the sparse omission fails until the restored full checkout passes; staged and unstaged deletions and a removed committed addition; committed, staged, unstaged and untracked combinations and staged and unstaged renames listed once, beside a historical page and an unformatted historical original given only an older modification time, which the plumbing `git diff-files` confirms as stale stat data and which are neither selected nor refreshed, with the index and file bytes unchanged; under the repository's `* text=auto eol=lf` rule and `core.autocrlf=true`, historical pages and JSON rewritten from LF to CRLF only, including a bracketed name that as a pattern would match a changed sibling, which `git diff-files` lists as stale with a changed size while `git hash-object --path` gives the indexed and base blob, and which are not selected, beside a same-size edit given an older modification time, new content written with CRLF and a CRLF rewrite of a `-text` original, which are, with the index and file bytes unchanged and an ordinary `git diff` selecting the same paths; and refused arguments, bases, unrelated history and a directory outside any repository.
 
 ## Test layers (Decided)
 
@@ -222,7 +286,7 @@ The [WP-B3 QA record](qa/2026-10-19-wp-b3-reset/README.md) holds the owner's man
 
 ## CI gates (Decided)
 
-`.github/workflows/ci.yml` runs six jobs on pushes to `main` and pull requests: Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs run independently on separate runners, except that Gates waits for Repository checks and Coverage; the steps below describe the execution order within each job.
+`.github/workflows/ci.yml` runs seven jobs on pushes to `main` and pull requests. The jobs are macOS launcher, Windows launcher, Repository checks, Coverage, Gates, Browser and Template image. A failure in any job fails the workflow. Jobs use separate runners. Gates waits only for Repository checks and Coverage. The macOS launcher reports separately from that aggregate, so Gates can pass while the macOS job fails. The steps below describe the execution order within each job.
 
 The `Gates` status is a stable aggregate context ([ADR-0084](decisions/ADR-0084-independent-ci-lanes-behind-gates.md), #488). Coverage and the repository checks run as two independent jobs, so neither one's duration can keep the other from finishing, and the final licence, docs, contrast and audit checks no longer wait for coverage.
 
@@ -250,7 +314,7 @@ The `coverage` job (**Coverage**, 30-minute job budget) runs:
 1. Install with a frozen lockfile.
 2. Build every package and app (`pnpm build`), the same full build as Repository checks, so every suite sees the original built inputs.
 3. Install Chromium for the tooling browser measurements (`pnpm --filter @graphgoblin/web exec playwright install --with-deps chromium`).
-4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1`). The step has a 25-minute cap inside the job budget.
+4. Unit tests with coverage thresholds, with one package at a time (`pnpm exec turbo run test:coverage --concurrency=1 --log-order=stream --log-prefix=task`). Output streams with task prefixes so a timeout retains the active suite's available output. The step has a 25-minute cap inside the job budget.
 5. Upload the package `coverage-summary.json` files as the `coverage` artifact after every outcome (a warning when none exist), and write the coverage step's outcome and the number of retained summaries to the job summary. Summaries from a failed, cancelled or timed-out step are partial and never establish a passing gate.
 
 The workload is unchanged: the same packages, tests, thresholds, worker settings and serial order, with no sharding, retry or remote cache.
@@ -265,10 +329,12 @@ The `windows-launcher` job (**Windows launcher**, 20 minutes) installs, builds a
 - **Record.** The native step receives only that directory, through `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR`. The suite reads it once, removes it from its environment before any child starts, and appends typed records to `observations.ndjson` synchronously as they occur. The records cover the start and end of every test and subtest; every child process's tool and mode, exit code, recognised error code, signal, kill state, configured timeout, elapsed time, stdout and stderr byte counts and a closed diagnostic class recognised from its stderr; checkout-alias link type, target match, release and unlink disposition; lock-contention owner counts; gateway drain, window-fixture and contender cleanup; and each fixture root's existence and type at exit, observed with `lstat`. Fixtures are identified only by their random six-character suffix.
 - **Privacy.** A record holds closed enums, bounded integers, booleans and validated identifiers only: no path, argument, environment value, key, token, store byte, command output, error message or log text. Records with missing, extra, invalid or mutually inconsistent fields become `rejected` records. So does a second statement of a once-per-run fact (each test and subtest start and end, each link kind's alias outcome, each alias round and each contention trial), and any of the recorder's own lifecycle or fixture-state types written through the public API.
 - **Bounds.** Each record is at most 1 KiB and the file at most 1,024 records and 192 KiB, with room reserved for the closing records. Records beyond that are counted as omitted after one `overflow` record. The manifest is capped at 8 KiB and the result at 16 KiB, so the archive stays below 256 KiB.
-- **Failures.** A failing test or subtest also prints its typed end record and its last child record to stdout. An evidence directory that is missing, linked, outside the runner temp or not created by `init` is refused with one stdout marker; the tests still run with their own result. A write failure stops recording with one marker and never throws into a test.
+- **Failures.** A failing test or subtest also prints its typed end record and its last child record to stdout. A test or subtest ends when its body settles or as soon as node:test stops waiting for it, whichever comes first (#534). node:test stops waiting when it cancels the test (the test's own timeout, or a parent or the whole run that finished first) or when the test starts after its parent ended. Such a test is recorded as failed at that moment, as node:test reports it, with a failure kind and no error code or exit status. The first failure recorded is kept: a later return or throw of the cancelled body adds no second end and is not rejected, and a body that failed before it was cancelled keeps its own failure fields. The body keeps running, so cleanup and child records it writes afterwards stay in its own test's scope. Subtests still running when their parent ends count among the parent's failed subtests. An evidence directory that is missing, linked, outside the runner temp or not created by `init` is refused with one stdout marker; the tests still run with their own result. A write failure stops recording with one marker and never throws into a test.
 - **Finalize.** After the native step, on every outcome of a successfully prepared directory, `finalize` refuses a directory that is not the `init` directory for this job. It also refuses any entry other than the two expected files, and a link, hard link, non-file or oversized file, without following, deleting or writing anything. The manifest must be exactly the bytes `init` wrote: it is rebuilt from its validated values, the fixed limits and file names, and the fields derived from them (the `unavailable` list and the checkout comparisons), then compared byte for byte, so an unknown or repeated field at any depth, a byte-order mark or other formatting is refused before any path is published. Observation bytes must be the recorder's canonical serialization without a byte-order mark. The stream must start with its one `recorder-open`, hold at most one `overflow` record and at most one final `recorder-closed` record whose counts match the stream, and state each once-per-run fact once. Any other byte or contradiction rejects the file. These checks validate shape and consistency; they do not authenticate files that a hostile runner could write. It then writes `result.json` with the install, build and native step outcomes, the observation state and counts, per-case results and the missing required observations. The upload receives only the exact file paths, as `windows-launcher-<attempt>`, with `include-hidden-files: false` and `if-no-files-found: error`.
-- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3; and a final state for every fixture. Each contention trial needs its totals, a distinct result for every contender with the same seeded token and no structured filesystem or cleanup failures, exactly one acquired owner with expected refusals from the rest, a live matching owner PID/token readback with the seeded marker absent, and final clean release, absent main lock and guard, zero staging entries and intact unrelated bytes. Totals alone cannot complete a trial. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). The run identity must be bound too: a missing or malformed repository, workflow reference, job key, run ID, run attempt, event or ref is reported once as `binding-identity`. The runner OS, architecture and image and the Node version are diagnostics that may stay unavailable, and a push needs no event base. A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
+- **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3; and a final state for every fixture. Each contention trial needs its totals, a distinct result for every contender with the same seeded token and no structured filesystem or cleanup failures, exactly one acquired owner with expected refusals from the rest, a live matching owner PID/token readback with the seeded marker absent, and final clean release, absent main lock and guard, zero staging entries and intact unrelated bytes. Totals alone cannot complete a trial, and neither can a single totals row that keeps its own sum (acquired, refused and other add up to contenders) but contradicts those receipts in any count: the trial is missing (`contention-trials`) while the valid observations are still uploaded (#539). A repeated totals row is refused like any repeated fact. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). The run identity must be bound too: a missing or malformed repository, workflow reference, job key, run ID, run attempt, event or ref is reported once as `binding-identity`. The runner OS, architecture and image and the Node version are diagnostics that may stay unavailable, and a push needs no event base. A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
 - **Retention.** Fixtures under `.tmp` and OS TEMP are left in place, including any kept because a release or unlink could not be verified. Evidence records their final state and never copies or traverses them.
+
+The job's last step, **API built-entry startup on Windows** (#565), runs `pnpm --filter @graphgoblin/api test src/main.test.ts` against the job's build. It is the maintained Windows venue for the built-entry startup cases, including the Windows-only launcher log-folder refusal case, which Linux CI skips. It runs after every successful build that is not cancelled, whatever the native, evidence and upload steps did, and only after them, so its result cannot change their outcomes or the evidence. It has no `continue-on-error`: a failure fails the job. Its test, hook and wait limits are those of the local suite, and it shares the job's 20-minute budget.
 
 Without `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR` the local `pnpm test:windows-launcher` writes no evidence and keeps its usual output. The CI evidence binds to the checkout but does not establish a hosted result by itself: the uploaded archive, its GitHub digest and the job's own log are the evidence.
 
@@ -307,6 +373,16 @@ Browser exclusions and conditional modes, also written to the job summary on eve
 - `screens.capture.ts` is a manual screenshot utility and does not match the functional suite's `*.spec.ts` pattern.
 
 The `template-image` job builds the distributed container and checks installed template contents without network or writable storage. It runs on pull requests as well as pushes to `main`.
+
+A separate step in the same job (#467) checks that the image's installed jsonata carries `patches/jsonata@2.2.2.patch`, whose responsibilities and upgrade obligations are in the [licence ledger](research/licenses.md#jsonata-patch). It runs the image with the same switches as the template step (no network, read-only root filesystem, all capabilities dropped, no new privileges) and a working directory of `/app/apps/api`, where `node --input-type=module` imports the compiled `@graphgoblin/domain` entry the API resolves, never source or host `node_modules`. It runs whenever the image built, even after a template failure. Each probe calls the public `observeExpression` with a finite expression:
+
+- `a + b` over `{ "a": 1, "b": 2 }` at the default limits returns 3.
+- A JSON literal holding a 250-item array and a 250-member object, wider than the default depth of 200, returns itself at the default limits. Only sequential siblings accept it.
+- `1` with `maxDepth: 0` is refused with reason `depth` and the `ExpressionError` message `expression exceeded max depth 0`.
+- `1` with `timeoutMs: -1`, a deadline already spent at the first evaluator entry, is refused with reason `time` and the message `expression exceeded -1ms`.
+- `1` again at the default limits, the same cached source, then returns 1, so neither refusal carried over into a later evaluation.
+
+Without the patch the symbol-keyed hooks are never bound, so both refusal probes succeed and fail their assertions at once instead of hanging. These restrictive options exist only in the probe; the evaluator's 200-level and 2,000 ms defaults are unchanged. The step prints one JSON line (`"check":"installed-jsonata-patch"`) that the job log retains. The per-evaluation timestamp has no image probe: only `packages/domain/src/expression.test.ts` covers it. The source regressions do not prove the distributed image, and this step does not replace them.
 
 Live/paid smoke checks remain separate, manually authorized checks. CI schedules no recurring paid-provider job or Postgres matrix.
 
@@ -419,9 +495,11 @@ Finding fixed while measuring: libsql's local client does its work in native cod
 `apps/api/dist/main.js`. API subprocess tests build the API first through Turbo's
 `test` and `test:coverage` task dependencies. Direct package test commands bypass
 Turbo, so run `pnpm build` first; a missing entry reports that command explicitly.
-Each fixture owns a temporary `gg-api-process-*` directory, clears inherited `GG_*`
-configuration, and creates its API key through the binary. API Vitest workers
-reserve loopback ports atomically in a temporary directory shared by the run (#407).
+Each fixture creates its own temporary `gg-api-process-*` store directory, starts
+children only through its `run()` and creates its API key through the binary. On
+dispose it force-stops any child still running and releases its port reservation.
+API Vitest workers reserve loopback ports atomically in a temporary directory
+shared by the run (#407).
 The reservation lasts through startup, restarts and child or listener cleanup.
 Set `GG_TEST_PORT_START` and `GG_TEST_PORT_COUNT` to a free range large enough for
 the fixtures active at the same time. The default is 5600 to 5699, with 5760 to 5769
@@ -429,8 +507,13 @@ for the dedicated shutdown process and startup suites. An invalid or exhausted
 range fails with the range in the error. TCP bind probes check IPv4 loopback and,
 on Windows and macOS, also check IPv4 and available dual-stack wildcard bindings
 because overlapping addresses can bind the same port on those platforms.
-Probe listeners close before startup. Reservations coordinate fixtures drawing from that range
-in the same Vitest run. Each port records successive claims in separate
+Probe listeners close before startup. These probes are point-in-time availability
+checks, not an OS hold. Reservations coordinate only fixtures drawing from that
+range in the same Vitest run; a process outside the run can still bind a reserved
+port after the check. A
+listener a test owns for itself, such as the stand-in Ollama, is not reserved: it
+binds `127.0.0.1` port 0 and reads back the ephemeral port the OS assigned, from
+no fixed range. Each port records successive claims in separate
 directories that stay until the run closes. An unfinished claim stays reserved
 for that run, and the Vitest parent removes the reservation directory when
 its workers have closed. Give simultaneous test invocations disjoint ranges.
@@ -438,6 +521,23 @@ CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
 refusal, occupied-port cleanup and Linux native signal shutdown are distinct
 evidence. The corrupt database fails before HTTP setup; a literal `*` static asset
 supplies a separate real post-container route-registration fault on POSIX.
+
+Children get the parent environment without inherited `GG_*`, `JEV_API_KEY` and
+`NODE_V8_COVERAGE`, then the fixture's own `GG_*` values (#565). These include
+`GG_OLLAMA_ENABLED=false`, so ordinary startup makes no Ollama discovery request
+whatever the product default or the shell sets. A test that owns a provider
+endpoint opts in per child with `GG_OLLAMA_ENABLED=true` and its own
+`GG_OLLAMA_URL`. The in-process `main()` case in `main.test.ts` adopts the same
+fixture values through reversible `vi.stubEnv` stubs after clearing inherited
+`GG_*` (other than `GG_TEST_*`) and `JEV_API_KEY`, so it cannot seed an inherited
+Jev key either. This is not network isolation: children keep the host network and
+the rest of the inherited environment, and only the discovery default is fixed.
+`src/testing/provider-isolation.test.ts` checks both venues, a built-entry child
+and in-process `main()`, against a stand-in Ollama listener that the test owns and
+that lists no models; both cases point `GG_OLLAMA_URL` at it. With the fixture
+default the saved connection stays disabled and idle and the listener receives no
+request. With an explicit opt-in it receives exactly `GET /api/tags` and discovery
+becomes ready.
 
 Signal cases run only on Linux. Node force-kills children on SIGINT/SIGTERM on
 win32 and does not execute JavaScript handlers. The literal wildcard asset also
@@ -463,7 +563,8 @@ Process fixtures stop their children and best-effort remove their temporary
 stores and reports, retrying native handle release. The `gg-publish-*` fixtures
 use separate real SQLite connections to arrange draft/publish interleavings,
 then close both clients and best-effort remove their temporary database directory.
-No owner process, store, or port is used.
+No fixture starts, stops or opens an owner process or store. Fixture API ports come
+from the reservation range above, and test-owned listeners use port 0.
 
 ## Browser history retention measurements (#186 round 2, 2026-10-24)
 

@@ -1,0 +1,47 @@
+Exit code 1
+$ vitest run scripts/check-qa-packet.test.mjs
+
+ RUN  v5.0.3 G:/ggq/gg-fu-qa-packets-20261124/GraphGoblin/tooling
+
+ ❯ scripts/check-qa-packet.test.mjs (12 tests | 1 failed) 11428ms
+   × a page Prettier stops on fails with its cause; later pages and sparse omissions are still reported 1003ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  scripts/check-qa-packet.test.mjs > a page Prettier stops on fails with its cause; later pages and sparse omissions are still reported
+AssertionError: check:qa: Unexpected closing tag "main". It may happen when the tag has already been closed by another tag. For more info see https://www.w3.org/TR/html5/syntax.html#closing-elements-that-have-implied-end-tags (1:21)
+> 1 | <main><section>Hello</main>
+    |                     ^^^^^^^
+  2 |
+
+
+2 !== 1
+
+
+- Expected
++ Received
+
+- 1
++ 2
+
+ ❯ scripts/check-qa-packet.test.mjs:321:10
+    319|   let result = check(root, '--base', 'main');
+    320|
+    321|   assert.equal(result.status, 1, result.stdout + result.stderr);
+       |          ^
+    322|   assert.equal(result.stderr, '');
+    323|   assert.deepEqual(listed(result.stdout), [
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+   Start at  23:30:14
+   Duration  11.69s (tests 99%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-fu-qa-packets-
+  │ 20261124\GraphGoblin\tooling

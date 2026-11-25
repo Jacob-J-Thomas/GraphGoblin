@@ -1,0 +1,250 @@
+{
+  "reviewedAtUtc": "2026-11-25T08:23:18.912346+00:00",
+  "repository": "Jacob-J-Thomas/GraphGoblin",
+  "issue": 581,
+  "pr": 582,
+  "round": 2,
+  "roundLimit": 3,
+  "requestCommentId": 7156803019,
+  "requestUrl": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/582#issuecomment-7156803019",
+  "decision": "REQUEST_CHANGES",
+  "head": "0af9b8a41367f4e90152333e02c687f4b7ba1185",
+  "base": "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+  "tree": "3dbab5604f25ab9fcd82f7b477b6b3a1e438b031",
+  "soleParent": "3f80820ff2982614a750cd6bd8dce488714a3752",
+  "effectiveDiff": {
+    "command": "git diff --binary da01ebc7575b9b05f87d4b89993e6c46b8de194b 0af9b8a41367f4e90152333e02c687f4b7ba1185",
+    "sha256": "eb9e9c9a7b32fb273824917cf82dd0e58cbf546524af2f617e4e6b083e7c82f4",
+    "bytes": 417911,
+    "files": 86
+  },
+  "reviewer": {
+    "agent": "/root/windows_reclaim_review_r2",
+    "fresh": true,
+    "authoredCandidateCode": false,
+    "configuredModel": "gpt-6.2-astra",
+    "configuredEffort": "xhigh",
+    "observableServingIdentity": null,
+    "servingIdentityNote": "Not exposed by the host; assignment configuration is separately recorded.",
+    "assignmentFile": "root-assignment.json"
+  },
+  "implementation": {
+    "configuredModel": "gpt-6.2-sol",
+    "configuredEffort": "high",
+    "reason": "Disclosed fallback after actual Claude five-hour subscription cap."
+  },
+  "findings": [
+    {
+      "id": "R2-F1",
+      "priority": "P2",
+      "confidence": "high",
+      "disposition": "FIX-IN-PR",
+      "blocking": true,
+      "title": "The final lost guard marker is reported as verified live ownership.",
+      "locations": [
+        "apps/api/src/data-dir-lock.ts:392",
+        "apps/api/src/data-dir-lock.ts:442",
+        "apps/api/src/serve.ts:166"
+      ],
+      "finiteCorrection": "When the final acquisition observation loses its enumerated marker, refuse with existing ownership uncertainty detail and the guard path. Preserve the eight-attempt limit, prior publication exhaustion behavior and cleanup. Add a public acquire regression that verifies bounded uncertainty text/path and no retained main, guard or staging entries once the other caller releases.",
+      "evidence": [
+        "ledger-acquire-current.json",
+        "ledger-acquire-r1.json",
+        "ledger-acquire-target.json",
+        "ledger-observe-current.json"
+      ]
+    }
+  ],
+  "priorFinding": {
+    "id": "R1-F1",
+    "outcome": "VERIFIED_FIXED",
+    "publicAcquisitionSchedules": 3,
+    "publicConfirmedResetExit": 0,
+    "removalCredits": [
+      true,
+      false,
+      true
+    ],
+    "resetCreditedStaleGuard": true,
+    "storeFilesRemoved": 0,
+    "storeBytesRemoved": 0,
+    "unrelatedBytesPreserved": true
+  },
+  "execution": {
+    "system": "macOS 26.6.2 (25G83)",
+    "arch": "arm64",
+    "node": "v22.22.2",
+    "windowsEpermInjectedInReviewerChurnSchedules": false,
+    "twoPublicProcesses": true,
+    "newObservationSummaries": {
+      "ledger-acquire-current.json": {
+        "revision": "0af9b8a41367f4e90152333e02c687f4b7ba1185",
+        "releasedCycles": 8,
+        "nativeMarkerReadENOENT": 8,
+        "mainAndGuardAbsentBeforeEighthRead": true,
+        "workerExitedBeforeEighthRead": true,
+        "fixtureEntriesAfter": [],
+        "result": {
+          "state": "refused",
+          "name": "StoreOwnershipRefusedError",
+          "message": "another GraphGoblin process holds <fixture>/graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying"
+        }
+      },
+      "ledger-acquire-r1.json": {
+        "revision": "3f80820ff2982614a750cd6bd8dce488714a3752",
+        "releasedCycles": 8,
+        "nativeMarkerReadENOENT": 8,
+        "mainAndGuardAbsentBeforeEighthRead": true,
+        "workerExitedBeforeEighthRead": true,
+        "fixtureEntriesAfter": [],
+        "result": {
+          "state": "acquired",
+          "reclaimed": {
+            "file": false,
+            "guard": false
+          },
+          "release": "removed"
+        }
+      },
+      "ledger-acquire-target.json": {
+        "revision": "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+        "releasedCycles": 8,
+        "nativeMarkerReadENOENT": 8,
+        "mainAndGuardAbsentBeforeEighthRead": true,
+        "workerExitedBeforeEighthRead": true,
+        "fixtureEntriesAfter": [],
+        "result": {
+          "state": "acquired",
+          "reclaimed": {
+            "file": false,
+            "guard": false
+          },
+          "release": "removed"
+        }
+      },
+      "ledger-observe-current.json": {
+        "revision": "0af9b8a41367f4e90152333e02c687f4b7ba1185",
+        "releasedCycles": 8,
+        "nativeMarkerReadENOENT": 8,
+        "mainAndGuardAbsentBeforeEighthRead": true,
+        "workerExitedBeforeEighthRead": true,
+        "fixtureEntriesAfter": [],
+        "result": {
+          "state": "held",
+          "detail": "Store ownership could not be verified (reclamation guard marker repeatedly disappeared during the check)",
+          "path": "<fixture>/graphgoblin.lock.reclaim"
+        }
+      }
+    }
+  },
+  "localValidationInspected": {
+    "focused": {
+      "passed": 85,
+      "baselinePassed": 81,
+      "baselineFailed": 4
+    },
+    "fullApi": {
+      "passed": 2290,
+      "skipped": 37,
+      "passedFiles": 144,
+      "skippedFiles": 5,
+      "durationSeconds": 78.24,
+      "statements": 93.77,
+      "branches": 91.01,
+      "functions": 90.21,
+      "lines": 95.19,
+      "rawPrivateLogSha256": "d64aa10841df3dc4e465e184ed8971f9f0b509304e55c400150d1d299eb922ab"
+    },
+    "build": "passed",
+    "apiTypecheck": "passed",
+    "changedFileLint": "passed",
+    "format": "passed",
+    "freshFullSuiteRunByReviewer": false
+  },
+  "hosted": {
+    "currentHeadNativeVerifiedByReviewer": false,
+    "currentHeadStatusAtReview": "Local rejected source; current-head CI evidence is not required to establish the source blocker.",
+    "priorRunOnly": 45571609471,
+    "priorRunCandidate": "3f80820ff2982614a750cd6bd8dce488714a3752",
+    "originalFailureRun": 45566702222,
+    "historicalWin32Interleaving": "unknown",
+    "originalNativeTrial2": {
+      "filesystemFailures": 1,
+      "error": "EPERM / recovery-directory-remove",
+      "liveOwnerMatched": true,
+      "closed": 5,
+      "released": 1,
+      "pathsAbsent": true,
+      "staging": 0,
+      "unrelatedIntact": true
+    }
+  },
+  "candidateProductBlobIds": {
+    "CHANGELOG.md": "ac311c7c336c217220b48f8bf240350fc038b406",
+    "apps/api/src/data-dir-lock.ts": "be24010c8909cfcd76c017ddd54d2be678399ae9",
+    "apps/api/src/data-dir-lock-failures.test.ts": "acfce5d651eaf76d787137e4972c7a97f4ce4a35",
+    "docs/11-security-and-distribution.md": "d4624248fd6a0ff1c21f672de939bcd05ec1caa3"
+  },
+  "unchangedNativeOracleBlobIds": {
+    ".github/workflows/ci.yml": "78f72b4e484b4eec1bf730147b3bf2580798d139",
+    "tooling/scripts/windows-launcher.acceptance.mjs": "6c14954b2d6a0fbd3f4bcb6923369f716a672550",
+    "tooling/scripts/windows-launcher-evidence.mjs": "e895f2195307940b88aa73789b16957a7317a346"
+  },
+  "upstreamQaInputDigests": {
+    "r1-repair/disposition.json": {
+      "sha256": "bf31e94d7d4a0c8f48ebbab0e3a7cf7c50b68ca804d2dcda03891c3c0896f411",
+      "manifestEntriesMatched": 26
+    },
+    "r1-review/copy-provenance.json": {
+      "sha256": "816582efd88c7b57aa861daed65fe3fc517930cbf782b046ad0230a454132154",
+      "manifestEntriesMatched": 10
+    },
+    "source-and-local-validation.json": {
+      "sha256": "196234e3ea94168ee64dba368f76f47390109720fde6692ed7eefbac018f8f52",
+      "manifestEntriesMatched": 33
+    },
+    "integration-da01/receipt.json": {
+      "sha256": "71ea90ede4a7321180a1a1f54cff3b2f1a5cf5b0681a8e033aa32be1506e0bb6",
+      "manifestEntriesMatched": 6
+    },
+    "original-native-failure/manifest.json": {
+      "sha256": "db6c9d68a3388b180b805da30aafefa19215c7f892fdfe84a4921421320a5ae8"
+    },
+    "original-native-failure/observations.ndjson": {
+      "sha256": "78eaa48faaf57c1f5804631eeb03fa573862583fab09a898e948de62e687e694"
+    },
+    "original-native-failure/result.json": {
+      "sha256": "ebf3112cf226dc26861ae547802ba7bddfef7590d52cbeb95b4e702076e8b207"
+    },
+    "diagnosis/diagnosis.md": {
+      "sha256": "59eabfac12def6d55bd516435ea661b2da6f0f0433ff51f08ba13747e6c5cab2"
+    },
+    "r1-review/receipt.json": {
+      "sha256": "d5528b875723001551d69ccebac611adebfc9b18a9abb288eb7ff9d767f5f23d"
+    },
+    "r1-review/review.md.txt": {
+      "sha256": "3d304f62e754641cba67efaabe30cfc04268f7c9c1f3c9f727277f73fbba23bf"
+    }
+  },
+  "reviewFilesSha256": {
+    "0af9b8a41367f4e90152333e02c687f4b7ba1185.ts": "0745da764fb5acf239fb18191096ad0f946988bc8075a1acc812be8fd7689947",
+    "3f80820ff2982614a750cd6bd8dce488714a3752.ts": "76c04a86848345793a70cb4c80e51c53cb3a6516185ac4a94182e4aff6114710",
+    "churn-acquire-current.json": "d8738db3c10f9ad5e2868527c19444d5f26658327102ba78621aeaabaf2ce336",
+    "churn-acquire-r1.json": "a2c0a450a771ac2b03f30f6754c180946c658c22fc4383928f872ea163d33fc5",
+    "churn-acquire-target.json": "160ea2f1bffa4c747cda2083a41013094848fbfaa08e62988d3ce32f04b017d5",
+    "churn-observe-current.json": "089c70027357c440b42aac813252a206e477417d904dca311492379333d1c7fc",
+    "da01ebc7575b9b05f87d4b89993e6c46b8de194b.ts": "9ac7ee4116896e18de4db3942bc8798aa354e82f478fe5374289fbb05a11c3cc",
+    "ledger-acquire-current.json": "1bd8abe0fc863250ced9c2e760d494feb2c3ed1e88bde51d0c14071adcdf4178",
+    "ledger-acquire-r1.json": "229e0a0e19d3fe2585b389b4041f85925080e982818a51b25c5b5bacbb57fc10",
+    "ledger-acquire-target.json": "ab4b81d2db1b10b6e8b24a44c1095d06dff6f69e769b40b01cd4fe82c5c2d537",
+    "ledger-observe-current.json": "0a8dd2fc00ff5ad8172148ddeea1d93cb2010dd0e31b3a7d11c1b6a207efcc70",
+    "marker-churn-release-ledger.mjs": "d0592570cf4feb328ecc43146fdeac82d7ed2b023debac2257f375126190d110",
+    "marker-churn.mjs": "e61dc65d7f7dbde84b325b204916b0bad867a648ddee237e0f58b50c3b0ff2a5",
+    "marker-read-schedule.mjs": "6401027a32a47bacd057e9438bff6dae990c1cd92b23f1849d23cb42d75c5c9d",
+    "r1-marker-controls.json": "d7128026522fae7e0212ca689f37d8978d77e7a85a6c07697146ca7c487b4850",
+    "r1-reset-control.json": "cfbeadebd74b690734c19bf9adb2fefba85869b3cefe2ae684f6d048b02c950d",
+    "reset-manifest-schedule.mjs": "7a39c31b1d81ca01c9c7f101bdc2eabe00b36a21a1a6c62dcd0e70ff924c41c0",
+    "review.md": "7e8de13788768735e8b4638a2baec545aba610276023b32702cc74ad4de30c46",
+    "root-assignment.json": "fd3c28667f65b047bd12779db4fbf85a1da7520628b6785db79281af44c926f8"
+  }
+}

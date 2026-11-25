@@ -1,0 +1,81 @@
+# SCOPED QA PASS
+
+**Scope.** This verdict covers the frozen #554 candidate `d2df860…` (patch `4f40ceb6…`, index `c646b195…`) and rests only on the supplied receipts and source. I ran nothing. The original report, its BLOCKED criterion 9 and its tool events stand unchanged.
+
+**Why criterion 9 was blocked.** docs/05 has 813 lines, so the requested lines 1100–1128 lay past the end of the file. The empty reversed heading was a preparation fault, not a candidate defect.
+
+**Source binding.** Five supplied files are complete: authored-failure, mutate, common, failure-publication and event-validation. Each carries the SHA-256 recorded in the frozen-state or blob-proof receipts. I compared stated hashes; I did not recompute them.
+
+## Documentation (criterion 9: PASS)
+
+- **Identifiers.** The docs/05 table and the `fields` map hold the same 27 identifiers, each exactly once, with no omissions, extras or spelling drift.
+- **Location fields and payload.**
+  - Every documented location field exists on `AuthoredSite`.
+  - `transformFailure` adds `itemIndex` only when an item failed.
+  - `phase: "after-result"` is set only for `inference.output.schema.repair.prompt` and `inference.output.transforms`.
+  - Labels add one to indices but not to `beat`/`attempt`, which matches the docs.
+  - Details hold only site fields, the fixed `causeFor` copy and `phase`.
+  - The top-level code is limited to TEMPLATE, EXPRESSION or MUTATION_ERROR; PATCH_ERROR appears only as `cause.code`. These failures carry `resumable: false`.
+- **Nesting.** `isChildWrapper`/`childDetails` pass non-internal child details, boundary included, unchanged under `childDetails`. `failRun` writes the same bounded failure, with details, to `run.failed` and to the run record.
+- **Ordinary distinctions.**
+  - Mutate details are `{operationIndex, operationKind, cause}` and carry no boundary.
+  - A non-compiling coerce schema yields validation errors, then `repairValue` ends in `continue-raw` or `OUTPUT_SCHEMA_MISMATCH`.
+  - That unchanged ordinary failure publishes validation errors and the value. This is outside the boundary guarantee, as docs/05 places it.
+- **docs/07.** It links to `05-execution-engine.md#authored-boundary-identifiers`, which matches the heading, and its summary agrees with the section.
+
+## Evaluator text (resolved; not a #554 defect)
+
+The policy files are unchanged:
+- mutate.ts, common.ts, failure-publication.ts, errors.ts, event-validation.ts and docs/04 are byte-identical to their baseline blobs.
+- None appears in run-check's enforced changed-path set.
+
+How the mutate node publishes evaluator text:
+- It passes only an ordinary mapper and no `mapFact`. So `rethrow` sends domain-class errors there, including target faults.
+- That mapper publishes `boundedAuthoredCause(error.message)` in both `failure.message` and `details.cause.message`. This is exactly what tests 80–108 expect.
+- Other thrown values come back unchanged and become INTERNAL_ERROR with fixed copy and a private diagnostic.
+- Bounds:
+  - the cause is limited to 1000 characters;
+  - the message is limited to the schema maximum via `boundedFailure`;
+  - the event and the run record receive the same bounded failure.
+- Truncation bounds length only. `$error(secret)` in a Context mutation still publishes the secret up to that bound.
+
+This is the pre-existing Context mutation contract. docs/04 promises a "bounded cause", and docs/05 puts mutate under "Other failures carry no boundary".
+
+The no-evaluator-text claim covers only the newly typed sites (`evaluateAuthored`, `predicateAuthored`, `renderAuthored`), which produce fixed copy.
+- In run-manager, their failures are logged without `errorDiagnostic`.
+- Unclassified `valueAt` rethrows fall under the Bug row.
+- A genuine target fault reaches `mapFact` and gets fixed "target is invalid" copy. The control shows exactly `[{kind:'target'},2,'coerce']`.
+
+I found no contradiction. Whether Context mutations should also suppress evaluator text is a wider policy question outside #554.
+
+## Execution evidence
+
+- **Receipts.** All three receipts, stream hashes and byte counts agree with CLAUDE-EXIT. Each run exited 0 with `sourceUnchanged: true`, and staged and untracked lists were empty. QA-CONFIG file hashes and commands match the frozen candidate.
+- **Domain.** 26 ✓ entries, 26/26 in 1 file.
+- **Engine.** 140 entries in 4 files, 140/140. My recount by file: 9 authored-failure, 15 mutation-failures, 28 heartbeat-visit, 88 flow.
+- **Why the original saw 133 lines.** run-check's last-135 filter dropped the first 7 tests, and 6 multiline names broke at "(first".
+- **stderr.** It contains only pnpm's `$ vitest run …` echo. I recomputed the 54 B and 163 B by hand.
+- **Controls.**
+  - 10/10 passed with empty stderr.
+  - The before/after snapshots bind driver `efa2d5d4…`.
+  - In the supplied coerce branch, only the `validateJson` catch rethrows without a fact. That corroborates the throw site by elimination.
+- **Runtime.**
+  - Node v22.23.4 and pnpm 12.8.1 come from the launcher preflight only; there was no per-child probe.
+  - vitest 5.0.3 comes from the child banners.
+  - Tests and the driver ran development TypeScript, not `dist/`.
+  - The getter throws bound mapper behaviour for synthetic direct JavaScript only.
+
+## Gaps relevant to scoped QA (non-blocking)
+
+- Handler call-site construction and most test assertion bodies were not supplied. Location bindings beyond the shown code rest on test titles.
+- These were not in the supplied source:
+  - `classifyScriptFailure`;
+  - child-wrapper construction;
+  - the API/MCP projection (`list_runs` omitting `details`);
+  - the `return.failed` claim.
+
+## Still separate
+
+- Coverage, typecheck, lint and `pnpm check`.
+- Current-target CI, final audit and applicable owner acceptance.
+- The historical formal review is an independent tier and is not this verdict. No new test run is claimed.

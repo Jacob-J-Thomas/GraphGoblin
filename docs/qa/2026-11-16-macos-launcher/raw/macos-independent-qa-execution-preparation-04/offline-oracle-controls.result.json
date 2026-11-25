@@ -1,0 +1,1518 @@
+{
+  "schema": "gg456-prep04-offline-oracle-controls/1",
+  "controlled": true,
+  "nativeAcceptance": false,
+  "node": "v22.23.4",
+  "platform": "win32-x64",
+  "inputs": {
+    "driver03": "gg456-native-qa.mjs",
+    "driver04": "gg456-native-qa.mjs",
+    "qa05Records": {
+      "installed-a.json": "86adf8ccafea4bcc89773d454512b1ef3b8834bfe8cdb32b626063120dcb6e07",
+      "installed-a-nfd.json": "101bfb1197dda99d2f1417b6c8352e66ac7ff8e397aed6aa3815e112034d597d",
+      "installed-a-case.json": "04d3ce984bea363ec92552ed3aa2f04fb10b03121883266d1f9e36caa157425e"
+    }
+  },
+  "guard": {
+    "d03Sha256": "9be9a517754877ab3f68b72e74f476d0ced04f34216e10e12d48e7685927736f",
+    "d04Sha256": "bafe95338dc22402a29b5805f0f0ec4862d8d3c6155220f03ca005946be4729e",
+    "d03Lines": 1556,
+    "d04Lines": 1606,
+    "restIdentical": true,
+    "d03Replaced": [
+      "// Preparation 03: copy of preparation 02 with the built-asset response bound listed in correction-handoff.md.",
+      "    choices: state.json.choices ?? null, graceMs: state.json.graceMs ?? null }, series, elapsedMs: now() - start };",
+      "    const started = await api(P, 'POST', `/loops/${loopId}/runs`, { allowDraft: true });",
+      "    ctx.data = { loopId, runId, loopName: definition.name, waitSeconds: WAIT_SECONDS, startedAt: iso() };",
+      "    want(ctx, 'waiting-run-not-unconfirmed', !(drained.shutdown.unconfirmedRunIds ?? []).includes(runId), drained.shutdown);",
+      "    want(ctx, 'identical-saved-configuration', b.files['Contents/Resources/launcher.json'].sha256 === ctx.app.a.files['Contents/Resources/launcher.json'].sha256);"
+    ],
+    "oldStartBodyInD03": true,
+    "newStartBodyInD04": true
+  },
+  "reconstruction": {
+    "a": {
+      "keys": [
+        "requireAPIKey",
+        "port",
+        "version",
+        "checkout",
+        "node",
+        "dataDirectory",
+        "ollamaEnabled"
+      ],
+      "recordedSha256": "7479f6e8fffc2f57669205723b157c5c87eb3a52e4d632ee9e1f0f026d565c3d",
+      "recordedSize": 332,
+      "reconstructedSha256": "7479f6e8fffc2f57669205723b157c5c87eb3a52e4d632ee9e1f0f026d565c3d",
+      "reconstructedSize": 332,
+      "receiptConfiguration": "7479f6e8fffc2f57669205723b157c5c87eb3a52e4d632ee9e1f0f026d565c3d",
+      "matches": true
+    },
+    "a-nfd": {
+      "keys": [
+        "node",
+        "dataDirectory",
+        "requireAPIKey",
+        "version",
+        "checkout",
+        "ollamaEnabled",
+        "port"
+      ],
+      "recordedSha256": "52909c11fb797f88117c05c533778e115e4deb65bca892f24cbd4f7ce630eb94",
+      "recordedSize": 332,
+      "reconstructedSha256": "52909c11fb797f88117c05c533778e115e4deb65bca892f24cbd4f7ce630eb94",
+      "reconstructedSize": 332,
+      "receiptConfiguration": "52909c11fb797f88117c05c533778e115e4deb65bca892f24cbd4f7ce630eb94",
+      "matches": true
+    },
+    "a-case": {
+      "keys": [
+        "port",
+        "dataDirectory",
+        "version",
+        "checkout",
+        "ollamaEnabled",
+        "node",
+        "requireAPIKey"
+      ],
+      "recordedSha256": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+      "recordedSize": 332,
+      "reconstructedSha256": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+      "reconstructedSize": 332,
+      "receiptConfiguration": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+      "matches": true
+    }
+  },
+  "cases": [
+    {
+      "id": "R1-d03-S4-omitted-version-404",
+      "ok": true,
+      "meaning": "driver 03 sends {allowDraft:true} only and stops at run-admitted with 404 LOOP_NOT_FOUND, exactly as QA05",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: run-admitted"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:run-admitted"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false
+      }
+    },
+    {
+      "id": "R2-d03-S4-reads-GET-not-POST",
+      "ok": true,
+      "meaning": "reproduction-only lenient start: driver 03 passes waiting-run-not-unconfirmed although the accepted POST snapshot lists the timer run",
+      "observed": {
+        "status": "criteria-met",
+        "detail": {
+          "phase": "running",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [],
+          "graceMs": 300000
+        }
+      }
+    },
+    {
+      "id": "R3-d03-S4-missing-POST-array-vacuous",
+      "ok": true,
+      "meaning": "reproduction-only lenient start: driver 03 passes waiting-run-not-unconfirmed with no unconfirmedRunIds in the POST snapshot",
+      "observed": {
+        "status": "criteria-met",
+        "detail": {
+          "phase": "running",
+          "activeRunIds": [],
+          "unconfirmedRunIds": [],
+          "choices": [],
+          "graceMs": 300000
+        }
+      }
+    },
+    {
+      "id": "A1-d04-S4-correct-explicit-draft",
+      "ok": true,
+      "meaning": "driver 04 validates the created draft, sends exactly {versionId:<draft>,allowDraft:true}, gets 202 and completes S4 with all criteria met",
+      "observed": {
+        "status": "criteria-met",
+        "thrown": null,
+        "checks": [
+          "met:must:loop-created",
+          "met:must:draft-bound-to-loop",
+          "met:must:run-admitted",
+          "met:must:run-pins-new-draft-snapshot",
+          "met:must:run-active-waiting",
+          "met:must:no-provider-process",
+          "met:must:drain-with-waiting-run:registered-owner",
+          "met:must:drain-with-waiting-run:shutdown-state",
+          "met:must:drain-with-waiting-run:same-incarnation",
+          "met:must:drain-with-waiting-run:drain-accepted",
+          "met:must:drain-with-waiting-run:never-forcing",
+          "met:must:drain-with-waiting-run:released",
+          "met:must:drain-with-waiting-run:store-free",
+          "met:want:waiting-run-not-unconfirmed",
+          "met:must:relaunch-envelope",
+          "met:must:new-gateway-incarnation",
+          "met:must:run-retained-across-restart",
+          "met:must:run-pin-retained-across-restart",
+          "met:want:run-completed-after-restart",
+          "met:want:loop-retained",
+          "met:must:no-provider-process-after-restart",
+          "met:must:drain-idle:registered-owner",
+          "met:must:drain-idle:shutdown-state",
+          "met:must:drain-idle:same-incarnation",
+          "met:must:drain-idle:drain-accepted",
+          "met:must:drain-idle:never-forcing",
+          "met:must:drain-idle:released",
+          "met:must:drain-idle:store-free"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"versionId\":\"01KA00000000000000000000D1\",\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false
+      }
+    },
+    {
+      "id": "A1b-d04-S4-snapshot-distinct-and-recorded",
+      "ok": true,
+      "meaning": "the pinned versionId is a new snapshot ID distinct from the submitted draft, source draft, version 1, recorded in ctx.data beside the draft ID",
+      "observed": {
+        "pin": {
+          "runId": "01KA00000000000000000000R1",
+          "loopId": "01KA00000000000000000000A1",
+          "versionId": "01KA00000000000000000000S1",
+          "source": "draft",
+          "version": 1
+        },
+        "data": {
+          "loopId": "01KA00000000000000000000A1",
+          "runId": "01KA00000000000000000000R1",
+          "draftVersionId": "01KA00000000000000000000D1",
+          "runVersionId": "01KA00000000000000000000S1",
+          "loopName": "QA wait 7c5ae3c2",
+          "waitSeconds": 45
+        }
+      }
+    },
+    {
+      "id": "A1c-d04-S4-retained-pin-compared",
+      "ok": true,
+      "meaning": "after the controlled restart the same run/loop/snapshot/source/version projection is read from GET /runs/{id}",
+      "observed": {
+        "admitted": {
+          "runId": "01KA00000000000000000000R1",
+          "loopId": "01KA00000000000000000000A1",
+          "versionId": "01KA00000000000000000000S1",
+          "source": "draft",
+          "version": 1
+        },
+        "retained": {
+          "runId": "01KA00000000000000000000R1",
+          "loopId": "01KA00000000000000000000A1",
+          "versionId": "01KA00000000000000000000S1",
+          "source": "draft",
+          "version": 1
+        }
+      }
+    },
+    {
+      "id": "A1d-d04-S4-no-control-token-recorded",
+      "ok": true,
+      "meaning": "no control token issued by the fake API appears in the stage record or ctx.data; both drains sent the matching token",
+      "observed": {
+        "tokenLeak": false,
+        "shutdownPosts": [
+          {
+            "matched": true,
+            "action": "drain"
+          },
+          {
+            "matched": true,
+            "action": "drain"
+          }
+        ]
+      }
+    },
+    {
+      "id": "A2-d04-S4-missing-draft",
+      "ok": true,
+      "meaning": "a 201 without a draft member refuses before any start request",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: draft-bound-to-loop"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:draft-bound-to-loop"
+        ],
+        "startRequests": [],
+        "tokenLeak": false,
+        "detail": {
+          "loopId": "01KA00000000000000000000A1",
+          "loopDraftVersionId": "01KA00000000000000000000D1",
+          "draftId": null,
+          "draftLoopId": null,
+          "draftStatus": null,
+          "draftVersion": null
+        }
+      }
+    },
+    {
+      "id": "A3-d04-S4-foreign-draft",
+      "ok": true,
+      "meaning": "a draft whose loopId names another loop refuses before any start request",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: draft-bound-to-loop"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:draft-bound-to-loop"
+        ],
+        "startRequests": [],
+        "tokenLeak": false,
+        "detail": {
+          "loopId": "01KA00000000000000000000A1",
+          "loopDraftVersionId": "01KA00000000000000000000D1",
+          "draftId": "01KA00000000000000000000D1",
+          "draftLoopId": "01KA00000000000000000000F1",
+          "draftStatus": "draft",
+          "draftVersion": 1
+        }
+      }
+    },
+    {
+      "id": "A4-d04-S4-non-ulid-draft",
+      "ok": true,
+      "meaning": "a non-ULID draft ID refuses before any start request",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: draft-bound-to-loop"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:draft-bound-to-loop"
+        ],
+        "startRequests": [],
+        "tokenLeak": false,
+        "detail": {
+          "loopId": "01KA00000000000000000000A1",
+          "loopDraftVersionId": null,
+          "draftId": null,
+          "draftLoopId": "01KA00000000000000000000A1",
+          "draftStatus": "draft",
+          "draftVersion": 1
+        }
+      }
+    },
+    {
+      "id": "A5-d04-S4-loop-draft-mismatch",
+      "ok": true,
+      "meaning": "loop.draftVersionId naming a different version refuses before any start request",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: draft-bound-to-loop"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:draft-bound-to-loop"
+        ],
+        "startRequests": [],
+        "tokenLeak": false,
+        "detail": {
+          "loopId": "01KA00000000000000000000A1",
+          "loopDraftVersionId": "01KA00000000000000000000X1",
+          "draftId": "01KA00000000000000000000D1",
+          "draftLoopId": "01KA00000000000000000000A1",
+          "draftStatus": "draft",
+          "draftVersion": 1
+        }
+      }
+    },
+    {
+      "id": "A6-d04-S4-loop-draft-absent",
+      "ok": true,
+      "meaning": "a loop without draftVersionId refuses before any start request",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: draft-bound-to-loop"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:draft-bound-to-loop"
+        ],
+        "startRequests": [],
+        "tokenLeak": false,
+        "detail": {
+          "loopId": "01KA00000000000000000000A1",
+          "loopDraftVersionId": null,
+          "draftId": "01KA00000000000000000000D1",
+          "draftLoopId": "01KA00000000000000000000A1",
+          "draftStatus": "draft",
+          "draftVersion": 1
+        }
+      }
+    },
+    {
+      "id": "A7-d04-S4-draft-not-draft-status",
+      "ok": true,
+      "meaning": "a draft member whose status is not draft refuses before any start request",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: draft-bound-to-loop"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:draft-bound-to-loop"
+        ],
+        "startRequests": [],
+        "tokenLeak": false,
+        "detail": {
+          "loopId": "01KA00000000000000000000A1",
+          "loopDraftVersionId": "01KA00000000000000000000D1",
+          "draftId": "01KA00000000000000000000D1",
+          "draftLoopId": "01KA00000000000000000000A1",
+          "draftStatus": "published",
+          "draftVersion": 1
+        }
+      }
+    },
+    {
+      "id": "A8-d04-S4-draft-id-equals-loop",
+      "ok": true,
+      "meaning": "a draft ID equal to the loop ID refuses before any start request",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: draft-bound-to-loop"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "UNMET:must:draft-bound-to-loop"
+        ],
+        "startRequests": [],
+        "tokenLeak": false,
+        "detail": {
+          "loopId": "01KA00000000000000000000A1",
+          "loopDraftVersionId": "01KA00000000000000000000A1",
+          "draftId": "01KA00000000000000000000A1",
+          "draftLoopId": "01KA00000000000000000000A1",
+          "draftStatus": "draft",
+          "draftVersion": 1
+        }
+      }
+    },
+    {
+      "id": "P1-d04-S4-run-version-equals-draft",
+      "ok": true,
+      "meaning": "run.versionId equal to the mutable submitted draft ID is refused",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: run-pins-new-draft-snapshot"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "met:must:draft-bound-to-loop",
+          "met:must:run-admitted",
+          "UNMET:must:run-pins-new-draft-snapshot"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"versionId\":\"01KA00000000000000000000D1\",\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false,
+        "detail": {
+          "pin": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000A1",
+            "versionId": "01KA00000000000000000000D1",
+            "source": "draft",
+            "version": 1
+          },
+          "draftVersionId": "01KA00000000000000000000D1"
+        }
+      }
+    },
+    {
+      "id": "P2-d04-S4-run-version-equals-run",
+      "ok": true,
+      "meaning": "run.versionId equal to the run ID is refused",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: run-pins-new-draft-snapshot"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "met:must:draft-bound-to-loop",
+          "met:must:run-admitted",
+          "UNMET:must:run-pins-new-draft-snapshot"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"versionId\":\"01KA00000000000000000000D1\",\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false,
+        "detail": {
+          "pin": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000A1",
+            "versionId": "01KA00000000000000000000R1",
+            "source": "draft",
+            "version": 1
+          },
+          "draftVersionId": "01KA00000000000000000000D1"
+        }
+      }
+    },
+    {
+      "id": "P3-d04-S4-pinned-source-published",
+      "ok": true,
+      "meaning": "pinned.source other than draft is refused",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: run-pins-new-draft-snapshot"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "met:must:draft-bound-to-loop",
+          "met:must:run-admitted",
+          "UNMET:must:run-pins-new-draft-snapshot"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"versionId\":\"01KA00000000000000000000D1\",\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false,
+        "detail": {
+          "pin": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000A1",
+            "versionId": "01KA00000000000000000000S1",
+            "source": "published",
+            "version": 1
+          },
+          "draftVersionId": "01KA00000000000000000000D1"
+        }
+      }
+    },
+    {
+      "id": "P4-d04-S4-run-foreign-loop",
+      "ok": true,
+      "meaning": "a run bound to another loop is refused",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: run-pins-new-draft-snapshot"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "met:must:draft-bound-to-loop",
+          "met:must:run-admitted",
+          "UNMET:must:run-pins-new-draft-snapshot"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"versionId\":\"01KA00000000000000000000D1\",\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false,
+        "detail": {
+          "pin": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000F1",
+            "versionId": "01KA00000000000000000000S1",
+            "source": "draft",
+            "version": 1
+          },
+          "draftVersionId": "01KA00000000000000000000D1"
+        }
+      }
+    },
+    {
+      "id": "P5-d04-S4-retained-version-differs",
+      "ok": true,
+      "meaning": "a different pinned versionId after restart is refused",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: run-pin-retained-across-restart"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "met:must:draft-bound-to-loop",
+          "met:must:run-admitted",
+          "met:must:run-pins-new-draft-snapshot",
+          "met:must:run-active-waiting",
+          "met:must:no-provider-process",
+          "met:must:drain-with-waiting-run:registered-owner",
+          "met:must:drain-with-waiting-run:shutdown-state",
+          "met:must:drain-with-waiting-run:same-incarnation",
+          "met:must:drain-with-waiting-run:drain-accepted",
+          "met:must:drain-with-waiting-run:never-forcing",
+          "met:must:drain-with-waiting-run:released",
+          "met:must:drain-with-waiting-run:store-free",
+          "met:want:waiting-run-not-unconfirmed",
+          "met:must:relaunch-envelope",
+          "met:must:new-gateway-incarnation",
+          "met:must:run-retained-across-restart",
+          "UNMET:must:run-pin-retained-across-restart"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"versionId\":\"01KA00000000000000000000D1\",\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false,
+        "detail": {
+          "admitted": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000A1",
+            "versionId": "01KA00000000000000000000S1",
+            "source": "draft",
+            "version": 1
+          },
+          "retained": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000A1",
+            "versionId": "01KA00000000000000000000X1",
+            "source": "draft",
+            "version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "P6-d04-S4-retained-source-differs",
+      "ok": true,
+      "meaning": "a different pinned source after restart is refused",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S4-wait-run-graceful-drain-and-retention: run-pin-retained-across-restart"
+        },
+        "checks": [
+          "met:must:loop-created",
+          "met:must:draft-bound-to-loop",
+          "met:must:run-admitted",
+          "met:must:run-pins-new-draft-snapshot",
+          "met:must:run-active-waiting",
+          "met:must:no-provider-process",
+          "met:must:drain-with-waiting-run:registered-owner",
+          "met:must:drain-with-waiting-run:shutdown-state",
+          "met:must:drain-with-waiting-run:same-incarnation",
+          "met:must:drain-with-waiting-run:drain-accepted",
+          "met:must:drain-with-waiting-run:never-forcing",
+          "met:must:drain-with-waiting-run:released",
+          "met:must:drain-with-waiting-run:store-free",
+          "met:want:waiting-run-not-unconfirmed",
+          "met:must:relaunch-envelope",
+          "met:must:new-gateway-incarnation",
+          "met:must:run-retained-across-restart",
+          "UNMET:must:run-pin-retained-across-restart"
+        ],
+        "startRequests": [
+          {
+            "url": "/loops/<loop>/runs",
+            "rawBody": "{\"versionId\":\"01KA00000000000000000000D1\",\"allowDraft\":true}"
+          }
+        ],
+        "tokenLeak": false,
+        "detail": {
+          "admitted": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000A1",
+            "versionId": "01KA00000000000000000000S1",
+            "source": "draft",
+            "version": 1
+          },
+          "retained": {
+            "runId": "01KA00000000000000000000R1",
+            "loopId": "01KA00000000000000000000A1",
+            "versionId": "01KA00000000000000000000S1",
+            "source": "published",
+            "version": 1
+          }
+        }
+      }
+    },
+    {
+      "id": "D1-d04-S4-POST-empty-array",
+      "ok": true,
+      "meaning": "POST unconfirmedRunIds [] meets the criterion",
+      "observed": {
+        "status": "criteria-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": [],
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "array"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D2-d04-S4-POST-missing",
+      "ok": true,
+      "meaning": "a POST snapshot without unconfirmedRunIds is unmet, not vacuously met",
+      "observed": {
+        "status": "criteria-not-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": null,
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "undefined"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D3-d04-S4-POST-string",
+      "ok": true,
+      "meaning": "a string unconfirmedRunIds is unmet",
+      "observed": {
+        "status": "criteria-not-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": null,
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "string"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D4-d04-S4-POST-object",
+      "ok": true,
+      "meaning": "an object unconfirmedRunIds is unmet",
+      "observed": {
+        "status": "criteria-not-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": null,
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "object"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D5-d04-S4-POST-null",
+      "ok": true,
+      "meaning": "a null unconfirmedRunIds is unmet",
+      "observed": {
+        "status": "criteria-not-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": null,
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "null"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D6-d04-S4-POST-contains-timer-run",
+      "ok": true,
+      "meaning": "the timer run reported unconfirmed is unmet",
+      "observed": {
+        "status": "criteria-not-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": [
+              "01KA00000000000000000000R1"
+            ],
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "array"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D7-d04-S4-GET-clean-POST-flags-run",
+      "ok": true,
+      "meaning": "a clean GET with a POST flagging the run is unmet: the POST is the source",
+      "observed": {
+        "status": "criteria-not-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": [
+              "01KA00000000000000000000R1"
+            ],
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "array"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D8-d04-S4-GET-flags-run-POST-clean",
+      "ok": true,
+      "meaning": "a GET flagging the run with a clean POST is met: the GET is not the source",
+      "observed": {
+        "status": "criteria-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": [],
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "array"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [
+          "01KA00000000000000000000R1"
+        ],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": [
+          "01KA00000000000000000000R1"
+        ]
+      }
+    },
+    {
+      "id": "D9-d04-S4-POST-other-run-only",
+      "ok": true,
+      "meaning": "another run listed unconfirmed does not affect this timer run",
+      "observed": {
+        "status": "criteria-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": [
+              "01KA00000000000000000000X1"
+            ],
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "array"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D10-d04-S4-POST-non-ulid-entry",
+      "ok": true,
+      "meaning": "an array holding a non-ULID entry is not a valid run-ID list and is unmet",
+      "observed": {
+        "status": "criteria-not-met",
+        "detail": {
+          "accepted": {
+            "phase": "draining",
+            "activeRunIds": [],
+            "unconfirmedRunIds": null,
+            "shapes": {
+              "activeRunIds": "array",
+              "unconfirmedRunIds": "array"
+            },
+            "choices": [],
+            "graceMs": 300000
+          },
+          "runId": "01KA00000000000000000000R1"
+        },
+        "getUnconfirmedSent": [],
+        "restOfStageMet": true,
+        "drainNoteShutdownGET": []
+      }
+    },
+    {
+      "id": "D11-d04-acceptedDrainFields-allowlist",
+      "ok": true,
+      "meaning": "only phase, run-ID lists, their shapes, choices and graceMs are kept; controlToken, error and other members are dropped",
+      "observed": {
+        "phase": "draining",
+        "activeRunIds": [
+          "01KA00000000000000000000R1"
+        ],
+        "unconfirmedRunIds": [],
+        "shapes": {
+          "activeRunIds": "array",
+          "unconfirmedRunIds": "array"
+        },
+        "choices": [],
+        "graceMs": 300000
+      }
+    },
+    {
+      "id": "D12-d04-acceptedDrainFields-bounded",
+      "ok": true,
+      "meaning": "a run-ID list above 256 entries is not retained (null, shape array)",
+      "observed": {
+        "activeRunIds": "undefined",
+        "unconfirmedRunIds": "array"
+      }
+    },
+    {
+      "id": "H1-d04-draftStart-direct",
+      "ok": true,
+      "meaning": "the exact body for a valid create response; every malformed variant refuses with no body",
+      "observed": {
+        "ok": true,
+        "body": {
+          "versionId": "01KA00000000000000000000D1",
+          "allowDraft": true
+        },
+        "refused": {
+          "missingLoop": true,
+          "missingDraft": true,
+          "nullBody": true,
+          "versionZero": true,
+          "versionString": true,
+          "snapshotStatus": true,
+          "lowercaseId": true
+        }
+      }
+    },
+    {
+      "id": "H2-d04-draftRunPin-direct",
+      "ok": true,
+      "meaning": "a new snapshot ID with source draft and the draft version is accepted; equal-to-draft/loop, non-ULID, other version, missing pin or refused start are not",
+      "observed": {
+        "pin": {
+          "runId": "01KA00000000000000000000R1",
+          "loopId": "01KA00000000000000000000A1",
+          "versionId": "01KA00000000000000000000S1",
+          "source": "draft",
+          "version": 1
+        },
+        "rejected": {
+          "equalsDraft": false,
+          "equalsLoop": false,
+          "nonUlid": false,
+          "version2": false,
+          "missingPinned": false,
+          "refusedStart": false
+        }
+      }
+    },
+    {
+      "id": "C0-qa05-records-reconstructed",
+      "ok": true,
+      "meaning": "each recorded config SHA-256 equals its own receipt configuration and the SHA of JSON.stringify(parsed) in its recorded member order; three orders, three distinct hashes",
+      "observed": {
+        "a": {
+          "keys": [
+            "requireAPIKey",
+            "port",
+            "version",
+            "checkout",
+            "node",
+            "dataDirectory",
+            "ollamaEnabled"
+          ],
+          "recordedSha256": "7479f6e8fffc2f57669205723b157c5c87eb3a52e4d632ee9e1f0f026d565c3d",
+          "recordedSize": 332,
+          "reconstructedSha256": "7479f6e8fffc2f57669205723b157c5c87eb3a52e4d632ee9e1f0f026d565c3d",
+          "reconstructedSize": 332,
+          "receiptConfiguration": "7479f6e8fffc2f57669205723b157c5c87eb3a52e4d632ee9e1f0f026d565c3d",
+          "matches": true
+        },
+        "a-nfd": {
+          "keys": [
+            "node",
+            "dataDirectory",
+            "requireAPIKey",
+            "version",
+            "checkout",
+            "ollamaEnabled",
+            "port"
+          ],
+          "recordedSha256": "52909c11fb797f88117c05c533778e115e4deb65bca892f24cbd4f7ce630eb94",
+          "recordedSize": 332,
+          "reconstructedSha256": "52909c11fb797f88117c05c533778e115e4deb65bca892f24cbd4f7ce630eb94",
+          "reconstructedSize": 332,
+          "receiptConfiguration": "52909c11fb797f88117c05c533778e115e4deb65bca892f24cbd4f7ce630eb94",
+          "matches": true
+        },
+        "a-case": {
+          "keys": [
+            "port",
+            "dataDirectory",
+            "version",
+            "checkout",
+            "ollamaEnabled",
+            "node",
+            "requireAPIKey"
+          ],
+          "recordedSha256": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+          "recordedSize": 332,
+          "reconstructedSha256": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+          "reconstructedSize": 332,
+          "receiptConfiguration": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+          "matches": true
+        }
+      }
+    },
+    {
+      "id": "C1-d04-sameConfiguration-direct",
+      "ok": true,
+      "meaning": "the three QA05 configs are pairwise equal in every order; each changed port/path/option/version or extra/missing member is not; null/array inputs are not",
+      "observed": {
+        "pairsEqual": [
+          "a=a-nfd:true",
+          "a=a-case:true",
+          "a-nfd=a-case:true"
+        ],
+        "changedRejected": {
+          "port": true,
+          "portAsString": true,
+          "checkout": true,
+          "node": true,
+          "dataDirectoryNfc": true,
+          "dataDirectoryCase": true,
+          "requireAPIKey": true,
+          "ollamaEnabled": true,
+          "version": true,
+          "extraField": true,
+          "extraNullField": true,
+          "missingField": true
+        },
+        "savedDataDirectoryIsNfd": true
+      }
+    },
+    {
+      "id": "B1-d04-checkInstalled-actual-a",
+      "ok": true,
+      "meaning": "the unchanged checkInstalled meets every check on the actual QA05 a record, including receipt-binding to its own configuration bytes",
+      "observed": {
+        "checks": [
+          "met:must:a:bundle-physical",
+          "met:want:a:bundle-inventory",
+          "met:want:a:files-owned-single-link",
+          "met:want:a:arm64-executable",
+          "met:want:a:no-quarantine",
+          "met:must:a:installation-id",
+          "met:must:a:bundle-identifier",
+          "met:want:a:regular-app-plist",
+          "met:want:a:config-closed-keys",
+          "met:must:a:config-values",
+          "met:want:a:config-options",
+          "met:must:a:no-canary-in-config",
+          "met:must:a:receipt-private",
+          "met:must:a:receipt-binding",
+          "met:must:a:receipt-settled"
+        ]
+      }
+    },
+    {
+      "id": "B1-d04-checkInstalled-actual-a-nfd",
+      "ok": true,
+      "meaning": "the unchanged checkInstalled meets every check on the actual QA05 a-nfd record, including receipt-binding to its own configuration bytes",
+      "observed": {
+        "checks": [
+          "met:must:a-nfd:bundle-physical",
+          "met:want:a-nfd:bundle-inventory",
+          "met:want:a-nfd:files-owned-single-link",
+          "met:want:a-nfd:arm64-executable",
+          "met:want:a-nfd:no-quarantine",
+          "met:must:a-nfd:installation-id",
+          "met:must:a-nfd:bundle-identifier",
+          "met:want:a-nfd:regular-app-plist",
+          "met:want:a-nfd:config-closed-keys",
+          "met:must:a-nfd:config-values",
+          "met:want:a-nfd:config-options",
+          "met:must:a-nfd:no-canary-in-config",
+          "met:must:a-nfd:receipt-private",
+          "met:must:a-nfd:receipt-binding",
+          "met:must:a-nfd:receipt-settled"
+        ]
+      }
+    },
+    {
+      "id": "B1-d04-checkInstalled-actual-a-case",
+      "ok": true,
+      "meaning": "the unchanged checkInstalled meets every check on the actual QA05 a-case record, including receipt-binding to its own configuration bytes",
+      "observed": {
+        "checks": [
+          "met:must:a-case:bundle-physical",
+          "met:want:a-case:bundle-inventory",
+          "met:want:a-case:files-owned-single-link",
+          "met:want:a-case:arm64-executable",
+          "met:want:a-case:no-quarantine",
+          "met:must:a-case:installation-id",
+          "met:must:a-case:bundle-identifier",
+          "met:want:a-case:regular-app-plist",
+          "met:want:a-case:config-closed-keys",
+          "met:must:a-case:config-values",
+          "met:want:a-case:config-options",
+          "met:must:a-case:no-canary-in-config",
+          "met:must:a-case:receipt-private",
+          "met:must:a-case:receipt-binding",
+          "met:must:a-case:receipt-settled"
+        ]
+      }
+    },
+    {
+      "id": "B2-d04-checkInstalled-foreign-config-hash",
+      "ok": true,
+      "meaning": "a record whose configuration bytes hash differs from its own receipt (another install's hash) stops at receipt-binding",
+      "observed": {
+        "thrown": {
+          "stop": true,
+          "message": "control: a:receipt-binding"
+        }
+      }
+    },
+    {
+      "id": "S1-d04-S5-reordered-original",
+      "ok": true,
+      "meaning": "B with A's original member order (7479f6e8) against the final A (case update, 4f08dab9) meets identical-saved-configuration; receipt and closed-key checks met",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: precondition-port-refused"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "met:must:b:config-values",
+          "met:want:b:config-options",
+          "met:must:b:no-canary-in-config",
+          "met:must:b:receipt-private",
+          "met:must:b:receipt-binding",
+          "met:must:b:receipt-settled",
+          "met:must:alias-saved-as-canonical-store",
+          "met:want:store-spelling-bytes-identical",
+          "met:must:distinct-installation-identity",
+          "met:want:identical-saved-configuration",
+          "UNMET:must:precondition-port-refused"
+        ],
+        "identical": {
+          "configSha256": {
+            "a": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+            "b": "7479f6e8fffc2f57669205723b157c5c87eb3a52e4d632ee9e1f0f026d565c3d"
+          }
+        }
+      }
+    },
+    {
+      "id": "S2-d04-S5-reordered-nfd",
+      "ok": true,
+      "meaning": "B with the NFD-update member order (52909c11) also meets it",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: precondition-port-refused"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "met:must:b:config-values",
+          "met:want:b:config-options",
+          "met:must:b:no-canary-in-config",
+          "met:must:b:receipt-private",
+          "met:must:b:receipt-binding",
+          "met:must:b:receipt-settled",
+          "met:must:alias-saved-as-canonical-store",
+          "met:want:store-spelling-bytes-identical",
+          "met:must:distinct-installation-identity",
+          "met:want:identical-saved-configuration",
+          "UNMET:must:precondition-port-refused"
+        ],
+        "identical": {
+          "configSha256": {
+            "a": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+            "b": "52909c11fb797f88117c05c533778e115e4deb65bca892f24cbd4f7ce630eb94"
+          }
+        }
+      }
+    },
+    {
+      "id": "S3-d04-S5-option-changed",
+      "ok": true,
+      "meaning": "a changed option is unmet (and config-options unmet)",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: precondition-port-refused"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "met:must:b:config-values",
+          "UNMET:want:b:config-options",
+          "met:must:b:no-canary-in-config",
+          "met:must:b:receipt-private",
+          "met:must:b:receipt-binding",
+          "met:must:b:receipt-settled",
+          "met:must:alias-saved-as-canonical-store",
+          "met:want:store-spelling-bytes-identical",
+          "met:must:distinct-installation-identity",
+          "UNMET:want:identical-saved-configuration",
+          "UNMET:must:precondition-port-refused"
+        ],
+        "identical": {
+          "configSha256": {
+            "a": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+            "b": "6f06abb0e8274496dd287cfa99617093425e70aa69a7c36e61791ad2d975e618"
+          }
+        }
+      }
+    },
+    {
+      "id": "S4-d04-S5-extra-field",
+      "ok": true,
+      "meaning": "an extra member is unmet (and config-closed-keys unmet)",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: precondition-port-refused"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "UNMET:want:b:config-closed-keys",
+          "met:must:b:config-values",
+          "met:want:b:config-options",
+          "met:must:b:no-canary-in-config",
+          "met:must:b:receipt-private",
+          "met:must:b:receipt-binding",
+          "met:must:b:receipt-settled",
+          "met:must:alias-saved-as-canonical-store",
+          "met:want:store-spelling-bytes-identical",
+          "met:must:distinct-installation-identity",
+          "UNMET:want:identical-saved-configuration",
+          "UNMET:must:precondition-port-refused"
+        ],
+        "identical": {
+          "configSha256": {
+            "a": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+            "b": "cef00a2b1498aba8a6887d3a10441d24f11e3ec832f8ff2b82b90d9f3d338294"
+          }
+        }
+      }
+    },
+    {
+      "id": "S5-d04-S5-data-path-other-spelling",
+      "ok": true,
+      "meaning": "the same store under another Unicode spelling passes the NFC value check but is unmet for byte-identical store spelling and identical configuration",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: precondition-port-refused"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "met:must:b:config-values",
+          "met:want:b:config-options",
+          "met:must:b:no-canary-in-config",
+          "met:must:b:receipt-private",
+          "met:must:b:receipt-binding",
+          "met:must:b:receipt-settled",
+          "met:must:alias-saved-as-canonical-store",
+          "UNMET:want:store-spelling-bytes-identical",
+          "met:must:distinct-installation-identity",
+          "UNMET:want:identical-saved-configuration",
+          "UNMET:must:precondition-port-refused"
+        ],
+        "identical": {
+          "configSha256": {
+            "a": "4f08dab910b887802108b5da58b4834652175fce407eb67b2ac01b6696560525",
+            "b": "e2722e400adacf1a6deac3f4a8ff5fa95f0d22d499efd80c153fa642e4727386"
+          }
+        }
+      }
+    },
+    {
+      "id": "S6-d04-S5-port-changed",
+      "ok": true,
+      "meaning": "a changed port stops at the unchanged hard b:config-values check",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: b:config-values"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "UNMET:must:b:config-values"
+        ],
+        "identical": null
+      }
+    },
+    {
+      "id": "S7-d04-S5-checkout-path-changed",
+      "ok": true,
+      "meaning": "a changed checkout path stops at the unchanged hard b:config-values check",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: b:config-values"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "UNMET:must:b:config-values"
+        ],
+        "identical": null
+      }
+    },
+    {
+      "id": "S8-d04-S5-receipt-bound-to-other-bytes",
+      "ok": true,
+      "meaning": "a receipt naming another install's configuration hash stops at the hard b:receipt-binding check",
+      "observed": {
+        "status": "stopped",
+        "thrown": {
+          "stop": true,
+          "message": "S5-second-install-concurrent-aliased-store: b:receipt-binding"
+        },
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "met:must:b:config-values",
+          "met:want:b:config-options",
+          "met:must:b:no-canary-in-config",
+          "met:must:b:receipt-private",
+          "UNMET:must:b:receipt-binding"
+        ],
+        "identical": null
+      }
+    },
+    {
+      "id": "R4-d03-S5-reordered-unmet",
+      "ok": true,
+      "meaning": "driver 03 reports identical-saved-configuration unmet for the same reordered, value-identical B (the oracle defect)",
+      "observed": {
+        "checks": [
+          "met:must:alias-resolves-to-store",
+          "met:must:installer-exit-zero",
+          "met:want:installer-output",
+          "met:must:b:bundle-physical",
+          "met:want:b:bundle-inventory",
+          "met:want:b:files-owned-single-link",
+          "met:want:b:arm64-executable",
+          "met:want:b:no-quarantine",
+          "met:must:b:installation-id",
+          "met:must:b:bundle-identifier",
+          "met:want:b:regular-app-plist",
+          "met:want:b:config-closed-keys",
+          "met:must:b:config-values",
+          "met:want:b:config-options",
+          "met:must:b:no-canary-in-config",
+          "met:must:b:receipt-private",
+          "met:must:b:receipt-binding",
+          "met:must:b:receipt-settled",
+          "met:must:alias-saved-as-canonical-store",
+          "met:want:store-spelling-bytes-identical",
+          "met:must:distinct-installation-identity",
+          "UNMET:want:identical-saved-configuration",
+          "UNMET:must:precondition-port-refused"
+        ]
+      }
+    }
+  ],
+  "counts": {
+    "total": 49,
+    "ok": 49
+  },
+  "pass": true
+}

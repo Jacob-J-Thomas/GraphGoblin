@@ -1,0 +1,110 @@
+{
+  "issues": [
+    534,
+    539
+  ],
+  "frozenAt": "2026-11-25T01:03:57.020150+00:00",
+  "worktree": "G:/ggq/gg-fu-evidence-20261124/GraphGoblin",
+  "baseHead": "d2df8600c2c8574bec420947de686b936910b245",
+  "branch": "codex/gg-fu-evidence-20261124",
+  "stagedPaths": [],
+  "fileSha256": {
+    "CHANGELOG.md": "91c08d079675f57c3ff593254f447432d2babb913b9db1561def0643734b80c9",
+    "docs/10-testing-and-quality.md": "5eb55f24b131d55de7ba0daaf2c697d02464a33c83f528f306fadc81b0e2df91",
+    "tooling/scripts/windows-launcher-evidence.mjs": "d5c7cb4d775bd6f1ab65bc55ea296bca8c83703d8442d32a0436197c35c0f876",
+    "tooling/scripts/windows-launcher-evidence.test.mjs": "f452aac8a94e9d46424e0660ea8e4a981f833d695e54893ae721ff8a2cf66bfb"
+  },
+  "binaryDiffSha256": "526d5eea2f8a8e8dd3d809365f9211cf04a774d746a1e84fcdf36b6f8dd6ce47",
+  "provider": {
+    "pid": 47968,
+    "model": "claude-opus-5-5",
+    "effort": "xhigh",
+    "authentication": {
+      "loggedIn": true,
+      "authMethod": "claude.ai",
+      "apiProvider": "firstParty",
+      "subscriptionType": "max",
+      "apiKeySource": null
+    },
+    "usingOverage": false
+  },
+  "verifiedCommands": {
+    "pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs": {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  43 passed (43)"
+      ]
+    },
+    "pnpm --filter @graphgoblin/tooling test:coverage scripts/windows-launcher-evidence.test.mjs --coverage.include=scripts/windows-launcher-evidence.mjs": {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling test:coverage scripts/windows-launcher-evidence.test.mjs --coverage.include=scripts/windows-launcher-evidence.mjs",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Test Files  1 passed (1)",
+        "Tests  43 passed (43)"
+      ]
+    },
+    "pnpm --filter @graphgoblin/tooling lint": {
+      "tool": "Bash",
+      "command": "pnpm --filter @graphgoblin/tooling lint",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    },
+    "pnpm exec prettier --check tooling/scripts/windows-launcher-evidence.mjs tooling/scripts/windows-launcher-evidence.test.mjs docs/10-testing-and-quality.md CHANGELOG.md": {
+      "tool": "Bash",
+      "command": "pnpm exec prettier --check tooling/scripts/windows-launcher-evidence.mjs tooling/scripts/windows-launcher-evidence.test.mjs docs/10-testing-and-quality.md CHANGELOG.md",
+      "file": null,
+      "success": true,
+      "outputSummary": [
+        "Checking formatting...",
+        "All matched files use Prettier code style!"
+      ]
+    },
+    "git --no-pager diff --check": {
+      "tool": "Bash",
+      "command": "git --no-pager diff --check",
+      "file": null,
+      "success": true,
+      "outputSummary": []
+    }
+  },
+  "focusedFileCoverage": {
+    "Statements": {
+      "percent": 99.0,
+      "covered": 693,
+      "total": 700
+    },
+    "Branches": {
+      "percent": 97.43,
+      "covered": 683,
+      "total": 701
+    },
+    "Functions": {
+      "percent": 100.0,
+      "covered": 145,
+      "total": 145
+    },
+    "Lines": {
+      "percent": 99.48,
+      "covered": 582,
+      "total": 585
+    }
+  },
+  "provenance": {
+    "firstAttempt": "Claude-authored test and recorder changes, deadline exit retained",
+    "secondAttempt": "Claude-authored additions and documentation, orchestration interruption retained",
+    "orchestratorFormatter": "Exact four-file Prettier formatting command returned all unchanged",
+    "thirdAttempt": "Provider success for all final scoped checks, source hashes unchanged"
+  },
+  "remainingGates": [
+    "Independent GPT review",
+    "Separate Claude QA",
+    "Required CI and final delivery gates"
+  ]
+}

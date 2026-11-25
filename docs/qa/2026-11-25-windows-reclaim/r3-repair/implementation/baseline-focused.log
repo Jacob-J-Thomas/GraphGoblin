@@ -1,0 +1,37 @@
+$ vitest run src/data-dir-lock-failures.test.ts src/data-dir-lock.test.ts
+
+ RUN  v5.0.3 /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/windows-reclaim/apps/api
+
+ ❯ src/data-dir-lock-failures.test.ts (39 tests | 1 failed) 63ms
+   × reports uncertainty after seven marker read losses and a final lost stale-marker unlink 7ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > reports uncertainty after seven marker read losses and a final lost stale-marker unlink
+AssertionError: expected 'another GraphGoblin process holds /pr…' to contain 'Store ownership could not be verified…'
+
+Expected: "Store ownership could not be verified (reclamation guard marker disappeared during removal at the acquisition attempt limit): /private/var/folders/0g/7cv638n558vbtr3l0h0bnp4r0000gn/T/gg-lock-failure-duUGre/graphgoblin.lock.reclaim"
+Received: "another GraphGoblin process holds /private/var/folders/0g/7cv638n558vbtr3l0h0bnp4r0000gn/T/gg-lock-failure-duUGre/graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying"
+
+ ❯ src/data-dir-lock-failures.test.ts:277:18
+    275|
+    276|   const output = shellFailureOutput(refusal);
+    277|   expect(output).toContain(
+       |                  ^
+    278|     `Store ownership could not be verified (reclamation guard marker d…
+    279|   );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 87 passed (88)
+   Start at  02:40:58
+   Duration  1.07s (transform 38%, tests 31%, import 30%, setup 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /Users/jake/Documents/Codex/2026-11-23/
+  │ files-pasted-by-the-user-prompt/work/windows-reclaim/apps/api
+

@@ -1,0 +1,322 @@
+diff --git a/docs/10-testing-and-quality.md b/docs/10-testing-and-quality.md
+index 535b77a4e..3accc9b56 100644
+--- a/docs/10-testing-and-quality.md
++++ b/docs/10-testing-and-quality.md
+@@ -105,12 +105,12 @@ The [#264 QA record](qa/2026-10-26-wp-a5b-coverage-gaps/README.md) records exact
+ 
+ - **Selection.** The `docs/qa` paths that differ between the merge base of `--base` and `HEAD` and the working tree: committed on the branch, staged, unstaged and untracked, each listed once. Git-ignored untracked files are not selected. The report names the base ref, its commit and the merge base.
+ - **Checks.** Markdown, as Prettier infers it, is checked in memory with the repository Prettier configuration, even when `.gitignore` or `.prettierignore` hides it from `prettier --check .`; the report marks such pages as checked only here. Other files Prettier would check are checked as it would. Files Prettier would not check (no parser, or ignored raw evidence such as JSON) are retained untouched and listed with their SHA-256, as are `.md.txt` originals. A newly added Markdown file named as an original is refused without a format verdict, so its fix is never to format it.
+-- **Coverage.** Every selected path is listed as formatted, unformatted, refused original, retained, deleted or unavailable, with the counts. A path that existed at the merge base and is removed from the working tree or the index is a deletion. Any other selected path missing from the working tree (outside a sparse checkout's cone, marked skip-worktree, or an addition committed or staged and then removed) is unavailable: it is reported as not checked and fails the check with scope guidance.
+-- **Exit codes.** 0 when every selected path passed, including when none changed; 1 when any is unformatted, a refused original or unavailable; 2 when the arguments, base, merge base or repository are unusable, with no partial report.
++- **Coverage.** Every selected path is listed as formatted, unformatted, a Prettier error, refused original, retained, deleted or unavailable, with the counts. A path on which Prettier stops with an error, such as a parse error in malformed HTML, has no format verdict: it is listed as `CHECK-ERROR` and counted as a Prettier error, apart from the completed checks and the unavailable paths, with Prettier's message, position and code frame shown under its path on lines marked with an indented bar, and the remaining paths are still checked. The result counts Prettier errors and unavailable paths as not checked. A path that existed at the merge base and is removed from the working tree or the index is a deletion. Any other selected path missing from the working tree (outside a sparse checkout's cone, marked skip-worktree, or an addition committed or staged and then removed) is unavailable: it is reported as not checked and fails the check with scope guidance.
++- **Exit codes.** 0 when every selected path passed, including when none changed; 1 when any is unformatted, a Prettier error, a refused original or unavailable; 2 when the arguments, base, merge base or repository are unusable, with no partial report.
+ - **Content changes only.** Without its index refresh, `git diff` lists every entry whose cached stat data is stale, and no cached predicate settles whether its content changed: Git's own check, behind `git ls-files --modified`, reports a changed cached size without comparing content, as after a CRLF rewrite that `text=auto eol=lf` normalizes back to the indexed blob. An unstaged modification of a path not also staged or committed on the branch is therefore kept only when `git diff --patch` for that path is not empty. To build the patch, Git hashes the work-tree file as it would store it, applying attributes, end-of-line normalization and the index, and compares the contents. A path whose timestamp alone changed, or whose bytes normalize to the indexed blob, is not selected. A real edit or a line-ending change Git stores as it is, such as one in a `-text` original, is.
+ - **Read-only.** Git runs with `--no-optional-locks`, `--literal-pathspecs` and, for that command alone, `-c diff.autoRefreshIndex=false`: optional locks do not stop `git diff` from writing the index stat refresh it performs after comparing entries whose stat data is stale. Repository and global Git configuration are not changed, and the index and checked files keep their bytes. Prettier checks text in memory.
+ 
+-`tooling/scripts/check-qa-packet.test.mjs` drives the public command over disposable Git repositories with spaced paths and no inherited Git configuration. It covers clean new prose; malformed new Markdown and HTML from a spaced subdirectory; an unformatted CRLF raw original stored as `.md.txt`, retained with unchanged bytes and hash; formatted and unformatted new Markdown originals refused, while a historical `README-original.md`, an `original-final-audit/` page and `original-hash-verification.md` are not; malformed new Markdown under an archive ignore rule, with the control that `prettier --check` passes it; no changed QA path; a cone-mode sparse checkout lacking a selected page beside a deletion; staged and unstaged deletions and a removed committed addition; committed, staged, unstaged and untracked combinations and staged and unstaged renames listed once, beside a historical page and an unformatted historical original given only an older modification time, which the plumbing `git diff-files` confirms as stale stat data and which are neither selected nor refreshed, with the index and file bytes unchanged; under the repository's `* text=auto eol=lf` rule and `core.autocrlf=true`, historical pages and JSON rewritten from LF to CRLF only, including a bracketed name that as a pattern would match a changed sibling, which `git diff-files` lists as stale with a changed size while `git hash-object --path` gives the indexed and base blob, and which are not selected, beside a same-size edit given an older modification time, new content written with CRLF and a CRLF rewrite of a `-text` original, which are, with the index and file bytes unchanged and an ordinary `git diff` selecting the same paths; and refused arguments, bases, unrelated history and a directory outside any repository.
++`tooling/scripts/check-qa-packet.test.mjs` drives the public command over disposable Git repositories with spaced paths and no inherited Git configuration. It covers clean new prose; malformed new Markdown and HTML from a spaced subdirectory; an unformatted CRLF raw original stored as `.md.txt`, retained with unchanged bytes and hash; formatted and unformatted new Markdown originals refused, while a historical `README-original.md`, an `original-final-audit/` page and `original-hash-verification.md` are not; malformed new Markdown under an archive ignore rule, with the control that `prettier --check` passes it; no changed QA path; a cone-mode sparse checkout lacking a selected page beside a deletion; a malformed HTML page on which Prettier stops, sorted before a formatted page, with the control that `prettier --check` stops on it with the message, position and code frame the report carries verbatim under its path, checked from a full checkout and then from a cone-mode sparse checkout whose selected README is a skip-worktree entry rather than a deletion, reporting every selected path, the formatted page after it and the counts, with the index and file bytes unchanged, and then repaired, so that only the sparse omission fails until the restored full checkout passes; staged and unstaged deletions and a removed committed addition; committed, staged, unstaged and untracked combinations and staged and unstaged renames listed once, beside a historical page and an unformatted historical original given only an older modification time, which the plumbing `git diff-files` confirms as stale stat data and which are neither selected nor refreshed, with the index and file bytes unchanged; under the repository's `* text=auto eol=lf` rule and `core.autocrlf=true`, historical pages and JSON rewritten from LF to CRLF only, including a bracketed name that as a pattern would match a changed sibling, which `git diff-files` lists as stale with a changed size while `git hash-object --path` gives the indexed and base blob, and which are not selected, beside a same-size edit given an older modification time, new content written with CRLF and a CRLF rewrite of a `-text` original, which are, with the index and file bytes unchanged and an ordinary `git diff` selecting the same paths; and refused arguments, bases, unrelated history and a directory outside any repository.
+ 
+ ## Test layers (Decided)
+ 
+diff --git a/tooling/scripts/check-qa-packet.mjs b/tooling/scripts/check-qa-packet.mjs
+index 59d132778..0c9d56911 100644
+--- a/tooling/scripts/check-qa-packet.mjs
++++ b/tooling/scripts/check-qa-packet.mjs
+@@ -8,7 +8,9 @@
+  * hides it from `pnpm format:check`; other files Prettier would check are checked as it would; the
+  * rest are opaque archived originals, retained and reported with their SHA-256. A newly added
+  * Markdown file named as an original is refused: immutable Markdown originals are stored as
+- * `*.md.txt`. Paths missing from this working tree (a sparse checkout) are reported and fail.
++ * `*.md.txt`. Paths missing from this working tree (a sparse checkout) are reported and fail. A
++ * path on which Prettier stops with an error (a parse error in malformed HTML, for example) fails
++ * with Prettier's own message under its path, and the remaining paths are still checked.
+  *
+  * Read-only: Git runs without optional locks or automatic index refresh, and formatting is checked
+  * in memory. An unstaged modification is selected only when Git's patch for it is not empty, so
+@@ -20,7 +22,7 @@ import { execFileSync } from 'node:child_process';
+ import { createHash } from 'node:crypto';
+ import { readFile, stat } from 'node:fs/promises';
+ import { basename, join, resolve } from 'node:path';
+-import { parseArgs } from 'node:util';
++import { parseArgs, stripVTControlCharacters } from 'node:util';
+ import * as prettier from 'prettier';
+ 
+ export const QA_ROOT = 'docs/qa';
+@@ -39,21 +41,31 @@ export const ORIGINAL_MARKDOWN_NAME = /(?:^|[ ._-])original$/i;
+ const LABELS = {
+   formatted: 'formatted',
+   unformatted: 'UNFORMATTED',
++  error: 'CHECK-ERROR',
+   original: 'MD-ORIGINAL',
+   retained: 'retained',
+   deleted: 'deleted',
+   unavailable: 'UNAVAILABLE',
+ };
+-const PROBLEMS = new Set(['unformatted', 'original', 'unavailable']);
++const PROBLEMS = new Set(['unformatted', 'error', 'original', 'unavailable']);
+ const NOT_CHECKED_OUT = 'not in this working tree (sparse checkout or skip-worktree); not checked';
+ const REMOVED =
+   'removed from the working tree although its addition is committed or staged; not checked';
++const PRETTIER_STOPPED = 'Prettier stopped with an error; not checked, see its detail below';
++/** Line breaks in a Prettier message, as its code frame splits source lines. */
++const LINE_BREAK = /\r\n|[\n\r\p{Zl}\p{Zp}]/u;
+ const FIXES = {
+   unformatted:
+     'UNFORMATTED: format reader-facing pages before sealing their hashes with ' +
+     'pnpm exec prettier --write "<path>" (add --ignore-path .gitignore when an archive ignore ' +
+     'rule hides the path). Never format an immutable original: store a new one byte-for-byte ' +
+     'as <name>.md.txt, or restore a historical one to its recorded bytes.',
++  error:
++    'CHECK-ERROR: Prettier stopped with an error on a selected path, so its formatting was not ' +
++    'checked; its message is shown above under the path. Correct the cause it reports at the ' +
++    'line and column given, then run check:qa again. Never edit an immutable original to ' +
++    'satisfy Prettier: keep its recorded bytes as the QA packet file conventions in ' +
++    'docs/15-issue-workflow.md describe.',
+   original:
+     'MD-ORIGINAL: store an immutable Markdown original byte-for-byte as <name>.md.txt, keep the ' +
+     'SHA-256 shown here in the packet manifest and link a formatted .md summary for readers.',
+@@ -176,10 +188,19 @@ export async function checkQaPacket({ base, cwd = process.cwd() }) {
+       entries.push({ path, kind: 'original', note: `sha256=${sha256(bytes)}` });
+     } else if (markdown || (inferredParser && !ignored)) {
+       const options = await prettier.resolveConfig(absolute, { editorconfig: true });
+-      const formatted = await prettier.check(bytes.toString('utf8'), {
+-        ...options,
+-        filepath: absolute,
+-      });
++      let formatted;
++      try {
++        formatted = await prettier.check(bytes.toString('utf8'), {
++          ...options,
++          filepath: absolute,
++        });
++      } catch (error) {
++        // Prettier gave no format verdict for this path, whatever its reason. That fails this path
++        // with Prettier's message as its CLI prints it, never as a run that could not start, and
++        // the remaining paths are still checked.
++        entries.push({ path, kind: 'error', note: PRETTIER_STOPPED, detail: String(error) });
++        continue;
++      }
+       entries.push({
+         path,
+         kind: formatted ? 'formatted' : 'unformatted',
+@@ -193,11 +214,16 @@ export async function checkQaPacket({ base, cwd = process.cwd() }) {
+   return { base, commit, mergeBase, entries };
+ }
+ 
+-/** Renders the report; the result fails when any selected path has a problem. */
++/**
++ * Renders the report; the result fails when any selected path has a problem. The counts partition
++ * the selected paths: a Prettier error is neither a completed check nor an unavailable path, and
++ * its term appears only when one occurred, leaving every other report unchanged.
++ */
+ export function formatReport({ base, commit, mergeBase, entries }) {
+   const count = (kind) => entries.filter((entry) => entry.kind === kind).length;
+   const checked = count('formatted') + count('unformatted');
+   const markdown = entries.filter((entry) => entry.markdown).length;
++  const errors = entries.filter((entry) => entry.kind === 'error');
+   const problems = entries.filter((entry) => PROBLEMS.has(entry.kind));
+   const lines = [
+     'check:qa: local QA packet pre-publication check; pnpm format:check and CI remain the full gates.',
+@@ -205,19 +231,27 @@ export function formatReport({ base, commit, mergeBase, entries }) {
+     `Selection: ${QA_ROOT} paths changed from merge base ${mergeBase} to the working tree ` +
+       '(committed, staged, unstaged and untracked; Git-ignored files excluded), deduplicated.',
+     `Selected ${QA_ROOT} paths: ${entries.length} = checked with Prettier ${checked} ` +
+-      `(Markdown ${markdown}) + refused Markdown originals ${count('original')} + retained ` +
+-      `archived originals ${count('retained')} + deleted ${count('deleted')} + unavailable ` +
+-      `${count('unavailable')}`,
++      `(Markdown ${markdown})${errors.length ? ` + Prettier errors ${errors.length}` : ''} + ` +
++      `refused Markdown originals ${count('original')} + retained archived originals ` +
++      `${count('retained')} + deleted ${count('deleted')} + unavailable ${count('unavailable')}`,
+     ...entries.map(
+       (entry) =>
+         `  ${LABELS[entry.kind].padEnd(12)} ${entry.path}${entry.note ? `  [${entry.note}]` : ''}`,
+     ),
++    // Prettier's message and code frame, without terminal colour, under a line naming the path.
++    // Every detail line starts with an indented bar, so no frame line can read as a path row.
++    ...errors.flatMap((entry) => [
++      `CHECK-ERROR detail for ${entry.path}:`,
++      ...stripVTControlCharacters(entry.detail)
++        .split(LINE_BREAK)
++        .map((line) => `    | ${line}`),
++    ]),
+   ];
+   if (!entries.length) lines.push(`No ${QA_ROOT} path changed; nothing to check.`);
+   for (const kind of new Set(problems.map((entry) => entry.kind))) lines.push(FIXES[kind]);
+   lines.push(
+     problems.length
+-      ? `Result: FAILED (${problems.length} problems; ${count('unavailable')} of ` +
++      ? `Result: FAILED (${problems.length} problems; ${count('unavailable') + errors.length} of ` +
+           `${entries.length} selected paths not checked).`
+       : 'Result: passed (every selected path was checked, retained or deleted).',
+   );
+diff --git a/tooling/scripts/check-qa-packet.test.mjs b/tooling/scripts/check-qa-packet.test.mjs
+index ec57aa0a0..e61bd2ff3 100644
+--- a/tooling/scripts/check-qa-packet.test.mjs
++++ b/tooling/scripts/check-qa-packet.test.mjs
+@@ -16,6 +16,7 @@ import { createRequire } from 'node:module';
+ import { tmpdir } from 'node:os';
+ import { dirname, join } from 'node:path';
+ import { fileURLToPath, pathToFileURL } from 'node:url';
++import { stripVTControlCharacters } from 'node:util';
+ import { afterAll, test } from 'vitest';
+ 
+ const cli = fileURLToPath(new URL('./check-qa-packet.mjs', import.meta.url));
+@@ -49,6 +50,7 @@ const HIDDEN = 'an ignore rule hides it from format:check; checked here';
+ const NOT_CHECKED_OUT = 'not in this working tree (sparse checkout or skip-worktree); not checked';
+ const REMOVED =
+   'removed from the working tree although its addition is committed or staged; not checked';
++const PRETTIER_STOPPED = 'Prettier stopped with an error; not checked, see its detail below';
+ 
+ const git = (cwd, ...args) =>
+   execFileSync('git', args, { cwd, env, encoding: 'utf8', windowsHide: true });
+@@ -73,6 +75,17 @@ const listed = (stdout) =>
+     path,
+     note ?? '',
+   ]);
++/** Each CHECK-ERROR detail as [path, lines without their delimiting bar], in report order. */
++const details = (stdout) =>
++  [...stdout.matchAll(/^CHECK-ERROR detail for (.+):\n((?: {4}\| .*\n)*)/gm)].map(
++    ([, path, block]) => [
++      path,
++      block
++        .split('\n')
++        .slice(0, -1)
++        .map((line) => line.slice('    | '.length)),
++    ],
++  );
+ 
+ let repositories = 0;
+ /**
+@@ -258,6 +271,132 @@ test('a sparse checkout fails on selected paths it lacks while deletions stay de
+   );
+ });
+ 
++test('a page Prettier stops on fails with its cause; later pages and sparse omissions are still reported', () => {
++  const root = repository();
++  const hidden = 'docs/qa/hidden/README.md';
++  const bad = 'docs/qa/visible/bad.html';
++  const good = 'docs/qa/visible/good.html';
++  write(root, hidden, FORMATTED);
++  write(root, bad, '<main><section>Hello</main>\n');
++  write(root, good, '<p>Evidence</p>\n');
++  git(root, 'add', '-A');
++  git(root, 'commit', '--quiet', '-m', 'packet with a malformed page');
++  // Control: the full formatter itself stops on the malformed page with its parser's message,
++  // position and code frame, which this check must carry verbatim under the page's path.
++  const hosted = spawnSync(process.execPath, [prettierBin, '--check', bad], {
++    cwd: root,
++    env,
++    encoding: 'utf8',
++    windowsHide: true,
++  });
++  assert.equal(hosted.status, 2, hosted.stdout + hosted.stderr);
++  const [located, ...frame] = stripVTControlCharacters(hosted.stderr)
++    .trimEnd()
++    .split(/\r?\n/)
++    .map((line) => line.replace(/^\[error\] /, ''));
++  const parserCause = /^\S+bad\.html: (SyntaxError: Unexpected closing tag "main"\. .* \(1:21\))$/;
++  assert.match(located, parserCause);
++  const [, cause] = parserCause.exec(located);
++  assert.ok(frame.includes('> 1 | <main><section>Hello</main>'), frame.join('\n'));
++  // Unmarked, a frame continuation such as the following source line would read as a path row.
++  assert.ok(
++    frame.some((line) => /^ {2}\S/.test(line)),
++    frame.join('\n'),
++  );
++  const prettierError = [[bad, [cause, ...frame]]];
++  const snapshot = (...paths) => ['.git/index', ...paths].map((path) => read(root, path));
++  const partition = (checked, markdown, errors, unavailable) =>
++    new RegExp(
++      `^Selected docs/qa paths: 3 = checked with Prettier ${checked} \\(Markdown ${markdown}\\)` +
++        (errors ? ` \\+ Prettier errors ${errors}` : '') +
++        ' \\+ refused Markdown originals 0 \\+ retained archived originals 0 \\+ deleted 0' +
++        ` \\+ unavailable ${unavailable}$`,
++      'm',
++    );
++
++  // Full checkout: the page Prettier stops on fails, and the page after it is still checked.
++  let before = snapshot(hidden, bad, good);
++  let result = check(root, '--base', 'main');
++
++  assert.equal(result.status, 1, result.stdout + result.stderr);
++  assert.equal(result.stderr, '');
++  assert.deepEqual(listed(result.stdout), [
++    ['formatted', hidden, ''],
++    ['CHECK-ERROR', bad, PRETTIER_STOPPED],
++    ['formatted', good, ''],
++  ]);
++  assert.deepEqual(details(result.stdout), prettierError);
++  assert.match(result.stdout, partition(2, 1, 1, 0));
++  assert.match(result.stdout, /^CHECK-ERROR: Prettier stopped .*line and column given/m);
++  assert.match(
++    result.stdout,
++    /^Result: FAILED \(1 problems; 1 of 3 selected paths not checked\)\.$/m,
++  );
++  assert.deepEqual(snapshot(hidden, bad, good), before);
++
++  // Sparse checkout: the README leaves the cone as a skip-worktree entry, not a deletion.
++  git(root, 'sparse-checkout', 'set', '--cone', 'docs/qa/visible');
++  assert.throws(() => read(root, hidden), { code: 'ENOENT' });
++  assert.equal(git(root, 'ls-files', '-t', '--', hidden), `S ${hidden}\n`);
++  assert.equal(git(root, 'status', '--porcelain', '--', 'docs/qa'), '');
++  before = snapshot(bad, good);
++
++  result = check(root, '--base', 'main');
++
++  assert.equal(result.status, 1, result.stdout + result.stderr);
++  assert.equal(result.stderr, '');
++  assert.deepEqual(listed(result.stdout), [
++    ['UNAVAILABLE', hidden, NOT_CHECKED_OUT],
++    ['CHECK-ERROR', bad, PRETTIER_STOPPED],
++    ['formatted', good, ''],
++  ]);
++  assert.deepEqual(details(result.stdout), prettierError);
++  assert.match(result.stdout, partition(1, 0, 1, 1));
++  assert.match(result.stdout, /^CHECK-ERROR: Prettier stopped /m);
++  assert.match(result.stdout, /^UNAVAILABLE: .*git sparse-checkout add docs\/qa.*full checkout/m);
++  assert.match(
++    result.stdout,
++    /^Result: FAILED \(2 problems; 2 of 3 selected paths not checked\)\.$/m,
++  );
++  assert.deepEqual(snapshot(bad, good), before);
++
++  // Repairing only the page leaves the sparse omission as the one failure, in the old wording.
++  write(root, bad, '<main><section>Hello</section></main>\n');
++  before = snapshot(bad, good);
++
++  result = check(root, '--base', 'main');
++
++  assert.equal(result.status, 1, result.stdout + result.stderr);
++  assert.deepEqual(listed(result.stdout), [
++    ['UNAVAILABLE', hidden, NOT_CHECKED_OUT],
++    ['formatted', bad, ''],
++    ['formatted', good, ''],
++  ]);
++  assert.doesNotMatch(result.stdout, /CHECK-ERROR|Prettier errors/);
++  assert.match(result.stdout, partition(2, 0, 0, 1));
++  assert.match(
++    result.stdout,
++    /^Result: FAILED \(1 problems; 1 of 3 selected paths not checked\)\.$/m,
++  );
++  assert.deepEqual(snapshot(bad, good), before);
++
++  // Restoring the full checkout restores the scope, and the repaired packet passes.
++  git(root, 'sparse-checkout', 'disable');
++  before = snapshot(hidden, bad, good);
++
++  result = check(root, '--base', 'main');
++
++  assert.equal(result.status, 0, result.stdout + result.stderr);
++  assert.deepEqual(listed(result.stdout), [
++    ['formatted', hidden, ''],
++    ['formatted', bad, ''],
++    ['formatted', good, ''],
++  ]);
++  assert.match(result.stdout, partition(3, 1, 0, 0));
++  assert.match(result.stdout, /^Result: passed /m);
++  assert.deepEqual(snapshot(hidden, bad, good), before);
++});
++
+ test('ordinary deletions pass, but a committed addition missing from the working tree fails', () => {
+   const root = repository({
+     'docs/qa/p/staged-deletion.md': FORMATTED,

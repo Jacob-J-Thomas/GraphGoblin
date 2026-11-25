@@ -94,6 +94,27 @@ As an engineering parameter, Windows publication uses six attempts with five del
 
 ### Install from a checkout (Decided by implementation, WP-F2)
 
+The optional [macOS Finder/Dock launcher](decisions/ADR-0082-macos-finder-dock-launcher.md)
+installs per user from a built checkout, for native Apple Silicon macOS 15 or later. It saves
+the canonical checkout and Node 22.22.2+ path, local store and typed options. It uses direct
+detached process creation and opens the default browser after verifying the intended gateway
+and both web shells. The launcher never stops the gateway. Shutdown begins through the
+existing authenticated API. Browser Wait and Force are available only after an externally
+initiated drain reaches its choice phase. Installation and replacement require private descriptor-verified
+bundle/receipt state and same-volume publication. Foreign destinations and uncertain ownership
+refuse. The private APFS log root is independently reserved by the API before loading the
+application; the same bounded writer serves Windows and Mac adapters. The Mac launch also
+rechecks its local key source after both writer leases, before SQLite or key creation.
+The [installation guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+describes alternate app names and log locations. No automatic update or login item is installed.
+
+Read-only store inspection escapes the physical path for both libsql's URL parser and SQLite's
+URI parser. Literal percent signs, query or fragment characters cannot select another file or
+override `mode=ro`. A missing database is refused rather than created. An existing WAL database
+is read with its live WAL contents; SQLite may still create or update its normal WAL sidecars.
+The default database URL independently encodes the data-directory path. No Unicode normalization
+or stored-content conversion is applied by these path encoders.
+
 The Windows launcher refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides,
 case-insensitively, before the installer writes any configuration, including temporary staging
 files. Empty values are refused too. The native launcher also refuses these keys in manually
@@ -136,16 +157,25 @@ verified live ownership from unverifiable ownership and retain the probe failure
 prove reuse and need independent inspection if their PID now belongs to another process.
 See [ADR-0069](decisions/ADR-0069-windows-lock-process-identity.md).
 
-Reading an enumerated recovery marker on Windows can also report `EPERM`. If an independent
-`lstat` finds that exact UUID path absent, recovery continues without unlinking it. An unreadable
-marker that still exists keeps its original error. Reads of the main owner record keep their errors.
+When an enumerated recovery marker disappears during a read, acquisition and read-only ownership
+checks re-observe the guard within their attempt limits. This distinguishes a surviving empty
+directory, a successor and a guard already removed by another contender. If the marker disappears
+during a read or removal on the final acquisition attempt, ownership remains unverified. If the
+read reports `EPERM` on Windows, a separate `lstat` must establish that the exact UUID path is
+absent before re-observing. An unreadable marker that still exists keeps its original error.
+Reads of the main owner record keep their errors.
 
 Concurrent Windows deletion can report `EPERM` after another contender has removed the same
-stale UUID marker or empty guard directory. The API accepts that outcome only when a separate
-`lstat` establishes that exact path is absent; it never retries the deletion. A marker or directory
-that remains present, or whose absence cannot be verified, retains a filesystem error naming the
-operation and code. Successor markers are preserved. If releasing the recovery guard fails after
-the main lock was acquired, acquisition rolls back the main lock and reports the cleanup failure.
+stale UUID marker or empty guard directory. A separate `lstat` can establish that the exact path
+is absent, without crediting this acquisition with removing it. Acquisition publishes its guard
+directly after observing absence and checks the shared path again when another contender removes
+the observed stale marker first. If removing a stale guard directory reports `EPERM`, a read-only
+check can report ordinary contention when it verifies a different physical directory with one new
+UUID marker whose record matches a live process and its OS creation identity. The check confirms
+that the directory and marker still match after the process probe. Otherwise a guard whose
+absence cannot be confirmed keeps the filesystem error naming the operation and code. No deletion
+is retried. If releasing the recovery guard fails after the main lock was acquired, acquisition
+rolls back the main lock and reports the cleanup failure.
 A failed rollback explicitly reports retained ownership. Failed releases keep their in-process
 holds, and additional cleanup failures retain the original refusal rather than replacing it.
 

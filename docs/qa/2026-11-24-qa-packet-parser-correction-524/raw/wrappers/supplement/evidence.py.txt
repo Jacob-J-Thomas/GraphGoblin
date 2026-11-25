@@ -1,0 +1,174 @@
+"""Read-only reconstruction of the one exact #524 QA record."""
+
+import hashlib
+from importlib import import_module
+import json
+from pathlib import Path
+import re
+import sys
+
+sys.dont_write_bytecode = True
+HERE = Path(__file__).resolve().parent
+E = HERE.parent
+QA = E / 'qa-packets-524-correction-independent-qa-01'
+sys.path.insert(0, str(QA))
+original = import_module('common')
+BOUND = '828aea20126e5c7c21b207b0c52561b6f4ffc72515e6b2a917672b3a7eeb13f8'
+EXIT = 'dd7669e81016660dcff51d95990b84000967d2d2dffee275430bae759fef0045'
+FAILURE = E / 'publication-524-parser-correction-preparation/QA-FAILURE-READBACK.json'
+FAILURE_SHA = '9b1fa175b21f3d6891426c7bfb4a300db7543b455352cef01256f17f2ecd5d45'
+COUNT = r'Tests\s+(\d+) passed\s+\(\1\)'
+SGR = rb'\x1b\[[0-9;]*m'
+MODES = ('focused', 'fixtures', 'packet')
+FIXTURE_EXITS = {
+    'full-malformed': 1, 'sparse-malformed': 1, 'sparse-repaired': 1, 'full-repaired': 0,
+    'invalid-args': 2, 'invalid-base': 2, 'unusable-repository': 2, 'literal-crlf': 0,
+}
+EXPECTED_COVERAGE = {'statements': 105, 'branches': 57, 'functions': 18, 'lines': 91}
+
+
+def need(condition, reason):
+    if not condition:
+        raise RuntimeError(reason)
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def load(path):
+    return json.loads(path.read_bytes())
+
+
+def digest(path):
+    return sha(path.read_bytes())
+
+
+def save(path, data):
+    with path.open('x', encoding='utf-8', newline='\n') as stream:
+        json.dump(data, stream, indent=2, ensure_ascii=False)
+        stream.write('\n')
+
+
+def assemble():
+    binding_path = QA / 'CANDIDATE-BINDING.json'
+    terminal_path = QA / 'claude-qa-01/CLAUDE-EXIT.json'
+    need(digest(binding_path) == BOUND and digest(terminal_path) == EXIT
+         and digest(FAILURE) == FAILURE_SHA, 'EXACT_524_RECORDED_FAILURE_CHANGED')
+    binding = original.bound()
+    source = binding['source']
+    terminal = load(terminal_path)
+    need(terminal['verdict'] == 'FAIL' and terminal['qaAccepted'] is False
+         and terminal['allChecksPassed'] is False and terminal['sourceUnchanged']
+         and terminal['providerProvenanceVerified'] and terminal['exactToolScope']
+         and terminal['distinctFromAuthor'], 'FAILURE_OR_PROVIDER_PROVENANCE_CHANGED')
+    raw = {terminal_path.relative_to(QA).as_posix(): terminal_path.read_bytes()}
+    report_name = 'claude-qa-01/QA-REPORT.claude.md'
+    raw[report_name] = (QA / report_name).read_bytes()
+    need(sha(raw[report_name].removesuffix(b'\n')) == terminal['reportSha256'], 'QA_ORIGINAL_REPORT_HASH_MISMATCH')
+    expected = {'focused': 1, 'fixtures': 0, 'packet': 0}
+    result = {}
+    for mode in MODES:
+        name = f'runs/{mode}/RESULT.json'
+        raw[name] = (QA / name).read_bytes()
+        record = json.loads(raw[name])
+        need(sha(raw[name]) == terminal['checkReceipts'][mode] and record['exitCode'] == expected[mode]
+             and record['sourceUnchanged'] and record['source'] == source, f'BOUND_{mode.upper()}_RECEIPT_CHANGED')
+        result[mode] = record
+    need(result['focused']['failure'] == 'FOCUSED_REGRESSION_SUITE_OR_EXISTING_COVERAGE_THRESHOLD_NOT_PROVED',
+         'FOCUSED_WRAPPER_FAILURE_CHANGED')
+
+    def streams(parent, receipt):
+        for stream in ('stdout', 'stderr'):
+            name = f'{parent}/{stream}.log'
+            raw[name] = (QA / name).read_bytes()
+            need(sha(raw[name]) == receipt[stream + 'Sha256'], f'ORIGINAL_STREAM_CHANGED: {name}')
+
+    for mode in ('focused', 'packet'):
+        prefix = f'runs/{mode}/command'
+        relative = prefix + '/PROCESS-EXIT.json'
+        raw[relative] = (QA / relative).read_bytes()
+        child = json.loads(raw[relative])
+        need(child['exitCode'] == 0 and not child['timedOut'], f'ACTUAL_{mode.upper()}_CHILD_DID_NOT_PASS')
+        streams(prefix, child)
+    coverage_path = 'runs/focused/coverage/coverage-summary.json'
+    raw[coverage_path] = (QA / coverage_path).read_bytes()
+    coverage = json.loads(raw[coverage_path])
+    keys = [key for key in coverage if key != 'total']
+    need(len(keys) == 1 and Path(keys[0]) == original.WORKTREE / 'tooling/scripts/check-qa-packet.mjs',
+         'COVERAGE_NOT_SCOPED_TO_BOUND_CHECKER')
+    for kind, count in EXPECTED_COVERAGE.items():
+        expected_value = {'total': count, 'covered': count, 'skipped': 0, 'pct': 100}
+        need(coverage[keys[0]][kind] == coverage['total'][kind] == expected_value,
+             f'V8_COVERAGE_NOT_VERIFIED: {kind}')
+
+    original_stdout = raw['runs/focused/command/stdout.log']
+    sgr_stripped, removals = re.subn(SGR, b'', original_stdout)
+    exact_text = original_stdout.decode('utf-8')
+    projected_text = sgr_stripped.decode('utf-8')
+    count = re.search(COUNT, projected_text)
+    need(removals > 0 and re.search(COUNT, exact_text) is None and count and int(count[1]) == 12
+         and 'a page Prettier stops on fails with its cause; later pages and sparse omissions are still reported'
+         in projected_text, 'SGR_PROJECTION_DID_NOT_EXPLAIN_TEST_COUNT_FAILURE')
+    need(all(re.search(rf'{kind.capitalize()}\s*:\s*100%\s*\( {value}/{value} \)', projected_text)
+             for kind, value in EXPECTED_COVERAGE.items()), 'PROJECTED_STDOUT_COVERAGE_COUNTS_MISMATCH')
+    wrapper = QA / 'run-check.py'
+    wrapper_lines = wrapper.read_text(encoding='utf-8').splitlines()
+    need(COUNT in wrapper_lines[255] and 'count and int(count[1]) >= 11' in wrapper_lines[257],
+         'ORIGINAL_WRAPPER_ASSERTION_CHANGED')
+
+    observations_name = 'runs/fixtures/FIXTURE-OBSERVATIONS.json'
+    raw[observations_name] = (QA / observations_name).read_bytes()
+    observations = json.loads(raw[observations_name])
+    need(len(observations['cases']) == result['fixtures']['evidence']['publicCalls'] == 8
+         and set(FIXTURE_EXITS) == {case['name'] for case in observations['cases']}, 'FIXTURE_CASE_SCOPE_CHANGED')
+    integrity = {}
+    for case in observations['cases']:
+        name = case['name']
+        prefix = f'runs/fixtures/{name}'
+        path = QA / prefix / 'INTEGRITY.json'
+        need(load(path) == case and case['exitCode'] == FIXTURE_EXITS[name]
+             and not case['timedOut'] and case['before'] == case['after'], f'FIXTURE_INTEGRITY_CHANGED: {name}')
+        integrity[name] = digest(path)
+        streams(prefix, case)
+    sparse = raw['runs/fixtures/sparse-malformed/stdout.log'].decode()
+    literal = raw['runs/fixtures/literal-crlf/stdout.log'].decode()
+    need(observations['sparseFlag'] == 'S docs/qa/qa524-omitted/README.md'
+         and 'UNAVAILABLE  docs/qa/qa524-omitted/README.md' in sparse
+         and 'CHECK-ERROR detail for docs/qa/qa524-visible/a-bad [v2].html:' in sparse
+         and 'Unexpected closing tag "main"' in sparse and '(1:21)' in sparse
+         and 'formatted    docs/qa/qa524-visible/z-valid.md' in sparse
+         and 'Result: FAILED (2 problems; 2 of 3 selected paths not checked).' in sparse,
+         'MALFORMED_SPARSE_SCOPE_OR_PATH_DIAGNOSTIC_MISMATCH')
+    need(all(observations['normalizationEqual'].values())
+         and observations['literalRawSha256'] in literal
+         and 'notes [v2].md' not in literal and 'notes 2.md' in literal, 'LITERAL_CRLF_CONTROL_MISMATCH')
+    log = raw['runs/packet/command/stdout.log'].decode()
+    packet = result['packet']['evidence']
+    need(packet['selectedPaths'] == source['packetPaths'] and len(packet['selectedPaths']) == 66
+         and packet['retainedHashesVerified'] == 65 and packet['base'] == source['target']
+         and 'Selected docs/qa paths: 66 =' in log, 'REAL_PACKET_SCOPE_OR_TARGET_CHANGED')
+    archived = sum((rel + '  [sha256=' + source['rawFiles'][rel] + ']') in log for rel in source['packetPaths'])
+    need(archived == 65, 'REAL_PACKET_RAW_RETAINED_FILE_DIGESTS_CHANGED')
+    protected = load(QA / 'PREPARED-BASELINE.json')
+    need(source['packetPaths'] == protected['packetPaths']
+         and all(source['rawFiles'][rel] == protected['rawFiles'][rel] for rel in source['packetPaths'])
+         and source['indexSha256'] == protected['indexSha256'], 'ORIGINAL_66_PACKET_FILES_OR_INDEX_CHANGED')
+    observed = {
+        'issue': 524, 'originalQaResult': 'FAIL', 'originalQaAccepted': False,
+        'originalTerminalReceiptSha256': EXIT, 'exactCandidateBindingSha256': BOUND,
+        'sourceHead': source['head'], 'target': source['target'], 'patchSha256': source['patchSha256'],
+        'indexSha256': source['indexSha256'], 'sourceBeforeAdjudication': source,
+        'temporaryReadOnlyProjection': {'removedSgrSequences': removals, 'originalSha256': sha(original_stdout),
+                                        'projectionSha256': sha(sgr_stripped), 'originalCountRegexMatched': False,
+                                        'projectionCountRegexMatched': 12, 'originalOutputAltered': False},
+        'focusedChildExitCode': 0, 'testsPassed': 12, 'checkerCoverage': coverage[keys[0]],
+        'originalWrapper': {'sha256': digest(wrapper), 'startLine': 253, 'lines': wrapper_lines[252:260]},
+        'fixtureExits': FIXTURE_EXITS, 'fixtureIntegritySha256': integrity,
+        'fixturesAllRawFilesGitConfigAndIndexPreserved': True,
+        'realPacketSelected': 66, 'realPacketRetainedDigestsVerified': 65,
+        'all66HistoricalPacketBytesUnchanged': True,
+        'coordinatorFailureReadbackSha256': FAILURE_SHA,
+    }
+    need(original.bound() == binding, 'SOURCE_OR_AUTHOR_PROOF_CHANGED_DURING_READBACK')
+    return observed, raw, projected_text, terminal

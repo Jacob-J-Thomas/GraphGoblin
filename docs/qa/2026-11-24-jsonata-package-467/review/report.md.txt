@@ -1,0 +1,50 @@
+# Independent source review 01 - #467
+
+Outcome: PASS WITH ONE P3 DOCUMENTATION FIX. No introduced source or workflow blocker found. The ordinary delivery gates, independent fresh Claude QA, actual distributed-image execution, hosted CI, and exact-head final review remain outstanding and are not waived by this review.
+
+Reviewer: independent Codex / OpenAI-family reviewer of the Claude-authored implementation. Formal pass 1 of the parent's three-total-scan cap. No implementation, staging, commit, publication, issue mutation, or Docker operation performed.
+
+## Reviewed identity and frozen inputs
+
+- Worktree: G:/ggq/gg-fu-jsonata-package-20261124/GraphGoblin
+- Branch: codex/gg-fu-jsonata-package-20261124
+- Intended comparison base and actual HEAD: d2df8600c2c8574bec420947de686b936910b245
+- The compressed handoff's 39-character base omitted the leading d. IMPLEMENTATION-CONTRACT.json and live HEAD agree on the full SHA above. freeze.json preserves that initial supplied value and the correct actual HEAD; it was not rewritten.
+- Frozen review patch: patch.diff, SHA-256 c06d20a14541506b8ac6862a29ea27362ce5bd707e87890326d958e751814c3f.
+- Exactly four unstaged paths: .github/workflows/ci.yml, CHANGELOG.md, docs/10-testing-and-quality.md, docs/research/licenses.md. Per-file hashes and the index hash are in freeze.json; verify-inputs.json confirms they remain unchanged.
+- Author provenance: claude-implementation-01/CLAUDE-EXIT.json reports claude-opus-5-5, successful exit 0 at 2026-11-25T01:51:47.367911+00:00, no staged/out-of-scope paths, and matching hashes for all four files.
+
+## Finding and disposition
+
+P3 / FIX-IN-PR / jsonata-patch-docs/isParallelCall-reader-wording
+
+At docs/research/licenses.md:71, the new sibling-evaluation paragraph says nothing in jsonata 2.2.2 reads isParallelCall. The pinned installed jsonata.js:5341 reads enclosingEnvironment.isParallelCall when createFrame copies the marker to a child frame. No evaluation consumer branches on the flag, and GraphGoblin's hooks ignore it, so this does not invalidate the patch or the image probe. It is an in-scope factual correction to the requested patch-obligation documentation. Narrow the sentence to explain that createFrame copies the flag but evaluation logic does not consume it. No new issue or architecture change is needed. Parent agreed this disposition while the snapshot remained frozen.
+
+No other findings admitted. In particular, older implementation-plan prose not linking the patch is pre-existing context and not a current-patch blocker.
+
+## Review conclusions
+
+1. CI scheduling is correct. The existing image build receives id image; the new step requires a successful build and uses !cancelled(), so it executes after an independent template-check failure and does not erase that failure. Existing template checks, triggers, 20-minute job budget, and container switches remain intact.
+2. The command addresses the actual production image. Dockerfile deploys the API production dependency closure into /app/apps/api; the command sets that working directory, overrides the entrypoint with node, and imports @graphgoblin/domain by its public package entry. Without a development condition, its import export is dist/index.js. There is no source import, host mount, network, provider invocation, startup probe, or product-runtime change.
+3. Probes are finite and fail closed for their intended regressions. Ordinary evaluation returns 3. The 250-item array and 250-member object exceed the 200 default depth in sibling width; losing either sequential-constructor change while retaining the hooks refuses the wide literal. The maxDepth 0 and timeoutMs -1 literal controls require the exact reason, ExpressionError identity, and message. Missing symbol bindings returns success, which immediately fails an assertion. No infinite expression is used. Reusing cached literal 1 at ordinary limits after both refusals checks that their state does not carry over.
+4. The patch ledger correctly explains enumerable symbol bindings in the invocation frame, timestamp-local now/millis closures, sequential constructor siblings, the unpatched alternate bundles, exact-version patch registration, and upgrade comparison/reapplication/removal obligations. The one marker-read sentence above needs precision.
+5. Evidence limits are stated accurately. The docs explicitly omit a timestamp image probe and point to the existing interleaved timestamp unit regression. Source tests establish source behavior rather than installed-image contents. The author's build was 7/7 cached tasks and is not evidence of a fresh image build.
+6. Existing JSONata patch and lockfile are outside the changed set. Existing patch SHA-256 is c946341f2ec643121e3296159f896f45cd24fcc3bb6ad26abe6760d3306670e0; lockfile SHA-256 is bcc908d0f7aa32ba4a64302a9f74284c1a0679e2372ca1ba83176af5b5bbcce2. No dependency or licence change is introduced.
+
+## Checks and evidence boundaries
+
+Reviewer-executed checks:
+
+- Selected project-scoped Node v22.23.4 and confirmed its version.
+- Extracted the exact new CI heredoc into workflow-probe.mjs without changing its JavaScript. From apps/api, piped it to pnpm.cmd exec node --input-type=module against the host's compiled public package. Exit 0; host-compiled-probe.log records ordinary 3, wideSiblings 250, exact depth/time refusals and fresh 1.
+- git diff --check passed.
+- Independently inspected Dockerfile, domain exports, installed JSONata package metadata/source, patch hunks, expression implementation, existing meaningful expression regressions, CI scheduling/security switches, and all four changed paths.
+- Rehashed all four paths and Git index after execution: unchanged, with no staged changes.
+
+The host compiled probe checks JavaScript syntax and local behavior only. It does not prove pnpm deploy, Linux module resolution in the shipped image, or the actual distributed JSONata artifact. No Docker client/daemon/startup command was invoked. Parent reports a Docker client with no available daemon pipe and will use the hosted image gate; that is parent-reported readiness, not this reviewer's executed image evidence.
+
+Author-reported checks, inspected in IMPLEMENTATION-REPORT.claude.md: expression tests 29/29, API build 7/7 cached tasks, four-file Prettier check, diff whitespace, and only the four authorized paths. Those were not rerun by this reviewer because no test or runtime implementation changed.
+
+## Handoff
+
+Release the four-file snapshot for the narrow documentation correction. Reassess the wording delta through the remaining QA/final exact-head review without spending another full formal source scan. Retain the hosted production-image result, ordinary required CI/gates, independent fresh Claude QA, and final exact-head review before delivery. This review authorizes no commit, publication, merge, or issue closure.

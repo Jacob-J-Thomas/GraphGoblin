@@ -1,0 +1,25 @@
+{
+  "wrapperSha256": "653a581bedb40d21aa002150921deb85acf51ec91e8a9aa1f45cfadc299c05aa",
+  "gitBlobIdentical": true,
+  "sourceLines": [
+    {
+      "line": 22,
+      "text": "env['GG_TEST_PORT_START'] = '62000'"
+    },
+    {
+      "line": 23,
+      "text": "env['GG_TEST_PORT_COUNT'] = '100'"
+    },
+    {
+      "line": 24,
+      "text": "env['TEMP'] = env['TMP'] = str(alias)"
+    },
+    {
+      "line": 26,
+      "text": "subprocess.run([str(NODE / 'node.exe'), '-e', \"require('node:fs').symlinkSync(process.argv[1],process.argv[2],'junction')\", str(target), str(alias)], check=True, creationflags=subprocess.CREATE_NO_WINDOW)"
+    }
+  ],
+  "reservationRange": "62000-62099",
+  "resultJsonOmitsEnvironment": true,
+  "limit": "Retained original wrapper sets cooperative API reservation range; this does not enumerate every auxiliary ephemeral listener or independently attest junction activation."
+}

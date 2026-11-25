@@ -1,0 +1,20 @@
+# API startup fixture QA for #565
+
+The seven source paths in [source-binding.json](source-binding.json) were reviewed and tested against base `d2df8600c2c8574bec420947de686b936910b245`. The frozen patch SHA-256 is `ead99e8961455f4bb1a620721df86a555d0c57d2ccc6960d456e6e7a4d87fc02`.
+
+The disposable API fixture explicitly disables Ollama discovery after filtering inherited configuration. Tests can opt in against their own loopback listener. Both built-entry subprocess and in-process startup exercise default-off and deliberate opt-in with a synthetic inherited Jev key. The Windows launcher CI job adds the maintained API startup cases after native evidence finalization and upload.
+
+| Check                                  | Result                                                                                                                                                                                                                               |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Forced API build                       | Seven tasks passed with zero Turbo cache hits. TypeScript could still reuse incremental build state.                                                                                                                                 |
+| Windows API startup and provider cases | 18 passed and five expected platform skips. The Windows startup/log-refusal test and four provider cases passed. Each default case observed no request at the owned endpoint. Each opt-in case observed exactly one `GET /api/tags`. |
+| Windows workflow simulation            | 40 passed. The simulation exercises earlier preparation, native, build and cancellation outcomes, plus an API-entry failure after native evidence handling. Hosted execution is a separate gate.                                     |
+| Formatting and diff whitespace         | Passed on the frozen source.                                                                                                                                                                                                         |
+
+[Independent formal review 1](review/report.md.txt) found no actionable issue and reran all 40 workflow tests. [Independent Claude Code Opus 5.5 (xhigh) QA](qa/report.md.txt) ran all five checks and reported a qualified local pass. The [adjudication](ADJUDICATION.md) binds the product seeding log and the fixture port references, confirms the contents of nonempty stderr, and records the remaining verification limits.
+
+The author retained a [provider regression red](author/provider-red.log) with two default cases failing and both opt-in cases passing. The first Windows workflow change reached a [39-of-40 checkpoint](author/workflow-checkpoint.log). The scoped continuation repaired the workflow assertions and passed 40 of 40. The reports and first-run checkpoint remain available. Only the two command-output strings were extracted from the provider transcript.
+
+The hosted Windows job runs the maintained startup and log-refusal file. This packet supplies local Windows evidence for the separate provider-isolation file, which the Ubuntu coverage lane also exercises. The workflow simulation cannot establish live GitHub cancellation or whole-job timing. Integration with Mac PR #501 must preserve both additions to the shared workflow and recheck the integrated startup cases. Hosted CI, full coverage, fresh independent final review, merge and owner acceptance remain separate.
+
+[MANIFEST.json](MANIFEST.json) identifies the retained original receipts, the two extracted command outputs, and the publication metadata. Packet-local attributes preserve their bytes while keeping formatted Markdown and the manifest on LF. Private prompts, events and credentials are excluded.
