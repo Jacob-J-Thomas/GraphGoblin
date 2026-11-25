@@ -1,0 +1,46 @@
+from pathlib import Path
+import sys, json, hashlib, re
+from datetime import datetime, timezone
+sys.dont_write_bytecode = True
+root = Path(__file__).resolve().parent
+sys.path.insert(0, str(root.parent))
+import common
+_, spec, frozen = common.bound(573)
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+load = lambda p: json.loads(p.read_text(encoding='utf-8-sig'))
+receipt = load(root / 'CLAUDE-EXIT.json')
+assert receipt['qaAccepted'] and receipt['sourceUnchanged'] and receipt['verdict'] == 'PASS'
+assert receipt['providerModel'] == 'claude-opus-5-5' and receipt['providerApiKeySource'] == 'none'
+assert all(x.get('isUsingOverage') is False for x in receipt['rateLimitObservations'])
+checks = {}
+for name, expected in receipt['checkReceipts'].items():
+    p = root / (name.upper() + '-RESULT.json')
+    assert sha(p) == expected
+    r = load(p)
+    assert r['exitCode'] == 0 and r['sourceUnchanged'] and r['before'] == r['after'] == frozen and r['error'] is None
+    if name in ('component', 'boundary'):
+        cmd = r['result'] if name == 'component' else r['result']['commandReceipt']
+        for stream in ('stdout', 'stderr'):
+            assert sha(root / 'runs' / name / (stream + '.log')) == cmd[stream + 'Sha256']
+        assert not cmd['timedOut']
+    checks[name] = expected
+raw = (root / 'runs/component/stdout.log').read_text(encoding='utf-8')
+plain = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', raw)
+assert '57 passed' in plain and 'R2 clears the previous reply live announcement' in plain
+mirror = root / 'runs/boundary-owned-mirror'
+lineage = load(mirror / 'MIRROR-LINEAGE.json')
+for rel, expected in lineage['copiedFileSha256'].items():
+    assert sha(Path(spec['worktree']) / rel) == expected
+    assert sha(mirror / rel) == expected
+assert common.bound(573)[2] == frozen
+result = {'issue':573, 'at':datetime.now(timezone.utc).isoformat(), 'verdict':'SCOPED PASS',
+    'qaReceiptSha256':sha(root/'CLAUDE-EXIT.json'), 'checkReceipts':checks, 'componentPassed':57,
+    'r2RawResultVerified':True, 'mirrorFilesVerified':len(lineage['copiedFileSha256']),
+    'sourceUnchanged':True, 'formalScan1':'READY, separate review-01',
+    'limits':['Controlled fake-client component boundary is not proof of historical hosted timing or browser QA.',
+              'Actual QA report status of GPT review is historical; separate review-01 is READY.',
+              'Current-target integration, complete CI and fresh final review remain pending.'],
+    'noTestsOrModelsRunByAdjudication':True}
+with (root/'ROOT-QA-ADJUDICATION.json').open('x',encoding='utf-8',newline='\n') as f:
+    json.dump(result,f,indent=2); f.write('\n')
+print(json.dumps(result))
