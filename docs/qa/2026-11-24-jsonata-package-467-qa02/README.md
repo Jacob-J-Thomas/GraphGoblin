@@ -40,7 +40,7 @@ The QA report kept full CI outside its own verdict; this separate hosted capture
 
 ## Evidence limits and remaining gates
 
-- **Timestamp behavior is source-unit evidence only.** The included source tests exercise `$now()`/`$millis()`; this finite image probe does not. No timestamp image assertion is invented.
+- **Timestamp behavior is source-unit evidence only.** The included source test exercises `$millis()` across interleaved evaluations. It does not call `$now()`, and this finite image probe exercises neither timestamp function.
 - **Windows compiled dist is corroboration only.** Node v22.23.4 from apps/api resolved existing packages/domain/dist/index.js, SHA256 `a391fc41bea5ea5f280cc5eae13b245baec66a242c1f5c231f786f46a4566d59`, and returned the same finite result. It was not rebuilt during QA and does not prove that local dist came from this head. Actual shipped-image evidence is the separate container run.
 - **Operator preparation is separate.** The preserved first docs-control byte assertion encountered CRLF materialization in an owned scratch copy. Its qualified LF comparison and later source checks are preparation, not actual Claude QA. Root's integration proof records preserved original CHANGELOG insertion/docs 10 patch and unchanged other candidate paths. [Original integration proof](binding/INTEGRATION-569.json), [source diff](binding/INTEGRATED-SOURCE.patch), [first preparation assertion](preparation/OPERATOR-DOC-CONTROL-FIRST-ATTEMPT.json), [preparation result](preparation/OPERATOR-PREPARATION.json).
 - **No owner acceptance is inferred.** No owner store/service or local Docker Desktop was used for these bounded checks. This is not deployment, all-host cleanup, personal device testing or completion of owner QA.
