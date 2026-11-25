@@ -168,14 +168,19 @@ describe('built API entry and startup failures', () => {
   it('holds ownership while listening and releases it on supported HTTP close', async () => {
     const f = await fixture();
     // Test fixture fences are not product configuration; preserve them even if this case fails.
-    for (const name of Object.keys(process.env))
-      if (name.toUpperCase().startsWith('GG_') && !name.toUpperCase().startsWith('GG_TEST_'))
+    // Inherited JEV_API_KEY is cleared too, so this in-process start cannot seed it (#565).
+    for (const name of Object.keys(process.env)) {
+      const upper = name.toUpperCase();
+      if ((upper.startsWith('GG_') && !upper.startsWith('GG_TEST_')) || upper === 'JEV_API_KEY')
         vi.stubEnv(name, undefined);
+    }
     for (const [name, value] of Object.entries(f.env))
       if (name.toUpperCase().startsWith('GG_')) vi.stubEnv(name, value);
     let running: Awaited<ReturnType<typeof main>> | undefined;
     try {
       running = await main();
+      expect(running.container.config.ollamaEnabled).toBe(false);
+      expect(running.container.config.jevApiKey).toBeUndefined();
       const lock = await readFile(f.lockPath, 'utf8');
       await expect(main()).rejects.toThrow('another GraphGoblin process holds');
       expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
@@ -201,7 +206,8 @@ describe('built API entry and startup failures', () => {
       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
       expect(contender.stderr).toContain('another GraphGoblin process holds');
       expectOwnershipRefusal(contender.stderr);
-      expect(contender.stderr).toContain(f.lockPath);
+      // Ownership diagnostics use canonical paths, including Windows short-name temp roots.
+      expect(contender.stderr).toContain(await realpath(f.lockPath));
       expect(contender.stderr).toContain(
         'wait for the owning process to finish or stop it before retrying',
       );
@@ -236,7 +242,9 @@ describe('built API entry and startup failures', () => {
       const contender = other.run([], env);
       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
       expectOwnershipRefusal(contender.stderr);
-      expect(contender.stderr).toContain(`another GraphGoblin process holds ${databaseLock}`);
+      expect(contender.stderr).toContain(
+        `another GraphGoblin process holds ${await realpath(databaseLock)}`,
+      );
       expect(contender.stdout).toBe('');
       expect(await readFile(f.lockPath, 'utf8')).toBe(directoryRecord);
       expect(await readFile(databaseLock, 'utf8')).toBe(databaseRecord);
@@ -275,7 +283,7 @@ describe('built API entry and startup failures', () => {
       expect(child.stderr).toContain(
         'Store ownership could not be verified (malformed or incomplete owner record)',
       );
-      expect(child.stderr).toContain(kind === 'reclamation' ? guard : path);
+      expect(child.stderr).toContain(await realpath(kind === 'reclamation' ? guard : path));
       expect(child.stderr).toContain('inspect the owner record and running GraphGoblin processes');
       expect(child.stdout).toBe('');
       expect(await readFile(path, 'utf8')).toBe(record);

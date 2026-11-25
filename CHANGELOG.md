@@ -19,6 +19,24 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   `validateLoop` by those two codes. No stored, export, device-draft or contract format changes,
   and no repairs, warnings or notice wording change.
 
+- API process tests no longer start Ollama model discovery by default (#565). The disposable
+  built-entry fixture drops inherited `GG_*`, `JEV_API_KEY` and `NODE_V8_COVERAGE` and now sets
+  `GG_OLLAMA_ENABLED=false` itself, so its children no longer fall back to the product default
+  (on), which sent discovery to `http://127.0.0.1:11434`. The in-process `main()`
+  case adopts the same values through reversible environment stubs and also clears an inherited
+  `JEV_API_KEY`. A test that owns a provider endpoint still opts in per child. A new regression
+  test starts both the built entry and in-process `main()` against a stand-in Ollama listener it
+  owns: no request with the fixture default, exactly one model-list request with an explicit
+  opt-in. Only discovery is fixed; children keep the host network. Each fixture owns its own
+  temporary store and the children it starts. Its API port is a reservation shared only by
+  cooperating fixtures in the same Vitest run, after point-in-time bind checks, while
+  test-owned listeners bind port 0 and use whatever ephemeral port the OS assigns. The Windows
+  launcher CI job now also runs `main.test.ts` as its last step after a successful build, giving
+  the Windows-only startup and log-folder refusal cases a maintained Windows venue without
+  changing the native or evidence steps' outcomes. Production configuration and defaults are
+  unchanged; existing tests keep their time limits, assertions and retries, and coverage
+  thresholds are unchanged.
+
 - Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
   keeps read-only SQLite mode intact, and refuses missing files without creating a different
   database. Default database configuration also encodes the data directory as a file URL.
