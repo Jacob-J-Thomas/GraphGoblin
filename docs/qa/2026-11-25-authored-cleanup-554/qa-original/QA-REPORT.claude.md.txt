@@ -1,0 +1,53 @@
+# Independent QA for #554 (authored cleanup), frozen candidate
+
+All three checks passed (exit 0). Every run reported the source unchanged and patch hash `4f40ceb69211a9f8fab0d7d18e6b21894ecc4136bcbf25548d98094c93885e9a`, which matches the frozen value. Every criterion I could run passes. The documentation identifiers are BLOCKED because the doc excerpt I was given is empty.
+
+## Criteria
+
+| # | Criterion | Result | Evidence |
+|---|---|---|---|
+| 1 | Valid scratch JSON produces the usual patch | PASS | Controls: the patch matches exactly `[{op:'add', path:'/vars/result', value:{ok:true}}]`. Domain test: "writes valid values to the target" |
+| 2 | Supported invalid data stays on repair | PASS | Controls: result is `kind:'repair'` and the request value is `{ok:'wrong'}`. Domain test: "stops with a repair request on invalid values and resumes after repair". Engine test: mutate node "repairs coerce failures through the structured port" |
+| 3 | An invalid authored schema stays on repair | PASS | Domain tests: `{"type":"not-a-type"}` and `pattern:"("` both go to repair and neither mapper is called. Engine tests: mutate and inference coerce both repair "without an authored boundary", and continue-raw works |
+| 4 | A real authored target still maps to its fact | PASS | Controls: the fact mapper is called exactly once with `[{kind:'target'}, 2, 'coerce']`, and the planner rejects with that mapper's marker. Domain test: `/run/id` rejects with MutationError. Engine test: a failed coerce target write reports PATCH_ERROR at operation 1 (coerce) |
+| 5 | An external validation throw gets no authored provenance | PASS (synthetic scope) | Controls: 7/7 getter throws (Error, MutationError, PatchError, TemplateError, ExpressionError, `null`, `11`). With no ordinary mapper, the planner rejects with the same value. With one, that mapper is called exactly with `[error, 8, 'coerce']`. The fact mapper is never called. The matching domain test also passes |
+| 6 | Public failure details are bounded and raw private diagnostics stay separate | PASS (by test title) | Engine tests: fixed `until` copy for `$error("PRIVATE_LITERAL")` and `PRIVATE_DYNAMIC`; "types expression evaluation failures without retaining authored/private error text"; "does not retain raw string provider failures"; completion and resolver exceptions stay "private and resumable"; final ContextThread validation stays outside authored attribution; external secret, workspace and decision errors stay outside authored attribution |
+| 7 | Repair, handler behaviour and the rendering path where exercised | PASS | Engine tests: heartbeat renders headers, URL and body before a successful probe; script args render; LLM and classifier context and questions render; Liquid location is reported without the source; a repair-prompt render failure is attributed to the coerce operation; the original operation index survives repairs |
+| 8 | Render caller ownership removed | PASS (source only, limited) | `authored-failure.ts` lines 174–182: `renderAuthored(site, template, view)` calls `observeTemplate` itself and builds the failure. Callers cannot supply their own renderer. I could not see the diff or list the callers |
+| 9 | Documentation identifiers | BLOCKED | The `docs/05-execution-engine.md (1100–813)` excerpt has a reversed range and no lines, and reading the file is outside my allowed commands |
+| 10 | Candidate stayed frozen | PASS | All 3 runs reported `sourceUnchanged: true` and the frozen patch hash |
+
+## Counts, runtimes and hashes
+
+- **Domain:** 26/26 tests in 1 file, 2.71 s
+  - stdout `f6c3b5b6580f0eebd2c36b40c04dae2baab29ac56073d6366dbe2f87f542902e` (4444 B)
+  - stderr `5362e83155321618898588beb78c1ed1a79bf662a6d0c8bbec77227cc6875298` (54 B)
+- **Engine:** 140/140 tests in 4 files, 7.14 s
+  - stdout `76e876f23665155c4f5d980fe7f7ca368c528dc8c1711f3522ca056a7b951da3` (28156 B)
+  - stderr `e1fdc8c97d38e36d316c17fe75749a24ced5811d31c229b5d4322871b46c8de8` (163 B)
+- **Controls:** 10/10 cases (7 throws, valid, repair, target), 1.53 s
+  - stdout `387f4b13f3d109d2db011e23754a170eac5cc760425fb8ff803ce74a07153d18` (1384 B)
+  - stderr empty (`e3b0c442…b855`)
+
+## Points for the final reviewer
+
+1. **Mutate-node failures pass evaluator text through.** In `mutation-failures.test.ts` (lines 80–108), the tests expect the public `failure.message` and `details.cause.message` to contain `author fault`, `append expect 2 arguments`, `not in a mutable region` and `traverses a non-container`. None of that text is in the fixed copy in `causeFor`, so the mutate node must build its public failure another way. Heartbeat, by contrast, replaces `$error` text with fixed copy. This doesn't fail any criterion as written, but someone should confirm it is intended.
+2. **7 engine test names weren't shown.** The summary counts 140 tests, but the output shows only 133 test lines. Six of those are cut off at "(first", and 7 tests have no line at all. My allowed commands can't read the full logs.
+3. **Unread stderr.** Domain and engine both wrote to stderr (54 B and 163 B), but the content wasn't shown. Both exited 0.
+4. **Node version unknown.** The wrapper doesn't report which Node version ran.
+
+## Limits of the synthetic controls
+
+- The throws come from a getter defined directly on an in-memory object, which stored JSON can't contain. They don't show that a supported stored-pointer throw path exists, and they are not evidence of a defect in one.
+- The driver checks what the mappers receive, not which internal line threw. The result fits the `validateJson` catch at lines 342–346 but doesn't prove it.
+- The target control passes no ordinary mapper. That a fact takes precedence over the ordinary mapper (line 224) is supported by source only.
+- I couldn't read or hash `failure-controls.mts`, and the wrapper doesn't report its hash. Its output matches the supplied driver's case names, count and qualifier.
+- The driver ran against TypeScript source through tsx with the development condition, not against the built `dist/`.
+
+## Still pending
+
+- Full `pnpm test:coverage` (90% gate), typecheck, lint and `pnpm check`. The focused runs covered only 1 domain file and 4 engine files.
+- Hosted CI.
+- The reserved final independent review.
+
+I made no product changes, wrote no files and did no formal review. The wrapper wrote only its own logs to the QA evidence directory.
