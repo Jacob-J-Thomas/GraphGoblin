@@ -1,0 +1,37 @@
+# R2-F1 acquisition uncertainty
+
+Issue #581 and PR #582. The starting head was `0af9b8a41367f4e90152333e02c687f4b7ba1185`.
+The implementation dispatch configured GPT-6.2 Sol with high reasoning as the fallback while
+the actual Claude subscription quota remained unavailable until 10:10 UTC. The worker context
+identified the GPT-6 family. The parent dispatch is the source for the configured model and effort.
+
+If the marker disappears before ownership verification on the eighth acquisition attempt, the
+public `StoreOwnershipRefusedError` now names the guard and explains the verification limit.
+That error uses the existing uncertainty diagnostic. Earlier marker losses still use the existing
+re-observation loop. Exhausted publication retries retain their ordinary refusal. Read-only checks,
+the successor proof, published release and unpublished staging cleanup retain their existing code.
+
+The regression schedules eight native marker-read ENOENT results through public acquisition. It
+checks the refusal type and path, the uncertainty reason, the absence of live-owner and stop
+instructions, eight marker reads, zero publication attempts, and a free store with an empty
+directory after cleanup. A second schedule combines seven marker losses with a final refused
+publication. It checks the earlier publication-exhaustion behavior and the same cleanup.
+
+| Check | Exit | Result |
+| --- | --- | --- |
+| `baseline-focused` | 1 | 1 expected diagnostic failure, 86 passes |
+| `focused` | 0 | 87 passes in two files |
+| `api-typecheck` | 0 | API typecheck |
+| `changed-lint` | 0 | ESLint for the two TypeScript files |
+| `format-diff` | 0 | Prettier and whitespace checks |
+
+The baseline diagnostic failure occurs after both its cleanup and retry-count checks pass. The
+mixed-retry control passes on both revisions. The round-one marker read regressions and existing
+read-only control remain part of the focused suite. The parent owns the independently scheduled
+two-process churn and confirmed-reset reruns on the integrated source, full API validation,
+commit and final review.
+
+Runs used Node v22.22.2 and pnpm 12.8.1. `commands.json` records shell commands and working
+directories, and each execution has a log and exit file. `source-sha256.txt` binds the source at
+handoff. The assignment modified the lock module, its failure tests and numbered distribution
+documentation. The changelog is included in the hash manifest for continuity with round one.

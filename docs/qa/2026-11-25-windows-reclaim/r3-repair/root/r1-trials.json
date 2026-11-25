@@ -1,0 +1,68 @@
+{
+  "revision": "working-tree",
+  "sourceSha256": "29c8914fc0bb3f338fc00fc4342d940cd6e1abc53238860c246baffe333bab76",
+  "node": "v22.22.2",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cases": [
+    {
+      "schedule": "remove-only-marker",
+      "events": [
+        "other contender removed only enumerated marker",
+        "caller rmdir succeeded",
+        {
+          "action": "caller published by real rename",
+          "replacedOriginal": false,
+          "priorEntries": [],
+          "differentInode": true
+        },
+        "caller rmdir succeeded"
+      ],
+      "reclaimed": {
+        "file": false,
+        "guard": true
+      },
+      "released": "removed",
+      "entriesAfterRelease": []
+    },
+    {
+      "schedule": "remove-marker-and-directory",
+      "events": [
+        "other contender removed only enumerated marker",
+        "other contender removed guard directory",
+        {
+          "action": "caller published by real rename",
+          "replacedOriginal": false,
+          "priorEntries": [],
+          "differentInode": true
+        },
+        "caller rmdir succeeded"
+      ],
+      "reclaimed": {
+        "file": false,
+        "guard": false
+      },
+      "released": "removed",
+      "entriesAfterRelease": []
+    },
+    {
+      "schedule": "preserve-marker",
+      "events": [
+        "caller rmdir succeeded",
+        {
+          "action": "caller published by real rename",
+          "replacedOriginal": false,
+          "priorEntries": [],
+          "differentInode": true
+        },
+        "caller rmdir succeeded"
+      ],
+      "reclaimed": {
+        "file": false,
+        "guard": true
+      },
+      "released": "removed",
+      "entriesAfterRelease": []
+    }
+  ]
+}
