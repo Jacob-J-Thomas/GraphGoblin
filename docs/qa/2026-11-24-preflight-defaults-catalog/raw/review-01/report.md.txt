@@ -1,0 +1,61 @@
+# Independent formal review 01: #545 and #546
+
+**Verdict: PASS for this frozen patch. No actionable findings or introduced blockers.** This is code-review sign-off, not final delivery or merge approval. Independent native-entry QA, the final designated review and CI/package coverage gates remain outstanding.
+
+## Identity and scope
+
+- Worktree: `G:/ggq/gg-fu-preflight-20261124/GraphGoblin`.
+- Base and HEAD: `d2df8600c2c8574bec420947de686b936910b245`.
+- Branch: `codex/gg-fu-preflight-20261124`.
+- Frozen patch SHA-256: `9d58186982ab043a02ad810953ec58fe609a03e69756555a7cdd0c9ff22dffaa`.
+- Six unstaged changed files are copied into this directory; `source-manifest.json` matches every hash in `../claude-implementation-01/CLAUDE-EXIT.json`. Rechecked unchanged at review completion.
+- Built preflight module used by the independent probe: `apps/api/dist/preflight.js`, SHA-256 `b9438c729b9faf2bb8ee02c38cf8c328562bcce780a7e2b98bc57f682d7cebaa`.
+- Reviewed the architecture, implementation brief/contract, repository instructions, issue workflow, pipeline review policy, implementation report and relevant baseline reproduction. No source edits, index writes, commits, publication, owner data, protected service ports or provider turns.
+
+## Correctness and boundaries
+
+`apps/api/src/preflight.ts:285` preserves membership diagnostics, applies startup's existing `validateHarnessDefaults` to the authored Codex defaults, and only then applies the existing disabled-model warning. Unsupported provided effort therefore fails even for a disabled row. At line 320 omission warns without making `report.ok` false, matching the explicit FUP-010 decision and startup's omission policy. Enabled, supported choices name their effort. Harness prerequisites remain separate checks. Claude's disabled-model failure remains unchanged.
+
+At lines 615 and 721 the CLI uses the existing format guard and migration counter. At line 741 a migrated store retains `SqliteModelCatalog.list()` with discovery metadata; a guarded current pending store uses startup's `readPreMigrationModelCatalog` and the same stored-first, missing-seed projection. Missing/guarded fresh stores use first-start seeds. This adds no migration, seeding, discovery, refresh or persistence write. The running-container path remains unchanged.
+
+At lines 355 and 426 a failed database inspection prevents catalog admission. Codex and configured Claude defaults get explicit inspection-limit warnings, while the database failure still determines failure. This removes the seed-backed ready claim for an uninspectable existing store. Jev/Ollama deferral and native harness checks remain separate. `runPreflightCli` retains unconditional `sources.close()` in its finally block at line 797.
+
+The changed tests cover real migration-prefix stores, stored-only models, disabled rows, stored effort metadata, absent seeds, committed WAL frames, first-start/empty stores, unsupported and corrupt stores, and the Codex effort matrix against ordinary container startup. Existing Ollama tests cover discovery-aware migrated catalogs and pending/refused/unreadable deferral. The touched test environments explicitly turn Ollama off unless the existing Ollama suite intercepts fetch.
+
+Docs and CHANGELOG reflect the behavior and text change, distinguish Codex and Claude disabled behavior, and retain the existing read-only SQLite SHM/new-empty-WAL exceptions. No new contract, model policy, compatibility path or schema change is introduced.
+
+## Verification evidence
+
+The implementer's raw tool results were independently checked and extracted into `author-verification-summary.json`; these are author-run gates, not independent QA:
+
+| Command | Recorded result |
+| --- | --- |
+| `pnpm --filter @graphgoblin/api test src/preflight-catalog.test.ts src/preflight.test.ts src/preflight-ollama.test.ts` | 97/97 passed; final run 14.38 seconds |
+| `pnpm --filter @graphgoblin/api typecheck` | Passed after the final test change |
+| `pnpm --filter @graphgoblin/api lint` | Passed after the final test change |
+| `pnpm test --filter=@graphgoblin/domain` | 484/484 passed |
+| `pnpm build --filter=@graphgoblin/api` | Passed; API cache miss; seven tasks successful |
+| `pnpm exec prettier --check` on all six changed files | Passed |
+| `git diff --check` | Passed independently in this review |
+
+Independent disposable built-function probes ran on Node v22.23.4:
+
+- `node --expose-gc review-01/closure-probe.mjs`: unsupported format-3 and corrupt stores each returned CLI-function exit 1 three times, then direct source inspection/close also passed. Both default checks warned explicitly; catalog access rejected; DB hashes were unchanged. The unsupported fixture had no WAL before preflight and gained only an allowed empty WAL. This probe did not supply a nonempty WAL; committed-existing-WAL evidence comes from the focused authored tests and the parent's separate native-entry QA.
+- The same probe obtained strict Windows `.NET FileShare.None` read access to the DB and any WAL after close plus the GC step already used by repository fixtures. Results: `closure-probe-results.json`.
+- `node --expose-gc review-01/driver-control.mjs`: the base and candidate both retained a native SQLite file handle before GC and both released it after GC. The base control transpiles only the immutable base `preflight.ts`, resolving the unchanged built dependencies from this worktree. Results: `driver-control-results.json`.
+
+Initial probe setup attempts encountered an asynchronous fixture-WAL disappearance before the first snapshot, then the strict pre-GC file-sharing failure. The final probe snapshots after fixture close settles. A baseline-control setup initially resolved Zod from the workspace root rather than the API package; that probe-only import was corrected. These were probe setup/lifecycle observations, not gate failures or source changes.
+
+## Concern ledger and dispositions
+
+| Signature | Evidence | Disposition |
+| --- | --- | --- |
+| `preflight/omitted-codex-effort-warning` | Architecture's explicit FUP-010 decision, startup validator, effort matrix | NO-CHANGE: intended admitted behavior; no new approval question |
+| `preflight/disabled-harness-status-difference` | Existing Codex WARN/Claude FAIL behavior retained; pending-store tests exercise both | NO-CHANGE: required invariant |
+| `preflight/native-handle-retained-before-gc` | Same strict sharing failure on base and candidate; both release after GC; physical CLI lifetime also ends at process exit | NO-CHANGE: no introduced cleanup regression established; not a patch blocker or an issue request |
+
+`findings` is empty. No deferred issue writes are requested by this review.
+
+## Limits and handoff
+
+This review did not rerun the broad API suite or full package coverage, per the #565 isolation boundary. It did not exercise paid inference, live providers, owner services or owner databases. Passing focused tests is not full-application acceptance. The independent probe calls the built public CLI function and source API; it is not the parent's planned physical `main.js --preflight` versus ordinary-process-startup reproduction. Continue the already-authorized native-entry QA, designated final review and CI gates against this exact frozen patch. A new review is needed only if the patch changes within the applicable pipeline rules.

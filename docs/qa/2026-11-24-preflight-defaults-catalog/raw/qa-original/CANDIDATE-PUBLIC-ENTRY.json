@@ -1,0 +1,344 @@
+[
+  {
+    "name": "migrated-none",
+    "model": "gpt-5.5",
+    "effort": "none",
+    "guard": "current; zero pending",
+    "before": {
+      "db": {
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "preflight": {
+      "code": 1,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\migrated-none-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  ok      Database        reachable and migrated\n  WARN    Harness ollama  Ollama is off in Settings\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured\n  FAIL    Default model   GG_DEFAULTS.byHarness.codex.effort \"none\" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists\n\n1 failed, 5 warning(s): fix the failed checks before starting\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).\n  codex: EFFORT_UNSUPPORTED at effort (model \"gpt-5.5\", effort \"none\"): The default reasoning effort is not supported by its model.\nNo stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.\n"
+    }
+  },
+  {
+    "name": "migrated-low",
+    "model": "gpt-5.5",
+    "effort": "low",
+    "guard": "current; zero pending",
+    "before": {
+      "db": {
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "preflight": {
+      "code": 0,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\migrated-low-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  ok      Database        reachable and migrated\n  WARN    Harness ollama  Ollama is off in Settings\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured\n  ok      Default model   gpt-5.5 (codex) is in the model catalog and supports effort low\n\n0 failed, 5 warning(s): ready to start\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 0,
+      "signal": null,
+      "listened": true,
+      "stdout": "{\"level\":30,\"time\":1795571714545,\"pid\":46492,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:49537\"}\n{\"level\":30,\"time\":1795571714546,\"pid\":46492,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":0,\"dataDir\":\"G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\preflight-545-546\\\\independent-qa-01\\\\candidate-store-002YV1\\\\migrated-low-data\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1795571714601,\"pid\":46492,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:49537\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":49538},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571714608,\"pid\":46492,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":5.9547999999999774,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795571714618,\"pid\":46492,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:49537\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":49539},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571714625,\"pid\":46492,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":6.457899999999881,\"msg\":\"request completed\"}\n",
+      "stderr": ""
+    }
+  },
+  {
+    "name": "migrated-omitted",
+    "model": "gpt-5.5",
+    "guard": "current; zero pending",
+    "before": {
+      "db": {
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "7bd5d622bac869967d8818e9c20b81cf7160f7f4e8bd7ac67b4593572ea0a6f8",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "preflight": {
+      "code": 0,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\migrated-omitted-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  ok      Database        reachable and migrated\n  WARN    Harness ollama  Ollama is off in Settings\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             no API key in secret \"jev-api-key\"; Jev is optional; its classifier is unavailable until a key is configured\n  WARN    Default model   gpt-5.5 (codex) is in the model catalog, but GG_DEFAULTS.byHarness.codex.effort is not set; runs need a supported effort from the loop or Settings defaults\n\n0 failed, 6 warning(s): ready to start\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 0,
+      "signal": null,
+      "listened": true,
+      "stdout": "{\"level\":30,\"time\":1795571719516,\"pid\":19168,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:50813\"}\n{\"level\":30,\"time\":1795571719516,\"pid\":19168,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":0,\"dataDir\":\"G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\preflight-545-546\\\\independent-qa-01\\\\candidate-store-002YV1\\\\migrated-omitted-data\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1795571719522,\"pid\":19168,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:50813\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":50814},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571719528,\"pid\":19168,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":5.425699999999779,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795571719530,\"pid\":19168,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:50813\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":50815},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571719536,\"pid\":19168,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":5.182000000000244,\"msg\":\"request completed\"}\n",
+      "stderr": ""
+    }
+  },
+  {
+    "name": "pending-disabled",
+    "model": "gpt-6-luna",
+    "effort": "low",
+    "guard": "current; 3 pending, stored row disabled",
+    "before": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "d609040777c3eb173af82bddfc5c7783236de2bd19bdeeec4950bc5c3a5e9358",
+        "size": 16512
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "d609040777c3eb173af82bddfc5c7783236de2bd19bdeeec4950bc5c3a5e9358",
+        "size": 16512
+      }
+    },
+    "preflight": {
+      "code": 0,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\pending-disabled-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  WARN    Database        3 migration(s) pending; they are applied on the next start\n  WARN    Harness ollama  Ollama is not checked until the database is migrated\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  WARN    Default model   gpt-6-luna is in the model catalog but disabled\n\n0 failed, 7 warning(s): ready to start\n",
+      "stderr": ""
+    }
+  },
+  {
+    "name": "pending-stored-only",
+    "model": "fixture-only-codex-model",
+    "effort": "low",
+    "guard": "current; 3 pending, model only in stored rows",
+    "before": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "d609040777c3eb173af82bddfc5c7783236de2bd19bdeeec4950bc5c3a5e9358",
+        "size": 16512
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "d609040777c3eb173af82bddfc5c7783236de2bd19bdeeec4950bc5c3a5e9358",
+        "size": 16512
+      }
+    },
+    "preflight": {
+      "code": 0,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\pending-stored-only-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  WARN    Database        3 migration(s) pending; they are applied on the next start\n  WARN    Harness ollama  Ollama is not checked until the database is migrated\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   fixture-only-codex-model (codex) is in the model catalog and supports effort low\n\n0 failed, 6 warning(s): ready to start\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 0,
+      "signal": null,
+      "listened": true,
+      "stdout": "{\"level\":30,\"time\":1795571729409,\"pid\":5780,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:62658\"}\n{\"level\":30,\"time\":1795571729410,\"pid\":5780,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":0,\"dataDir\":\"G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\preflight-545-546\\\\independent-qa-01\\\\candidate-store-002YV1\\\\pending-stored-only-data\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1795571729414,\"pid\":5780,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:62658\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":62659},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571729421,\"pid\":5780,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":6.384499999999662,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795571729423,\"pid\":5780,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:62658\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":62660},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571729428,\"pid\":5780,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":4.3770999999997,\"msg\":\"request completed\"}\n",
+      "stderr": ""
+    }
+  },
+  {
+    "name": "pending-missing-seed",
+    "model": "gpt-6.1-terra",
+    "effort": "medium",
+    "guard": "current; 3 pending, shipped row absent",
+    "before": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "a1e9447b8325add512175105f8cbdcd061b1d799f856d78463b646a1c0a20771",
+        "size": 8272
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "a1e9447b8325add512175105f8cbdcd061b1d799f856d78463b646a1c0a20771",
+        "size": 8272
+      }
+    },
+    "preflight": {
+      "code": 0,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\pending-missing-seed-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  WARN    Database        3 migration(s) pending; they are applied on the next start\n  WARN    Harness ollama  Ollama is not checked until the database is migrated\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   gpt-6.1-terra (codex) is in the model catalog and supports effort medium\n\n0 failed, 6 warning(s): ready to start\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 0,
+      "signal": null,
+      "listened": true,
+      "stdout": "{\"level\":30,\"time\":1795571734615,\"pid\":26872,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:62664\"}\n{\"level\":30,\"time\":1795571734615,\"pid\":26872,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":0,\"dataDir\":\"G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\preflight-545-546\\\\independent-qa-01\\\\candidate-store-002YV1\\\\pending-missing-seed-data\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1795571734620,\"pid\":26872,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:62664\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":62665},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571734628,\"pid\":26872,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":6.696799999999712,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795571734630,\"pid\":26872,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:62664\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":62666},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571734639,\"pid\":26872,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":8.341499999999996,\"msg\":\"request completed\"}\n",
+      "stderr": ""
+    }
+  },
+  {
+    "name": "pending-stored-effort",
+    "model": "gpt-5.5",
+    "effort": "high",
+    "guard": "current; 3 pending, stored efforts only low",
+    "before": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "6e423039bf431fa462d94661e617e7a8dddb8a86ef728e947cd03bfb5e0ea61c",
+        "size": 8272
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "74df16565ee35fa295ecac9f22d9345108f6b10872df3dfd54d62598ea5e12d3",
+        "size": 454656
+      },
+      "-wal": {
+        "sha256": "6e423039bf431fa462d94661e617e7a8dddb8a86ef728e947cd03bfb5e0ea61c",
+        "size": 8272
+      }
+    },
+    "preflight": {
+      "code": 1,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\pending-stored-effort-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  WARN    Database        3 migration(s) pending; they are applied on the next start\n  WARN    Harness ollama  Ollama is not checked until the database is migrated\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  FAIL    Default model   GG_DEFAULTS.byHarness.codex.effort \"high\" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists\n\n1 failed, 6 warning(s): fix the failed checks before starting\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).\n  codex: EFFORT_UNSUPPORTED at effort (model \"gpt-5.5\", effort \"high\"): The default reasoning effort is not supported by its model.\nNo stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again.\n"
+    }
+  },
+  {
+    "name": "missing",
+    "model": "gpt-5.5",
+    "effort": "low",
+    "guard": "absent",
+    "before": {},
+    "after": {},
+    "preflight": {
+      "code": 0,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\missing-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  WARN    Database        the database does not exist yet; it is created and migrated on first start\n  WARN    Harness ollama  Ollama is off in Settings\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  ok      Default model   gpt-5.5 (codex) is in the default catalog seeded on first start and supports effort low\n\n0 failed, 6 warning(s): ready to start\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 0,
+      "signal": null,
+      "listened": true,
+      "stdout": "{\"level\":30,\"time\":1795571745808,\"pid\":22276,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:62680\"}\n{\"level\":30,\"time\":1795571745809,\"pid\":22276,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":0,\"dataDir\":\"G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\preflight-545-546\\\\independent-qa-01\\\\candidate-store-002YV1\\\\missing-data\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1795571745814,\"pid\":22276,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:62680\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":62681},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571745823,\"pid\":22276,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":7.760000000000218,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795571745825,\"pid\":22276,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:62680\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":62682},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795571745831,\"pid\":22276,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":5.6042999999999665,\"msg\":\"request completed\"}\n",
+      "stderr": ""
+    }
+  },
+  {
+    "name": "unsupported",
+    "model": "gpt-5.5",
+    "effort": "low",
+    "guard": "format 3",
+    "before": {
+      "db": {
+        "sha256": "3c7f54ef072ab8f667c2047706fe480e8bb5f83a76899b1b6fed757260c44257",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "3c7f54ef072ab8f667c2047706fe480e8bb5f83a76899b1b6fed757260c44257",
+        "size": 479232
+      },
+      "-wal": {
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "size": 0
+      }
+    },
+    "preflight": {
+      "code": 1,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported-data\"\n  WARN    Harness ollama  Ollama is not checked until the database is current and readable\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  WARN    Default model   The configured Codex model and effort are not checked until the database is current and readable\n\n1 failed, 6 warning(s): fix the failed checks before starting\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "GraphGoblin did not start: this build cannot open the store in data directory G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported-data.\n  Database: G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported.db\n  Found:    format 3\n  Requires: format 4\n  Reason:   The store is format 3; this build reads only format 4\nNo stored data was changed. This build does not convert stores from other formats.\nTo keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported-data\"\n"
+    }
+  },
+  {
+    "name": "unreadable",
+    "model": "gpt-5.5",
+    "effort": "low",
+    "guard": "not SQLite",
+    "before": {
+      "db": {
+        "sha256": "71ce97f612e4eec6a9970b6dfbfc9aea82972eb02d85c6cf5010aefaf67df43e",
+        "size": 27
+      }
+    },
+    "after": {
+      "db": {
+        "sha256": "71ce97f612e4eec6a9970b6dfbfc9aea82972eb02d85c6cf5010aefaf67df43e",
+        "size": 27
+      }
+    },
+    "preflight": {
+      "code": 1,
+      "stdout": "GraphGoblin preflight\n\n  STATUS  CHECK           DETAIL\n  ok      Node.js         Node 22.23.4\n  WARN    Data directory  G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unreadable-data does not exist yet; it is created on first start\n  ok      Master key      taken from GG_MASTER_KEY\n  FAIL    Database        not reachable: SQLITE_NOTADB: file is not a database\n  WARN    Harness ollama  Ollama is not checked until the database is current and readable\n  WARN    Harness claude  Claude CLI was not found at the configured path. Install the Claude CLI or set GG_CLAUDE_BINARY, then retry preflight.\n  ok      Harness codex   codex 0.160.0 is installed and logged in\n  WARN    Codex plugins   Loaded plugin tools are not verified by this check. Inspect codex plugin list --json and codex mcp list --json in the worker directory; neither proves every enabled plugin loaded. Verify the expected tool in the worker before relying on it.\n  WARN    Jev             not checked until the database is migrated; Jev is optional\n  WARN    Default model   The configured Codex model and effort are not checked until the database is current and readable\n\n1 failed, 6 warning(s): fix the failed checks before starting\n",
+      "stderr": ""
+    },
+    "startup": {
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "LibsqlError: SQLITE_NOTADB: file is not a database\n    at mapSqliteError (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:653:16)\n    at executeStmt (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:556:15)\n    at Sqlite3Client.execute (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20)\n    ... 5 lines matching cause stack trace ...\n    at async serve (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/apps/api/dist/serve.js:111:16) {\n  code: 'SQLITE_NOTADB',\n  extendedCode: 'SQLITE_NOTADB',\n  rawCode: 26,\n  [cause]: SqliteError: file is not a database\n      at convertError (G:\\ggq\\gg-fu-preflight-20261124\\GraphGoblin\\node_modules\\.pnpm\\libsql@0.5.29\\node_modules\\libsql\\index.js:59:12)\n      at Database.prepare (G:\\ggq\\gg-fu-preflight-20261124\\GraphGoblin\\node_modules\\.pnpm\\libsql@0.5.29\\node_modules\\libsql\\index.js:131:13)\n      at executeStmt (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:527:28)\n      at Sqlite3Client.execute (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/node_modules/.pnpm/@libsql+client@0.18.0/node_modules/@libsql/client/lib-esm/sqlite3.js:245:20)\n      at async rows (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/packages/infrastructure/dist/sqlite/readiness.js:11:20)\n      at async tableNames (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/packages/infrastructure/dist/sqlite/store-format.js:13:13)\n      at async guardCurrentStore (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/packages/infrastructure/dist/sqlite/store-format.js:97:19)\n      at async createContainer (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/apps/api/dist/container.js:76:31)\n      at async file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/apps/api/dist/serve.js:53:23\n      at async serve (file:///G:/ggq/gg-fu-preflight-20261124/GraphGoblin/apps/api/dist/serve.js:111:16) {\n    code: 'SQLITE_NOTADB',\n    rawCode: 26\n  }\n}\n"
+    }
+  }
+]

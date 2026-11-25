@@ -258,13 +258,13 @@ With `GG_REQUIRE_API_KEY=true` the [public shell][public-routes] still loads and
 
 ## Check readiness and run the starter graph
 
-The first-run preflight checks Node, the data directory, the master key, the database and pending migrations, the Codex harness (installed and logged in), the optional Jev key, and the default model. Each check is `ok`, `WARN` (works, or is set up on first start), or `FAIL` (runs will not work until it is fixed). It changes nothing and is safe before the first start. From the repository root, with the same environment as the server:
+The first-run preflight checks Node, the data directory, the master key, the database and pending migrations, the Codex harness (installed and logged in), the optional Jev key, and the default model. Each check is `ok`, `WARN` (works, or is set up on first start), or `FAIL` (runs will not work until it is fixed). It leaves settings and database rows unchanged and does not run migrations. It can create and remove a temporary file to check directory writability, and opening an existing database may create or update SQLite sidecar files. You can run it before the first start. From the repository root, with the same environment as the server:
 
 ```powershell
 node apps/api/dist/main.js --preflight
 ```
 
-It prints a table and exits 1 when any check failed. Before the first start the master key and database are warnings, because the start creates them. While the API runs, the same report is available over HTTP (`GET /system/preflight` needs a key when keys are required; see [Public routes][public-routes]):
+It prints a table and exits 1 when any check failed. Before the first start the master key and database are warnings, because the start creates them. The default model is checked against the model catalog the next start uses, including your saved models while migrations are pending. A `GG_DEFAULTS` effort the model does not offer fails, as the start refuses it. A Codex default without an effort is a warning: the start accepts it, but each run then needs an effort from its loop or Settings. If the database cannot be read or is refused, the default model is reported as not checked. While the API runs, the same report is available over HTTP (`GET /system/preflight` needs a key when keys are required; see [Public routes][public-routes]):
 
 ```bash
 curl -sS http://127.0.0.1:4747/system/preflight

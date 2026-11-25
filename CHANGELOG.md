@@ -4,6 +4,21 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Preflight checks `GG_DEFAULTS` against the model catalog start uses (#545, #546). A Codex
+  effort its model does not offer now fails with `EFFORT_UNSUPPORTED`, as start refuses it; an
+  omitted Codex effort is a warning, because start accepts it but a run then needs a supported
+  effort from its loop or Settings defaults. The Codex `ok` detail names the effort. A current
+  store with pending migrations is checked against its stored rows, read as startup reads them
+  before migrating, plus the shipped models it lacks, so stored disabled rows, stored-only models
+  and stored effort lists count as they do at startup. Missing and empty stores still use the
+  shipped catalog. An unsupported or unreadable store still fails its database check; its Codex
+  and Claude default checks now warn that they were not checked instead of reporting a result
+  from the shipped catalog. `GET /system/preflight` applies the same Codex effort rule. Check IDs,
+  the report shape, the Jev and Ollama deferrals and startup policy are unchanged, and preflight
+  still changes no database or existing write-ahead log bytes.
+  **Upgrade:** rebuild the API. Preflight output parsers must allow the new Codex warning and
+  detail text. No schema, stored format or reset change.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under

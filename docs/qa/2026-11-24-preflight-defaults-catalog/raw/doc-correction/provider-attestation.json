@@ -1,0 +1,86 @@
+{
+  "preflightQuotaAttempt": {
+    "succeeded": false,
+    "providerModel": "claude-opus-5-5",
+    "effort": "xhigh",
+    "account": "ordinary Claude Max",
+    "apiKeySource": "none",
+    "observedOverage": false,
+    "rateLimitEvents": [
+      {
+        "status": "rejected",
+        "rateLimitType": "five_hour",
+        "resetsAt": 1795583400,
+        "isUsingOverage": false
+      }
+    ],
+    "permissionDenials": 0,
+    "scopeEdits": [],
+    "commandEvidence": [],
+    "privateStderrBytes": 0
+  },
+  "preflightSuccessfulCorrection": {
+    "succeeded": true,
+    "providerModel": "claude-opus-5-5",
+    "effort": "xhigh",
+    "account": "ordinary Claude Max",
+    "apiKeySource": "none",
+    "observedOverage": false,
+    "rateLimitEvents": [
+      {
+        "status": "allowed",
+        "rateLimitType": "five_hour",
+        "resetsAt": 1795601400,
+        "isUsingOverage": false
+      },
+      {
+        "status": "allowed",
+        "rateLimitType": "five_hour",
+        "resetsAt": 1795601400,
+        "isUsingOverage": false
+      }
+    ],
+    "permissionDenials": 0,
+    "scopeEdits": [
+      "docs/guide/01-install-and-first-run.md"
+    ],
+    "commandEvidence": [
+      {
+        "command": "git --no-optional-locks status --short",
+        "requestLine": 8,
+        "resultLine": 10,
+        "ok": true
+      },
+      {
+        "command": "node --version",
+        "requestLine": 20,
+        "resultLine": 21,
+        "ok": true
+      },
+      {
+        "command": "pnpm exec prettier --check docs/guide/01-install-and-first-run.md",
+        "requestLine": 33,
+        "resultLine": 35,
+        "ok": true
+      },
+      {
+        "command": "git --no-pager diff --check",
+        "requestLine": 34,
+        "resultLine": 36,
+        "ok": true
+      },
+      {
+        "command": "git --no-optional-locks status --short",
+        "requestLine": 37,
+        "resultLine": 38,
+        "ok": true
+      }
+    ],
+    "privateStderrBytes": 0
+  },
+  "reportHashes": {
+    "providerResultTextSha256": "2456b636397608caee59c99098507c21b7b6ba00624741dec410b12204e95465",
+    "exactSavedReportBytesSha256": "8ac8963b0dc138a6413d03291c19e5379d7adb038e678075ad49cceabced1cf4"
+  },
+  "observedAt": "2026-11-25T05:40:10.761955+00:00"
+}
