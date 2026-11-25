@@ -958,16 +958,26 @@ describe('root browser review regressions', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Send message' }));
     expect(await screen.findByText(turn.response!.reply)).toBeVisible();
-    expect(screen.getByRole('status')).toHaveTextContent(`Reply: ${turn.response!.reply}`);
-    fireEvent.click(screen.getByRole('button', { name: 'New chat' }));
+    const newChat = await waitFor(() => {
+      const button = screen.getByRole('button', { name: 'New chat' });
+      expect(button).toBeEnabled();
+      return button;
+    });
+    const replyStatus = screen.getByText(`Reply: ${turn.response!.reply}`, {
+      selector: '[role="status"][aria-live="polite"]',
+    });
+    expect(screen.getAllByRole('status')).toContain(replyStatus);
+    fireEvent.click(newChat);
     expect(await screen.findByRole('heading', { name: 'What’s the move?' })).toBeVisible();
-    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    expect(replyStatus).toBeInTheDocument();
+    expect(replyStatus).toBeEmptyDOMElement();
     client.turns.mockResolvedValue([turn]);
     fireEvent.change(screen.getByRole('combobox', { name: 'Conversation' }), {
       target: { value: conversation.id },
     });
     expect(await screen.findByText(turn.response!.reply)).toBeVisible();
-    expect(screen.getByRole('status')).toBeEmptyDOMElement();
+    expect(replyStatus).toBeInTheDocument();
+    expect(replyStatus).toBeEmptyDOMElement();
   });
   it('R2 keeps uncertain admission recovery intact when New chat is blocked', async () => {
     sessionStorage.setItem(

@@ -1,0 +1,95 @@
+"""Exact corrected-#565 test commands; all evidence writes are outside the checkout."""
+
+from importlib import import_module
+import json
+from pathlib import Path
+import re
+import subprocess
+import sys
+import tempfile
+
+sys.dont_write_bytecode = True
+binding = import_module('bind-correction')
+ROOT, shared = binding.ROOT, binding.shared
+QA = ROOT / 'independent-qa-02'
+
+
+def junction_environment(env):
+    scratch = Path(tempfile.mkdtemp(prefix='gg-565-junction-qa-', dir='G:/ggq')).resolve()
+    target = scratch / 'canonical-temporary-target'
+    alias = scratch / 'temporary-alias'
+    target.mkdir()
+    command = [
+        str(binding.NODE), '-e',
+        "require('node:fs').symlinkSync(process.argv[1], process.argv[2], 'junction')",
+        str(target), str(alias),
+    ]
+    subprocess.run(command, env=env, check=True, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW)
+    test_env = {
+        **env, 'TEMP': str(alias), 'TMP': str(alias),
+        'GG_TEST_PORT_START': '62100', 'GG_TEST_PORT_COUNT': '100',
+    }
+    probe = subprocess.run(
+        [str(binding.NODE), '-e',
+         "const os=require('node:os'),fs=require('node:fs');"
+         "console.log(JSON.stringify({tmpdir:os.tmpdir(),real:fs.realpathSync(os.tmpdir())}))"],
+        env=test_env, capture_output=True, check=True, creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+    evidence = json.loads(probe.stdout)
+    if Path(evidence['tmpdir']) != alias or Path(evidence['real']).resolve() != target:
+        raise RuntimeError('JUNCTION_CONTROL_NOT_ACTIVE')
+    evidence.update({
+        'ownedScratch': scratch.as_posix(), 'alias': alias.as_posix(), 'target': target.as_posix(),
+        'portRange': '62100-62199', 'qualification': 'Canonical path alias control, not a Windows 8.3 alias.',
+    })
+    return test_env, evidence
+
+
+def main():
+    if len(sys.argv) != 2 or sys.argv[1] not in binding.COMMANDS:
+        raise SystemExit('Use build, api or junction')
+    mode = sys.argv[1]
+    binding.require_reset()
+    env = binding.environment()
+    before, _ = binding.verify(env)
+    if mode != 'build':
+        built = shared.read_json(QA / 'BUILD-RESULT.json')
+        if built['exitCode'] != 0 or not built['sourceAndIndexUnchanged'] or built['head'] != binding.HEAD:
+            raise RuntimeError('EXACT_CORRECTION_BUILD_REQUIRED')
+    junction = None
+    if mode == 'junction':
+        env, junction = junction_environment(env)
+    out = QA / f'{mode}.stdout.log'
+    err = QA / f'{mode}.stderr.log'
+    started = shared.utc_now()
+    with out.open('xb') as stdout, err.open('xb') as stderr:
+        result = binding.execute(binding.COMMANDS[mode], env)
+        stdout.write(result.stdout)
+        stderr.write(result.stderr)
+    try:
+        after, _ = binding.verify(env)
+        unchanged = after == before
+    except (RuntimeError, OSError, subprocess.SubprocessError):
+        unchanged = False
+    receipt = {
+        'mode': mode, 'command': binding.COMMANDS[mode], 'head': before['head'], 'tree': before['tree'],
+        'indexSha256': before['indexSha256'], 'sourceSha256': before['sourceSha256'],
+        'exitCode': result.returncode, 'sourceAndIndexUnchanged': unchanged,
+        'startedAt': started, 'finishedAt': shared.utc_now(), 'junction': junction,
+        'stdout': {'file': out.name, 'bytes': len(result.stdout), 'sha256': binding.sha(result.stdout)},
+        'stderr': {'file': err.name, 'bytes': len(result.stderr), 'sha256': binding.sha(result.stderr)},
+    }
+    shared.save_json(QA / f'{mode.upper()}-RESULT.json', receipt)
+    print(json.dumps(receipt, indent=2))
+    text = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', (result.stdout + b'\n' + result.stderr).decode('utf-8', errors='replace'))
+    text = re.sub(r'\bgg_[A-Za-z0-9_-]{16,}\b', '[disposable-key]', text)
+    lines = text.splitlines()
+    if result.returncode == 0:
+        lines = [line for line in lines if re.search(r'\b(Tests|Test Files|Tasks:|Cached:|Time:)|✓|↓', line)]
+    print('\n'.join(lines[-85:]).encode('ascii', errors='backslashreplace').decode('ascii'))
+    return result.returncode if unchanged else 2
+
+
+if __name__ == '__main__':
+    sys.exit(main())
+

@@ -909,14 +909,51 @@ export class Recorder {
       parent,
       numbering: parent?.numbering ?? { subtests: 0 },
       children: 0,
+      running: 0,
       failedSubtests: 0,
       lastChild: null,
+      ended: false,
     };
   }
 
+  /**
+   * Record a test's start and its one end. The end is recorded when the body settles, or as soon as
+   * node:test stops waiting for the body: when it aborts the test's signal to cancel it (its
+   * timeout, or a parent or the whole run that finished first), or when a subtest starts after its
+   * parent ended. node:test reports such a test as failed whatever the body does later, so the body
+   * keeps running and recording in its scope, but a later return or throw adds no second end.
+   * Subtests still running when their parent ends are cancelled by node:test and count as failed.
+   */
   async #run(current, t, body) {
+    const { parent } = current;
     this.record('case-start', { case: current.case, subtest: current.subtest });
+    if (parent) parent.running++;
     const started = this.#clock();
+    const end = (thrown, error) => {
+      if (current.ended) return;
+      current.ended = true;
+      if (parent) parent.running--;
+      const failedSubtests = current.failedSubtests + current.running;
+      const failed = thrown || failedSubtests > 0;
+      if (failed && parent) parent.failedSubtests++;
+      const record = this.record('case-end', {
+        case: current.case,
+        subtest: current.subtest,
+        result: failed ? 'fail' : 'pass',
+        elapsedMs: Math.min(86_400_000, Math.max(0, Math.round(this.#clock() - started))),
+        failedSubtests,
+        // Even a thrown `undefined` or `null`, or a cancellation, is a failure with a kind.
+        ...failureFields(thrown ? (error ?? {}) : undefined, failedSubtests),
+      });
+      if (failed) {
+        this.#marker(record);
+        this.#marker(current.lastChild);
+      }
+    };
+    const signal = property(t, 'signal');
+    if (signal instanceof AbortSignal)
+      signal.addEventListener('abort', () => end(true), { once: true });
+    if ((signal instanceof AbortSignal && signal.aborted) || parent?.ended) end(true);
     let thrown = false;
     let error;
     try {
@@ -928,21 +965,7 @@ export class Recorder {
       error = caught;
       throw caught;
     } finally {
-      const failed = thrown || current.failedSubtests > 0;
-      if (failed && current.parent) current.parent.failedSubtests++;
-      const end = this.record('case-end', {
-        case: current.case,
-        subtest: current.subtest,
-        result: failed ? 'fail' : 'pass',
-        elapsedMs: Math.min(86_400_000, Math.max(0, Math.round(this.#clock() - started))),
-        failedSubtests: current.failedSubtests,
-        // Even a thrown `undefined` or `null` is a failure with a kind.
-        ...failureFields(thrown ? (error ?? {}) : undefined, current.failedSubtests),
-      });
-      if (failed) {
-        this.#marker(end);
-        this.#marker(current.lastChild);
-      }
+      end(thrown, error);
     }
   }
 

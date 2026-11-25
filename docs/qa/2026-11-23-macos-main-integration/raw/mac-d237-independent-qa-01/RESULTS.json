@@ -1,0 +1,223 @@
+{
+  "utc": "2026-11-23T02:44:12.2920262+00:00",
+  "total": 46,
+  "passed": 28,
+  "failed": 0,
+  "pending": 18,
+  "success": true,
+  "files": [
+    {
+      "path": "G:/ggq/gg-mac-d237-qa/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts",
+      "status": "passed",
+      "total": 14,
+      "passed": 14,
+      "unexecuted": 0,
+      "cases": [
+        {
+          "name": "recognizes a Windows recovery marker that disappeared before its owner could be read",
+          "status": "passed"
+        },
+        {
+          "name": "preserves a refused read when the recovery marker still exists",
+          "status": "passed"
+        },
+        {
+          "name": "preserves a refused main owner record read even when its path is absent",
+          "status": "passed"
+        },
+        {
+          "name": "accepts Windows EPERM only after the exact stale UUID marker is independently absent",
+          "status": "passed"
+        },
+        {
+          "name": "never retries a refused stale-marker deletion or touches a successor marker",
+          "status": "passed"
+        },
+        {
+          "name": "accepts Windows rmdir EPERM only after the guard directory is independently absent",
+          "status": "passed"
+        },
+        {
+          "name": "retains a genuine guard-directory removal failure and rolls back its main lock",
+          "status": "passed"
+        },
+        {
+          "name": "never removes a successor published before an absent-marker EPERM recheck",
+          "status": "passed"
+        },
+        {
+          "name": "preserves non-Windows EPERM even when a stale marker disappeared",
+          "status": "passed"
+        },
+        {
+          "name": "rolls back a newly acquired ordinary main lock if its recovery marker cannot be released",
+          "status": "passed"
+        },
+        {
+          "name": "rolls back a newly acquired attested main lock if its recovery marker cannot be released",
+          "status": "passed"
+        },
+        {
+          "name": "explicitly reports retained ownership if both recovery release and main rollback fail",
+          "status": "passed"
+        },
+        {
+          "name": "retains the original ownership refusal alongside recovery cleanup failures",
+          "status": "passed"
+        },
+        {
+          "name": "retains an acquisition refusal when unpublished staging cleanup also fails",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "G:/ggq/gg-mac-d237-qa/GraphGoblin/apps/api/src/data-dir-lock.integration.independent.qa.test.ts",
+      "status": "passed",
+      "total": 13,
+      "passed": 13,
+      "unexecuted": 0,
+      "cases": [
+        {
+          "name": "independent D237 public lock composition delta L1 keeps one primary acquisition and its real ordinary release",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L1 keeps one primary acquisition and its real attested release",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L2 reclaims a real exited child owner through the ordinary overload",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L2 reclaims a real exited child owner through the attested overload",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L3 rolls back the ordinary primary after recovery release fails without publishing a lease",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L3 rolls back the attested primary after recovery release fails without publishing a lease",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L4 keeps both errors and ownership when ordinary rollback also fails",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L4 keeps both errors and ownership when attested rollback also fails",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L5 forwards attested release ownership after absent and retires proof",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L5 forwards attested release ownership after successor and retires proof",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L5 forwards attested release ownership after removal-fault and retires proof",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L6 retires an already verified result whose final filesystem observation completes after release begins",
+          "status": "passed"
+        },
+        {
+          "name": "independent D237 public lock composition delta L7 shares canonical database ownership across overloads and refuses real hard-link aliases",
+          "status": "passed"
+        }
+      ]
+    },
+    {
+      "path": "G:/ggq/gg-mac-d237-qa/GraphGoblin/apps/api/src/macos-local-key.test.ts",
+      "status": "passed",
+      "total": 19,
+      "passed": 1,
+      "unexecuted": 18,
+      "cases": [
+        {
+          "name": "attested writer artifacts proves the exact live acquisition and makes proof unavailable as soon as release starts",
+          "status": "skipped"
+        },
+        {
+          "name": "attested writer artifacts cannot use an exact token-bearing copy at a different inode",
+          "status": "skipped"
+        },
+        {
+          "name": "attested writer artifacts refuses changed record on the original locked inode",
+          "status": "skipped"
+        },
+        {
+          "name": "attested writer artifacts refuses changed link on the original locked inode",
+          "status": "skipped"
+        },
+        {
+          "name": "attested writer artifacts refuses changed mode on the original locked inode",
+          "status": "skipped"
+        },
+        {
+          "name": "attested writer artifacts does not attach a proof to ordinary leases",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup creates a local key only after actual fresh lease admission",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup allows admissible key metadata and leaves key decoding to the normal loader",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses database before any SQLite connection or key generation",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses wal before any SQLite connection or key generation",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses reclaim before any SQLite connection or key generation",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses other before any SQLite connection or key generation",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses key-directory before any SQLite connection or key generation",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses key-symlink before any SQLite connection or key generation",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses override before any SQLite connection or key generation",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup requires proof from both exact leases and refuses a second filename-only exemption",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup refuses external or option-bearing SQLite URLs without touching another store",
+          "status": "skipped"
+        },
+        {
+          "name": "Mac-managed store startup does not follow a local database name that points at a different store",
+          "status": "skipped"
+        },
+        {
+          "name": "reports key refusal as a fixed closed startup cause",
+          "status": "passed"
+        }
+      ]
+    }
+  ],
+  "executedOverlaySha256": "35bc29a71b5aff7b05796339938f9b7e087822645e87a7c568de42aa5b5e6f84",
+  "worktreeOverlaySha256": "35bc29a71b5aff7b05796339938f9b7e087822645e87a7c568de42aa5b5e6f84"
+}

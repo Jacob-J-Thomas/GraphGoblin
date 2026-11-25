@@ -1,0 +1,677 @@
+﻿2026-11-17T03:32:39.7420050Z Current runner version: '2.338.2'
+2026-11-17T03:32:39.7438100Z ##[group]Runner Image Provisioner
+2026-11-17T03:32:39.7438870Z Hosted Compute Agent
+2026-11-17T03:32:39.7439300Z Version: 20261103.629
+2026-11-17T03:32:39.7439720Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-17T03:32:39.7440240Z Build Date: 2026-11-03T17:26:59Z
+2026-11-17T03:32:39.7440690Z Worker ID: {7ef076ae-40b7-4d5d-b999-b607aa31cffa}
+2026-11-17T03:32:39.7441150Z Region: westus
+2026-11-17T03:32:39.7441510Z Cloud: MacCloud
+2026-11-17T03:32:39.7441880Z ##[endgroup]
+2026-11-17T03:32:39.7442990Z ##[group]Operating System
+2026-11-17T03:32:39.7443400Z macOS
+2026-11-17T03:32:39.7443730Z 15.8.2
+2026-11-17T03:32:39.7444070Z 24H232
+2026-11-17T03:32:39.7444410Z ##[endgroup]
+2026-11-17T03:32:39.7444790Z ##[group]Runner Image
+2026-11-17T03:32:39.7445190Z Image: macos-15-arm64
+2026-11-17T03:32:39.7445570Z Version: 20261104.0514.1
+2026-11-17T03:32:39.7446480Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20261104.0514/images/macos/macos-15-arm64-Readme.md
+2026-11-17T03:32:39.7447530Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20261104.0514
+2026-11-17T03:32:39.7448200Z ##[endgroup]
+2026-11-17T03:32:39.7449080Z ##[group]GITHUB_TOKEN Permissions
+2026-11-17T03:32:39.7450480Z Contents: read
+2026-11-17T03:32:39.7450890Z Metadata: read
+2026-11-17T03:32:39.7451250Z Packages: read
+2026-11-17T03:32:39.7451610Z ##[endgroup]
+2026-11-17T03:32:39.7453210Z Secret source: Actions
+2026-11-17T03:32:39.7453770Z Cache mode: write
+2026-11-17T03:32:39.7454240Z Prepare workflow directory
+2026-11-17T03:32:39.7805090Z Prepare all required actions
+2026-11-17T03:32:39.7848690Z Getting action download info
+2026-11-17T03:32:39.9595640Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-17T03:32:40.1064410Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-17T03:32:40.8724560Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-17T03:32:40.9414630Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-17T03:32:41.0950230Z Complete job name: macOS launcher
+2026-11-17T03:32:41.1554800Z ##[group]Run actions/checkout@v4
+2026-11-17T03:32:41.1555350Z with:
+2026-11-17T03:32:41.1555700Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:32:41.1558720Z   token: ***
+2026-11-17T03:32:41.1559030Z   ssh-strict: true
+2026-11-17T03:32:41.1559350Z   ssh-user: git
+2026-11-17T03:32:41.1559670Z   persist-credentials: true
+2026-11-17T03:32:41.1560020Z   clean: true
+2026-11-17T03:32:41.1560350Z   sparse-checkout-cone-mode: true
+2026-11-17T03:32:41.1560730Z   fetch-depth: 1
+2026-11-17T03:32:41.1561080Z   fetch-tags: false
+2026-11-17T03:32:41.1561460Z   show-progress: true
+2026-11-17T03:32:41.1561790Z   lfs: false
+2026-11-17T03:32:41.1562090Z   submodules: false
+2026-11-17T03:32:41.1562420Z   set-safe-directory: true
+2026-11-17T03:32:41.1562810Z   allow-unsafe-pr-checkout: false
+2026-11-17T03:32:41.1563300Z env:
+2026-11-17T03:32:41.1563600Z   LIVE: 0
+2026-11-17T03:32:41.1564300Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:32:41.1564950Z ##[endgroup]
+2026-11-17T03:32:41.3474750Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:32:41.3476310Z ##[group]Getting Git version info
+2026-11-17T03:32:41.3476860Z Working directory is '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T03:32:41.3477630Z [command]/opt/homebrew/bin/git version
+2026-11-17T03:32:41.3726950Z git version 2.56.0
+2026-11-17T03:32:41.3740210Z ##[endgroup]
+2026-11-17T03:32:41.3748770Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/e805feb5-c7e9-4119-b969-4397b048115a/.gitconfig'
+2026-11-17T03:32:41.3757160Z Temporarily overriding HOME='/Users/runner/work/_temp/e805feb5-c7e9-4119-b969-4397b048115a' before making global git config changes
+2026-11-17T03:32:41.3758860Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T03:32:41.3759720Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T03:32:41.3872780Z Deleting the contents of '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T03:32:41.3876630Z ##[group]Initializing the repository
+2026-11-17T03:32:41.3879900Z [command]/opt/homebrew/bin/git init /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T03:32:41.4095940Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-17T03:32:41.4096820Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-17T03:32:41.4097590Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-17T03:32:41.4098150Z hint: call:
+2026-11-17T03:32:41.4098530Z hint:
+2026-11-17T03:32:41.4098910Z hint: 	git config --global init.defaultBranch <name>
+2026-11-17T03:32:41.4099390Z hint:
+2026-11-17T03:32:41.4099860Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-17T03:32:41.4100630Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-17T03:32:41.4101150Z hint:
+2026-11-17T03:32:41.4101470Z hint: 	git branch -m <name>
+2026-11-17T03:32:41.4101840Z hint:
+2026-11-17T03:32:41.4102310Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-17T03:32:41.4107920Z Initialized empty Git repository in /Users/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-17T03:32:41.4114830Z [command]/opt/homebrew/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:32:41.4193880Z ##[endgroup]
+2026-11-17T03:32:41.4194570Z ##[group]Disabling automatic garbage collection
+2026-11-17T03:32:41.4201080Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-17T03:32:41.4269840Z ##[endgroup]
+2026-11-17T03:32:41.4270440Z ##[group]Setting up auth
+2026-11-17T03:32:41.4276130Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T03:32:41.4350460Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T03:32:41.5313420Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T03:32:41.5403650Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T03:32:41.6334120Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T03:32:41.6509970Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T03:32:41.7589770Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-17T03:32:41.7780380Z ##[endgroup]
+2026-11-17T03:32:41.7781940Z ##[group]Fetching the repository
+2026-11-17T03:32:41.7783320Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +d1003f6489cd612d988e7d99f913fa450ee42cf0:refs/remotes/pull/501/merge
+2026-11-17T03:32:58.7049450Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T03:32:58.7068560Z  * [new ref]           d1003f6489cd612d988e7d99f913fa450ee42cf0 -> pull/501/merge
+2026-11-17T03:32:58.7109400Z ##[endgroup]
+2026-11-17T03:32:58.7116290Z ##[group]Determining the checkout info
+2026-11-17T03:32:58.7152060Z ##[endgroup]
+2026-11-17T03:32:58.7174660Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-17T03:32:58.7337540Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-17T03:32:58.7460110Z ##[group]Checking out the ref
+2026-11-17T03:32:58.7471300Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/501/merge
+2026-11-17T03:33:00.0083600Z Updating files:   5% (1782/31775)
+2026-11-17T03:33:00.4956670Z Updating files:   6% (1907/31775)
+2026-11-17T03:33:00.7354730Z Updating files:   7% (2225/31775)
+2026-11-17T03:33:00.7939330Z Updating files:   8% (2542/31775)
+2026-11-17T03:33:00.8211020Z Updating files:   8% (2742/31775)
+2026-11-17T03:33:00.9822120Z Updating files:   9% (2860/31775)
+2026-11-17T03:33:01.1417470Z Updating files:  10% (3178/31775)
+2026-11-17T03:33:01.2727260Z Updating files:  11% (3496/31775)
+2026-11-17T03:33:01.5008780Z Updating files:  12% (3813/31775)
+2026-11-17T03:33:01.6259670Z Updating files:  13% (4131/31775)
+2026-11-17T03:33:01.7948510Z Updating files:  14% (4449/31775)
+2026-11-17T03:33:01.9558360Z Updating files:  14% (4705/31775)
+2026-11-17T03:33:02.2191370Z Updating files:  15% (4767/31775)
+2026-11-17T03:33:02.6555070Z Updating files:  16% (5084/31775)
+2026-11-17T03:33:02.8270450Z Updating files:  17% (5402/31775)
+2026-11-17T03:33:03.1854970Z Updating files:  17% (5474/31775)
+2026-11-17T03:33:03.3128410Z Updating files:  18% (5720/31775)
+2026-11-17T03:33:03.4056260Z Updating files:  19% (6038/31775)
+2026-11-17T03:33:03.5835390Z Updating files:  20% (6355/31775)
+2026-11-17T03:33:03.7979180Z Updating files:  21% (6673/31775)
+2026-11-17T03:33:04.0737830Z Updating files:  21% (6935/31775)
+2026-11-17T03:33:04.1502020Z Updating files:  22% (6991/31775)
+2026-11-17T03:33:04.2031750Z Updating files:  23% (7309/31775)
+2026-11-17T03:33:04.4091490Z Updating files:  24% (7626/31775)
+2026-11-17T03:33:04.5017110Z Updating files:  25% (7944/31775)
+2026-11-17T03:33:04.6223500Z Updating files:  26% (8262/31775)
+2026-11-17T03:33:04.7949500Z Updating files:  27% (8580/31775)
+2026-11-17T03:33:04.8633880Z Updating files:  27% (8866/31775)
+2026-11-17T03:33:05.0530980Z Updating files:  28% (8897/31775)
+2026-11-17T03:33:05.1220070Z Updating files:  29% (9215/31775)
+2026-11-17T03:33:05.2465880Z Updating files:  30% (9533/31775)
+2026-11-17T03:33:05.4863420Z Updating files:  31% (9851/31775)
+2026-11-17T03:33:05.6435530Z Updating files:  32% (10168/31775)
+2026-11-17T03:33:05.7989820Z Updating files:  33% (10486/31775)
+2026-11-17T03:33:05.8355400Z Updating files:  33% (10698/31775)
+2026-11-17T03:33:05.9152010Z Updating files:  34% (10804/31775)
+2026-11-17T03:33:06.0034790Z Updating files:  35% (11122/31775)
+2026-11-17T03:33:06.1815910Z Updating files:  36% (11439/31775)
+2026-11-17T03:33:06.3050580Z Updating files:  37% (11757/31775)
+2026-11-17T03:33:06.4547350Z Updating files:  38% (12075/31775)
+2026-11-17T03:33:06.5773870Z Updating files:  39% (12393/31775)
+2026-11-17T03:33:06.7977380Z Updating files:  40% (12710/31775)
+2026-11-17T03:33:06.8186130Z Updating files:  40% (13012/31775)
+2026-11-17T03:33:07.1739720Z Updating files:  41% (13028/31775)
+2026-11-17T03:33:07.2429820Z Updating files:  42% (13346/31775)
+2026-11-17T03:33:07.3133870Z Updating files:  43% (13664/31775)
+2026-11-17T03:33:07.4066390Z Updating files:  44% (13981/31775)
+2026-11-17T03:33:07.6049030Z Updating files:  45% (14299/31775)
+2026-11-17T03:33:07.7126370Z Updating files:  46% (14617/31775)
+2026-11-17T03:33:07.7850440Z Updating files:  47% (14935/31775)
+2026-11-17T03:33:07.7978760Z Updating files:  48% (15252/31775)
+2026-11-17T03:33:07.8697760Z Updating files:  48% (15372/31775)
+2026-11-17T03:33:08.0867080Z Updating files:  49% (15570/31775)
+2026-11-17T03:33:08.2166400Z Updating files:  50% (15888/31775)
+2026-11-17T03:33:08.3619030Z Updating files:  51% (16206/31775)
+2026-11-17T03:33:08.4985110Z Updating files:  52% (16523/31775)
+2026-11-17T03:33:08.5723170Z Updating files:  53% (16841/31775)
+2026-11-17T03:33:08.7051340Z Updating files:  54% (17159/31775)
+2026-11-17T03:33:08.7990980Z Updating files:  55% (17477/31775)
+2026-11-17T03:33:08.8054200Z Updating files:  55% (17767/31775)
+2026-11-17T03:33:08.9760540Z Updating files:  56% (17794/31775)
+2026-11-17T03:33:09.1454740Z Updating files:  57% (18112/31775)
+2026-11-17T03:33:09.2996360Z Updating files:  58% (18430/31775)
+2026-11-17T03:33:09.4298810Z Updating files:  59% (18748/31775)
+2026-11-17T03:33:09.6328310Z Updating files:  60% (19065/31775)
+2026-11-17T03:33:09.7251020Z Updating files:  61% (19383/31775)
+2026-11-17T03:33:09.8426950Z Updating files:  62% (19701/31775)
+2026-11-17T03:33:09.9539190Z Updating files:  62% (19772/31775)
+2026-11-17T03:33:10.1142990Z Updating files:  63% (20019/31775)
+2026-11-17T03:33:10.2086070Z Updating files:  64% (20336/31775)
+2026-11-17T03:33:10.4266170Z Updating files:  65% (20654/31775)
+2026-11-17T03:33:10.4850890Z Updating files:  66% (20972/31775)
+2026-11-17T03:33:10.6087070Z Updating files:  67% (21290/31775)
+2026-11-17T03:33:10.7648520Z Updating files:  68% (21607/31775)
+2026-11-17T03:33:10.7991850Z Updating files:  69% (21925/31775)
+2026-11-17T03:33:10.9149090Z Updating files:  69% (22014/31775)
+2026-11-17T03:33:11.0485390Z Updating files:  70% (22243/31775)
+2026-11-17T03:33:11.1751060Z Updating files:  71% (22561/31775)
+2026-11-17T03:33:11.2569960Z Updating files:  72% (22878/31775)
+2026-11-17T03:33:11.3578840Z Updating files:  73% (23196/31775)
+2026-11-17T03:33:11.4312130Z Updating files:  74% (23514/31775)
+2026-11-17T03:33:11.4961860Z Updating files:  75% (23832/31775)
+2026-11-17T03:33:11.5563770Z Updating files:  76% (24149/31775)
+2026-11-17T03:33:11.6119220Z Updating files:  77% (24467/31775)
+2026-11-17T03:33:11.6831260Z Updating files:  78% (24785/31775)
+2026-11-17T03:33:11.7409890Z Updating files:  79% (25103/31775)
+2026-11-17T03:33:11.7995000Z Updating files:  80% (25420/31775)
+2026-11-17T03:33:11.8292430Z Updating files:  80% (25646/31775)
+2026-11-17T03:33:11.9117650Z Updating files:  81% (25738/31775)
+2026-11-17T03:33:11.9906100Z Updating files:  82% (26056/31775)
+2026-11-17T03:33:12.0462920Z Updating files:  83% (26374/31775)
+2026-11-17T03:33:12.2118310Z Updating files:  84% (26691/31775)
+2026-11-17T03:33:12.2793140Z Updating files:  85% (27009/31775)
+2026-11-17T03:33:12.4246530Z Updating files:  86% (27327/31775)
+2026-11-17T03:33:12.5148230Z Updating files:  87% (27645/31775)
+2026-11-17T03:33:12.6246190Z Updating files:  88% (27962/31775)
+2026-11-17T03:33:12.7186860Z Updating files:  89% (28280/31775)
+2026-11-17T03:33:12.7908230Z Updating files:  90% (28598/31775)
+2026-11-17T03:33:12.8190930Z Updating files:  91% (28916/31775)
+2026-11-17T03:33:12.8948800Z Updating files:  91% (28943/31775)
+2026-11-17T03:33:12.9474630Z Updating files:  92% (29233/31775)
+2026-11-17T03:33:13.0098580Z Updating files:  93% (29551/31775)
+2026-11-17T03:33:13.0588740Z Updating files:  94% (29869/31775)
+2026-11-17T03:33:13.1111820Z Updating files:  95% (30187/31775)
+2026-11-17T03:33:13.1755620Z Updating files:  96% (30504/31775)
+2026-11-17T03:33:13.2233560Z Updating files:  97% (30822/31775)
+2026-11-17T03:33:13.2986190Z Updating files:  98% (31140/31775)
+2026-11-17T03:33:13.3595560Z Updating files:  99% (31458/31775)
+2026-11-17T03:33:13.3597510Z Updating files: 100% (31775/31775)
+2026-11-17T03:33:13.3598000Z Updating files: 100% (31775/31775), done.
+2026-11-17T03:33:13.4140740Z HEAD is now at d1003f64 Merge f2b163cd37a5a28887af9897059a46be96e58b2e into 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1
+2026-11-17T03:33:13.4268430Z ##[endgroup]
+2026-11-17T03:33:13.4720990Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-17T03:33:13.4927500Z d1003f6489cd612d988e7d99f913fa450ee42cf0
+2026-11-17T03:33:13.5428750Z ##[group]Run pnpm/action-setup@v4
+2026-11-17T03:33:13.5429420Z with:
+2026-11-17T03:33:13.5429680Z   dest: ~/setup-pnpm
+2026-11-17T03:33:13.5429900Z   run_install: null
+2026-11-17T03:33:13.5430130Z   cache: false
+2026-11-17T03:33:13.5430400Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-17T03:33:13.5430790Z   package_json_file: package.json
+2026-11-17T03:33:13.5431020Z   standalone: false
+2026-11-17T03:33:13.5431310Z env:
+2026-11-17T03:33:13.5431570Z   LIVE: 0
+2026-11-17T03:33:13.5432020Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:33:13.5432560Z ##[endgroup]
+2026-11-17T03:33:13.8661700Z ##[group]Running self-installer...
+2026-11-17T03:33:14.4004580Z (node:1192) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T03:33:14.4015690Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T03:33:14.6150180Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-17T03:33:14.7439680Z Packages: +2
+2026-11-17T03:33:14.7440000Z ++
+2026-11-17T03:33:15.5247090Z Progress: resolved 15, reused 0, downloaded 2, added 2, done
+2026-11-17T03:33:15.5474220Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-17T03:33:16.4298600Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-17T03:33:16.4300610Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-17T03:33:16.5377170Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-17T03:33:18.1274020Z 
+2026-11-17T03:33:18.1281470Z dependencies:
+2026-11-17T03:33:18.1287520Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-17T03:33:18.1295890Z 
+2026-11-17T03:33:18.1408460Z Done in 4s
+2026-11-17T03:33:18.3185310Z ##[endgroup]
+2026-11-17T03:33:18.3188420Z Installation Completed!
+2026-11-17T03:33:18.4205510Z ##[group]Run actions/setup-node@v4
+2026-11-17T03:33:18.4206330Z with:
+2026-11-17T03:33:18.4207040Z   node-version-file: .nvmrc
+2026-11-17T03:33:18.4207660Z   cache: pnpm
+2026-11-17T03:33:18.4208340Z   always-auth: false
+2026-11-17T03:33:18.4208920Z   check-latest: false
+2026-11-17T03:33:18.4215640Z   token: ***
+2026-11-17T03:33:18.4216250Z env:
+2026-11-17T03:33:18.4216610Z   LIVE: 0
+2026-11-17T03:33:18.4217640Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:33:18.4218870Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:33:18.4219750Z ##[endgroup]
+2026-11-17T03:33:18.7491260Z Resolved .nvmrc as 22
+2026-11-17T03:33:18.7548410Z Found in cache @ /Users/runner/hostedtoolcache/node/22.23.4/arm64
+2026-11-17T03:33:18.7556910Z (node:1354) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T03:33:18.7559250Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T03:33:18.7562110Z ##[group]Environment details
+2026-11-17T03:33:19.5753510Z node: v22.23.4
+2026-11-17T03:33:19.5897430Z npm: 10.9.9
+2026-11-17T03:33:19.5913180Z yarn: 1.22.22
+2026-11-17T03:33:19.5915620Z ##[endgroup]
+2026-11-17T03:33:19.5916820Z [command]/Users/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-17T03:33:19.6516560Z /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T03:33:19.7847640Z Cache hit for: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T03:33:19.7927000Z (node:1354) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T03:33:20.8673430Z Received 104857600 of 433669274 (24.2%), 99.6 MBs/sec
+2026-11-17T03:33:21.8644300Z Received 260046848 of 433669274 (60.0%), 123.4 MBs/sec
+2026-11-17T03:33:22.8754580Z Received 373293056 of 433669274 (86.1%), 117.9 MBs/sec
+2026-11-17T03:33:23.5448240Z Received 433669274 of 433669274 (100.0%), 112.2 MBs/sec
+2026-11-17T03:33:23.5475560Z Cache Size: ~414 MB (433669274 B)
+2026-11-17T03:33:23.5738570Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/9cdedef6-57bc-425c-bc3c-f02bf7d8e99a/cache.tzst -P -C /Users/runner/work/GraphGoblin/GraphGoblin --delay-directory-restore --use-compress-program unzstd
+2026-11-17T03:33:37.8336450Z Cache restored successfully
+2026-11-17T03:33:37.8433080Z Cache restored from key: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T03:33:37.9287430Z ##[group]Run mkdir -p .tmp/macos-launcher-toolchain
+2026-11-17T03:33:37.9288540Z [36;1mmkdir -p .tmp/macos-launcher-toolchain[0m
+2026-11-17T03:33:37.9288830Z [36;1m{[0m
+2026-11-17T03:33:37.9289450Z [36;1m  git rev-parse HEAD 'HEAD^{tree}'[0m
+2026-11-17T03:33:37.9290450Z [36;1m  sw_vers[0m
+2026-11-17T03:33:37.9290710Z [36;1m  uname -m[0m
+2026-11-17T03:33:37.9291110Z [36;1m  xcode-select -p[0m
+2026-11-17T03:33:37.9291450Z [36;1m  xcrun --sdk macosx --show-sdk-version[0m
+2026-11-17T03:33:37.9291870Z [36;1m  xcrun --sdk macosx swift --version[0m
+2026-11-17T03:33:37.9292230Z [36;1m  node --version[0m
+2026-11-17T03:33:37.9292470Z [36;1m  pnpm --version[0m
+2026-11-17T03:33:37.9292890Z [36;1m} > .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-17T03:33:37.9293350Z [36;1mcat .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-17T03:33:37.9293690Z [36;1mtest "$(uname -m)" = arm64[0m
+2026-11-17T03:33:38.0294360Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-17T03:33:38.0294930Z env:
+2026-11-17T03:33:38.0295500Z   LIVE: 0
+2026-11-17T03:33:38.0296230Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:33:38.0296880Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:33:38.0297240Z ##[endgroup]
+2026-11-17T03:33:42.6658430Z d1003f6489cd612d988e7d99f913fa450ee42cf0
+2026-11-17T03:33:42.6659190Z d337c72e4d789c299a2e1b23fb411d88863248bc
+2026-11-17T03:33:42.6659740Z ProductName:		macOS
+2026-11-17T03:33:42.6660090Z ProductVersion:		15.8.2
+2026-11-17T03:33:42.6660380Z BuildVersion:		24H232
+2026-11-17T03:33:42.6660680Z arm64
+2026-11-17T03:33:42.6661040Z /Applications/Xcode_16.4.app/Contents/Developer
+2026-11-17T03:33:42.6661850Z 15.5
+2026-11-17T03:33:42.6662380Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-17T03:33:42.6662950Z Target: arm64-apple-macosx15.0
+2026-11-17T03:33:42.6663410Z v22.23.4
+2026-11-17T03:33:42.6663690Z 12.8.1
+2026-11-17T03:33:42.6687630Z swift-driver version: 1.120.5 
+2026-11-17T03:33:42.6734950Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-17T03:33:42.6735410Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-17T03:33:42.6780560Z shell: /bin/bash -e {0}
+2026-11-17T03:33:42.6780940Z env:
+2026-11-17T03:33:42.6781220Z   LIVE: 0
+2026-11-17T03:33:42.6781740Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:33:42.6782370Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:33:42.6782860Z ##[endgroup]
+2026-11-17T03:33:42.7568480Z Scope: all 14 workspace projects
+2026-11-17T03:33:42.8414600Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-17T03:33:43.5600340Z Packages are cloned from the content-addressable store to the virtual store.
+2026-11-17T03:33:43.5616550Z   Content-addressable store is at: /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T03:33:43.5617480Z   Virtual store is at:             node_modules/.pnpm
+2026-11-17T03:33:46.9386990Z ✓ Lockfile passes supply-chain policies (931 entries in 4.1s)
+2026-11-17T03:33:46.9387750Z Lockfile is up to date, resolution step is skipped
+2026-11-17T03:33:46.9479500Z Packages: +801
+2026-11-17T03:33:46.9480090Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-17T03:33:47.1244370Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-17T03:33:47.2570520Z 
+2026-11-17T03:33:47.2571430Z devDependencies:
+2026-11-17T03:33:47.2571900Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-17T03:33:47.2572300Z + @eslint/js 10.0.1
+2026-11-17T03:33:47.2572610Z + @vitest/coverage-v8 5.0.3
+2026-11-17T03:33:47.2573000Z + dependency-cruiser 18.5.0
+2026-11-17T03:33:47.2573320Z + eslint 10.11.0
+2026-11-17T03:33:47.2573630Z + eslint-config-prettier 10.1.8
+2026-11-17T03:33:47.2574040Z + eslint-plugin-react-hooks 7.1.1
+2026-11-17T03:33:47.2574340Z + prettier 3.9.9
+2026-11-17T03:33:47.2574720Z + turbo 2.11.6
+2026-11-17T03:33:47.2575100Z + typescript 6.0.3
+2026-11-17T03:33:47.2576310Z + typescript-eslint 8.71.0
+2026-11-17T03:33:47.2576700Z + vitest 5.0.3
+2026-11-17T03:33:47.2576870Z 
+2026-11-17T03:33:47.2577100Z Done in 4.5s using pnpm v12.8.1
+2026-11-17T03:33:47.2713520Z ##[group]Run pnpm build
+2026-11-17T03:33:47.2713810Z [36;1mpnpm build[0m
+2026-11-17T03:33:47.2758620Z shell: /bin/bash -e {0}
+2026-11-17T03:33:47.2758880Z env:
+2026-11-17T03:33:47.2759470Z   LIVE: 0
+2026-11-17T03:33:47.2778060Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:33:47.2778620Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:33:47.2779090Z ##[endgroup]
+2026-11-17T03:33:47.3502780Z $ turbo run build
+2026-11-17T03:33:47.5098040Z 
+2026-11-17T03:33:47.5098910Z Attention:
+2026-11-17T03:33:47.5099720Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-17T03:33:47.5100620Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-17T03:33:47.5101880Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-17T03:33:47.5102720Z https://turborepo.dev/docs/telemetry
+2026-11-17T03:33:47.5102960Z 
+2026-11-17T03:33:48.4703610Z 
+2026-11-17T03:33:48.4713230Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-17T03:33:48.4716050Z    • Running build in 13 packages
+2026-11-17T03:33:48.4716570Z    • Remote caching disabled
+2026-11-17T03:33:48.4740720Z 
+2026-11-17T03:33:50.8595940Z ##[group]@graphgoblin/contracts:build
+2026-11-17T03:33:50.8596830Z cache miss, executing 7f72b1f6dcfc45b1
+2026-11-17T03:33:50.8597290Z $ tsc -b tsconfig.build.json
+2026-11-17T03:33:50.8597960Z ##[endgroup]
+2026-11-17T03:33:53.5268600Z ##[group]@graphgoblin/domain:build
+2026-11-17T03:33:53.5269420Z cache miss, executing 1a49ddcef75326a0
+2026-11-17T03:33:53.5269990Z $ tsc -b tsconfig.build.json
+2026-11-17T03:33:53.5270780Z ##[endgroup]
+2026-11-17T03:33:56.7157900Z ##[group]@graphgoblin/engine:build
+2026-11-17T03:33:56.7158410Z cache miss, executing 9e06681b12e7dbc3
+2026-11-17T03:33:56.7158810Z $ tsc -b tsconfig.build.json
+2026-11-17T03:33:56.7159230Z ##[endgroup]
+2026-11-17T03:33:59.1974310Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-17T03:33:59.2073920Z cache miss, executing e51ad2e6de34b44e
+2026-11-17T03:33:59.2175040Z $ tsc -b tsconfig.build.json
+2026-11-17T03:33:59.2277200Z ##[endgroup]
+2026-11-17T03:33:59.6718920Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-17T03:33:59.6819060Z cache miss, executing e2aa2e1d394c67d3
+2026-11-17T03:33:59.6828460Z $ tsc -b tsconfig.build.json
+2026-11-17T03:33:59.6829330Z ##[endgroup]
+2026-11-17T03:34:07.6935270Z ##[group]@graphgoblin/infrastructure:build
+2026-11-17T03:34:07.6939250Z cache miss, executing 0c985d965b3b7f4b
+2026-11-17T03:34:07.6941690Z $ tsc -b tsconfig.build.json
+2026-11-17T03:34:07.6942450Z ##[endgroup]
+2026-11-17T03:34:16.6762200Z ##[group]@graphgoblin/api:build
+2026-11-17T03:34:16.6763610Z cache miss, executing f33d580843952a01
+2026-11-17T03:34:16.6764330Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-17T03:34:16.6765070Z ##[endgroup]
+2026-11-17T03:34:18.4805480Z ##[group]@graphgoblin/api-client:build
+2026-11-17T03:34:18.4806100Z cache miss, executing a69b4dadf120c266
+2026-11-17T03:34:18.4806410Z $ tsc -b tsconfig.build.json
+2026-11-17T03:34:18.4806930Z ##[endgroup]
+2026-11-17T03:34:21.2105940Z ##[group]@graphgoblin/mcp:build
+2026-11-17T03:34:21.2106690Z cache miss, executing c9ef1c7c385c2ad7
+2026-11-17T03:34:21.2107770Z $ tsc -b tsconfig.build.json
+2026-11-17T03:34:21.2108290Z ##[endgroup]
+2026-11-17T03:34:22.5300590Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-17T03:34:22.5398910Z cache bypass, force executing 00256bce1cadce84
+2026-11-17T03:34:22.5496600Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T03:34:22.5499750Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-17T03:34:22.5541720Z ##[endgroup]
+2026-11-17T03:34:22.7545740Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-17T03:34:22.7585680Z cache bypass, force executing 5477a494b406a423
+2026-11-17T03:34:22.7586300Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T03:34:22.7586910Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-17T03:34:22.7588090Z Install: codex plugin marketplace add "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-17T03:34:22.7588980Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-17T03:34:22.7589670Z ##[endgroup]
+2026-11-17T03:34:26.3669640Z ##[group]@graphgoblin/web:build
+2026-11-17T03:34:26.3677950Z cache miss, executing 6cc9573742b00cb5
+2026-11-17T03:34:26.3719130Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-17T03:34:26.3728090Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T03:34:26.3733790Z transforming...
+2026-11-17T03:34:26.3771770Z ✓ 779 modules transformed.
+2026-11-17T03:34:26.3798340Z rendering chunks...
+2026-11-17T03:34:26.3799660Z computing gzip size...
+2026-11-17T03:34:26.3800220Z dist/manifest.webmanifest           0.47 kB
+2026-11-17T03:34:26.3801150Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-17T03:34:26.3802190Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-17T03:34:26.3803420Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-17T03:34:26.3803760Z 
+2026-11-17T03:34:26.3805030Z [32m✓ built in 2.09s[39m
+2026-11-17T03:34:26.3805490Z 
+2026-11-17T03:34:26.3805770Z [36mPWA v1.3.0[39m
+2026-11-17T03:34:26.3806220Z mode      [35mgenerateSW[39m
+2026-11-17T03:34:26.3806930Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-17T03:34:26.3807460Z files generated
+2026-11-17T03:34:26.3807930Z   [2mdist/sw.js.map[22m
+2026-11-17T03:34:26.3808380Z   [2mdist/sw.js[22m
+2026-11-17T03:34:26.3808910Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-17T03:34:26.3809420Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-17T03:34:26.3810160Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T03:34:26.3811720Z transforming...
+2026-11-17T03:34:26.3813660Z ✓ 284 modules transformed.
+2026-11-17T03:34:26.3818510Z rendering chunks...
+2026-11-17T03:34:26.3819800Z computing gzip size...
+2026-11-17T03:34:26.3821440Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-17T03:34:26.3822400Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-17T03:34:26.3823210Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-17T03:34:26.3824310Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-17T03:34:26.3824810Z 
+2026-11-17T03:34:26.3825140Z [32m✓ built in 477ms[39m
+2026-11-17T03:34:26.3825430Z 
+2026-11-17T03:34:26.3825700Z [36mPWA v1.3.0[39m
+2026-11-17T03:34:26.3826270Z mode      [35mgenerateSW[39m
+2026-11-17T03:34:26.3827010Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-17T03:34:26.3827590Z files generated
+2026-11-17T03:34:26.3828140Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-17T03:34:26.3828620Z   [2m../dist-goblin/sw.js[22m
+2026-11-17T03:34:26.3829140Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-17T03:34:26.3829670Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-17T03:34:26.3830730Z ##[endgroup]
+2026-11-17T03:34:26.3830970Z 
+2026-11-17T03:34:26.3831270Z  Tasks:    12 successful, 12 total
+2026-11-17T03:34:26.3832450Z Cached:    0 cached, 12 total
+2026-11-17T03:34:26.3833090Z   Time:    38.849s 
+2026-11-17T03:34:26.3833620Z 
+2026-11-17T03:34:26.5602090Z ##[group]Run pnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts
+2026-11-17T03:34:26.5613210Z [36;1mpnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts[0m
+2026-11-17T03:34:26.5855180Z shell: /bin/bash -e {0}
+2026-11-17T03:34:26.5855450Z env:
+2026-11-17T03:34:26.5855630Z   LIVE: 0
+2026-11-17T03:34:26.5856010Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:34:26.5880830Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:34:26.5882090Z ##[endgroup]
+2026-11-17T03:34:27.3593970Z 
+2026-11-17T03:34:27.3603560Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/Users/runner/work/GraphGoblin/GraphGoblin/apps/api[39m
+2026-11-17T03:34:27.3664470Z 
+2026-11-17T03:34:28.3912960Z  [32m✓[39m src/windows-log/guard.test.ts [2m([22m[2m16 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 582[2mms[22m[39m
+2026-11-17T03:34:28.5833750Z  [32m✓[39m src/managed-log/gateway-log-writer.test.ts [2m([22m[2m27 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 818[2mms[22m[39m
+2026-11-17T03:34:28.5846410Z    [32m✓[39m gateway log queue, faults and acknowledgment [2m(13)[22m
+2026-11-17T03:34:28.5850790Z      [33m[2m✓[22m[39m acknowledges only the specific completed record and bounds the exit wait at 250 ms[33m 507[2mms[22m[39m
+2026-11-17T03:34:29.2379420Z  [32m✓[39m src/data-dir-lock.test.ts [2m([22m[2m47 tests[22m[2m)[22m[33m 651[2mms[22m[39m
+2026-11-17T03:34:34.6631950Z  [32m✓[39m src/serve.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 2318[2mms[22m[39m
+2026-11-17T03:34:34.6655630Z    [32m✓[39m serve with the managed destination [2m(5)[22m
+2026-11-17T03:34:34.6764000Z      [33m[2m✓[22m[39m reports each reached stage and writes engine records only to the bounded destination[33m 516[2mms[22m[39m
+2026-11-17T03:34:34.6804750Z      [33m[2m✓[22m[39m keeps serving while every log write is stalled, within the pending-byte bound[33m 592[2mms[22m[39m
+2026-11-17T03:34:34.6807290Z      [33m[2m✓[22m[39m answers malformed wire requests at managed trace without logging their bytes, then keeps serving[33m 332[2mms[22m[39m
+2026-11-17T03:34:34.8218290Z {"level":30,"time":1794886474819,"pid":2768,"hostname":"iad20-eo1209-dcdb69e9-d869-476f-98df-6c84e1f1bcb5-02C9F4C6BAF2.local","msg":"Server listening at http://127.0.0.1:5600"}
+2026-11-17T03:34:34.8325700Z {"level":30,"time":1794886474822,"pid":2768,"hostname":"iad20-eo1209-dcdb69e9-d869-476f-98df-6c84e1f1bcb5-02C9F4C6BAF2.local","host":"127.0.0.1","port":5600,"dataDir":"/var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/gg-api-process-7WWrvx","requireApiKey":true,"msg":"GraphGoblin API listening"}
+2026-11-17T03:34:34.8423370Z {"level":30,"time":1794886474839,"pid":2768,"hostname":"iad20-eo1209-dcdb69e9-d869-476f-98df-6c84e1f1bcb5-02C9F4C6BAF2.local","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+2026-11-17T03:34:34.8529070Z {"level":30,"time":1794886474844,"pid":2768,"hostname":"iad20-eo1209-dcdb69e9-d869-476f-98df-6c84e1f1bcb5-02C9F4C6BAF2.local","reqId":"req-1","res":{"statusCode":200},"responseTime":5.191458999999668,"msg":"request completed"}
+2026-11-17T03:34:34.9774940Z  [32m✓[39m src/macos-log/guard.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 56[2mms[22m[39m
+2026-11-17T03:34:37.2572520Z  [32m✓[39m src/gateway-logger.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 635[2mms[22m[39m
+2026-11-17T03:34:37.2691250Z    [33m[2m✓[22m[39m keeps the correlated private #381 diagnostic and narrows real access records to method, route and status[33m 606[2mms[22m[39m
+2026-11-17T03:34:38.9529360Z  [32m✓[39m src/macos-local-key.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 232[2mms[22m[39m
+2026-11-17T03:34:42.8259210Z  [32m✓[39m src/database-ownership.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 2192[2mms[22m[39m
+2026-11-17T03:34:42.8270200Z    [33m[2m✓[22m[39m rechecks catalog created by a writer before database ownership is acquired[33m 1640[2mms[22m[39m
+2026-11-17T03:34:42.8274710Z    [33m[2m✓[22m[39m locks the same external SQLite file across data directories and refuses an offline key writer[33m 419[2mms[22m[39m
+2026-11-17T03:34:44.1496690Z  [32m✓[39m src/main-entry.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+2026-11-17T03:34:52.4964160Z  [32m✓[39m src/main.test.ts [2m([22m[2m15 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 23670[2mms[22m[39m
+2026-11-17T03:34:52.5070210Z    [32m✓[39m built entry and the reserved Windows launcher variable (#438) [2m(4)[22m
+2026-11-17T03:34:52.5177560Z      [33m[2m✓[22m[39m consumes the variable for CLI commands, which keep their ordinary output[33m 1156[2mms[22m[39m
+2026-11-17T03:34:52.5286650Z      [33m[2m✓[22m[39m ignores the Windows-only variable elsewhere and keeps shell logging[33m 2673[2mms[22m[39m
+2026-11-17T03:34:52.5391840Z    [32m✓[39m built API entry and startup failures [2m(6)[22m
+2026-11-17T03:34:52.5505030Z      [33m[2m✓[22m[39m holds ownership while listening and releases it on supported HTTP close[33m 2157[2mms[22m[39m
+2026-11-17T03:34:52.5514430Z      [33m[2m✓[22m[39m serves authenticated requests using a binary-created key and refuses a competing process[33m 4789[2mms[22m[39m
+2026-11-17T03:34:52.5595060Z      [33m[2m✓[22m[39m dispatches the API-key and preflight CLIs with their real exit codes[33m 4713[2mms[22m[39m
+2026-11-17T03:34:52.5690310Z      [33m[2m✓[22m[39m releases ownership on a real corrupt-database startup fault before HTTP setup[33m 2579[2mms[22m[39m
+2026-11-17T03:34:52.5691960Z      [33m[2m✓[22m[39m releases ownership after a real occupied-port listen failure[33m 2738[2mms[22m[39m
+2026-11-17T03:34:52.5693650Z      [33m[2m✓[22m[39m releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)[33m 2759[2mms[22m[39m
+2026-11-17T03:34:52.5694900Z 
+2026-11-17T03:34:52.5696630Z [2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+2026-11-17T03:34:52.5699420Z [2m      Tests [22m [1m[32m203 passed[39m[22m[2m | [22m[33m8 skipped[39m[90m (211)[39m
+2026-11-17T03:34:52.5712130Z [2m   Start at [22m 03:34:27
+2026-11-17T03:34:52.5736220Z [2m   Duration [22m 25.10s[2m (tests 78%, import 16%, transform 6%)[22m
+2026-11-17T03:34:52.5736770Z 
+2026-11-17T03:34:52.6268250Z ##[group]Run pnpm test:macos-coverage
+2026-11-17T03:34:52.6268700Z [36;1mpnpm test:macos-coverage[0m
+2026-11-17T03:34:52.6391300Z shell: /bin/bash -e {0}
+2026-11-17T03:34:52.6392040Z env:
+2026-11-17T03:34:52.6392720Z   LIVE: 0
+2026-11-17T03:34:52.6393900Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:34:52.6395560Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:34:52.6396550Z ##[endgroup]
+2026-11-17T03:34:52.8793960Z $ node tooling/scripts/macos-launcher-coverage.acceptance.mjs .tmp/macos-launcher-coverage
+2026-11-17T03:35:48.3194580Z warning: 'macos-launcher': /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Package.swift -target arm64-apple-macosx14.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -I /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/ManifestAPI -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -vfsoverlay /var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/TemporaryDirectory.A0X9Cn/vfs.yaml -swift-version 6 -package-description-version 6.0.0 -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -module-name main -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path '/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server' -external-plugin-path '/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server' -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -o /var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/TemporaryDirectory.zczVdE/Package-1.o
+2026-11-17T03:35:48.3246570Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang /var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/TemporaryDirectory.zczVdE/Package-1.o -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks --sysroot /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk --target=arm64-apple-macosx14.0 -L /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/macosx -L /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk/usr/lib/swift -L /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/ManifestAPI -L /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -lPackageDescription -Xlinker -rpath -Xlinker /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/pm/ManifestAPI -o /var/folders/2s/vty41l455yv698g4xkgfv7z00000gn/T/TemporaryDirectory.S93f2g/macos-launcher-manifest
+2026-11-17T03:35:48.3252320Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-17T03:35:48.3252860Z Target: arm64-apple-macosx14.0
+2026-11-17T03:35:48.3253190Z Building for debugging...
+2026-11-17T03:35:48.3253950Z /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/GraphGoblinMacLauncherPackageTests.derived/runner.swift
+2026-11-17T03:35:48.3255540Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/swift-version--79AA4F9932D1E87A.txt
+2026-11-17T03:35:48.3404320Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/PresentationFixture.build/sources
+2026-11-17T03:35:48.3405570Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/PresentationFixture-entitlement.plist
+2026-11-17T03:35:48.3407330Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentationTests.build/sources
+2026-11-17T03:35:48.3409360Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/sources
+2026-11-17T03:35:48.3415140Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherInstallerTests.build/sources
+2026-11-17T03:35:48.3421950Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherInstaller.build/sources
+2026-11-17T03:35:48.3427250Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEntry.build/sources
+2026-11-17T03:35:48.3441580Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngineTests.build/sources
+2026-11-17T03:35:48.3445070Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/sources
+2026-11-17T03:35:48.3446280Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/sources
+2026-11-17T03:35:48.3460760Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/InstallerEntry.build/sources
+2026-11-17T03:35:48.3462640Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/GraphGoblinMacLauncherPackageTests.build/sources
+2026-11-17T03:35:48.3468620Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/GraphGoblinLauncherInstaller-entitlement.plist
+2026-11-17T03:35:48.3470500Z Write auxiliary file /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/GraphGoblin-entitlement.plist
+2026-11-17T03:35:48.3586660Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LaunchContract -emit-dependencies -emit-module -emit-module-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LaunchContract.swiftmodule -output-file-map /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/output-file-map.json -parse-as-library -incremental -c @/Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/sources -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -target arm64-apple-macosx15.0 -v -enable-batch-mode -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -Onone -enable-testing -j3 -DSWIFT_PACKAGE -DDEBUG -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -parseable-output -parse-as-library -emit-objc-header -emit-objc-header-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/LaunchContract-Swift.h -profile-coverage-mapping -profile-generate -swift-version 6 -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -L /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -g -disable-batch-mode -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -package-name macos_launcher
+2026-11-17T03:35:48.3599590Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-17T03:35:48.3600100Z Target: arm64-apple-macosx15.0
+2026-11-17T03:35:48.3616490Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/LaunchContract.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/LaunchContract.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/LaunchContract.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LaunchContract -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/LaunchContract.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.3644960Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -emit-module -experimental-skip-non-inlinable-function-bodies-without-types /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/LaunchContract.swift -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LaunchContract -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -emit-module-doc-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LaunchContract.swiftdoc -emit-module-source-info-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LaunchContract.swiftsourceinfo -emit-objc-header-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/LaunchContract-Swift.h -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LaunchContract.build/LaunchContract.emit-module.d -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LaunchContract.swiftmodule -emit-abi-descriptor-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LaunchContract.abi.json
+2026-11-17T03:35:48.3685030Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LauncherEngine -emit-dependencies -emit-module -emit-module-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherEngine.swiftmodule -output-file-map /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/output-file-map.json -parse-as-library -incremental -c @/Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/sources -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -target arm64-apple-macosx15.0 -v -enable-batch-mode -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -Onone -enable-testing -j3 -DSWIFT_PACKAGE -DDEBUG -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -parseable-output -parse-as-library -emit-objc-header -emit-objc-header-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/LauncherEngine-Swift.h -profile-coverage-mapping -profile-generate -swift-version 6 -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -L /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -g -disable-batch-mode -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -package-name macos_launcher
+2026-11-17T03:35:48.3704980Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name LauncherPresentation -emit-dependencies -emit-module -emit-module-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherPresentation.swiftmodule -output-file-map /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/output-file-map.json -parse-as-library -incremental -c @/Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/sources -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -target arm64-apple-macosx15.0 -v -enable-batch-mode -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -Onone -enable-testing -j3 -DSWIFT_PACKAGE -DDEBUG -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -parseable-output -parse-as-library -emit-objc-header -emit-objc-header-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/LauncherPresentation-Swift.h -profile-coverage-mapping -profile-generate -swift-version 6 -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -L /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -g -disable-batch-mode -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -package-name macos_launcher
+2026-11-17T03:35:48.3712850Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-17T03:35:48.3713440Z Target: arm64-apple-macosx15.0
+2026-11-17T03:35:48.3713950Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-17T03:35:48.3714540Z Target: arm64-apple-macosx15.0
+2026-11-17T03:35:48.3736390Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/ChildProcess.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/ChildProcess.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherEngine -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/ChildProcess.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.3806210Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -emit-module -experimental-skip-non-inlinable-function-bodies-without-types /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/AppKitSupport.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/AppKitSurface.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/FailurePanel.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/HandoffArbiter.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LaunchPresentationController.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LauncherAppDelegate.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LauncherPresentationEntry.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/PresentationCopy.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/PresentationSeams.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/ProgressPanel.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/WorkspaceBrowserOpener.swift -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherPresentation -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -emit-module-doc-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherPresentation.swiftdoc -emit-module-source-info-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherPresentation.swiftsourceinfo -emit-objc-header-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/LauncherPresentation-Swift.h -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/LauncherPresentation.emit-module.d -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherPresentation.swiftmodule -emit-abi-descriptor-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherPresentation.abi.json
+2026-11-17T03:35:48.3848800Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -emit-module -experimental-skip-non-inlinable-function-bodies-without-types /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherEngine -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -emit-module-doc-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherEngine.swiftdoc -emit-module-source-info-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherEngine.swiftsourceinfo -emit-objc-header-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/LauncherEngine-Swift.h -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/LauncherEngine.emit-module.d -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherEngine.swiftmodule -emit-abi-descriptor-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules/LauncherEngine.abi.json
+2026-11-17T03:35:48.3899790Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/AppKitSupport.swift -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/AppKitSurface.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/FailurePanel.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/HandoffArbiter.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LaunchPresentationController.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LauncherAppDelegate.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LauncherPresentationEntry.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/PresentationCopy.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/PresentationSeams.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/ProgressPanel.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/WorkspaceBrowserOpener.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/AppKitSurface.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/AppKitSurface.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherPresentation -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/AppKitSurface.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.3936060Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Diagnostics.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Diagnostics.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherEngine -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Diagnostics.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.4004010Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/AppKitSupport.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/AppKitSurface.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/FailurePanel.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/HandoffArbiter.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LaunchPresentationController.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LauncherAppDelegate.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/LauncherPresentationEntry.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/PresentationCopy.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/PresentationSeams.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/ProgressPanel.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Presentation/WorkspaceBrowserOpener.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/AppKitSupport.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/AppKitSupport.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherPresentation -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherPresentation.build/AppKitSupport.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.4235080Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Headless.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Headless.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherEngine -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Headless.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.4273620Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/LaunchInputs.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/LaunchInputs.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherEngine -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/LaunchInputs.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.4381480Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Installation.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Installation.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherEngine -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Installation.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:48.4478200Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Loopback.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Loopback.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -F /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -enable-testing -g -debug-info-format=dwarf -dwarf-version=5 -module-cache-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/ModuleCache -profile-generate -profile-coverage-mapping -swift-version 6 -Onone -D SWIFT_PACKAGE -D DEBUG -new-driver-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-driver -empty-abi-descriptor -resource-dir /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift -enable-anonymous-context-mangled-names -file-compilation-dir /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher -Xcc -isysroot -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks -Xcc -F -Xcc /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks -Xcc -fPIC -Xcc -g -module-name LauncherEngine -package-name macos_launcher -disable-clang-spi -target-sdk-version 15.5 -target-sdk-name macosx15.5 -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -external-plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/local/lib/swift/host/plugins#/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/bin/swift-plugin-server -in-process-plugin-server-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/libSwiftInProcPluginServer.dylib -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins -plugin-path /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/local/lib/swift/host/plugins -parse-as-library -o /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/Loopback.swift.o -index-store-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/index/store -index-system-modules
+2026-11-17T03:35:52.8885980Z /Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swift-frontend -frontend -c /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Headless.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Loopback.swift -primary-file /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeLaunchEngine.swift -emit-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/NativeFiles.d -emit-reference-dependencies-path /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/LauncherEngine.build/NativeFiles.swiftdeps -target arm64-apple-macosx15.0 -Xllvm -aarch64-use-tbi -enable-objc-interop -stack-check -sdk /Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk -I /Users/runner/work/_temp/graphgoblin-coverage-USblbT/swift-test/arm64-apple-macosx/debug/Modules -I /file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:85
+2026-11-17T03:35:52.8892820Z       throw new Error(label + ' did not complete with its expected result. See recorded streams.');
+2026-11-17T03:35:52.8893370Z             ^
+2026-11-17T03:35:52.8893520Z 
+2026-11-17T03:35:52.8893830Z Error: swift-tests did not complete with its expected result. See recorded streams.
+2026-11-17T03:35:52.8894630Z     at run (file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:85:13)
+2026-11-17T03:35:52.8895570Z     at Object.xcrun (file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:94:5)
+2026-11-17T03:35:52.8896690Z     at main (file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:513:19)
+2026-11-17T03:35:52.8897710Z     at file:///Users/runner/work/GraphGoblin/GraphGoblin/tooling/scripts/macos-launcher-coverage.acceptance.mjs:629:1
+2026-11-17T03:35:52.8898590Z     at ModuleJob.run (node:internal/modules/esm/module_job:343:25)
+2026-11-17T03:35:52.8899430Z     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:681:26)
+2026-11-17T03:35:52.8900080Z     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+2026-11-17T03:35:52.8900460Z 
+2026-11-17T03:35:52.8900610Z Node.js v22.23.4
+2026-11-17T03:35:52.8932030Z [ELIFECYCLE] Command failed with exit code 1.
+2026-11-17T03:35:52.8997610Z ##[error]Process completed with exit code 1.
+2026-11-17T03:35:52.9146010Z ##[group]Run pnpm test:macos-launcher
+2026-11-17T03:35:52.9146420Z [36;1mpnpm test:macos-launcher[0m
+2026-11-17T03:35:52.9382000Z shell: /bin/bash -e {0}
+2026-11-17T03:35:52.9382770Z env:
+2026-11-17T03:35:52.9383280Z   LIVE: 0
+2026-11-17T03:35:52.9384410Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:35:52.9385680Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:35:52.9386820Z ##[endgroup]
+2026-11-17T03:35:53.1195750Z $ node --test tooling/scripts/macos-launcher.acceptance.mjs
+2026-11-17T03:35:53.1863780Z TAP version 13
+2026-11-17T03:35:53.2680260Z # Subtest: a reset does not prove that the listener released
+2026-11-17T03:35:53.2694510Z ok 1 - a reset does not prove that the listener released
+2026-11-17T03:35:53.2702850Z   ---
+2026-11-17T03:35:53.2725630Z   duration_ms: 20.356875
+2026-11-17T03:35:53.2726510Z   type: 'test'
+2026-11-17T03:35:53.2726840Z   ...
+2026-11-17T03:37:46.5877090Z # Subtest: macOS public launcher, native headless process and actual gateway
+2026-11-17T03:37:46.5929910Z ok 2 - macOS public launcher, native headless process and actual gateway
+2026-11-17T03:37:46.5952900Z   ---
+2026-11-17T03:37:46.5954360Z   duration_ms: 113259.061333
+2026-11-17T03:37:46.5955780Z   type: 'test'
+2026-11-17T03:37:46.5956210Z   ...
+2026-11-17T03:37:46.5958960Z # Public install with a malformed inherited locale validated and published a receipt-bound alternate app.
+2026-11-17T03:37:46.5962300Z # A foreign listener survived the launcher refusal and no store was initialized.
+2026-11-17T03:37:46.5963080Z # An occupied store without its key refused before spawn and preserved its contents.
+2026-11-17T03:37:46.5964100Z # Concurrent cold attempts with malformed locales completed and a single verified gateway served both built shells after both launchers exited.
+2026-11-17T03:37:46.5995070Z # Warm launch kept the serving PID and private managed logs excluded the request query.
+2026-11-17T03:37:46.5995940Z # A second built API entry contended on the actual physical log reservation before touching its store.
+2026-11-17T03:37:46.5996780Z # The actual managed API refused a missing local key at the store stage, preserving database bytes.
+2026-11-17T03:37:46.5997750Z # Same-path replacement kept the alternate identity and logged the held-store deadline refusal.
+2026-11-17T03:37:46.5998630Z # Supported drain released both leases, the verified process birth and the loopback listener.
+2026-11-17T03:37:46.5999330Z # Evidence: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:37:46.6009200Z 1..2
+2026-11-17T03:37:46.6009490Z # tests 2
+2026-11-17T03:37:46.6009630Z # suites 0
+2026-11-17T03:37:46.6009910Z # pass 2
+2026-11-17T03:37:46.6010250Z # fail 0
+2026-11-17T03:37:46.6010470Z # cancelled 0
+2026-11-17T03:37:46.6010740Z # skipped 0
+2026-11-17T03:37:46.6011010Z # todo 0
+2026-11-17T03:37:46.6011260Z # duration_ms 113369.492417
+2026-11-17T03:37:46.6332160Z ##[group]Run actions/upload-artifact@v4
+2026-11-17T03:37:46.6333320Z with:
+2026-11-17T03:37:46.6334160Z   name: macos-launcher
+2026-11-17T03:37:46.6334860Z   include-hidden-files: true
+2026-11-17T03:37:46.6336070Z   path: .tmp/macos-launcher-*/
+.tmp/macos-swift-test/**/codecov/**
+
+2026-11-17T03:37:46.6337100Z   if-no-files-found: error
+2026-11-17T03:37:46.6337690Z   retention-days: 7
+2026-11-17T03:37:46.6338350Z   compression-level: 6
+2026-11-17T03:37:46.6339160Z   overwrite: false
+2026-11-17T03:37:46.6339830Z env:
+2026-11-17T03:37:46.6340450Z   LIVE: 0
+2026-11-17T03:37:46.6341810Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T03:37:46.6343240Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T03:37:46.6344260Z ##[endgroup]
+2026-11-17T03:37:47.1440130Z (node:6081) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T03:37:47.1442500Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T03:37:47.1745930Z With the provided path, there will be 136 files uploaded
+2026-11-17T03:37:47.1746720Z Artifact name is valid!
+2026-11-17T03:37:47.1747000Z Root directory input is valid!
+2026-11-17T03:37:47.4262080Z Beginning upload of artifact content to blob storage
+2026-11-17T03:37:47.5708750Z (node:6081) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T03:37:47.6261990Z Uploaded bytes 66072
+2026-11-17T03:37:47.6484440Z Finished uploading artifact content to blob storage!
+2026-11-17T03:37:47.6486290Z SHA256 digest of uploaded artifact zip is b1128b5807a9e56d64c41234ff18cd4ba8b568e720b2e7d21ea44583aba0d748
+2026-11-17T03:37:47.6487580Z Finalizing artifact upload
+2026-11-17T03:37:47.9984410Z Artifact macos-launcher.zip successfully finalized. Artifact ID 14295944603
+2026-11-17T03:37:47.9986710Z Artifact macos-launcher has been successfully uploaded! Final size is 66072 bytes. Artifact ID is 14295944603
+2026-11-17T03:37:47.9987710Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44010913704/artifacts/14295944603
+2026-11-17T03:37:48.0110320Z Post job cleanup.
+2026-11-17T03:37:48.2064920Z Pruning is unnecessary.
+2026-11-17T03:37:48.2211110Z Post job cleanup.
+2026-11-17T03:37:48.3638760Z [command]/opt/homebrew/bin/git version
+2026-11-17T03:37:48.3823870Z git version 2.56.0
+2026-11-17T03:37:48.3863590Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/53404903-f6ce-46d7-9ad7-c604887cce04/.gitconfig'
+2026-11-17T03:37:48.3872980Z Temporarily overriding HOME='/Users/runner/work/_temp/53404903-f6ce-46d7-9ad7-c604887cce04' before making global git config changes
+2026-11-17T03:37:48.3875640Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T03:37:48.3881820Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T03:37:48.3994770Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T03:37:48.4066270Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T03:37:48.5859040Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T03:37:48.5928560Z http.https://github.com/.extraheader
+2026-11-17T03:37:48.5946270Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-17T03:37:48.6061940Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T03:37:48.7521080Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T03:37:48.7828310Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T03:37:48.9497640Z Cleaning up orphan processes
+2026-11-17T03:37:50.7628330Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
