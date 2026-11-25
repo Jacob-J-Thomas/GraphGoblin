@@ -22,6 +22,34 @@ validated against the configured IPv4 loopback origin and current `/app/` manife
 closure only stops observation; matching gateways in a drain or failure phase remain available
 for existing shutdown controls. See [ADR-0064](decisions/ADR-0064-windows-desktop-launcher.md).
 
+## macOS Finder and Dock entry point
+
+The optional [macOS Finder and Dock launcher](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+installs a per-user `GraphGoblin.app` under `~/Applications` for Apple Silicon running macOS 15
+or later. It requires a built checkout, native Node 22.22.2 or later within major 22, and Swift 6
+when installing or updating. The installer saves the checkout and Node paths, local data directory,
+port, and supported non-secret options; rerun it if the saved checkout or Node path moves.
+
+A Finder or Dock launch validates the saved installation and built pages, then either observes the
+matching loopback gateway or starts one detached gateway and asks the system default browser to
+open `http://127.0.0.1:<port>/app/`. It does not select a browser profile or create a
+browser-specific PWA window. Hiding or quitting the launcher after a start is committed, and
+closing the browser, do not stop the gateway or its work. Use the existing authenticated API to
+start a shutdown. The browser's Wait and Force choices appear only after an externally initiated
+drain reaches its choice phase. [Gateway shutdown](07-api-and-streaming.md#gateway-shutdown-224)
+
+An unresolved system file-access decision no longer leaves the launch progress waiting for that
+system call indefinitely. After the attempt budget and cleanup tail, an independent watchdog
+delivers the existing conservative failure outcome. A committed gateway may still be running;
+neither the error window nor Quit terminates it. The watchdog does not grant macOS permissions.
+
+Each alternate `GraphGoblin <suffix>.app` has a separate installation ID, receipt, and log
+directory. The launcher takes private per-user coordination locks for the configured data
+directory, database, and port; the API's writer leases remain authoritative, so an alternate app
+does not bypass an occupied store or conflicting listener. See the [install guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher),
+[troubleshooting guide](guide/07-troubleshooting.md#macos-finder-and-dock-launcher), and
+[ADR-0082](decisions/ADR-0082-macos-finder-dock-launcher.md) for setup and recovery details.
+
 ## Shape (Decided)
 
 A React single-page application built with Vite, served by the API process in 1.0, installable as a PWA. The management application lives at `/app/`; the separate Goblin PWA lives at `/goblin/`. Management resources use the generated typed client, and the run inspector follows native run events through SSE. Both Chat surfaces use the same scoped `/chat` API and poll turn state. Validation, routing, and execution semantics live in `contracts`, `domain`, and the backend. The editor can still validate drafts locally by importing `contracts` and `domain`, since both are pure.
@@ -840,7 +868,7 @@ The adversarial QA report is `docs/qa/2026-10-03-wp-d2.md`. Behaviour that chang
 
 ## Loop names (#209)
 
-The API refuses a loop name that another of the owner's loops holds after trimming, collapsing whitespace runs and lowercasing (`409 LOOP_NAME_CONFLICT` with an advisory `suggestedName`; [ADR-0073](decisions/ADR-0073-transactional-loop-names.md), docs/07). The UI never retries on its own and never creates a copy under a name the user did not submit. Every surface says which name was refused and the rule ("Names that differ only in letter case or spacing count as the same name."), keeps everything that existed, and makes the next attempt a deliberate submission. `lib/loop-names.ts` reads the refusal only from the exact code and a non-blank string `suggestedName`, and mirrors the comparison key solely to decide whether a field still holds the refused name (the API decides admission). A suggestion can be taken before the retry: the API then refuses again with a fresh suggestion (derived from the attempted name, for example "X copy copy"), which the same guidance shows. `400 LOOP_NAME_INVALID` keeps the ordinary error text.
+The API refuses a loop name that another of the owner's loops holds under the shared `loopNameKey` comparison in `@graphgoblin/domain`: both names are trimmed, each whitespace run becomes one space, and the result is lowercased, with no Unicode normalization or locale-dependent case folding (`409 LOOP_NAME_CONFLICT` with an advisory `suggestedName`; [ADR-0073](decisions/ADR-0073-transactional-loop-names.md), docs/07). Display names keep their stored spelling. The UI never retries on its own and never creates a copy under a name the user did not submit. Every surface says which name was refused and the rule ("Names that differ only in letter case or spacing count as the same name."), keeps everything that existed, and makes the next attempt a deliberate submission. `lib/loop-names.ts` reads the refusal only from the exact code and a non-blank string `suggestedName`, and calls the same shared key solely to decide whether a field still holds the refused name (the API decides admission). A suggestion can be taken before the retry: the API then refuses again with a fresh suggestion (derived from the attempted name, for example "X copy copy"), which the same guidance shows. `400 LOOP_NAME_INVALID` keeps the ordinary error text. MCP `describe_loop` and `start_run` resolve an exact ID of one of the owner's loops first and otherwise compare the full requested name with the same key, so part of a name does not resolve; the optional `list_loops` `query` stays a separate trimmed, case-insensitive substring filter over names and descriptions that does not collapse internal whitespace, and finds candidates rather than choosing one (docs/07).
 
 - **Create** (Loops). The refusal is the field's error: under **New loop name**, `role="alert"`, `aria-invalid` and `aria-describedby` on the input, with **Use “suggestion”** below (`LoopNameTakenHelp`). The button replaces the text and returns focus to the field; **Create** or Enter is the retry. The guidance follows the field's text: it hides when the text no longer matches the refused name and returns if it matches again. Other refusals keep their existing message.
 - **Import** (Loops). The parsed upload is held unchanged and the refusal opens a full-width region, **Import under another name**, on its own line below the Create and Import row so the Create form never moves. It holds a warning (`<file> was not imported`, the name, the rule, and that neither the file nor the existing loop changes) and `LoopNameRetryForm`: **Name for the imported loop**, prefilled with the suggestion, focused and selected so Enter accepts and typing replaces, then **Import as new loop** and **Cancel**. Each retry calls `loops.import(client, originalDocument, { name })`: the same body, the name in the query. A raced name shows under the field as an alert with the new suggestion, and focus stays where it was. Another failure keeps the form and shows its reason, adding "check the loop list" only when the request may have committed (no answer or 5xx). **Cancel** returns focus to the file picker; choosing another file starts over. The picker is described by the warning while it is shown. The picker stays enabled while a file is read or imported, and the newest choice owns the result and the region: choosing another file, or **Cancel**, ends the current choice, and what an ended choice still has under way changes neither. Its file, if not yet read, is never sent, and a failed read says nothing; its late answer only refreshes the loop list, since a late success (or an unanswered request) may have created a loop, which then appears there without a message. The form belongs to one choice, so text typed into it stays across that upload's retries, and a second activation while its retry is sending sends nothing. A file that cannot be read reports `<file> could not be read.` on the picker.

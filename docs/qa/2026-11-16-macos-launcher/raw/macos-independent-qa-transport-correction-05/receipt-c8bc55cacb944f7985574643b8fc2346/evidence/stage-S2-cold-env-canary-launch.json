@@ -1,0 +1,469 @@
+{
+  "id": "S2-cold-env-canary-launch",
+  "cases": [
+    "O3",
+    "O6"
+  ],
+  "startedAt": "2026-11-16T22:14:02.220Z",
+  "checks": [
+    {
+      "id": "precondition-port-refused",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "precondition-store-absent",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "precondition-no-gateway",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "envelope-open-management-running",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "ok": true,
+        "exit": {
+          "code": 0,
+          "signal": null,
+          "ms": 1591
+        },
+        "stdout": "{\"version\":1,\"code\":\"open-management-running\",\"port\":62241}\n",
+        "stderrBytes": 0,
+        "elapsedMs": 1591,
+        "timedOut": false
+      }
+    },
+    {
+      "id": "within-60s-budget",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "elapsedMs": 1591
+      }
+    },
+    {
+      "id": "no-canary-in-launcher-output",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "cold:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 49530
+      }
+    },
+    {
+      "id": "cold:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 49530,
+          "ppid": 1,
+          "pgid": 49530,
+          "uid": 501,
+          "stat": "Ss",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:14:03 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "cold:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 49530,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cold:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 49530,
+            "sha256": "98ae79d6e62f0276be80f4c8e099584236279b3f61cf9874fe24c9ffe6c50fd9",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179124534"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 49530,
+            "sha256": "2c298ac3f34b7537caaaca85675e0b554af6bc33d525e471a6ef8b5923ffe30f",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179124537"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "cold:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 49530,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "fingerprint-equals-independent-config",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "helper": "e8757d655994517350c2cf1d67dd3ca3a56087fd53c05f9a6df81d8488579a7a",
+        "served": "e8757d655994517350c2cf1d67dd3ca3a56087fd53c05f9a6df81d8488579a7a"
+      }
+    },
+    {
+      "id": "parent-is-launchd",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "ppid": 1
+      }
+    },
+    {
+      "id": "session-and-group-leader",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "stat": "Ss",
+        "pgid": 49530
+      }
+    },
+    {
+      "id": "no-controlling-terminal",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "tty": "??"
+      }
+    },
+    {
+      "id": "stdio-dev-null",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "0": [
+          "/dev/null"
+        ],
+        "1": [
+          "/dev/null"
+        ],
+        "2": [
+          "/dev/null"
+        ],
+        "cwd": [
+          "/Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo"
+        ],
+        "txt": [
+          "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node",
+          "/opt/homebrew/Cellar/brotli/1.2.0/lib/libbrotlidec.1.2.0.dylib",
+          "/opt/homebrew/Cellar/libuv/1.52.1/lib/libuv.1.0.0.dylib",
+          "/opt/homebrew/Cellar/simdjson/4.6.3/lib/libsimdjson.33.0.0.dylib",
+          "/opt/homebrew/Cellar/uvwasi/0.0.23/lib/libuvwasi.dylib",
+          "/Library/Preferences/Logging/.plist-cache.RYq75HTP",
+          "/Users/jake/Library/Caches/graphgoblin-456-qa-7c5ae3c2/data/QA data ü %41 #1/graphgoblin.db-shm",
+          "/opt/homebrew/Cellar/simdutf/9.0.0/lib/libsimdutf.34.0.0.dylib",
+          "/opt/homebrew/Cellar/c-ares/1.34.6/lib/libcares.2.19.5.dylib",
+          "/opt/homebrew/Cellar/libnghttp2/1.69.0/lib/libnghttp2.14.dylib",
+          "/opt/homebrew/Cellar/brotli/1.2.0/lib/libbrotlienc.1.2.0.dylib",
+          "/opt/homebrew/Cellar/libnghttp3/1.15.0/lib/libnghttp3.9.6.1.dylib",
+          "/opt/homebrew/Cellar/brotli/1.2.0/lib/libbrotlicommon.1.2.0.dylib",
+          "/opt/homebrew/Cellar/libngtcp2/1.22.1/lib/libngtcp2.16.dylib",
+          "/opt/homebrew/Cellar/zstd/1.5.7_1/lib/libzstd.1.5.7.dylib",
+          "/usr/lib/dyld",
+          "/opt/homebrew/Cellar/sqlite/3.53.4/lib/libsqlite3.3.53.4.dylib",
+          "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libssl.3.dylib",
+          "/opt/homebrew/Cellar/openssl@3/3.6.3/lib/libcrypto.3.dylib",
+          "/opt/homebrew/Cellar/icu4c@78/78.3/lib/libicuuc.78.3.dylib",
+          "/opt/homebrew/Cellar/icu4c@78/78.3/lib/libicui18n.78.3.dylib",
+          "/opt/homebrew/Cellar/node@22/22.22.2_2/lib/libnode.127.dylib",
+          "/Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/node_modules/.pnpm/@libsql+darwin-arm64@0.5.29/node_modules/@libsql/darwin-arm64/index.node",
+          "/opt/homebrew/Cellar/icu4c@78/78.3/lib/libicudata.78.3.dylib"
+        ]
+      }
+    },
+    {
+      "id": "cwd-canonical-checkout",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "cwd": [
+          "/Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo"
+        ]
+      }
+    },
+    {
+      "id": "runtime-is-bound-node",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "no-canary-token-in-gateway-process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "tokenHits": 0
+      }
+    },
+    {
+      "id": "environment-observable",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "reason": null
+      }
+    },
+    {
+      "id": "no-canary-only-names",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "names": [
+          "GG_DATA_DIR",
+          "GG_DB_URL",
+          "GG_GOBLIN_DIST",
+          "GG_HOST",
+          "GG_MACOS_LAUNCHER_LOG_ADMISSION",
+          "GG_OLLAMA_ENABLED",
+          "GG_PORT",
+          "GG_REQUIRE_API_KEY",
+          "GG_WEB_DIST",
+          "HOME",
+          "LANG",
+          "PATH",
+          "TMPDIR"
+        ]
+      }
+    },
+    {
+      "id": "closed-name-set",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "names": [
+          "GG_DATA_DIR",
+          "GG_DB_URL",
+          "GG_GOBLIN_DIST",
+          "GG_HOST",
+          "GG_MACOS_LAUNCHER_LOG_ADMISSION",
+          "GG_OLLAMA_ENABLED",
+          "GG_PORT",
+          "GG_REQUIRE_API_KEY",
+          "GG_WEB_DIST",
+          "HOME",
+          "LANG",
+          "PATH",
+          "TMPDIR"
+        ]
+      }
+    },
+    {
+      "id": "saved-options-override-canaries",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "GG_HOST": "127.0.0.1",
+        "GG_PORT": "62241",
+        "GG_REQUIRE_API_KEY": "false",
+        "GG_OLLAMA_ENABLED": "false"
+      }
+    },
+    {
+      "id": "deterministic-values",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "mismatched": [],
+        "observed": {}
+      }
+    },
+    {
+      "id": "data-dir-value",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "rawHex": "2f55736572732f6a616b652f4c6962726172792f4361636865732f6772617068676f626c696e2d3435362d71612d37633561653363322f646174612f514120646174612075cc8820253431202331"
+      }
+    },
+    {
+      "id": "database-uri-exact",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "uri": "file:///Users/jake/Library/Caches/graphgoblin-456-qa-7c5ae3c2/data/QA%20data%20u%CC%88%20%2541%20%231/graphgoblin.db",
+        "decodedHex": "2f55736572732f6a616b652f4c6962726172792f4361636865732f6772617068676f626c696e2d3435362d71612d37633561653363322f646174612f514120646174612075cc88202534312023312f6772617068676f626c696e2e6462"
+      }
+    },
+    {
+      "id": "log-admission-bound-to-instance-directory",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "admission": {
+          "version": 1,
+          "inode": "179124508",
+          "device": "16777232",
+          "root": "/Users/jake/Library/Logs/GraphGoblin/LauncherInstances/07d755df2eb34488b8154d8d88044f68"
+        }
+      }
+    },
+    {
+      "id": "single-store-directory",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "entriesHex": [
+          "514120646174612075cc8820253431202331"
+        ]
+      }
+    },
+    {
+      "id": "database-inside-store",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "local-key-private",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "mode": "600",
+        "size": 44
+      }
+    },
+    {
+      "id": "no-canary-in-store-names",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "both-shells-served",
+      "ok": true,
+      "hard": false,
+      "detail": [
+        {
+          "route": "/app/",
+          "status": 200,
+          "shellMatch": true,
+          "contentType": "text/html; charset=utf-8",
+          "asset": "/app/assets/index-C5U89dQm.js",
+          "assetMatch": true
+        },
+        {
+          "route": "/goblin/",
+          "status": 200,
+          "shellMatch": true,
+          "contentType": "text/html; charset=utf-8",
+          "asset": "/goblin/assets/index-DWjcCYh1.js",
+          "assetMatch": true
+        }
+      ]
+    },
+    {
+      "id": "no-helper-or-launcher-left",
+      "ok": true,
+      "hard": false,
+      "detail": [
+        {
+          "pid": 49530,
+          "ppid": 1,
+          "birth": "Mon Nov 16 16:14:03 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      ]
+    },
+    {
+      "id": "single-gateway",
+      "ok": true,
+      "hard": true,
+      "detail": [
+        {
+          "pid": 49530,
+          "ppid": 1,
+          "birth": "Mon Nov 16 16:14:03 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      ]
+    },
+    {
+      "id": "headless-opened-no-browser",
+      "ok": true,
+      "hard": false,
+      "detail": []
+    },
+    {
+      "id": "no-canary-in-logs",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "log-directory-private",
+      "ok": true,
+      "hard": false
+    }
+  ],
+  "notes": {
+    "storeNames": [
+      "graphgoblin.db",
+      "graphgoblin.db-shm",
+      "graphgoblin.db-wal",
+      "graphgoblin.db.graphgoblin.lock",
+      "graphgoblin.lock",
+      "master.key"
+    ],
+    "logDirectory": {
+      "root": "/Users/jake/Library/Logs/GraphGoblin/LauncherInstances/07d755df2eb34488b8154d8d88044f68",
+      "present": true,
+      "kind": "dir",
+      "uid": 501,
+      "mode": "700",
+      "device": "16777232",
+      "inode": "179124508",
+      "files": {
+        "gateway.log": {
+          "kind": "file",
+          "uid": 501,
+          "nlink": 1,
+          "mode": "600",
+          "size": 4247,
+          "device": "16777232",
+          "inode": "179124530",
+          "managed": true,
+          "sha256": "bc2ebbe29605a54714d36ea8ee4b2707f453d4e0ae9a4163c1fa55b06b336ce2",
+          "tokenHits": 0
+        }
+      }
+    },
+    "launcherLogAfterSuccess": false
+  },
+  "status": "criteria-met",
+  "elapsedMs": 7484,
+  "finishedAt": "2026-11-16T22:14:09.705Z"
+}

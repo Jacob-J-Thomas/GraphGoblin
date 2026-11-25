@@ -1,0 +1,106 @@
+import { webcrypto } from 'node:crypto';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { flushSync } from 'react-dom';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ChatSurface } from './ChatSurface.js';
+import { conversation, mockChatClient, turn } from './__fixtures__/chat.js';
+
+const boundary = vi.hoisted(() => ({
+  inspect: undefined as undefined | (() => void),
+}));
+
+vi.mock('./controller.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./controller.js')>();
+  // Flush the real UI at the external-store notification between accepting a
+  // reply and the send finally block. The underlying state machine is unchanged.
+  class BoundaryController extends actual.ChatController {
+    constructor(...args: ConstructorParameters<typeof actual.ChatController>) {
+      super(...args);
+      const subscribe = this.subscribe;
+      this.subscribe = (listener) => subscribe(() => {
+        const state = this.getSnapshot();
+        if (boundary.inspect && state.sending && state.turns.some((item) => item.runStatus === 'succeeded')) {
+          flushSync(listener);
+          boundary.inspect();
+        } else listener();
+      });
+    }
+  }
+  return { ...actual, ChatController: BoundaryController };
+});
+
+beforeEach(() => {
+  sessionStorage.clear();
+  vi.stubGlobal('crypto', webcrypto);
+});
+
+afterEach(() => {
+  boundary.inspect = undefined;
+  vi.unstubAllGlobals();
+  sessionStorage.clear();
+});
+
+describe('disposable #565 CI status timing discriminator', () => {
+  it('exposes the same two statuses when a completed reply commits before the send settles', async () => {
+    const client = mockChatClient();
+    client.conversations.mockResolvedValue([{ ...conversation, lastTurn: 1, title: 'Saved chat' }]);
+    let finish!: () => void;
+    client.send.mockImplementation((conversationId, request) => new Promise((resolve) => {
+      finish = () => resolve({ ...turn, conversationId, requestId: request.requestId, input: request.input });
+    }));
+    render(<ChatSurface client={client} storageKey="qa565-status-discriminator" owner />);
+    const send = screen.getByRole('button', { name: 'Send message' });
+    const newChat = () => screen.getByRole('button', { name: 'New chat' });
+    const reply = turn.response!.reply;
+    await waitFor(() => expect(client.session).toHaveBeenCalled());
+    await act(async () => { await Promise.resolve(); });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), { target: { value: 'Hello' } });
+    fireEvent.click(send);
+    await waitFor(() => expect(client.send).toHaveBeenCalledOnce());
+    const statuses = () => screen.getAllByRole('status').map((node) => ({
+      tag: node.tagName, id: node.id, live: node.getAttribute('aria-live'), text: node.textContent,
+    }));
+    expect(statuses().map((node) => node.text)).toEqual(['Sending\u2026','']);
+    let overlap: ReturnType<typeof statuses> | undefined;
+    let roleQueryError: string | undefined;
+    let actionDisabledAtOverlap: boolean | undefined;
+    let transcriptVisibleAtOverlap: boolean | undefined;
+    boundary.inspect = () => {
+      overlap = statuses();
+      actionDisabledAtOverlap = (newChat() as HTMLButtonElement).disabled;
+      transcriptVisibleAtOverlap = Boolean(screen.queryByText(reply));
+      try {
+        screen.getByRole('status');
+      } catch (error) {
+        roleQueryError = error instanceof Error ? error.message.split('\n')[0] : String(error);
+      }
+    };
+    finish();
+    await waitFor(() => expect(newChat()).toBeEnabled());
+    expect(overlap).toEqual([
+      { tag: 'DIV', id: 'chat-send-reason', live: null, text: 'Sending\u2026' },
+      { tag: 'P', id: '', live: 'polite', text: 'Reply: '+reply },
+    ]);
+    expect(roleQueryError).toBe('Found multiple elements with the role "status"');
+    expect(actionDisabledAtOverlap).toBe(true);
+    expect(transcriptVisibleAtOverlap).toBe(true);
+
+    expect(screen.getByText(reply)).toBeVisible();
+    const replyRegion = screen.getByRole('status');
+    expect(replyRegion).toHaveAttribute('aria-live','polite');
+    expect(replyRegion).toHaveTextContent('Reply: '+reply);
+    fireEvent.click(newChat());
+    expect(await screen.findByRole('heading', { name: 'What\u2019s the move?' })).toBeVisible();
+    expect(replyRegion).toBeInTheDocument();
+    expect(replyRegion).toBeEmptyDOMElement();
+    client.turns.mockResolvedValue([turn]);
+    fireEvent.change(screen.getByRole('combobox', { name: 'Conversation' }), {
+      target: { value: conversation.id },
+    });
+    expect(await screen.findByText(reply)).toBeVisible();
+    expect(replyRegion).toBeInTheDocument();
+    expect(replyRegion).toBeEmptyDOMElement();
+    console.log('QA565_CONTROL', JSON.stringify({ overlap, roleQueryError, actionDisabledAtOverlap,
+      transcriptVisibleAtOverlap, afterNewChatAndSelection: replyRegion.textContent }));
+  });
+});

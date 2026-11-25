@@ -93,7 +93,7 @@ it('matches launcher identity to the built gateway with both bundled shells and 
   // Tooling's test dependencies build both shells. Do not silently test an absent fallback.
   await access(join(root, 'apps/web/dist/index.html'));
   await access(join(root, 'apps/web/dist-goblin/index.html'));
-  const dataDir = await mkdtemp(join(tmpdir(), 'gg-launcher-identity space-α-'));
+  const dataDir = await mkdtemp(join(await realpath(tmpdir()), 'gg-launcher-identity space-α-'));
   const env = launcherEnvironment(dataDir);
   const identity = async (overrides = {}) => {
     const result = await execute(process.execPath, [identityEntry], {
