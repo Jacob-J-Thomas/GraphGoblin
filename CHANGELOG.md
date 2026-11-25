@@ -26,6 +26,15 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   at their saved paths or rerun the installer. No format change or migration. Part of #456 and
   #326; owner acceptance is tracked separately. See ADR-0082.
 
+- MCP `describe_loop` and `start_run` resolve `loopId` as an exact ID of one of the caller's
+  loops first, then as a full loop name under the API's name rule: trimmed, whitespace runs
+  collapsed to one space and lowercased, without Unicode normalization or locale-dependent case
+  folding (#473, #516). Part of a name returns `LOOP_NOT_FOUND`, and equivalent names from an
+  inconsistent upstream return `AMBIGUOUS_LOOP_NAME`. Display names keep their stored spelling.
+  The `list_loops` `query` remains a separate trimmed, case-insensitive substring filter. The
+  user guide, docs/09 and the shared run-loop skill used by the Codex and Claude plugins now
+  describe this lookup. No store, schema or format change.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
@@ -203,13 +212,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   longer also listed under Keeps. A reset refuses when the directory lists several hard links
   that could be a lock or guard and the filesystem does not say which one the lock module opens.
   The confirmed manifest says a stale lock file or guard was reclaimed only when the reset's own
-  acquisition removed it, as the lock module now reports; one the preview found that another
-  process removed first is listed as `already gone when the reset took` that lock instead of as
-  reclaimed by the reset. Completion and failure output names each lock and what releasing
+  acquisition removed it, as the lock module now reports; one that the confirmed command's own
+  read-only preview found, and that another process removed before the command took that lock,
+  is listed as `already gone when the reset took` that lock instead of as reclaimed by the reset.
+  An earlier standalone dry run is a separate invocation, and the confirmed command does not
+  remember it. An entry cleared before the confirmed command's preview gets no attribution.
+  Completion and failure output names each lock and what releasing
   it did (removed, already gone, or kept because another process's record replaced it) instead
   of only `graphgoblin.lock`; a failed release names the lock that failed, where the database
   lock's failure was reported as `graphgoblin.lock`. A refusal after the confirmed reset took
-  its locks names any stale lock file or guard they reclaimed, and any the preview found that
+  its locks names any stale lock file or guard they reclaimed, and any its own preview found that
   was already gone when the reset took its lock (without saying who removed it), instead of
   saying nothing changed. A failed attempt to take either lock is no longer reported as
   `Nothing in the data directory was changed.`: taking a lock can itself create or reclaim that
@@ -224,7 +236,8 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   that parse reset output must expect the new lock rows and release lines in place of
   `graphgoblin.lock  the reset's own lock`, `removed graphgoblin.lock` and
   `Released graphgoblin.lock.`, the `could not take the <lock>:` refusal prefix, and the
-  `already gone when the reset took` wording for stale entries another process removed first.
+  `already gone when the reset took` wording for stale entries the confirmed command's own
+  preview found and another process removed before it took that lock.
 
 - The Windows launcher installer refuses explicit `GG_MASTER_KEY` and `GG_JEV_API_KEY`
   overrides, including case variants and empty values, before writing staged or installed JSON
