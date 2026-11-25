@@ -10,8 +10,11 @@
  * Markdown file named as an original is refused: immutable Markdown originals are stored as
  * `*.md.txt`. Paths missing from this working tree (a sparse checkout) are reported and fail.
  *
- * Read-only: Git runs without optional locks and formatting is checked in memory. It complements,
- * and never replaces, `pnpm format:check` and CI. See docs/15-issue-workflow.md.
+ * Read-only: Git runs without optional locks or automatic index refresh, and formatting is checked
+ * in memory. An unstaged modification is selected only when Git's patch for it is not empty, so
+ * a path whose timestamp alone changed, or whose bytes Git normalizes to the indexed blob (a CRLF
+ * rewrite under `text=auto eol=lf`), is not. It complements, and never replaces,
+ * `pnpm format:check` and CI. See docs/15-issue-workflow.md.
  */
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -60,8 +63,20 @@ const FIXES = {
     'restore a removed file or stage its removal with git rm.',
 };
 
+/**
+ * Runs Git read-only, with pathspecs taken literally. Optional locks cover `git status`, not the
+ * stat refresh `git diff` writes to the index after comparing stale entries, so each invocation
+ * switches that refresh off with `-c`, leaving repository and global Git configuration unchanged.
+ */
 function git(cwd, args) {
-  return execFileSync('git', ['--no-pager', '--no-optional-locks', ...args], {
+  const readOnly = [
+    '--no-pager',
+    '--no-optional-locks',
+    '--literal-pathspecs',
+    '-c',
+    'diff.autoRefreshIndex=false',
+  ];
+  return execFileSync('git', [...readOnly, ...args], {
     cwd,
     encoding: 'utf8',
     env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
@@ -115,6 +130,15 @@ export async function checkQaPacket({ base, cwd = process.cwd() }) {
   const diff = ['diff', '--name-status', '-z', '--no-renames', '--no-color'];
   const staged = nameStatus(git(root, [...diff, '--cached', mergeBase, '--', QA_ROOT]));
   const unstaged = nameStatus(git(root, [...diff, '--', QA_ROOT]));
+  // Without its index refresh, `git diff` lists every entry whose cached stat data is stale, and
+  // no cached predicate settles whether its content changed: Git's own check skips the content
+  // when the cached size differs, as after a CRLF rewrite that normalizes to the indexed blob.
+  // To build a patch, Git hashes the work-tree file as it would store it (attributes, end-of-line
+  // normalization, the index) and compares contents, so a path whose stored content would not
+  // change yields an empty patch and is dropped. Paths staged or committed are selected anyway.
+  const patch = ['diff', '--patch', '--no-ext-diff', '--no-textconv', '--no-color', '--'];
+  for (const [path, status] of unstaged)
+    if (status === 'M' && !staged.has(path) && !git(root, [...patch, path])) unstaged.delete(path);
   const untracked = git(root, ['ls-files', '--others', '--exclude-standard', '-z', '--', QA_ROOT])
     .split('\0')
     .filter(Boolean);

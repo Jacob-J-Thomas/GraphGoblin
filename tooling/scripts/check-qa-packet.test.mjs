@@ -6,8 +6,10 @@ import {
   mkdtempSync,
   readFileSync,
   realpathSync,
+  renameSync,
   rmSync,
   unlinkSync,
+  utimesSync,
   writeFileSync,
 } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -19,6 +21,11 @@ import { afterAll, test } from 'vitest';
 const cli = fileURLToPath(new URL('./check-qa-packet.mjs', import.meta.url));
 const prettierBin = createRequire(import.meta.url).resolve('prettier/bin/prettier.cjs');
 const repositoryPrettierConfig = readFileSync(new URL('../../.prettierrc', import.meta.url));
+// The repository's line-ending rule, the first line of its .gitattributes.
+const TEXT_RULE = '* text=auto eol=lf';
+const repositoryTextRule = readFileSync(new URL('../../.gitattributes', import.meta.url), 'utf8')
+  .split('\n')[0]
+  .trimEnd();
 const scratch = mkdtempSync(join(realpathSync.native(tmpdir()), 'gg-check-qa-'));
 afterAll(() => rmSync(scratch, { recursive: true, force: true, maxRetries: 10, retryDelay: 100 }));
 
@@ -283,10 +290,12 @@ test('ordinary deletions pass, but a committed addition missing from the working
   assert.match(result.stdout, /stage its removal with git rm/);
 });
 
-test('committed, staged, unstaged and untracked changes are selected once and nothing is written', () => {
+test('committed, staged, unstaged, untracked and renamed changes are selected once; nothing is written', () => {
   const root = repository({
     'docs/qa/p/edited.md': FORMATTED,
     'docs/qa/p/recreated.md': FORMATTED,
+    'docs/qa/p/rename-staged-from.md': FORMATTED,
+    'docs/qa/p/rename-unstaged-from.md': FORMATTED,
     'docs/qa/p/staged-then-edited.md': FORMATTED,
   });
   const second = `${FORMATTED}\nSecond pass.\n`;
@@ -304,33 +313,130 @@ test('committed, staged, unstaged and untracked changes are selected once and no
   git(root, 'rm', '--cached', '--quiet', 'docs/qa/p/recreated.md');
   write(root, 'docs/qa/p/untracked.md', FORMATTED);
   write(root, 'docs/qa/p/session.log', 'Git ignores this file.\n');
-  // Same bytes with a new modification time: stale index stat data, but no content change.
-  write(root, 'docs/qa/2026-11-01-historical/README.md', FORMATTED);
-  const selected = [
-    'docs/qa/p/committed-then-edited.md',
-    'docs/qa/p/edited.md',
-    'docs/qa/p/recreated.md',
-    'docs/qa/p/staged-then-edited.md',
-    'docs/qa/p/staged.md',
-    'docs/qa/p/untracked.md',
+  // Renames are selected without rename detection: the old path as deleted, the new one as added.
+  git(root, 'mv', 'docs/qa/p/rename-staged-from.md', 'docs/qa/p/rename-staged-to.md');
+  renameSync(
+    join(root, 'docs/qa/p/rename-unstaged-from.md'),
+    join(root, 'docs/qa/p/rename-unstaged-to.md'),
+  );
+  // Same bytes with an older modification time: stale index stat data but no content change, which
+  // a plain `git diff` refreshes by rewriting the index. Neither path is selected, so the
+  // unformatted historical original under the archive rule is not reported either.
+  const touched = [
+    'docs/qa/2026-11-01-historical/README.md',
+    'docs/qa/archive-packet/author/report-original.md',
   ];
-  const before = ['.git/index', ...selected].map((path) => read(root, path));
+  write(root, touched[0], FORMATTED);
+  const past = new Date('2020-01-01T00:00:00Z');
+  for (const path of touched) utimesSync(join(root, path), past, past);
+  // Control: the plumbing diff-files compares stat data only and writes nothing.
+  const stale = git(root, 'diff-files', '--name-only', '-z', '--', 'docs/qa').split('\0');
+  assert.deepEqual(
+    touched.filter((path) => !stale.includes(path)),
+    [],
+  );
+  const selected = [
+    ['formatted', 'docs/qa/p/committed-then-edited.md'],
+    ['formatted', 'docs/qa/p/edited.md'],
+    ['formatted', 'docs/qa/p/recreated.md'],
+    ['deleted', 'docs/qa/p/rename-staged-from.md'],
+    ['formatted', 'docs/qa/p/rename-staged-to.md'],
+    ['deleted', 'docs/qa/p/rename-unstaged-from.md'],
+    ['formatted', 'docs/qa/p/rename-unstaged-to.md'],
+    ['formatted', 'docs/qa/p/staged-then-edited.md'],
+    ['formatted', 'docs/qa/p/staged.md'],
+    ['formatted', 'docs/qa/p/untracked.md'],
+  ];
+  const present = selected.filter(([kind]) => kind === 'formatted').map(([, path]) => path);
+  const snapshot = () => ['.git/index', ...present, ...touched].map((path) => read(root, path));
+  const before = snapshot();
 
   const result = check(root, '--base', 'main');
 
   assert.equal(result.status, 0, result.stdout + result.stderr);
   assert.deepEqual(
     listed(result.stdout),
-    selected.map((path) => ['formatted', path, '']),
+    selected.map(([kind, path]) => [kind, path, '']),
   );
   assert.match(
     result.stdout,
-    /^Selected docs\/qa paths: 6 = checked with Prettier 6 \(Markdown 6\) \+/m,
+    /^Selected docs\/qa paths: 10 = checked with Prettier 8 \(Markdown 8\) \+ refused Markdown originals 0 \+ retained archived originals 0 \+ deleted 2 \+ unavailable 0$/m,
   );
-  assert.deepEqual(
-    ['.git/index', ...selected].map((path) => read(root, path)),
-    before,
-  );
+  assert.deepEqual(snapshot(), before);
+});
+
+test('a line-ending rewrite Git normalizes away is not selected; real content and EOL changes are', () => {
+  assert.equal(repositoryTextRule, TEXT_RULE);
+  const root = repository({
+    '.gitattributes': `${TEXT_RULE}\ndocs/qa/sealed/** -text -whitespace\n`,
+    'docs/qa/2026-11-01-historical/evidence.json': '{"compact":true}\n',
+    'docs/qa/2026-11-01-historical/notes 2.md': FORMATTED,
+    'docs/qa/2026-11-01-historical/notes [v2].md': FORMATTED,
+    'docs/qa/2026-11-01-historical/result.json': '{"result":"pass"}\n',
+    'docs/qa/sealed/report.md.txt': UNFORMATTED,
+  });
+  // As on a Windows checkout; the eol=lf attribute keeps the committed LF bytes in the work tree.
+  git(root, 'config', 'core.autocrlf', 'true');
+  const crlf = (text) => text.replaceAll('\n', '\r\n');
+  // Historical files rewritten with CRLF line endings only: Git normalizes them to their LF blobs.
+  // The bracketed name is a path, not a pattern that would also match `notes 2.md`.
+  const rewritten = [
+    'docs/qa/2026-11-01-historical/README.md',
+    'docs/qa/2026-11-01-historical/evidence.json',
+    'docs/qa/2026-11-01-historical/notes [v2].md',
+  ];
+  write(root, rewritten[0], crlf(FORMATTED));
+  write(root, rewritten[1], crlf('{"compact":true}\n'));
+  write(root, rewritten[2], crlf(FORMATTED));
+  // Real changes: a same-size edit given an older modification time, new content written with
+  // CRLF, and CRLF line endings in a -text original, whose bytes Git stores as they are.
+  const notes = FORMATTED.replace('summary', 'Summary');
+  const result = crlf('{"result":"fail"}\n');
+  const sealed = crlf(UNFORMATTED);
+  write(root, 'docs/qa/2026-11-01-historical/notes 2.md', notes);
+  const past = new Date('2020-01-01T00:00:00Z');
+  utimesSync(join(root, 'docs/qa/2026-11-01-historical/notes 2.md'), past, past);
+  write(root, 'docs/qa/2026-11-01-historical/result.json', result);
+  write(root, 'docs/qa/sealed/report.md.txt', sealed);
+  const changed = [
+    'docs/qa/2026-11-01-historical/notes 2.md',
+    'docs/qa/2026-11-01-historical/result.json',
+    'docs/qa/sealed/report.md.txt',
+  ];
+  // Control: each rewritten path has stale index stat data and a changed size, yet Git's
+  // normalized hash of its work-tree bytes is the blob in the index and at the base.
+  const stale = git(root, 'diff-files', '--name-only', '-z', '--', 'docs/qa').split('\0');
+  for (const path of rewritten) {
+    assert.ok(stale.includes(path), `${path} has stale index stat data`);
+    assert.notEqual(read(root, path).length, Number(git(root, 'cat-file', '-s', `main:${path}`)));
+    const normalized = git(root, 'hash-object', `--path=${path}`, '--', path).trim();
+    assert.deepEqual(git(root, 'rev-parse', `:${path}`, `main:${path}`).trim().split('\n'), [
+      normalized,
+      normalized,
+    ]);
+  }
+  const snapshot = () => ['.git/index', ...rewritten, ...changed].map((path) => read(root, path));
+  const before = snapshot();
+
+  const report = check(root, '--base', 'main');
+
+  assert.equal(report.status, 0, report.stdout + report.stderr);
+  assert.deepEqual(listed(report.stdout), [
+    ['formatted', 'docs/qa/2026-11-01-historical/notes 2.md', ''],
+    ['retained', 'docs/qa/2026-11-01-historical/result.json', sha256(result)],
+    ['retained', 'docs/qa/sealed/report.md.txt', sha256(sealed)],
+  ]);
+  assert.deepEqual(snapshot(), before);
+  // Control: an ordinary `git diff`, which compares content and may then refresh this disposable
+  // index, selects the same paths.
+  const ordinary = spawnSync('git', ['diff', '--name-only', '-z', '--', 'docs/qa'], {
+    cwd: root,
+    env,
+    encoding: 'utf8',
+    windowsHide: true,
+  });
+  assert.equal(ordinary.status, 0, ordinary.stderr);
+  assert.deepEqual(ordinary.stdout.split('\0').filter(Boolean), changed);
 });
 
 test('an unusable argument, base or repository stops with exit 2 and no partial report', () => {
