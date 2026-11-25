@@ -4,6 +4,21 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
+  `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
+  template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so
+  a self-edge counts one) and `repairedEndpoints` (each edge end moved, so both ends of a self-edge)
+  instead of the combined `repairedReferences`, which is removed with no alias. The editor's rename
+  notice takes its reference count from `repairedSources` and its connection count from
+  `repairedConnections` instead of recounting edges, and still counts a self-edge as one
+  connection. The redundant
+  `syntaxIssues` export is removed: `validateLoop` remains the only producer of
+  `TEMPLATE_INVALID` and `EXPRESSION_INVALID`, with the same paths, messages and order.
+  `findAuthoredSources` stays as a discovery helper. Upgrade note: code that read
+  `repairedReferences` reads the separate counts instead, and code that called `syntaxIssues` filters
+  `validateLoop` by those two codes. No stored, export, device-draft or contract format changes,
+  and no repairs, warnings or notice wording change.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under

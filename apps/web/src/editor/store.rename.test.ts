@@ -1,9 +1,10 @@
 import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgoblin/contracts';
-import { createSystemChatDefinition, enableChatAudio } from '@graphgoblin/domain';
+import { createSystemChatDefinition, enableChatAudio, renameLoopNode } from '@graphgoblin/domain';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { VOICE_STEP_MESSAGE } from './chat-protection.js';
 import { COALESCE_MS } from './history.js';
 import { validateDraft } from './model.js';
+import { renameSummary } from './RenameNotice.js';
 import { ID_FORMAT_MESSAGE, useEditorStore, type EditorState } from './store.js';
 
 const store = () => useEditorStore.getState();
@@ -314,6 +315,92 @@ describe('renaming a node with its references (#273)', () => {
     store().renameNode('review', 'audit');
     expect(config('check')['jsonata']).toBe('counters.nodeVisits.audit > 2 ? "stop" : "again"');
     expect(store().decisionRoutes['check']).toBe(rows);
+  });
+
+  it('reports the repaired sources and each connection once, a repeat self-edge included (#476)', () => {
+    const base = referencing();
+    const definition: LoopDefinitionInput = {
+      ...base,
+      nodes: [
+        ...base.nodes.filter((n) => n.id !== 'done'),
+        {
+          id: 'gate',
+          kind: 'decision',
+          label: 'Gate',
+          config: {
+            kind: 'expression',
+            jsonata: 'counters.nodeVisits.gate > 2 ? "stop" : "again"',
+            routes: [
+              { id: 'again', label: 'Again', repeat: true },
+              { id: 'stop', label: 'Stop' },
+            ],
+            maxPasses: 3,
+          },
+        },
+        { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'gates.gate.passes' } },
+      ],
+      edges: [
+        ...base.edges.filter((e) => e.id !== 'e3'),
+        { id: 'e3', from: { node: 'review', port: 'out' }, to: { node: 'gate', port: 'in' } },
+        { id: 'e4', from: { node: 'gate', port: 'again' }, to: { node: 'gate', port: 'in' } },
+        { id: 'e5', from: { node: 'gate', port: 'stop' }, to: { node: 'done', port: 'in' } },
+        {
+          id: 'e6',
+          from: { node: 'gate', port: 'limit-reached' },
+          to: { node: 'done', port: 'in' },
+        },
+      ],
+    };
+    store().load('L1', definition);
+    pause();
+    const loaded = store().definition;
+    expect(store().renameNode('gate', 'check')).toBeUndefined();
+    const ends = () => store().definition!.edges.map((e) => [e.id, e.from.node, e.to.node]);
+    const renamedEnds = [
+      ['e1', 'start', 'work'],
+      ['e2', 'work', 'review'],
+      ['e3', 'review', 'check'],
+      ['e4', 'check', 'check'],
+      ['e5', 'check', 'done'],
+      ['e6', 'check', 'done'],
+    ];
+    expect(ends()).toEqual(renamedEnds);
+    expect(config('check')['jsonata']).toBe('counters.nodeVisits.check > 2 ? "stop" : "again"');
+    expect(config('done')['returns']).toBe('gates.check.passes');
+
+    // Four connections hold the gate, e4 at both ends; the two sources reading it are the
+    // references. Connection ends are never counted as references.
+    const report = store().renameReport!;
+    expect(report).toMatchObject({
+      from: 'gate',
+      to: 'check',
+      connections: 4,
+      references: 2,
+      warnings: [],
+    });
+    expect(renameSummary(report)).toBe(
+      'Updated 2 references in expressions, templates and mutation paths, and 4 connections.',
+    );
+    // Both counts are the domain's for the draft the store renamed, taken as returned: the
+    // connections are its `repairedConnections`, not its five `repairedEndpoints`.
+    const domain = renameLoopNode(loaded!, 'gate', 'check');
+    if (domain.kind !== 'renamed') throw new Error(domain.kind);
+    expect(domain).toMatchObject({
+      repairedSources: 2,
+      repairedConnections: 4,
+      repairedEndpoints: 5,
+    });
+    expect(report).toMatchObject({
+      connections: domain.repairedConnections,
+      references: domain.repairedSources,
+    });
+
+    store().undo();
+    expect(store().definition).toEqual(loaded);
+    expect(store().renameReport).toBeUndefined();
+    store().redo();
+    expect(ends()).toEqual(renamedEnds);
+    expect(store().renameReport).toBeUndefined();
   });
 
   it('keeps protected voice steps: no rename, no report, the existing message', () => {
