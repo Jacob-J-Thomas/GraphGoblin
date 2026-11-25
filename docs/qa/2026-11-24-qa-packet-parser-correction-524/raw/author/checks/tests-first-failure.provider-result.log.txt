@@ -1,0 +1,297 @@
+Exit code 1
+$ vitest run scripts/check-qa-packet.test.mjs
+
+ RUN  v5.0.3 G:/ggq/gg-fu-qa-packets-20261124/GraphGoblin/tooling
+
+ ❯ scripts/check-qa-packet.test.mjs (12 tests | 12 failed) 6458ms
+   × new formatted prose passes and a raw original stored as .md.txt keeps its exact bytes 440ms
+   × unformatted new prose fails without writing, from a spaced subdirectory 376ms
+   × new Markdown hidden by an archive ignore rule is still checked, unlike prettier --check 497ms
+   × a newly added Markdown original is refused by its name; historical and other uses are not 423ms
+   × no changed QA path passes and still reports the base 437ms
+   × a sparse checkout fails on selected paths it lacks while deletions stay deletions 623ms
+   × a page Prettier stops on fails with its cause; later pages and sparse omissions are still reported 747ms
+   × ordinary deletions pass, but a committed addition missing from the working tree fails 605ms
+   × committed, staged, unstaged, untracked and renamed changes are selected once; nothing is written 723ms
+   × a line-ending rewrite Git normalizes away is not selected; real content and EOL changes are 785ms
+   × an unusable argument, base or repository stops with exit 2 and no partial report 419ms
+   × importing the module runs no check 73ms
+
+⎯⎯⎯⎯⎯⎯ Failed Tests 12 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  scripts/check-qa-packet.test.mjs > new formatted prose passes and a raw original stored as .md.txt keeps its exact bytes
+AssertionError: file:///G:/ggq/gg-fu-qa-packets-20261124/GraphGoblin/tooling/scripts/check-qa-packet.mjs:56
+const LINE_BREAK = /\r\n|[\n\r
+                   ^
+
+SyntaxError: Invalid regular expression: missing /
+    at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:110:18)
+    at #translate (node:internal/modules/esm/loader:559:20)
+    at afterLoad (node:internal/modules/esm/loader:612:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:617:12)
+    at #createModuleJob (node:internal/modules/esm/loader:640:36)
+    at #getJobFromResolveResult (node:internal/modules/esm/loader:353:34)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:680:25)
+
+Node.js v22.23.4
+
+
+1 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ scripts/check-qa-packet.test.mjs:124:10
+    122|   const result = check(root, '--base', 'main');
+    123|
+    124|   assert.equal(result.status, 0, result.stdout + result.stderr);
+       |          ^
+    125|   assert.match(result.stdout, /^check:qa: .*pnpm format:check and CI r…
+    126|   assert.match(
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/12]⎯
+
+ FAIL  scripts/check-qa-packet.test.mjs > unformatted new prose fails without writing, from a spaced subdirectory
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
++ []
+- [
+-   [
+-     'UNFORMATTED',
+-     'docs/qa/2026-11-24 spaced packet/QA notes.md',
+-     ''
+-   ],
+-   [
+-     'UNFORMATTED',
+-     'docs/qa/2026-11-24 spaced packet/capture.html',
+-     ''
+-   ],
+-   [
+-     'retained',
+-     'docs/qa/2026-11-24 spaced packet/raw copy.md.txt',
+-     'sha256=659f0740ce1f266afe09c36f6033bac250040da38f229c81d5c998fa13f7c7b6'
+-   ]
+- ]
+
+
+- Expected
++ Received
+
+- [
+-   [
+-     "UNFORMATTED",
+-     "docs/qa/2026-11-24 spaced packet/QA notes.md",
+-     "",
+-   ],
+-   [
+-     "UNFORMATTED",
+-     "docs/qa/2026-11-24 spaced packet/capture.html",
+-     "",
+-   ],
+-   [
+-     "retained",
+-     "docs/qa/2026-11-24 spaced packet/raw copy.md.txt",
+-     "sha256=659f0740ce1f266afe09c36f6033bac250040da38f229c81d5c998fa13f7c7b6",
+-   ],
+- ]
++ []
+
+ ❯ scripts/check-qa-packet.test.mjs:158:10
+    156|
+    157|   assert.equal(result.status, 1, result.stdout + result.stderr);
+    158|   assert.deepEqual(listed(result.stdout), [
+       |          ^
+    159|     ['UNFORMATTED', `${packet}/QA notes.md`, ''],
+    160|     ['UNFORMATTED', `${packet}/capture.html`, ''],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/12]⎯
+
+ FAIL  scripts/check-qa-packet.test.mjs > new Markdown hidden by an archive ignore rule is still checked, unlike prettier --check
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
++ []
+- [
+-   [
+-     'formatted',
+-     'docs/qa/archive-packet/reading-note.md',
+-     'an ignore rule hides it from format:check; checked here'
+-   ],
+-   [
+-     'UNFORMATTED',
+-     'docs/qa/archive-packet/summary.md',
+-     'an ignore rule hides it from format:check; checked here'
+-   ]
+- ]
+
+
+- Expected
++ Received
+
+- [
+-   [
+-     "formatted",
+-     "docs/qa/archive-packet/reading-note.md",
+-     "an ignore rule hides it from format:check; checked here",
+-   ],
+-   [
+-     "UNFORMATTED",
+-     "docs/qa/archive-packet/summary.md",
+-     "an ignore rule hides it from format:check; checked here",
+-   ],
+- ]
++ []
+
+ ❯ scripts/check-qa-packet.test.mjs:190:10
+    188|
+    189|   assert.equal(result.status, 1, result
+
+... [11476 characters truncated] ...
+
+    at #getJobFromResolveResult (node:internal/modules/esm/loader:353:34)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:680:25)
+
+Node.js v22.23.4
+
+
+1 !== 0
+
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ scripts/check-qa-packet.test.mjs:562:10
+    560|   const report = check(root, '--base', 'main');
+    561|
+    562|   assert.equal(report.status, 0, report.stdout + report.stderr);
+       |          ^
+    563|   assert.deepEqual(listed(report.stdout), [
+    564|     ['formatted', 'docs/qa/2026-11-01-historical/notes 2.md', ''],
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/12]⎯
+
+ FAIL  scripts/check-qa-packet.test.mjs > an unusable argument, base or repository stops with exit 2 and no partial report
+AssertionError: : file:///G:/ggq/gg-fu-qa-packets-20261124/GraphGoblin/tooling/scripts/check-qa-packet.mjs:56
+const LINE_BREAK = /\r\n|[\n\r
+                   ^
+
+SyntaxError: Invalid regular expression: missing /
+    at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
+    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:110:18)
+    at #translate (node:internal/modules/esm/loader:559:20)
+    at afterLoad (node:internal/modules/esm/loader:612:29)
+    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:617:12)
+    at #createModuleJob (node:internal/modules/esm/loader:640:36)
+    at #getJobFromResolveResult (node:internal/modules/esm/loader:353:34)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:680:25)
+
+Node.js v22.23.4
+
+
+1 !== 2
+
+
+- Expected
++ Received
+
+- 2
++ 1
+
+ ❯ scripts/check-qa-packet.test.mjs:600:12
+    598|   ]) {
+    599|     const result = check(cwd, ...args);
+    600|     assert.equal(result.status, 2, `${args.join(' ')}: ${result.stdout…
+       |            ^
+    601|     assert.match(result.stderr, message);
+    602|     assert.equal(result.stdout, '');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/12]⎯
+
+ FAIL  scripts/check-qa-packet.test.mjs > importing the module runs no check
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
++   1,
+-   0,
+    '',
++   'file:///G:/ggq/gg-fu-qa-packets-20261124/GraphGoblin/tooling/scripts/check-qa-packet.mjs:56\r\n' +
++     'const LINE_BREAK = /\\r\\n|[\\n\\r\r\n' +
++     '                   ^\r\n' +
++     '\r\n' +
++     'SyntaxError: Invalid regular expression: missing /\r\n' +
++     '    at compileSourceTextModule (node:internal/modules/esm/utils:346:16)\r\n' +
++     '    at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:110:18)\r\n' +
++     '    at #translate (node:internal/modules/esm/loader:559:20)\r\n' +
++     '    at afterLoad (node:internal/modules/esm/loader:612:29)\r\n' +
++     '    at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:617:12)\r\n' +
++     '    at #createModuleJob (node:internal/modules/esm/loader:640:36)\r\n' +
++     '    at #getJobFromResolveResult (node:internal/modules/esm/loader:353:34)\r\n' +
++     '    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)\r\n' +
++     '    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:680:25)\r\n' +
++     '\r\n' +
++     'Node.js v22.23.4\r\n'
+-   ''
+  ]
+
+
+- Expected
++ Received
+
+  [
+-   0,
++   1,
+    "",
+-   "",
++   "file:///G:/ggq/gg-fu-qa-packets-20261124/GraphGoblin/tooling/scripts/check-qa-packet.mjs:56
++ const LINE_BREAK = /\\r\\n|[\\n\\r
++                    ^
++ 
++ SyntaxError: Invalid regular expression: missing /
++     at compileSourceTextModule (node:internal/modules/esm/utils:346:16)
++     at ModuleLoader.moduleStrategy (node:internal/modules/esm/translators:110:18)
++     at #translate (node:internal/modules/esm/loader:559:20)
++     at afterLoad (node:internal/modules/esm/loader:612:29)
++     at ModuleLoader.loadAndTranslate (node:internal/modules/esm/loader:617:12)
++     at #createModuleJob (node:internal/modules/esm/loader:640:36)
++     at #getJobFromResolveResult (node:internal/modules/esm/loader:353:34)
++     at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:321:41)
++     at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:680:25)
++ 
++ Node.js v22.23.4
++ ",
+  ]
+
+ ❯ scripts/check-qa-packet.test.mjs:612:10
+    610|     { cwd: scratch, env, encoding: 'utf8', windowsHide: true },
+    611|   );
+    612|   assert.deepEqual([result.status, result.stdout, result.stderr], [0, …
+       |          ^
+    613| });
+    614|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/12]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  12 failed (12)
+   Start at  23:29:16
+   Duration  6.75s (tests 99%, import 1%, transform 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-fu-qa-packets-
+  │ 20261124\GraphGoblin\tooling

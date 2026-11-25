@@ -1,0 +1,39 @@
+**Verdict for #524: FAIL**
+
+The focused arm failed on its first and only run, so I can't pass the candidate. The fixtures and packet arms both passed. The focused failure stands as is until root reviews the saved bytes, because I don't know whether the cause is in the candidate or the harness.
+
+I ran the three commands once each, in order, in the foreground. I made no retries, edits, stage/index changes or side commands. The harness reported `sourceUnchanged: true` for all three arms.
+
+### 1. `focused`: FAIL (exit 1)
+```
+{"mode": "focused", "exitCode": 1, "sourceUnchanged": true, "failure": "FOCUSED_REGRESSION_SUITE_OR_EXISTING_COVERAGE_THRESHOLD_NOT_PROVED"}
+```
+- **Pass count:** the output didn't include it, so I can't report it.
+- **Line and branch coverage:** the output didn't include them either.
+- **Cause:** the failure code doesn't say whether a test failed, an existing coverage threshold was missed, or the harness misread the run. Reading the saved child output would have needed an extra command, which wasn't allowed. Root needs to check the archived stdout/stderr for this arm to find the cause.
+- The old baseline (11 tests, 100% coverage) was for the earlier defective source and doesn't count here.
+
+### 2. `fixtures`: PASS (exit 0)
+```
+{"mode": "fixtures", "exitCode": 0, "sourceUnchanged": true, "evidence": {"publicCalls": 8, "integrityFiles": [ ... 8 files ... ]}}
+```
+- There were 8 calls to the public CLI. Each one wrote an integrity file:
+  - `full-malformed`
+  - `sparse-malformed`
+  - `sparse-repaired`
+  - `full-repaired`
+  - `invalid-args`
+  - `invalid-base`
+  - `unusable-repository`
+  - `literal-crlf`
+- The harness exited 0, which means its internal checks passed: the required exit codes, full and sparse scope, the parser failure tied to a path with its real location, continuation into the later good Markdown, count reconciliation, recovery guidance for the missing README, the CRLF filename control with the retained `.md.txt` hash, and unchanged index, config and file bytes on every run.
+- Those individual results come only from the harness's exit status. Its summary doesn't print them one by one, and I didn't open the integrity files.
+
+### 3. `packet`: PASS (exit 0)
+- **Base:** `631d16e39b8e9932f4763390a4166fa67eea8df3`, which matches the pinned target.
+- **Selected paths:** I counted 66 in the output, all under `docs/qa/2026-11-24-qa-packet-check-524/`. That matches `packetPathCount: 66`.
+- **Archived hashes:** `retainedHashesVerified: 65`, as required.
+- **Working tree and index:** `sourceUnchanged: true`.
+
+### Scope
+This verdict covers only this exact local candidate (head `7ee3e20a…`). Current-target CI, the targeted final audit and publication are still handled separately. Before the candidate can pass, root needs to find what caused the focused failure.

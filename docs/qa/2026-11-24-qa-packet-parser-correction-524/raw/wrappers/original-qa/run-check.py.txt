@@ -1,0 +1,307 @@
+"""Run one bounded QA arm on the bound #524 correction and preserve complete receipts."""
+
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+import common as qa
+
+CHECKER = qa.WORKTREE / 'tooling/scripts/check-qa-packet.mjs'
+FIXTURE_CONFIG = ('.gitattributes', '.prettierignore', '.prettierrc', '.gitignore')
+OMITTED = 'docs/qa/qa524-omitted/README.md'
+HTML = 'docs/qa/qa524-visible/a-bad [v2].html'
+MARKDOWN = 'docs/qa/qa524-visible/z-valid.md'
+TEXT = {OMITTED: b'# Omitted page\n', HTML: b'<main><section>Hello</main>\n',
+        MARKDOWN: b'# Formatted page\n'}
+RAW = 'docs/qa/2026-11-17-ci-intent-1-independent-qa/immutable-original.md.txt'
+HISTORY = 'docs/qa/qa524-normalize/README.md'
+BRACKETS = 'docs/qa/qa524-normalize/notes [v2].md'
+NEIGHBOR = 'docs/qa/qa524-normalize/notes 2.md'
+
+
+def execute(argv, cwd, env, output, timeout):
+    plain = [str(value) for value in argv]
+    output.mkdir(exist_ok=False)
+    with (output / 'stdout.log').open('xb') as stdout, (output / 'stderr.log').open('xb') as stderr:
+        with subprocess.Popen(plain, cwd=cwd, env=env, stdin=subprocess.DEVNULL, stdout=stdout,
+                              stderr=stderr, creationflags=subprocess.CREATE_NO_WINDOW) as child:
+            qa.save(output / 'PROCESS.json', {'pid': child.pid, 'argv': plain, 'cwd': str(cwd), 'startedUtc': qa.utc()})
+            timed_out = False
+            try:
+                child.wait(timeout=timeout)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                subprocess.run(['taskkill.exe', '/PID', str(child.pid), '/T', '/F'],
+                               capture_output=True, timeout=20, creationflags=subprocess.CREATE_NO_WINDOW)
+                if child.poll() is None:
+                    child.kill()
+                child.wait(timeout=20)
+    receipt = {'exitCode': child.returncode, 'timedOut': timed_out, 'stdoutSha256': qa.digest(output / 'stdout.log'),
+               'stderrSha256': qa.digest(output / 'stderr.log')}
+    qa.save(output / 'PROCESS-EXIT.json', receipt)
+    return receipt
+
+
+class Fixture:
+    def __init__(self, parent, name, env):
+        self.root = parent / name
+        self.root.mkdir(exist_ok=False)
+        self.env = dict(env, GIT_CONFIG_NOSYSTEM='1', GIT_CONFIG_GLOBAL=os.devnull,
+                        GIT_CEILING_DIRECTORIES=str(parent.parent), GIT_AUTHOR_NAME='Synthetic fixture',
+                        GIT_COMMITTER_NAME='Synthetic fixture', GIT_AUTHOR_EMAIL='qa@example.invalid',
+                        GIT_COMMITTER_EMAIL='qa@example.invalid')
+        self.git('init', '--quiet', '--initial-branch=main')
+        self.git('config', '--local', 'core.autocrlf', 'true')
+        self.git('config', '--local', 'diff.autoRefreshIndex', 'true')
+        for rel in FIXTURE_CONFIG:
+            self.write(rel, (qa.WORKTREE / rel).read_bytes())
+
+    def git(self, *args):
+        return subprocess.run(['git', '--no-optional-locks', '-c', 'diff.autoRefreshIndex=false', *args],
+                              cwd=self.root, env=self.env, capture_output=True, check=True,
+                              timeout=20, creationflags=subprocess.CREATE_NO_WINDOW).stdout.decode('utf-8').strip()
+
+    def write(self, rel, data):
+        target = self.root / rel
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+
+    def snapshot(self, paths):
+        def hash_if_present(path):
+            return qa.digest(self.root / path) if (self.root / path).is_file() else None
+        return {'indexSha256': qa.digest(self.root / '.git/index'),
+                'head': self.git('rev-parse', 'HEAD'),
+                'config': qa.digest(self.root / '.git/config'),
+                'fileSha256': {rel: hash_if_present(rel) for rel in (*FIXTURE_CONFIG, *paths)}}
+
+    def call(self, parent, name, paths, *args, cwd=None):
+        output = parent / name
+        before = self.snapshot(paths)
+        receipt = execute([qa.NODE, CHECKER, *args], cwd or self.root, self.env, output, 30)
+        after = self.snapshot(paths)
+        record = {'name': name, 'before': before, 'after': after, **receipt}
+        qa.save(output / 'INTEGRITY.json', record)
+        return record
+
+
+def streams(parent, case):
+    output = parent / case['name']
+    return tuple((output / (name + '.log')).read_text(encoding='utf-8', errors='replace')
+                 for name in ('stdout', 'stderr'))
+
+
+def path_rows(output, paths):
+    lines = output.splitlines()
+    rows = {}
+    for path in paths:
+        pattern = re.compile(r'^ {2,}([A-Za-z][A-Za-z _-]*?) +' + re.escape(path) + r'(?: {2,}|\s*$)')
+        matches = [(number, pattern.match(line)[1]) for number, line in enumerate(lines) if pattern.match(line)]
+        qa.need(len(matches) == 1, f'EXPECTED_EXACTLY_ONE_ROW: {path}')
+        rows[path] = matches[0]
+    qa.need([path for path, _ in sorted(rows.items(), key=lambda item: item[1][0])] == sorted(paths),
+            'SELECTED_REPORT_ORDER_CHANGED')
+    return {path: row[1] for path, row in rows.items()}
+
+
+def partition(output, selected, checked, failures, unavailable, retained=0):
+    rows = [line for line in output.splitlines() if line.startswith('Selected docs/qa paths: ')]
+    qa.need(len(rows) == 1 and rows[0].startswith(f'Selected docs/qa paths: {selected} = '),
+            'MISSING_SELECTED_COUNT')
+    parts = rows[0].split(' = ', 1)[1].split(' + ')
+    counts = {}
+    for part in parts:
+        match = re.fullmatch(r'(.+?) (\d+)(?: \(Markdown \d+\))?', part)
+        qa.need(match is not None, 'UNPARSABLE_PARTITION: ' + part)
+        counts[match[1].casefold()] = int(match[2])
+    qa.need(len(counts) == len(parts) and sum(counts.values()) == selected, 'PARTITION_DOES_NOT_RECONCILE')
+    qa.need(counts.pop('checked with prettier', None) == checked and counts.pop('unavailable', None) == unavailable
+            and counts.pop('retained archived originals', None) == retained
+            and counts.pop('refused markdown originals', None) == 0 and counts.pop('deleted', None) == 0,
+            'WRONG_EXISTING_PARTITION_COUNTS')
+    qa.need(sum(counts.values()) == failures and (not failures or len(counts) == 1)
+            and all(re.search(r'(formatter|format|prettier|parser).*(fail|error)|'
+                              r'(fail|error).*(formatter|format|prettier|parser)', label) for label in counts),
+            'MISSING_DISTINCT_FORMATTER_FAILURE_COUNT')
+
+
+def outcome(case, expected):
+    qa.need(not case['timedOut'] and case['exitCode'] == expected
+            and case['before'] == case['after'], f'EXIT_OR_RAW_BYTES_OR_INDEX_MISMATCH: {case["name"]}')
+
+
+def parser_diagnostic(stdout, stderr):
+    for stream in (stdout, stderr):
+        lines = stream.splitlines()
+        for number, line in enumerate(lines):
+            if HTML not in line:
+                continue
+            nearby = '\n'.join(lines[max(0, number - 1):number + 5])
+            if (re.search(r'Unexpected closing tag ["\']main["\']', nearby, re.IGNORECASE)
+                    and (re.search(r'\b1:21\b', nearby) or '<main><section>Hello</main>' in nearby)):
+                return True
+    return False
+
+
+def fixtures(output, env):
+    mixed = Fixture(output, 'mixed-repo', env)
+    mixed.git('add', '--', *FIXTURE_CONFIG)
+    mixed.git('commit', '-qm', 'synthetic base')
+    mixed.git('switch', '-qc', 'candidate')
+    for rel, data in TEXT.items():
+        mixed.write(rel, data)
+    mixed.git('add', '--', 'docs/qa')
+    mixed.git('commit', '-qm', 'three selected pages')
+    selected = mixed.git('diff', '--name-only', 'main', 'HEAD', '--', 'docs/qa').splitlines()
+    qa.need(selected == sorted(TEXT), 'GIT_DID_NOT_SELECT_EXACT_FIXTURE_CASES')
+    full = mixed.call(output, 'full-malformed', TEXT, '--base', 'main')
+    mixed.git('sparse-checkout', 'set', '--cone', 'docs/qa/qa524-visible')
+    flag = mixed.git('ls-files', '-t', '--', OMITTED)
+    qa.need(flag == 'S ' + OMITTED and not (mixed.root / OMITTED).exists()
+            and not mixed.git('diff', '--name-only', '--diff-filter=D', 'HEAD'), 'SPARSE_OMISSION_IS_NOT_PROVED')
+    sparse = mixed.call(output, 'sparse-malformed', TEXT, '--base', 'main')
+    mixed.write(HTML, b'<p>OK</p>\n')
+    repaired_sparse = mixed.call(output, 'sparse-repaired', TEXT, '--base', 'main')
+    qa.need([rel for rel, value in sparse['before']['fileSha256'].items()
+             if repaired_sparse['before']['fileSha256'][rel] != value] == [HTML]
+            and sparse['before']['indexSha256'] == repaired_sparse['before']['indexSha256'],
+            'PAIRED_HTML_CONTROL_CHANGED_OTHER_BYTES_OR_INDEX')
+    mixed.git('sparse-checkout', 'disable')
+    repaired_full = mixed.call(output, 'full-repaired', TEXT, '--base', 'main')
+    invalid_args = mixed.call(output, 'invalid-args', TEXT, '--unknown-qa-option')
+    invalid_base = mixed.call(output, 'invalid-base', TEXT, '--base', 'no-such-base-qa524')
+    outside = output / 'outside-repo'
+    outside.mkdir()
+    invalid_repo = mixed.call(output, 'unusable-repository', TEXT, '--base', 'main', cwd=outside)
+
+    normalized = Fixture(output, 'normalization-repo', env)
+    baseline = b'# QA packet\n\nPrevious fixture.\n'
+    literal = b'#  Original evidence\r\n\r\n  preserve this spacing\r\n'
+    paths = (HISTORY, BRACKETS, NEIGHBOR, RAW)
+    for rel in paths:
+        normalized.write(rel, baseline)
+    normalized.git('add', '-A')
+    normalized.git('commit', '-qm', 'normalization base')
+    for rel in (HISTORY, BRACKETS):
+        normalized.write(rel, baseline.replace(b'\n', b'\r\n'))
+    normalized.write(NEIGHBOR, b'# QA packet\n\nA real content change.\n')
+    normalized.write(RAW, literal)
+    for rel in paths:
+        os.utime(normalized.root / rel, (1577836800, 1577836800))
+    normalized_equality = {
+        rel: normalized.git('rev-parse', ':' + rel) == normalized.git('hash-object', '--path', rel, rel)
+        for rel in (HISTORY, BRACKETS)
+    }
+    visible_stale_paths = normalized.git('diff-files', '--name-only', '--').splitlines()
+    normalization = normalized.call(output, 'literal-crlf', paths, '--base', 'main')
+    details = {'fixtureSelectedPaths': selected, 'sparseFlag': flag, 'normalizationEqual': normalized_equality,
+               'visibleStalePaths': visible_stale_paths, 'literalRawSha256': qa.sha(literal),
+               'cases': [full, sparse, repaired_sparse, repaired_full, invalid_args, invalid_base,
+                         invalid_repo, normalization]}
+    qa.save(output / 'FIXTURE-OBSERVATIONS.json', details)
+
+    for case, omitted in ((full, 0), (sparse, 1)):
+        outcome(case, 1)
+        stdout, stderr = streams(output, case)
+        rows = path_rows(stdout, TEXT)
+        qa.need(rows[MARKDOWN] == 'formatted' and rows[OMITTED] == ('UNAVAILABLE' if omitted else 'formatted')
+                and rows[HTML].casefold() not in ('formatted', 'unformatted', 'retained', 'unavailable'),
+                'MALFORMED_FILE_NOT_REPORTED_AS_OWN_FAILURE')
+        partition(stdout, 3, 2 - omitted, 1, omitted)
+        qa.need(parser_diagnostic(stdout, stderr) and f'Result: FAILED ({1 + omitted} problem' in stdout,
+                'MISSING_PARSE_CAUSE_OR_LOCATION_OR_FINAL_PROBLEM_COUNT')
+        if omitted:
+            qa.need('sparse-checkout add docs/qa' in stdout, 'SPARSE_RECOVERY_GUIDANCE_MISSING')
+    for case, omitted in ((repaired_sparse, 1), (repaired_full, 0)):
+        outcome(case, omitted)
+        stdout, stderr = streams(output, case)
+        rows = path_rows(stdout, TEXT)
+        qa.need(not stderr.strip() and rows[HTML] == rows[MARKDOWN] == 'formatted'
+                and rows[OMITTED] == ('UNAVAILABLE' if omitted else 'formatted'),
+                'REPAIRED_CONTROL_SCOPE_OR_STATUS_CHANGED')
+        partition(stdout, 3, 3 - omitted, 0, omitted)
+        if omitted:
+            qa.need('Result: FAILED (1 problems' in stdout, 'REPAIRED_SPARSE_HAS_WRONG_FAILURE_COUNT')
+    for case, expected_error in ((invalid_args, r'Usage:.*check:qa'),
+                                 (invalid_base, r'(base|revision|ref|object)'),
+                                 (invalid_repo, r'Git working tree')):
+        outcome(case, 2)
+        stdout, stderr = streams(output, case)
+        qa.need(not stdout.strip() and re.search(expected_error, stderr, re.IGNORECASE),
+                f'INVALID_SETUP_WAS_NOT_ACTIONABLE: {case["name"]}')
+    outcome(normalization, 0)
+    stdout, stderr = streams(output, normalization)
+    qa.need(all(normalized_equality.values()) and set(paths).issubset(visible_stale_paths)
+            and HISTORY not in stdout and BRACKETS not in stdout and not stderr.strip()
+            and path_rows(stdout, (NEIGHBOR, RAW)) == {NEIGHBOR: 'formatted', RAW: 'retained'}
+            and f'sha256={qa.sha(literal)}' in stdout, 'CRLF_LITERAL_PATH_OR_RAW_ARCHIVE_REGRESSION')
+    partition(stdout, 2, 1, 0, 0, retained=1)
+    return {'publicCalls': 8, 'integrityFiles': [case['name'] + '/INTEGRITY.json' for case in details['cases']]}
+
+
+def pnpm(output, env, mode):
+    if mode == 'focused':
+        args = ['--filter', '@graphgoblin/tooling', 'test:coverage', 'scripts/check-qa-packet.test.mjs',
+                '--coverage.include=scripts/check-qa-packet.mjs',
+                f'--coverage.reportsDirectory={output.as_posix()}/coverage', '--no-cache']
+    else:
+        args = ['check:qa', '--base', qa.TARGET]
+    command = ['cmd.exe', '/d', '/c', str(qa.PNPM), *args]
+    receipt = execute(command, qa.WORKTREE, env, output / 'command', 150 if mode == 'focused' else 45)
+    qa.need(not receipt['timedOut'] and receipt['exitCode'] == 0, 'PINNED_PNPM_COMMAND_FAILED')
+    stdout = (output / 'command/stdout.log').read_text(encoding='utf-8', errors='replace')
+    if mode == 'focused':
+        count = re.search(r'Tests\s+(\d+) passed\s+\(\1\)', stdout)
+        ratios = {name: re.search(rf'{name}\s*:\s*([0-9.]+)%', stdout) for name in ('Lines', 'Branches')}
+        qa.need(count and int(count[1]) >= 11 and all(value and float(value[1]) >= 90 for value in ratios.values()),
+                'FOCUSED_REGRESSION_SUITE_OR_EXISTING_COVERAGE_THRESHOLD_NOT_PROVED')
+        return {'passedTests': int(count[1]), 'coveragePercentages': {k: float(v[1]) for k, v in ratios.items()}}
+    source = qa.bound()['source']
+    rows = path_rows(stdout, source['packetPaths'])
+    partition(stdout, 66, 1, 0, 0, retained=65)
+    qa.need(sorted(rows.values()) == ['formatted'] + ['retained'] * 65, 'ARCHIVED_PACKET_SCOPE_MISMATCH')
+    for rel, kind in rows.items():
+        if kind == 'retained':
+            qa.need(any(rel + '  [sha256=' + source['rawFiles'][rel] + ']' in line for line in stdout.splitlines()),
+                    f'ARCHIVED_RAW_BYTES_MISREPORTED: {rel}')
+    return {'selectedPaths': list(rows), 'retainedHashesVerified': 65, 'base': qa.TARGET}
+
+
+def main():
+    qa.need(len(sys.argv) == 2 and sys.argv[1] in qa.CHECKS, 'USE: run-check.py focused|fixtures|packet')
+    mode = sys.argv[1]
+    binding = qa.bound()
+    # This receipt prevents accidental use of the wrappers outside the one reviewed QA dispatch.
+    qa.approved(binding)
+    output = qa.ROOT / 'runs' / mode
+    output.parent.mkdir(exist_ok=True)
+    output.mkdir(exist_ok=False)
+    env = qa.environment(output / 'temp')
+    result = {'mode': mode, 'source': binding['source'], 'exitCode': 1, 'sourceUnchanged': False}
+    try:
+        version = subprocess.check_output([qa.NODE, '--version'], env=env, timeout=20).decode().strip()
+        qa.need(version == 'v22.23.4', 'PINNED_NODE_RUNTIME_CHANGED')
+        result['evidence'] = fixtures(output, env) if mode == 'fixtures' else pnpm(output, env, mode)
+        result['exitCode'] = 0
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+        result['failure'] = str(error)
+    finally:
+        try:
+            result['sourceUnchanged'] = qa.bound()['source'] == binding['source']
+        except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as error:
+            result['postflightFailure'] = str(error)
+        if not result['sourceUnchanged']:
+            result['exitCode'] = 1
+        qa.save(output / 'RESULT.json', result)
+        print(qa.json.dumps({key: value for key, value in result.items() if key != 'source'}, ensure_ascii=True))
+    return result['exitCode']
+
+
+if __name__ == '__main__':
+    try:
+        raise SystemExit(main())
+    except (OSError, RuntimeError, ValueError, KeyError) as error:
+        print(str(error), file=sys.stderr)
+        raise SystemExit(2)

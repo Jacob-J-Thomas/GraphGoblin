@@ -1,0 +1,37 @@
+I fixed the finding: `check:qa` no longer writes `.git/index`, and a file whose only change is a newer timestamp is still not selected. The plain `-c diff.autoRefreshIndex=false` fix the review suggested was not enough on its own. My tests showed it introduces a new wrong failure, so the correction needed one more Git call. All scoped checks pass, and all three changed files are unstaged.
+
+**Why the flag alone wasn't enough**
+`--no-optional-locks` only governs `git status`. `git diff` rewrites the index whenever it finds an index entry whose timestamp is stale but whose content hasn't changed. The setting that stops that rewrite also stops the content check, so such files start showing up as modified. In the test repository this selected 8 paths instead of 6 and reported a historical raw original as `UNFORMATTED` (exit 1). That breaks the "only changed paths" scope.
+
+**What changed**
+- **`tooling/scripts/check-qa-packet.mjs`**:
+  - Every Git call now passes `-c diff.autoRefreshIndex=false` on its own command line. No repository or global Git config is touched.
+  - The checker then runs `git ls-files --modified` and drops any unstaged `M` entry it doesn't list. That command compares content and never writes the index, so a file with only a new timestamp is still left out. Other statuses (`D`, `A`, `T`, `U`) are untouched.
+  - I also updated the comments that claimed optional locks were enough.
+- **`tooling/scripts/check-qa-packet.test.mjs`**: I tightened the existing "nothing is written" test without loosening any assertion.
+  - It gives two historical files an old timestamp (`utimesSync` to 2020-01-01) with unchanged bytes. One is an unformatted original under the archive ignore rule.
+  - A check with `git diff-files`, which doesn't write, confirms Git sees both as stale before the checker runs.
+  - The byte comparison now covers `.git/index`, the selected files and both touched files.
+- **`docs/10-testing-and-quality.md`**: corrected the false read-only explanation and updated the description of the test.
+- I left `CHANGELOG.md`, `docs/15-issue-workflow.md` and `package.json` alone; their "read-only" wording is now accurate.
+
+**Red and control evidence**
+
+| Run | Result |
+|---|---|
+| Original checker + new test | Failed only on the `.git/index` bytes. Exit code and selection were correct; two index timestamps were rewritten to `0x5E0BE100` (exactly the forced 2020-01-01) and the checksum changed. |
+| `-c` flag only | Exit 1. Both touched files were selected, with the raw original reported `UNFORMATTED`. |
+| Full fix | 10/10 tests pass. |
+
+**Final results**
+- Tests: 10/10 passed.
+- Coverage for `check-qa-packet.mjs`: 100% of statements (96/96), branches (54/54), functions (15/15) and lines (83/83).
+- Lint, the exact six-path Prettier check and `git diff --check` are all clean; `prettier --write` wasn't needed.
+- No new dependency, exclusion or threshold change, and the full hosted formatter is unchanged.
+
+**Limits**
+- I couldn't read the review evidence folder: the file tools only reach this worktree. I worked from the finding as written in your brief.
+- I couldn't run `git --version` under the command list, so I'm relying on the review's report of Git 2.49.0.windows.1. Node is v22.23.4.
+- The test uses no inherited Git config. I haven't tested whether `ls-files --modified` and `git diff` agree under fsmonitor, the untracked cache, a split index or `autocrlf`. Reading Git's source, both use the same comparison, but that is analysis only.
+- The fix adds one extra Git call per run.
+- I didn't run the full `pnpm test` or `pnpm check`, since they're outside the command list. Independent review, QA and CI remain with you.

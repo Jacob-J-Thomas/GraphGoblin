@@ -1,0 +1,69 @@
+{
+  "signature": "qa-packet/parser-error-discards-selected-scope",
+  "checkerSha256": "eb17c9c6307243cfff39eaea99941596d5ad8e1a9b307e5d9ef05951c5b4baf6",
+  "fixtureBase": "77f89e84c8feeb19b2fc15fd675063467e94bb18",
+  "fixtureHead": "630298d4609e9db1b881716d9dd04182912f4dc8",
+  "fixtureConfigFilesFromCandidate": [
+    ".gitattributes",
+    ".prettierignore",
+    ".prettierrc",
+    ".gitignore"
+  ],
+  "inputFiles": {
+    "docs/qa/visible/A.md": "# Formatted page\n",
+    "docs/qa/visible/bad.html": "<main><section>Hello</main>\n",
+    "docs/qa/omitted/README.md": "# Omitted page\n"
+  },
+  "confirmedSelectedByGit": [
+    "docs/qa/omitted/README.md",
+    "docs/qa/visible/A.md",
+    "docs/qa/visible/bad.html"
+  ],
+  "skipWorktreeEntry": "S docs/qa/omitted/README.md",
+  "missingOnDisk": true,
+  "fullCheckoutMalformed": {
+    "exit": 2,
+    "stdout": [],
+    "stderr": [
+      "check:qa: Unexpected closing tag \"main\". It may happen when the tag has already been closed by another tag. For more info see https://www.w3.org/TR/html5/syntax.html#closing-elements-that-have-implied-end-tags (1:21)",
+      "> 1 | <main><section>Hello</main>",
+      "    |                     ^^^^^^^",
+      "  2 |"
+    ],
+    "indexBefore": "cadb740d7752733aff93090ab19af8b28cf100a37a143ffa74337268a8079af2",
+    "indexAfter": "cadb740d7752733aff93090ab19af8b28cf100a37a143ffa74337268a8079af2"
+  },
+  "sparseCheckoutMalformed": {
+    "exit": 2,
+    "stdout": [],
+    "stderr": [
+      "check:qa: Unexpected closing tag \"main\". It may happen when the tag has already been closed by another tag. For more info see https://www.w3.org/TR/html5/syntax.html#closing-elements-that-have-implied-end-tags (1:21)",
+      "> 1 | <main><section>Hello</main>",
+      "    |                     ^^^^^^^",
+      "  2 |"
+    ],
+    "indexBefore": "ba0cb533eebe4959bc61b06bb042e244e389b3e06f16aadd849b565014e26b35",
+    "indexAfter": "ba0cb533eebe4959bc61b06bb042e244e389b3e06f16aadd849b565014e26b35"
+  },
+  "onlyControlEdit": {
+    "path": "docs/qa/visible/bad.html",
+    "bytes": "<p>OK</p>\n"
+  },
+  "sparseCheckoutRepairedHtml": {
+    "exit": 1,
+    "stdout": [
+      "check:qa: local QA packet pre-publication check; pnpm format:check and CI remain the full gates.",
+      "Base: main = 77f89e84c8feeb19b2fc15fd675063467e94bb18",
+      "Selection: docs/qa paths changed from merge base 77f89e84c8feeb19b2fc15fd675063467e94bb18 to the working tree (committed, staged, unstaged and untracked; Git-ignored files excluded), deduplicated.",
+      "Selected docs/qa paths: 3 = checked with Prettier 2 (Markdown 1) + refused Markdown originals 0 + retained archived originals 0 + deleted 0 + unavailable 1",
+      "  UNAVAILABLE  docs/qa/omitted/README.md  [not in this working tree (sparse checkout or skip-worktree); not checked]",
+      "  formatted    docs/qa/visible/A.md",
+      "  formatted    docs/qa/visible/bad.html",
+      "UNAVAILABLE: selected paths missing from this working tree were not checked. In a sparse checkout run git sparse-checkout add docs/qa, or run check:qa from a full checkout; restore a removed file or stage its removal with git rm.",
+      "Result: FAILED (1 problems; 1 of 3 selected paths not checked)."
+    ],
+    "stderr": [],
+    "indexBefore": "ba0cb533eebe4959bc61b06bb042e244e389b3e06f16aadd849b565014e26b35",
+    "indexAfter": "ba0cb533eebe4959bc61b06bb042e244e389b3e06f16aadd849b565014e26b35"
+  }
+}
