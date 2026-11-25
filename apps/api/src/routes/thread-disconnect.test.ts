@@ -11,11 +11,13 @@ import type { EventDraft } from '@graphgoblin/engine';
 import { registerAuth } from '../plugins/auth.js';
 import { registerErrorHandler } from '../plugins/errors.js';
 import { requestValidatorCompiler } from '../plugins/request-validation.js';
+import { historicalThread } from '../run-history.js';
 import { createTestApp } from '../testing/test-app.js';
 import { registerRunRoutes } from './runs.js';
 import { registerSystemRoutes } from './system.js';
 
-type Stage = 'before handler' | 'ownership' | 'initial' | 'checkpoint' | 'boundary' | 'page';
+type Stage =
+  'before handler' | 'ownership' | 'initial' | 'checkpoint' | 'boundary' | 'page' | 'yield';
 type Headers = Record<string, string>;
 
 function deferred<Value = void>() {
@@ -208,16 +210,28 @@ describe('historical thread response lifetime', () => {
     });
     client.setTimeout(8_000, () => client.destroy(new Error(`Timed out waiting for ${stage}`)));
     client.once('error', prematureResponse.reject);
+    // The client's timer cannot reject held reads, close or settlement, so the same 8 s budget
+    // bounds every wait here and a stalled response still reaches the callers' cleanup.
+    const expired = deferred<never>();
+    const deadline = setTimeout(
+      () => expired.reject(new Error(`Timed out holding ${stage}`)),
+      8_000,
+    );
+    const bounded = <Value>(wait: Promise<Value>) => Promise.race([wait, expired.promise]);
     try {
-      await Promise.race([observation.reached.promise, prematureResponse.promise]);
-      await whileHeld?.();
-      client.destroy();
-      expect(await observation.closed.promise).toBe(false);
+      try {
+        await bounded(Promise.race([observation.reached.promise, prematureResponse.promise]));
+        if (whileHeld) await bounded(whileHeld());
+        client.destroy();
+        expect(await bounded(observation.closed.promise)).toBe(false);
+      } finally {
+        client.destroy();
+        observation.release.resolve();
+      }
+      expect(await bounded(observation.settled.promise)).toBe(0);
     } finally {
-      client.destroy();
-      observation.release.resolve();
+      clearTimeout(deadline);
     }
-    expect(await observation.settled.promise).toBe(0);
   }
 
   it.each([
@@ -247,6 +261,81 @@ describe('historical thread response lifetime', () => {
       'page',
     ]);
     expect(observation.sends).toBe(0);
+  });
+
+  it('stops at an abandoned yield after a completed page while unrelated reads complete', async () => {
+    const { events } = test.container.repos;
+    const readEvents = events.read;
+    const scheduleImmediate = globalThis.setImmediate;
+    const control = observation;
+    const agent = new Agent();
+    const timeline: string[] = [];
+    let completedPages = 0;
+    let held = false;
+    void control.closed.promise.then((finished) => timeline.push(`closed finished=${finished}`));
+    void control.settled.promise.then(() => timeline.push('settled'));
+    events.read = async (...args) => {
+      const rows = await readEvents(...args);
+      if (args[0] === runId && control.operations.at(-1) === 'page') {
+        completedPages++;
+        timeline.push(`page ${rows.length} through ${rows.at(-1)?.seq}`);
+      }
+      return rows;
+    };
+    // Hold only the real setImmediate that historicalThread schedules after its first page;
+    // every other call, including unrelated requests while it is held, passes straight through.
+    globalThis.setImmediate = Object.assign(
+      <Args extends unknown[]>(callback: (...args: Args) => void, ...args: Args) => {
+        if (
+          held ||
+          completedPages !== 1 ||
+          !new Error().stack?.includes(`at ${historicalThread.name} (`)
+        )
+          return scheduleImmediate(callback, ...args);
+        held = true;
+        timeline.push('yield held');
+        control.reached.resolve();
+        return scheduleImmediate(() => {
+          void control.release.promise.then(() => {
+            timeline.push('yield released');
+            callback(...args);
+          });
+        });
+      },
+      { __promisify__: scheduleImmediate.__promisify__ },
+    );
+    try {
+      await abandon('yield', async () => {
+        const health = await read(base + '/healthz', {}, agent);
+        expect(health.status).toBe(200);
+        expect(JSON.parse(health.body)).toEqual({ status: 'ok' });
+        expect(await read(current, headers, agent)).toMatchObject({
+          status: 200,
+          body: currentBody,
+        });
+      });
+    } finally {
+      globalThis.setImmediate = scheduleImmediate;
+      events.read = readEvents;
+      control.release.resolve();
+      agent.destroy();
+    }
+    expect(timeline).toEqual([
+      `page 128 through ${checkpointSeq + 128}`,
+      'yield held',
+      'closed finished=false',
+      'yield released',
+      'settled',
+    ]);
+    expect(observation.operations).toEqual([
+      'ownership',
+      'initial',
+      'checkpoint',
+      'boundary',
+      'page',
+    ]);
+    expect(observation.sends).toBe(0);
+    expect(observation.errors).toEqual([]);
   });
 
   it.each(['connected', 'abandoned'] as const)(
