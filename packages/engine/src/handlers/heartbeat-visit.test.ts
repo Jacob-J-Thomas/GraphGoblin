@@ -52,7 +52,6 @@ describe('heartbeat public handler visit evidence', () => {
       ports: e.ports,
       settings: e.settings,
       services: {
-        render: unused,
         record: async (draft) => {
           await e.ports.events.append(run.id, [draft]);
         },

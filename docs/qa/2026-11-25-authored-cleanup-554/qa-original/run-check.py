@@ -1,0 +1,138 @@
+"""Scoped public QA wrapper shared as a local copy, with exact source and index checks."""
+
+from datetime import datetime, timezone
+from importlib import import_module
+import hashlib
+import json
+from pathlib import Path
+import re
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+QA = Path(__file__).resolve().parent
+config = json.loads((QA / 'QA-CONFIG.json').read_text(encoding='utf-8'))
+sys.path.insert(0, str(Path(config['sharedTools'])))
+shared = import_module('prepare-scope')
+WORKTREE = Path(config['worktree']).resolve()
+BASH = Path('C:/Program Files/Git/bin/bash.exe')
+DRIVER = QA / config['driver']
+PATCH = Path(config['reviewPatch'])
+PATCH_SHA = config['patchSha256']
+CHECKS = config['checks']
+RESET = datetime.fromisoformat('2026-11-25T05:10:20+00:00')
+
+
+def require_reset():
+    if datetime.now(timezone.utc) < RESET:
+        raise RuntimeError('MAX_RESET_NOT_REACHED')
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def environment():
+    env = shared.subscription_environment()
+    env.update(GIT_OPTIONAL_LOCKS='0', GIT_TERMINAL_PROMPT='0',
+               CLAUDE_CODE_GIT_BASH_PATH=str(BASH))
+    return env
+
+
+def git(env, *args):
+    return subprocess.run(
+        ['git', '--no-pager', '--no-optional-locks', '-c', 'diff.autoRefreshIndex=false', *args],
+        cwd=WORKTREE, env=env, check=True, capture_output=True, timeout=30,
+        creationflags=subprocess.CREATE_NO_WINDOW,
+    ).stdout
+
+
+def git_text(env, *args):
+    return git(env, *args).decode('utf-8').strip('\r\n')
+
+
+def path_list(env, *args):
+    return sorted(filter(None, git_text(env, *args).split('\0')))
+
+
+def snapshot(env):
+    index = Path(git_text(env, 'rev-parse', '--path-format=absolute', '--git-path', 'index'))
+    before_index = sha(index)
+    live_patch = git(env, 'diff', '--binary', '--no-ext-diff', '--no-textconv', '--no-color', 'HEAD')
+    touched = path_list(env, 'diff', '--name-only', '--no-renames', '-z', 'HEAD')
+    data = {
+        'head': git_text(env, 'rev-parse', 'HEAD'),
+        'branch': git_text(env, 'branch', '--show-current'),
+        'indexSha256': before_index,
+        'patchSha256': sha(PATCH),
+        'workingTreeDiffSha256': hashlib.sha256(live_patch).hexdigest(),
+        'stagedPaths': path_list(env, 'diff', '--cached', '--name-only', '-z'),
+        'untrackedPaths': path_list(env, 'ls-files', '--others', '--exclude-standard', '-z'),
+        'changedFilesSha256': {path: sha(WORKTREE / path) for path in touched},
+        'driverSha256': sha(DRIVER),
+    }
+    if (
+        data['head'] != config['head'] or data['branch'] != config['branch']
+        or data['patchSha256'] != PATCH_SHA or data['changedFilesSha256'] != config['fileSha256']
+        or data['stagedPaths'] or data['untrackedPaths'] or before_index != sha(index)
+        or (config.get('reviewIndexSha256') is not None and before_index != config['reviewIndexSha256'])
+    ):
+        raise RuntimeError('INDEPENDENT_QA_FROZEN_CANDIDATE_MISMATCH')
+    prepared = QA / 'PREPARED-CANDIDATE.json'
+    if prepared.is_file() and shared.read_json(prepared) != data:
+        raise RuntimeError('INDEPENDENT_QA_CHECKPOINT_DRIFT')
+    return data
+
+
+def execute(command, env):
+    return subprocess.run(
+        [str(BASH), '--noprofile', '--norc', '-c', command],
+        cwd=WORKTREE, env=env, capture_output=True, creationflags=subprocess.CREATE_NO_WINDOW,
+    )
+
+
+def main():
+    if len(sys.argv) != 2 or sys.argv[1] not in CHECKS:
+        raise SystemExit('Use one exact mode: ' + ', '.join(CHECKS))
+    require_reset()
+    mode = sys.argv[1]
+    env = environment()
+    expected = shared.read_json(QA / 'FROZEN-BEFORE.json')
+    if snapshot(env) != expected:
+        raise RuntimeError('BEFORE_CHECK_DRIFT')
+    out_path = QA / f'{mode}.stdout.log'
+    err_path = QA / f'{mode}.stderr.log'
+    started = shared.utc_now()
+    with out_path.open('xb') as stdout, err_path.open('xb') as stderr:
+        result = execute(CHECKS[mode], env)
+        stdout.write(result.stdout)
+        stderr.write(result.stderr)
+    try:
+        unchanged = snapshot(env) == expected
+    except (OSError, RuntimeError, subprocess.SubprocessError):
+        unchanged = False
+    receipt = {
+        'mode': mode, 'command': CHECKS[mode], 'exitCode': result.returncode,
+        'sourceUnchanged': unchanged, 'patchSha256': PATCH_SHA,
+        'startedAt': started, 'finishedAt': shared.utc_now(),
+        'stdout': {'file': out_path.name, 'bytes': len(result.stdout), 'sha256': sha(out_path)},
+        'stderr': {'file': err_path.name, 'bytes': len(result.stderr), 'sha256': sha(err_path)},
+    }
+    additional = QA / config.get('driverResult', 'unused-local-result.json')
+    if mode in ('api', 'http', 'controls') and additional.is_file():
+        receipt['driverResult'] = {'file': additional.name, 'sha256': sha(additional)}
+    shared.save_json(QA / f'{mode.upper()}-RESULT.json', receipt)
+    print(json.dumps(receipt, indent=2))
+    output = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', (result.stdout + b'\n' + result.stderr).decode('utf-8', errors='replace'))
+    output = re.sub(r'\bgg_[A-Za-z0-9_-]{16,}\b', '[disposable-key]', output)
+    lines = output.splitlines()
+    if mode == 'focused' or mode in ('domain', 'engine'):
+        if result.returncode == 0:
+            lines = [line for line in lines if re.search(r'(?:\bTests\b|\bTest Files\b|✓|↓)', line)]
+    print('\n'.join(lines[-135:]).encode('ascii', errors='backslashreplace').decode('ascii'))
+    return result.returncode if unchanged else 2
+
+
+if __name__ == '__main__':
+    sys.exit(main())
+
