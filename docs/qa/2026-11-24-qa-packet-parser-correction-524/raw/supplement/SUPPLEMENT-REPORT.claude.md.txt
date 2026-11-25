@@ -1,0 +1,76 @@
+# SCOPED QA PASS
+
+**Original disposition, unchanged.** claude-qa-01 stays **FAIL, `qaAccepted: false`** (terminal receipt `dd7669e8…`). The finding below is a separate supplemental assessment. It covers only the exact local candidate: head `7ee3e20a`, working-tree patch `7c618d6c`, index `b83533c5`, target `631d16e3`. This was tool-free, so every digest below was compared by its stated value, not recomputed.
+
+**Focused arm: the harness misread a passing run**
+- **Child receipt.** `PROCESS-EXIT.json` records exit 0 with no timeout. Its stdout digest (`c3e2aad5`) and stderr digest (`f73dfc53`) match the supplied files. The stderr shows the scoped command (`--coverage.include=scripts/check-qa-packet.mjs`).
+- **Bound result.** The bound `RESULT.json` failed with `FOCUSED_REGRESSION_SUITE_OR_EXISTING_COVERAGE_THRESHOLD_NOT_PROVED`, not `PINNED_PNPM_COMMAND_FAILED`. Under the wrapper excerpt, that means the exit-0 check passed.
+- **Why the count regex failed.** In the raw stream, `\u001b[22m` sits between `Tests ` and the count. ESC is not `\s`, so `Tests\s+(\d+) passed\s+\(\1\)` finds nothing. No other line contains `Tests`; `(12 tests)` is lower-case.
+- **Coverage regex.** The `Lines` and `Branches` summary lines contain no escape codes, and both matched at 100. The count was therefore the only failing check.
+- **SGR projection.** I counted 142 escape sequences, all of the form `ESC[<n>m`, with no other escapes and no CR. Removing only those reproduces the supplied projection line for line. The same regex then matches `Tests  12 passed (12)` and returns 12.
+- **Tests.** Vitest reports 1 file passed (1) and 12 tests passed (12), with none failed or skipped. That meets the wrapper's minimum of 11.
+  - Only 11 test names appear, each 609 ms or longer. That is consistent with Vitest's non-TTY default reporter, which lists only slow tests. The 440 ms left over from the 13089 ms file time fits one fast test plus hooks.
+  - The parser-failure and sparse regression test (2695 ms) is listed and passed.
+- **Coverage (V8, checker file only).** The stdout summary and `coverage-summary.json` agree, and the single file entry equals the totals:
+
+| Metric | Covered / total | Percent |
+|---|---|---|
+| Statements | 105/105 | 100% |
+| Branches | 57/57 | 100% |
+| Functions | 18/18 | 100% |
+| Lines | 91/91 | 100% |
+
+**Fixtures arm: harness exit 0, 8 public calls**
+
+| Fixture | Exit |
+|---|---|
+| full-malformed | 1 |
+| sparse-malformed | 1 |
+| sparse-repaired | 1 |
+| full-repaired | 0 |
+| invalid-args | 2 |
+| invalid-base | 2 |
+| unusable-repository | 2 |
+| literal-crlf | 0 |
+
+- **Sparse-malformed report.** All three paths are accounted for: 3 = 1 checked + 1 Prettier error + 1 unavailable.
+  - `a-bad [v2].html` shows CHECK-ERROR with a SyntaxError at 1:21; I confirmed the column by hand.
+  - The later row `z-valid.md` shows as formatted.
+  - `README.md` shows as UNAVAILABLE, with sparse-checkout recovery guidance.
+  - The result reads: FAILED, 2 problems.
+- **Repaired controls.**
+  - sparse-repaired still fails, but only on the missing README.
+  - full-repaired passes with 3 of 3 checked.
+- **Invalid controls.** All three exit 2 with empty stdout and a single explanatory stderr message.
+- **Literal CRLF control.** 2 paths are selected.
+  - The retained `.md.txt` original keeps `sha256=27e5f691…`, which matches its file digest before and after.
+  - `notes 2.md` is formatted.
+  - The two normalization-equal paths are correctly not selected.
+- **Preservation.** In all 8 cases, the index, HEAD, config and every listed file are identical before and after. All 16 stdout/stderr digests match the supplied logs.
+
+**Packet arm: exit 0**
+- The base is `631d16e3`, which equals the target.
+- 66 paths were selected: 1 formatted (`README.md`) and 65 retained. None were refused, deleted or unavailable.
+- I compared each of the 65 printed digests against `rawFiles`, and all match. The selected list equals `packetPaths`.
+
+**Binding across the three receipts**
+- The receipts are `9226e59d`, `2c2d32b2` and `e827b642`. These equal the `checkReceipts` values in the terminal receipt.
+- All three record the same head, tree, target, index and patch.
+- All three record the same three changed files with identical digests: checker `1b1cf25e`, test `c06a3d09`, doc `f0dedc8b`.
+- All three record no staged or untracked paths, the same node and pnpm digests, and `sourceUnchanged: true`.
+
+**Discrepancy (does not block this scoped pass).** The terminal receipt's `reportSha256` is `9a07dd8f…`, but the supplied `QA-REPORT.claude.md` hashes to `3b2a6344…`. None of the findings above rely on the report, and its content agrees with the receipts. This must still be reconciled before the report and receipt are archived or cited together.
+
+**Limitations**
+- **Unverified digests.** I could not recompute the projection digest (`c7483ecb`), the candidate binding (`828aea20`) or the coordinator readback.
+- **Path-only binding.** The terminal receipt's hash chain stops at the three `RESULT.json` files. These files are tied to the run only by path and the child receipt:
+  - `PROCESS-EXIT.json`
+  - the focused stdout
+  - `coverage-summary.json`
+  - `FIXTURE-OBSERVATIONS.json`
+- **Missing integrity files.** The `INTEGRITY.json` files were not supplied, so the `fixtureIntegritySha256` values are unchecked.
+- **Partial wrapper.** I saw only lines 253–260 of the wrapper. Its bytes are not bound in any original receipt.
+- **No source.** The checker and test source were not supplied. Coverage-ignore pragmas can't be ruled out, and the 12th test's name is unobserved.
+- **Narrow coverage.** Coverage applies to `check-qa-packet.mjs` only.
+
+No historical author or audit run was counted as new QA. Current-target hosted CI, the single FUP-030 targeted final audit, approval, publication and merge all remain separate.
