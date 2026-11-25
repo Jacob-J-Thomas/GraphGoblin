@@ -1,0 +1,328 @@
+{
+  "at": "2026-11-25T07:46:00.718368+00:00",
+  "issue": 581,
+  "base": "600f36fa51cc154a4e9ce6914411652431a087f0",
+  "branch": "codex/windows-reclaim-contention",
+  "sourceSha256": {
+    "apps/api/src/data-dir-lock.ts": "76c04a86848345793a70cb4c80e51c53cb3a6516185ac4a94182e4aff6114710",
+    "apps/api/src/data-dir-lock-failures.test.ts": "95f46680de56be5781863bd7bc0de43340f4996b5744111f1392d3151196ade4",
+    "docs/11-security-and-distribution.md": "7093cf5786e9b2860de903ac5a44fa9d7ba34c06a9e2504403e3f0bc3b25285a",
+    "CHANGELOG.md": "e668ffd78bb0c940a50619e47c290f7a25742063f0316f603297e02a4cce43f5"
+  },
+  "implementation": {
+    "configuredAgent": "/root/windows_reclaim_implementation",
+    "configuredModel": "gpt-6.2-sol",
+    "configuredEffort": "high",
+    "observedByWorker": "genericGPT6family; no independentservingmodelattestation",
+    "reason": "Disclosed boundedfallbackafter actualClaude5hourMaxquota; noAPI/accountchange"
+  },
+  "diagnosis": {
+    "configuredModel": "gpt-6.2-astra",
+    "configuredEffort": "high",
+    "agent": "/root/windows_reclaim_diagnosis",
+    "separateFromImplementation": true
+  },
+  "review": {
+    "limit": 3,
+    "consumed": 0,
+    "status": "not yet requested"
+  },
+  "local": {
+    "runtime": {
+      "node": "22.22.2nativearm64",
+      "pnpm": "12.8.1Corepack",
+      "macOS": "26.6.2build25G83"
+    },
+    "dependencies": "offlinefrozen801packages",
+    "build": {
+      "command": "pnpm build",
+      "exit": 0,
+      "tasks": 12,
+      "cached": 6
+    },
+    "focused": {
+      "command": "pnpm --filter @graphgoblin/api test src/data-dir-lock-failures.test.ts src/data-dir-lock.test.ts",
+      "passed": 81,
+      "exit": 0
+    },
+    "typecheck": "passed",
+    "changedFileLint": "passed",
+    "format": "passed",
+    "rootModel": {
+      "exit": 0,
+      "realChildProcess": true,
+      "platformAndWMIMocked": true,
+      "cases": 3,
+      "result": "absentacquires; positivesuccessorordinaryheldandintact; persistentemptytypedEPERM",
+      "nativeWindowsReproduction": false
+    },
+    "fullAPICoverage": {
+      "command": "pnpm --filter @graphgoblin/api test:coverage",
+      "exit": 0,
+      "filesPassed": 143,
+      "filesSkipped": 5,
+      "testsPassed": 2282,
+      "testsSkipped": 37,
+      "durationSeconds": 96.94,
+      "statementsPct": 93.76,
+      "branchesPct": 91,
+      "functionsPct": 90.21,
+      "linesPct": 95.18,
+      "rawLog": {
+        "privatePath": "/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/windows-reclaim-api-coverage01.log",
+        "sha256": "9548f878aae6dfe354ea8d25f9567c519b86234b69a15597a9bc905707506d4a"
+      },
+      "publication": "Only summaryfooterandstructuredcoverage copied; fullrawprocesslogretainedprivate"
+    }
+  },
+  "originalNativeFailure": {
+    "run": 45566702222,
+    "attempt": 1,
+    "job": 139043140954,
+    "artifact": 15001150156,
+    "artifactSha256": "50f918abe3f87acf9abc9e9b5457f8277d56ebaa8e70b82d32738ecdffd4e321",
+    "records": 330,
+    "doubleOwnerObserved": false,
+    "exactFilesystemInterleaving": "unproven"
+  },
+  "copiedEvidence": [
+    {
+      "source": "aidlc/windows-reclaim-diagnosis/diagnosis.md",
+      "destination": "diagnosis/diagnosis.md",
+      "sha256": "2c0f811b0a8e81c20277924d770f55551910ddec931a963afd20093eb4da7b47",
+      "publishedFileSha256": "59eabfac12def6d55bd516435ea661b2da6f0f0433ff51f08ba13747e6c5cab2",
+      "byteIdenticalCopy": false
+    },
+    {
+      "source": "aidlc/windows-reclaim-diagnosis/lineage.json",
+      "destination": "diagnosis/lineage.json",
+      "sha256": "daab77d7ea91b3cef7981a0c73f159cdbb3c4cdb16ed0ad97c747f5d7a1655ae",
+      "publishedFileSha256": "daab77d7ea91b3cef7981a0c73f159cdbb3c4cdb16ed0ad97c747f5d7a1655ae",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-diagnosis/directory-state-model.mjs",
+      "destination": "diagnosis/directory-state-model.mjs",
+      "sha256": "0d890798e73135e8956ab6945a1fe79589308b2e995b6e5ae1c6b353541d0e70",
+      "publishedFileSha256": "0d890798e73135e8956ab6945a1fe79589308b2e995b6e5ae1c6b353541d0e70",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-diagnosis/directory-state-model.json",
+      "destination": "diagnosis/directory-state-model.json",
+      "sha256": "43d3de87dd32b009d25279f9377eff9c54083970a66d5cca7ac3c91b43f94a53",
+      "publishedFileSha256": "43d3de87dd32b009d25279f9377eff9c54083970a66d5cca7ac3c91b43f94a53",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/api-typecheck-01.exit",
+      "destination": "implementation/api-typecheck-01.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publishedFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/api-typecheck-01.log",
+      "destination": "implementation/api-typecheck-01.log",
+      "sha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "publishedFileSha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/api-typecheck-02.exit",
+      "destination": "implementation/api-typecheck-02.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publishedFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/api-typecheck-02.log",
+      "destination": "implementation/api-typecheck-02.log",
+      "sha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "publishedFileSha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/changed-file-lint-01.exit",
+      "destination": "implementation/changed-file-lint-01.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "publishedFileSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/changed-file-lint-01.log",
+      "destination": "implementation/changed-file-lint-01.log",
+      "sha256": "ccd60e69bb93c85a6d9145e7ae92b1c5cb44074af22642f08356fcd0b08fe9f0",
+      "publishedFileSha256": "ccd60e69bb93c85a6d9145e7ae92b1c5cb44074af22642f08356fcd0b08fe9f0",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-api-typecheck.exit",
+      "destination": "implementation/final-api-typecheck.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publishedFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-api-typecheck.log",
+      "destination": "implementation/final-api-typecheck.log",
+      "sha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "publishedFileSha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-changed-lint.exit",
+      "destination": "implementation/final-changed-lint.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publishedFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-changed-lint.log",
+      "destination": "implementation/final-changed-lint.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedFileSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-focused.exit",
+      "destination": "implementation/final-focused.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publishedFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-focused.log",
+      "destination": "implementation/final-focused.log",
+      "sha256": "3055485e56ce75c88b9bcdec2fa2b6e32a096fddb30197e82c74eb07434c1f39",
+      "publishedFileSha256": "3055485e56ce75c88b9bcdec2fa2b6e32a096fddb30197e82c74eb07434c1f39",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-format-diff.exit",
+      "destination": "implementation/final-format-diff.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publishedFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/final-format-diff.log",
+      "destination": "implementation/final-format-diff.log",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "publishedFileSha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/focused-test-01.exit",
+      "destination": "implementation/focused-test-01.exit",
+      "sha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "publishedFileSha256": "4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/focused-test-01.log",
+      "destination": "implementation/focused-test-01.log",
+      "sha256": "db424cabec8bf1beb716dc663733f83fc9975479b981cbdfb508b2456c5648e0",
+      "publishedFileSha256": "db424cabec8bf1beb716dc663733f83fc9975479b981cbdfb508b2456c5648e0",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/focused-test-02.exit",
+      "destination": "implementation/focused-test-02.exit",
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "publishedFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/focused-test-02.log",
+      "destination": "implementation/focused-test-02.log",
+      "sha256": "2bf602d6715e0d52cc477f77fe6b3827be8d634ecdb0d7ec5a7c80a37506f471",
+      "publishedFileSha256": "2bf602d6715e0d52cc477f77fe6b3827be8d634ecdb0d7ec5a7c80a37506f471",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/source-sha256.txt",
+      "destination": "implementation/source-sha256.txt",
+      "sha256": "3dd2c9924df5cb216a4ee9b2ac81c9545a7a4027cc7dd0ee7b64e24aebd29b6e",
+      "publishedFileSha256": "3dd2c9924df5cb216a4ee9b2ac81c9545a7a4027cc7dd0ee7b64e24aebd29b6e",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-implementation/verification.md",
+      "destination": "implementation/verification.md",
+      "sha256": "079337c0bae3518800d5dd20267fd380c947770b70e6c1035f50ef8360ffee89",
+      "publishedFileSha256": "507de264ccf4cc222155982c653fc8811e287b6e3706f09d4e858e88af806951",
+      "byteIdenticalCopy": false
+    },
+    {
+      "source": "aidlc/windows-reclaim-root-qa/directory-state-model-corrected.mjs",
+      "destination": "root-qa/directory-state-model-corrected.mjs",
+      "sha256": "aab1e06f853a84a2719b9a647f3a526659557b3838681f23d0b5811f5f6343ef",
+      "publishedFileSha256": "aab1e06f853a84a2719b9a647f3a526659557b3838681f23d0b5811f5f6343ef",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-root-qa/model01.json",
+      "destination": "root-qa/model01.json",
+      "sha256": "0f6bbaee5df68ee5f9d6cc17c2e8782cac886641ad29bfddacad54a9b3696b6d",
+      "publishedFileSha256": "0f6bbaee5df68ee5f9d6cc17c2e8782cac886641ad29bfddacad54a9b3696b6d",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-root-qa/model01.stderr",
+      "destination": "root-qa/model01.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "publishedFileSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/ci-45566702222/windows-extracted/manifest.json",
+      "destination": "original-native-failure/manifest.json",
+      "sha256": "db6c9d68a3388b180b805da30aafefa19215c7f892fdfe84a4921421320a5ae8",
+      "publishedFileSha256": "db6c9d68a3388b180b805da30aafefa19215c7f892fdfe84a4921421320a5ae8",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/ci-45566702222/windows-extracted/result.json",
+      "destination": "original-native-failure/result.json",
+      "sha256": "ebf3112cf226dc26861ae547802ba7bddfef7590d52cbeb95b4e702076e8b207",
+      "publishedFileSha256": "ebf3112cf226dc26861ae547802ba7bddfef7590d52cbeb95b4e702076e8b207",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/ci-45566702222/windows-extracted/observations.ndjson",
+      "destination": "original-native-failure/observations.ndjson",
+      "sha256": "78eaa48faaf57c1f5804631eeb03fa573862583fab09a898e948de62e687e694",
+      "publishedFileSha256": "78eaa48faaf57c1f5804631eeb03fa573862583fab09a898e948de62e687e694",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-dependencies01.log",
+      "destination": "local/windows-reclaim-dependencies01.log",
+      "sha256": "f1ea574b60d0defc56d4b3ba2b63eeb6bcdfa63fe572ce75ae2486e845c2e195",
+      "publishedFileSha256": "f1ea574b60d0defc56d4b3ba2b63eeb6bcdfa63fe572ce75ae2486e845c2e195",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "aidlc/windows-reclaim-build01.log",
+      "destination": "local/windows-reclaim-build01.log",
+      "sha256": "dec9eab33b329a799916e73a271e2f351255cb04aa9e15a01a0d7fb567f76dfd",
+      "publishedFileSha256": "dec9eab33b329a799916e73a271e2f351255cb04aa9e15a01a0d7fb567f76dfd",
+      "byteIdenticalCopy": true
+    },
+    {
+      "source": "windows-reclaim/apps/api/coverage/coverage-summary.json",
+      "destination": "local/api-coverage-summary.json",
+      "sha256": "7bcd19c3aac3f42785795e71253f90e3f0a3c266ebf3bd7bb87a53bf53b52c62",
+      "publishedFileSha256": "7bcd19c3aac3f42785795e71253f90e3f0a3c266ebf3bd7bb87a53bf53b52c62",
+      "byteIdenticalCopy": true
+    }
+  ],
+  "remaining": [
+    "fullhostedgates",
+    "freshindependentreview",
+    "guardedmergeandpostmergechecks",
+    "integratedweb575andMacA\u2013E"
+  ],
+  "ownerAcceptance": "Separate open456/64/323/125/221 unchanged"
+}
