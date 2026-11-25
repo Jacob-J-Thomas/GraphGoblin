@@ -1,0 +1,39 @@
+The fix and both-venue regression are done and passing, but one requested check fails: the Windows CI step I added breaks the narrow tooling workflow test. That test hard-codes the exact list of steps in the job, and the file isn't in my six authorized paths, so I didn't change it. Everything is unstaged; nothing was committed or published.
+
+## Changes
+- **`apps/api/src/testing/api-subprocess.ts`**: sets `GG_OLLAMA_ENABLED: 'false'` in the fixture environment, after the inherited-variable filter. Per-child `run()` overrides still let a test opt in. The header comment now separates:
+  - the fixture's port reservation (shared only by fixtures in the same Vitest run, checked at a point in time, not held by the OS) from port-0 listeners;
+  - the store and child processes each fixture owns;
+  - the provider default and explicit opt-in. It states this is not network isolation.
+- **`apps/api/src/main.test.ts`**: the in-process `main()` case now also clears any inherited `JEV_API_KEY` (any capitalisation) through the existing reversible stubs. It checks `config.ollamaEnabled === false` and `config.jevApiKey === undefined`. No existing case was removed or relaxed.
+- **`apps/api/src/testing/provider-isolation.test.ts`** (new): 2 venues (built-entry subprocess, in-process `main()`) × 2 cases.
+  - Each case owns a stand-in Ollama listener on `127.0.0.1` port 0 that lists no models, and always points `GG_OLLAMA_URL` at it.
+  - Each case uses its own fixture store and authenticated readiness, with cleanup in reverse order.
+  - Fixture default: the connection view must be exactly disabled and idle, and the listener must get no requests.
+  - Explicit `GG_OLLAMA_ENABLED=true`: discovery must reach `ready` with exactly one `GET /api/tags`.
+  - A made-up `JEV_API_KEY` value is set in the test process; the test checks neither venue seeds it.
+- **`.github/workflows/ci.yml`**: new last step `api-entry` in the Windows launcher job. It runs `pnpm --filter @graphgoblin/api test src/main.test.ts` with `if: ${{ !cancelled() && steps.build.outcome == 'success' }}` and no `continue-on-error`. Because it comes after finalize and upload, it can't change the preparation, native, finalize or upload outcomes.
+- **`docs/10-testing-and-quality.md`** and **`CHANGELOG.md`**: describe the default and opt-in, store and process ownership, reservation versus port 0 (no fixed range claimed), no network isolation, and the Windows venue.
+
+## Results
+| Check | Result |
+|---|---|
+| `node --version` | v22.23.4 |
+| `pnpm build --filter=@graphgoblin/api` | 7/7 successful (6 restored from cache; API rebuilt) |
+| **Red**: new test only, fixture not yet fixed | 2 failed, 2 passed. Both default cases failed with `enabled: true` and discovery `ready` against the owned port-0 listener; both opt-in cases passed |
+| **Green**: `test src/main.test.ts src/testing/provider-isolation.test.ts` | 2 files passed; 18 passed, 5 skipped (existing Linux/POSIX-only cases) |
+| API typecheck / lint | Pass / pass |
+| Tooling workflow test | Before my CI edit: 40/40. After: **1 failed, 39 passed** |
+| Prettier `--check` on the six paths | Pass (`--write` not needed) |
+| `git diff --check` | Clean |
+
+My first green run piped output through `grep`, which isn't in the command contract and hides the exit code. I re-ran the exact command; the green row is from that run.
+
+## Dependency needed
+`tooling/scripts/windows-launcher-evidence.test.mjs` (around line 1592) expects exactly `[install, build, evidence, native, finalize, upload]` as the steps that run. The failed-preparation check around line 1608 has the same kind of list. Both need `api-entry` added, ideally with checks for its command, its build-success condition, and that a failed `api-entry` leaves the other steps' outcomes unchanged. Without that, CI will fail on this test. I checked the test's other scenarios by reading the code (they didn't run past the first failure), and they appear unaffected.
+
+## Not verified / risks
+- The new CI step hasn't run on GitHub; it only passed locally on Windows. It also shares the job's existing 20-minute limit with the native suite, so a slow run could cut it off.
+- Not run, as scoped: wider built-API tests, full coverage, the native launcher suite, CI.
+- The change to `main.test.ts` is small but will need merging with Mac PR #501.
+- Owner ports (11434, 4747, 4748, 7443), owner stores, credentials and model calls were never touched. The API under test used the usual 5600–5699 reservation range.

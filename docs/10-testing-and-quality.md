@@ -199,6 +199,8 @@ The `windows-launcher` job (**Windows launcher**, 20 minutes) installs, builds a
 - **Status.** `complete` means a passing native step with every required observation. Those are a closed recorder with nothing omitted or rejected; every case started and passed; every case except lock contention, which starts its contenders directly, recorded at least one child process; every started subtest ended and passed; both checkout-alias records with a matched target, no failure stage and an unlinked alias, each after owner-verified, drained releases through both the alias and the direct spelling; the single-owner contention trials 1, 2 and 3; and a final state for every fixture. Each contention trial needs its totals, a distinct result for every contender with the same seeded token and no structured filesystem or cleanup failures, exactly one acquired owner with expected refusals from the rest, a live matching owner PID/token readback with the seeded marker absent, and final clean release, absent main lock and guard, zero staging entries and intact unrelated bytes. Totals alone cannot complete a trial. Alias and contention records count only from their own case. Every checkout comparison that applies to the event must also hold: a false one is a known contradiction (`binding-contradiction`) and a missing one leaves the revision unverified (`binding-unverified`). The run identity must be bound too: a missing or malformed repository, workflow reference, job key, run ID, run attempt, event or ref is reported once as `binding-identity`. The runner OS, architecture and image and the Node version are diagnostics that may stay unavailable, and a push needs no event base. A passing native step that lacks any of them, including a manifest-only directory, is `incomplete` and fails the job. A failed or cancelled native step is `native-failed`; a native step that did not run is `not-run`. Rejected observation bytes are never uploaded and fail the job. The original native failure stays in its own step and TAP output whatever the evidence steps do.
 - **Retention.** Fixtures under `.tmp` and OS TEMP are left in place, including any kept because a release or unlink could not be verified. Evidence records their final state and never copies or traverses them.
 
+The job's last step, **API built-entry startup on Windows** (#565), runs `pnpm --filter @graphgoblin/api test src/main.test.ts` against the job's build. It is the maintained Windows venue for the built-entry startup cases, including the Windows-only launcher log-folder refusal case, which Linux CI skips. It runs after every successful build that is not cancelled, whatever the native, evidence and upload steps did, and only after them, so its result cannot change their outcomes or the evidence. It has no `continue-on-error`: a failure fails the job. Its test, hook and wait limits are those of the local suite, and it shares the job's 20-minute budget.
+
 Without `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR` the local `pnpm test:windows-launcher` writes no evidence and keeps its usual output. The CI evidence binds to the checkout but does not establish a hosted result by itself: the uploaded archive, its GitHub digest and the job's own log are the evidence.
 
 The `browser` job installs pnpm and Node 22 from the shared `.nvmrc` pin, installs the frozen dependencies and Edge (`playwright install --with-deps msedge`), builds the app, then runs `pnpm exec playwright test --retries=0 --workers=1` from `apps/web`. `GG_E2E_BROWSER_CHANNEL=msedge` matches Windows development and the existing Ubuntu routing-performance job. Windows still defaults to installed Edge; other platforms default to Playwright's bundled Chromium unless a channel is explicitly selected. Retries default to zero everywhere, so a first-attempt failure fails the job, and under `CI` a focused (`.only`) test fails the run instead of silently skipping the rest of the suite. The functional step has a 60-minute timeout inside the 75-minute job budget. The expanded serial suite took 45m32s in the Windows candidate run; the step budget leaves about 14 minutes beyond that measurement, with another 15 minutes for setup/build and evidence upload outside the test step. These are whole-job budgets; individual test and performance limits stay unchanged. On Ubuntu the Browser job took 20m47s, its test step 19m04s, for 420 passed tests and the one paid-provider skip (CI run 40184348129, 2026-10-25). A step timeout fails the step, allowing the upload with `failure() || cancelled()` to run; exhausting the whole job budget can still prevent later steps. The `browser-failure` artifact contains available `apps/web/test-results/` evidence and the HTML report at `apps/web/playwright-report/` on failure or cancellation. The default trace mode retains failure traces where tracing is enabled: `routing.spec.ts` sets `trace: 'off'`, and the custom contexts in `responsive.spec.ts` attach no trace. A failure does not guarantee a trace ZIP.
@@ -348,9 +350,11 @@ Finding fixed while measuring: libsql's local client does its work in native cod
 `apps/api/dist/main.js`. API subprocess tests build the API first through Turbo's
 `test` and `test:coverage` task dependencies. Direct package test commands bypass
 Turbo, so run `pnpm build` first; a missing entry reports that command explicitly.
-Each fixture owns a temporary `gg-api-process-*` directory, clears inherited `GG_*`
-configuration, and creates its API key through the binary. API Vitest workers
-reserve loopback ports atomically in a temporary directory shared by the run (#407).
+Each fixture creates its own temporary `gg-api-process-*` store directory, starts
+children only through its `run()` and creates its API key through the binary. On
+dispose it force-stops any child still running and releases its port reservation.
+API Vitest workers reserve loopback ports atomically in a temporary directory
+shared by the run (#407).
 The reservation lasts through startup, restarts and child or listener cleanup.
 Set `GG_TEST_PORT_START` and `GG_TEST_PORT_COUNT` to a free range large enough for
 the fixtures active at the same time. The default is 5600 to 5699, with 5760 to 5769
@@ -358,8 +362,13 @@ for the dedicated shutdown process and startup suites. An invalid or exhausted
 range fails with the range in the error. TCP bind probes check IPv4 loopback and,
 on Windows and macOS, also check IPv4 and available dual-stack wildcard bindings
 because overlapping addresses can bind the same port on those platforms.
-Probe listeners close before startup. Reservations coordinate fixtures drawing from that range
-in the same Vitest run. Each port records successive claims in separate
+Probe listeners close before startup. These probes are point-in-time availability
+checks, not an OS hold. Reservations coordinate only fixtures drawing from that
+range in the same Vitest run; a process outside the run can still bind a reserved
+port after the check. A
+listener a test owns for itself, such as the stand-in Ollama, is not reserved: it
+binds `127.0.0.1` port 0 and reads back the ephemeral port the OS assigned, from
+no fixed range. Each port records successive claims in separate
 directories that stay until the run closes. An unfinished claim stays reserved
 for that run, and the Vitest parent removes the reservation directory when
 its workers have closed. Give simultaneous test invocations disjoint ranges.
@@ -367,6 +376,23 @@ CLI dispatch is proved by exit codes 0/1/2. Corrupt SQLite
 refusal, occupied-port cleanup and Linux native signal shutdown are distinct
 evidence. The corrupt database fails before HTTP setup; a literal `*` static asset
 supplies a separate real post-container route-registration fault on POSIX.
+
+Children get the parent environment without inherited `GG_*`, `JEV_API_KEY` and
+`NODE_V8_COVERAGE`, then the fixture's own `GG_*` values (#565). These include
+`GG_OLLAMA_ENABLED=false`, so ordinary startup makes no Ollama discovery request
+whatever the product default or the shell sets. A test that owns a provider
+endpoint opts in per child with `GG_OLLAMA_ENABLED=true` and its own
+`GG_OLLAMA_URL`. The in-process `main()` case in `main.test.ts` adopts the same
+fixture values through reversible `vi.stubEnv` stubs after clearing inherited
+`GG_*` (other than `GG_TEST_*`) and `JEV_API_KEY`, so it cannot seed an inherited
+Jev key either. This is not network isolation: children keep the host network and
+the rest of the inherited environment, and only the discovery default is fixed.
+`src/testing/provider-isolation.test.ts` checks both venues, a built-entry child
+and in-process `main()`, against a stand-in Ollama listener that the test owns and
+that lists no models; both cases point `GG_OLLAMA_URL` at it. With the fixture
+default the saved connection stays disabled and idle and the listener receives no
+request. With an explicit opt-in it receives exactly `GET /api/tags` and discovery
+becomes ready.
 
 Signal cases run only on Linux. Node force-kills children on SIGINT/SIGTERM on
 win32 and does not execute JavaScript handlers. The literal wildcard asset also
@@ -392,7 +418,8 @@ Process fixtures stop their children and best-effort remove their temporary
 stores and reports, retrying native handle release. The `gg-publish-*` fixtures
 use separate real SQLite connections to arrange draft/publish interleavings,
 then close both clients and best-effort remove their temporary database directory.
-No owner process, store, or port is used.
+No fixture starts, stops or opens an owner process or store. Fixture API ports come
+from the reservation range above, and test-owned listeners use port 0.
 
 ## Browser history retention measurements (#186 round 2, 2026-10-24)
 

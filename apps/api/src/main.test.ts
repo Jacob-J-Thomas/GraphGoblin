@@ -133,14 +133,19 @@ describe('built API entry and startup failures', () => {
   it('holds ownership while listening and releases it on supported HTTP close', async () => {
     const f = await fixture();
     // Test fixture fences are not product configuration; preserve them even if this case fails.
-    for (const name of Object.keys(process.env))
-      if (name.toUpperCase().startsWith('GG_') && !name.toUpperCase().startsWith('GG_TEST_'))
+    // Inherited JEV_API_KEY is cleared too, so this in-process start cannot seed it (#565).
+    for (const name of Object.keys(process.env)) {
+      const upper = name.toUpperCase();
+      if ((upper.startsWith('GG_') && !upper.startsWith('GG_TEST_')) || upper === 'JEV_API_KEY')
         vi.stubEnv(name, undefined);
+    }
     for (const [name, value] of Object.entries(f.env))
       if (name.toUpperCase().startsWith('GG_')) vi.stubEnv(name, value);
     let running: Awaited<ReturnType<typeof main>> | undefined;
     try {
       running = await main();
+      expect(running.container.config.ollamaEnabled).toBe(false);
+      expect(running.container.config.jevApiKey).toBeUndefined();
       const lock = await readFile(f.lockPath, 'utf8');
       await expect(main()).rejects.toThrow('another GraphGoblin process holds');
       expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
