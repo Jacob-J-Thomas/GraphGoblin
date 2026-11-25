@@ -1,0 +1,76 @@
+{
+  "run": "retained rerun of the amended embedded cold gateway fixture control",
+  "observedAt": "2026-11-17T04:27:37.160Z",
+  "node": {
+    "executable": "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe",
+    "version": "v22.23.4",
+    "platform": "win32",
+    "arch": "x64"
+  },
+  "control": {
+    "path": "C:\\Users\\98jak\\graphgoblin-qa\\2026-11-13-aidlc-batch\\launcher\\macos-installed-engine-fixture-correction-02\\embedded-fixture-probe.mjs",
+    "sha256": "957dc04c0593f200530dc4057837b6f8d60d4c60e4a3f6f5acc88f1fbb12d5fb"
+  },
+  "source": {
+    "swiftPath": "C:\\Users\\98jak\\.codex\\worktrees\\gg-20261116-macos-launcher\\GraphGoblin\\apps\\macos-launcher\\Tests\\Engine\\InstalledEngineTests.swift",
+    "swiftSha256": "4cf01f8757912d109a8e4b2af3306cb6eeb3acc35bdcfbb4e05678677870b35e",
+    "extractedRawSha256": "bedbb18cdb157256de0096330f01f6c3f50a291e83769904ce359ceb3da59408",
+    "substitution": {
+      "before": "\\#(token)",
+      "after": "fixture-control-check"
+    },
+    "executedProgramFile": "embedded-fixture.mjs",
+    "executedProgramSha256": "2b69d4d0f29a0aeb6af05587700af5ac6895fd3765b26130952247e4afd5f911",
+    "executedProgramBytes": 2029
+  },
+  "child": {
+    "pid": 36824,
+    "pidWitness": "36824\n",
+    "port": 49245,
+    "status": 0,
+    "signal": null,
+    "streams": {
+      "stdout": {
+        "bytes": 0,
+        "eof": true
+      },
+      "stderr": {
+        "bytes": 0,
+        "eof": true
+      }
+    }
+  },
+  "responses": {
+    "health": {
+      "status": 200,
+      "body": "{\"status\":\"ok\"}",
+      "connection": "keep-alive",
+      "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "pid": "36824",
+      "phase": "running"
+    },
+    "app": {
+      "status": 200,
+      "body": "<html>management</html>",
+      "connection": "keep-alive"
+    },
+    "goblin": {
+      "status": 200,
+      "body": "<html>Goblin</html>",
+      "connection": "keep-alive"
+    },
+    "wrongToken": {
+      "status": 404,
+      "body": "unexpected fixture request",
+      "connection": "keep-alive"
+    },
+    "shutdown": {
+      "status": 202,
+      "body": "{\"closed\":true}",
+      "connection": "close"
+    }
+  },
+  "requests": "GET /healthz\nGET /app/\nGET /goblin/\nPOST /fixture-drain\nPOST /fixture-drain\n",
+  "exitMilliseconds": 18.7,
+  "exitBudgetMilliseconds": 3000
+}

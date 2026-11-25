@@ -1,0 +1,13 @@
+# GraphGoblin PR 501 CI packet 07
+
+Read-only evidence for [GitHub Actions run 44009443183](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44009443183), run 910, attempt 1. The run was for PR 501 at exact head `8282861940f52d059e926e41a34bdf3894e52468`, tree `f6f6c56aa38283b7f7a3a4ba0d251a7ead70e444`, targeting `main` at `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`. Synthetic merge `7331464e54bd1907e1dab82d2d7b9bc225bda03b` has ordered parents base then head and the same tree.
+
+The workflow run ended `cancelled`. Terminal jobs: Gates `cancelled` during unit tests with coverage thresholds; Browser `cancelled` during the functional browser suite; macOS launcher `failure`; Windows launcher `success`; Template image `success`.
+
+The macOS API integration step passed 203 tests across 10 files with 8 skipped. Native installer/gateway acceptance passed 2/2. The primary Swift coverage command exited 1 without a signal; stdout was empty and stderr was 368,176 bytes (SHA-256 `dc42c9f7bed01596df3666d3f976a4b3718648e6458f9684c8e37284724271ec`). Its raw stream ended after the final `codesign` command with `error: fatalError`, without an explanatory compiler diagnostic. The failure-only serial build also exited 1 with no signal/error object: stdout 62,589 bytes and stderr 1,999 bytes. Its captured diagnostic status records the unexpected build result, but no failure cause. The 28-row object inventory hashed 21 objects and found 7 missing in Presentation test/support sources; the report scan found no matching compiler crash reports. These data localize incomplete compilation but do not identify why it stopped. No native coverage counters were produced.
+
+The partial V8 coverage archive contains six package summary JSON files. Gates was cancelled while the shared unit/coverage job was running, so these reports are not a complete repository gate result. The 9,435,633-byte Browser artifact archive is preserved intact and was not expanded. The original macOS artifact archive and all five decoded job logs are retained.
+
+The Mac diagnostic artifact includes the complete original Swift streams, failure-only build streams, object roster, report scan, toolchain, test sentinel and acceptance records. Exact sizes and SHA-256 values are recorded in `run-metadata.json` and `SHA256SUMS.txt`.
+
+No rerun, manual cancellation, retry, workflow edit, source edit or repository change was made by this observer.

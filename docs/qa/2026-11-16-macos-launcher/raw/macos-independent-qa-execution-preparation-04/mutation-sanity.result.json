@@ -1,0 +1,161 @@
+{
+  "schema": "gg456-prep04-mutation-sanity/1",
+  "controlled": true,
+  "node": "v22.23.4",
+  "mutants": [
+    {
+      "id": "M1-drain-assertion-reads-GET",
+      "meaning": "defect 2 re-introduced: the S4 want reads the pre-drain GET with ?? []",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "D2-d04-S4-POST-missing",
+        "D6-d04-S4-POST-contains-timer-run",
+        "D7-d04-S4-GET-clean-POST-flags-run",
+        "D8-d04-S4-GET-flags-run-POST-clean"
+      ],
+      "failed": [
+        "D2-d04-S4-POST-missing",
+        "D3-d04-S4-POST-string",
+        "D4-d04-S4-POST-object",
+        "D5-d04-S4-POST-null",
+        "D6-d04-S4-POST-contains-timer-run",
+        "D7-d04-S4-GET-clean-POST-flags-run",
+        "D8-d04-S4-GET-flags-run-POST-clean",
+        "D10-d04-S4-POST-non-ulid-entry"
+      ],
+      "detected": true
+    },
+    {
+      "id": "M2-start-omits-version",
+      "meaning": "defect 1 re-introduced: the start body omits versionId",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "A1-d04-S4-correct-explicit-draft",
+        "D1-d04-S4-POST-empty-array"
+      ],
+      "failed": [
+        "A1-d04-S4-correct-explicit-draft",
+        "A1b-d04-S4-snapshot-distinct-and-recorded",
+        "A1d-d04-S4-no-control-token-recorded",
+        "P1-d04-S4-run-version-equals-draft",
+        "P2-d04-S4-run-version-equals-run",
+        "P3-d04-S4-pinned-source-published",
+        "P4-d04-S4-run-foreign-loop",
+        "P5-d04-S4-retained-version-differs",
+        "P6-d04-S4-retained-source-differs",
+        "D1-d04-S4-POST-empty-array",
+        "D2-d04-S4-POST-missing",
+        "D3-d04-S4-POST-string",
+        "D4-d04-S4-POST-object",
+        "D5-d04-S4-POST-null",
+        "D6-d04-S4-POST-contains-timer-run",
+        "D7-d04-S4-GET-clean-POST-flags-run",
+        "D8-d04-S4-GET-flags-run-POST-clean",
+        "D9-d04-S4-POST-other-run-only",
+        "D10-d04-S4-POST-non-ulid-entry"
+      ],
+      "detected": true
+    },
+    {
+      "id": "M3-snapshot-may-equal-draft",
+      "meaning": "near miss: run.versionId equal to the submitted draft ID accepted",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "P1-d04-S4-run-version-equals-draft",
+        "H2-d04-draftRunPin-direct"
+      ],
+      "failed": [
+        "P1-d04-S4-run-version-equals-draft",
+        "H2-d04-draftRunPin-direct"
+      ],
+      "detected": true
+    },
+    {
+      "id": "M4-draft-loop-binding-dropped",
+      "meaning": "near miss: the draft's loop association is not checked",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "A3-d04-S4-foreign-draft"
+      ],
+      "failed": [
+        "A3-d04-S4-foreign-draft"
+      ],
+      "detected": true
+    },
+    {
+      "id": "M5-missing-array-coerced",
+      "meaning": "near miss: a missing or null POST array is coerced to []",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "D2-d04-S4-POST-missing",
+        "D5-d04-S4-POST-null"
+      ],
+      "failed": [
+        "D2-d04-S4-POST-missing",
+        "D5-d04-S4-POST-null"
+      ],
+      "detected": true
+    },
+    {
+      "id": "M6-control-token-recorded",
+      "meaning": "near miss: the accepted snapshot keeps controlToken",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "A1d-d04-S4-no-control-token-recorded",
+        "D11-d04-acceptedDrainFields-allowlist"
+      ],
+      "failed": [
+        "A1d-d04-S4-no-control-token-recorded",
+        "D1-d04-S4-POST-empty-array",
+        "D2-d04-S4-POST-missing",
+        "D3-d04-S4-POST-string",
+        "D4-d04-S4-POST-object",
+        "D5-d04-S4-POST-null",
+        "D6-d04-S4-POST-contains-timer-run",
+        "D7-d04-S4-GET-clean-POST-flags-run",
+        "D8-d04-S4-GET-flags-run-POST-clean",
+        "D9-d04-S4-POST-other-run-only",
+        "D10-d04-S4-POST-non-ulid-entry",
+        "D11-d04-acceptedDrainFields-allowlist"
+      ],
+      "detected": true
+    },
+    {
+      "id": "M7-config-order-sensitive",
+      "meaning": "defect 3 re-introduced: S5 compares the configurations order-sensitively",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "S1-d04-S5-reordered-original",
+        "S2-d04-S5-reordered-nfd"
+      ],
+      "failed": [
+        "S1-d04-S5-reordered-original",
+        "S2-d04-S5-reordered-nfd"
+      ],
+      "detected": true
+    },
+    {
+      "id": "M8-config-values-normalized",
+      "meaning": "near miss: S5 equality normalizes values to NFC",
+      "exit": 1,
+      "guardRestIdentical": true,
+      "expectedFailures": [
+        "C1-d04-sameConfiguration-direct",
+        "S5-d04-S5-data-path-other-spelling"
+      ],
+      "failed": [
+        "C1-d04-sameConfiguration-direct",
+        "S5-d04-S5-data-path-other-spelling"
+      ],
+      "detected": true
+    }
+  ],
+  "pass": true
+}

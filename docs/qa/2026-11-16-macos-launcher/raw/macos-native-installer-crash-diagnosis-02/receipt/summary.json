@@ -1,0 +1,402 @@
+{
+  "schema": "gg456-installer-crash-diagnosis/v1",
+  "token": "9ce7bf46113e4cbf860b591014a7a24c",
+  "pid": 48099,
+  "startedAt": "2026-11-16T21:59:58.800Z",
+  "observedCrashAt": "2026-11-16T21:59:59.081Z",
+  "sampledAt": "2026-11-16T22:09:25.346Z",
+  "artifact": {
+    "path": "/Users/jake/Library/Caches/graphgoblin-456-product-build-d75d293f66da44ffb60198a07d8fa2e2/swift-release/arm64-apple-macosx/release/GraphGoblinLauncherInstaller",
+    "bytes": 587616,
+    "sha256": "dca34a397e4c50959264dabd007076e361874f348d74e882b2e796939db298da",
+    "device": "16777232",
+    "inode": "179005070",
+    "machUuid": "4aff4759cf4436238d3b61360570cf32"
+  },
+  "partialStage": {
+    "unchanged": true,
+    "stage": "/Users/jake/Applications/.graphgoblin-launcher-stage-0669c5da61b2427385f29406ac41e441",
+    "device": "16777232",
+    "inode": "179009292",
+    "observedAbsence": {
+      "target": true,
+      "data": true,
+      "configuration": true,
+      "receipt": true
+    },
+    "executableSha256": "afb4f00697e82d76cc50d2d9d5f150202cf5b8cff9718f1e142dec06028faa12",
+    "plistSha256": "7ca4549d0fa6788a261d93bd0013d94d2aaf237b386160056827cfd5e77e45e9"
+  },
+  "crash": {
+    "directories": {
+      "parent": {
+        "path": "/Users/jake/Library/Logs",
+        "present": true,
+        "realpath": "/Users/jake/Library/Logs",
+        "uid": 501,
+        "gid": 20,
+        "mode": "700",
+        "device": "16777232",
+        "inode": "48296",
+        "kind": "directory"
+      },
+      "reports": {
+        "path": "/Users/jake/Library/Logs/DiagnosticReports",
+        "present": true,
+        "realpath": "/Users/jake/Library/Logs/DiagnosticReports",
+        "uid": 501,
+        "gid": 250,
+        "mode": "770",
+        "device": "16777232",
+        "inode": "67511",
+        "kind": "directory"
+      }
+    },
+    "status": "exact-pid-time-artifact-match",
+    "candidates": 1,
+    "unreadable": 0,
+    "candidateChecks": [
+      {
+        "checks": {
+          "pid": true,
+          "name": true,
+          "path": true,
+          "artifact": true,
+          "uid": true,
+          "time": true,
+          "launch": true
+        },
+        "pathRedacted": true,
+        "scalars": {
+          "captureTime": "2026-11-16 15:59:59.0809 -0600",
+          "procLaunch": "2026-11-16 15:59:58.8002 -0600",
+          "procPath": "/Users/USER/Library/Caches/*/GraphGoblinLauncherInstaller",
+          "timestamp": "2026-11-16 16:00:00.00 -0600",
+          "headerUuid": "4aff4759cf4436238d3b61360570cf32",
+          "imageUuids": [
+            "4aff4759cf4436238d3b61360570cf32"
+          ]
+        }
+      }
+    ],
+    "report": {
+      "name": "GraphGoblinLauncherInstaller-2026-11-16-160000.ips",
+      "identity": {
+        "device": "16777232",
+        "inode": "179009302"
+      },
+      "bytes": 13745,
+      "sha256": "7a6085e310c62971e7e42598b6e40d4a7efc32403fd5dc0c46a3ee2c174cc162",
+      "pathRedacted": true,
+      "selected": {
+        "pid": 48099,
+        "procName": "GraphGoblinLauncherInstaller",
+        "procPath": "/Users/USER/Library/Caches/*/GraphGoblinLauncherInstaller",
+        "userID": 501,
+        "captureTime": "2026-11-16 15:59:59.0809 -0600",
+        "procLaunch": "2026-11-16 15:59:58.8002 -0600",
+        "incident": "1BE99723-2A52-4C36-8692-57FBAC93C2BD",
+        "translated": false,
+        "bundle": {},
+        "header": {
+          "timestamp": "2026-11-16 16:00:00.00 -0600",
+          "slice_uuid": "4aff4759-cf44-3623-8d3b-61360570cf32",
+          "incident_id": "1BE99723-2A52-4C36-8692-57FBAC93C2BD",
+          "bug_type": "309"
+        },
+        "exception": {
+          "type": "EXC_BAD_ACCESS",
+          "signal": "SIGSEGV",
+          "subtype": "KERN_INVALID_ADDRESS at 0x0000000000000008",
+          "codes": "0x0000000000000001, 0x0000000000000008",
+          "rawCodes": [
+            1,
+            8
+          ]
+        },
+        "termination": {
+          "namespace": "SIGNAL",
+          "code": 11,
+          "flags": 0,
+          "indicator": "Segmentation fault: 11"
+        },
+        "faultingThread": {
+          "index": 0,
+          "id": 64277638,
+          "queue": "com.apple.main-thread",
+          "triggered": true,
+          "state": {
+            "pc": {
+              "value": 6572873632,
+              "matchesCrashFrame": 1
+            },
+            "lr": {
+              "value": 6572874144
+            },
+            "sp": {
+              "value": 6126333824
+            },
+            "far": {
+              "value": 8
+            },
+            "esr": {
+              "value": 2449473542,
+              "description": "(Data Abort) byte read Translation fault"
+            },
+            "cpsr": {
+              "value": 2147483648
+            }
+          },
+          "frames": [
+            {
+              "imageIndex": 1,
+              "imageOffset": 554912,
+              "symbol": "icu::Locale::Payload::copy(icu::Locale::Payload const&)",
+              "symbolLocation": 0
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 555424,
+              "symbol": "icu::Locale::Payload::operator=(icu::Locale::Payload const&)",
+              "symbolLocation": 68
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 563036
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 56012,
+              "symbol": "icu::Locale::getLocaleCache()",
+              "symbolLocation": 60
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 55928,
+              "symbol": "icu::Locale::getRoot()",
+              "symbolLocation": 16
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 1367116,
+              "symbol": "icu::CollationRoot::load(char const*, UErrorCode&)",
+              "symbolLocation": 336
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 471428
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 47824,
+              "symbol": "icu::CollationRoot::getRootCacheEntry(UErrorCode&)",
+              "symbolLocation": 56
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 2304072
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 47692,
+              "symbol": "icu::Collator::makeInstance(icu::Locale const&, UErrorCode&)",
+              "symbolLocation": 24
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 47572,
+              "symbol": "icu::Collator::createInstance(icu::Locale const&, UErrorCode&)",
+              "symbolLocation": 84
+            },
+            {
+              "imageIndex": 1,
+              "imageOffset": 47420,
+              "symbol": "ucol_open",
+              "symbolLocation": 76
+            },
+            {
+              "imageIndex": 2,
+              "imageOffset": 572148,
+              "symbol": "__CFStringCreateCollator",
+              "symbolLocation": 100
+            },
+            {
+              "imageIndex": 2,
+              "imageOffset": 569608,
+              "symbol": "_CFCompareStringsWithLocale",
+              "symbolLocation": 664
+            },
+            {
+              "imageIndex": 2,
+              "imageOffset": 102892,
+              "symbol": "CFStringCompareWithOptionsAndLocale",
+              "symbolLocation": 7196
+            },
+            {
+              "imageIndex": 2,
+              "imageOffset": 479164,
+              "symbol": "-[NSTaggedPointerString compare:options:range:locale:]",
+              "symbolLocation": 656
+            },
+            {
+              "imageIndex": 2,
+              "imageOffset": 405856,
+              "symbol": "__CFSimpleMergeSort",
+              "symbolLocation": 148
+            },
+            {
+              "imageIndex": 2,
+              "imageOffset": 405956,
+              "symbol": "__CFSimpleMergeSort",
+              "symbolLocation": 248
+            },
+            {
+              "imageIndex": 2,
+              "imageOffset": 405364,
+              "symbol": "CFSortIndexes",
+              "symbolLocation": 260
+            },
+            {
+              "imageIndex": 3,
+              "imageOffset": 655388,
+              "symbol": "_writeJSONObject",
+              "symbolLocation": 888
+            },
+            {
+              "imageIndex": 3,
+              "imageOffset": 11979280,
+              "symbol": "-[_NSJSONWriter dataWithRootObject:options:]",
+              "symbolLocation": 104
+            },
+            {
+              "imageIndex": 3,
+              "imageOffset": 653372,
+              "symbol": "+[NSJSONSerialization dataWithJSONObject:options:error:]",
+              "symbolLocation": 112
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 58772,
+              "symbol": "LauncherConfiguration.encode()",
+              "symbolLocation": 764
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 242740,
+              "symbol": "specialized static LauncherInstaller.assemble(_:name:id:releaseBinary:config:)",
+              "symbolLocation": 2688
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 251752,
+              "symbol": "static LauncherInstaller.assemble(_:name:id:releaseBinary:config:)",
+              "symbolLocation": 40
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 251752,
+              "symbol": "specialized static LauncherInstaller.install(_:checkout:releaseBinary:defaultNode:environment:)",
+              "symbolLocation": 5420
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 235908,
+              "symbol": "static LauncherInstaller.install(_:checkout:releaseBinary:defaultNode:environment:)",
+              "symbolLocation": 36
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 235908,
+              "symbol": "static LauncherInstaller.run(_:environment:)",
+              "symbolLocation": 652
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 8536,
+              "symbol": "specialized static InstallerEntry.main()",
+              "symbolLocation": 144
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 5872,
+              "symbol": "static InstallerEntry.main()",
+              "symbolLocation": 4
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 5872,
+              "symbol": "static InstallerEntry.$main()",
+              "symbolLocation": 4
+            },
+            {
+              "imageIndex": 0,
+              "imageOffset": 5872,
+              "symbol": "InstallerEntry_main",
+              "symbolLocation": 12
+            },
+            {
+              "imageIndex": 4,
+              "imageOffset": 132324,
+              "symbol": "start",
+              "symbolLocation": 6992
+            }
+          ],
+          "images": [
+            {
+              "index": 1,
+              "name": "libicucore.A.dylib",
+              "path": "/usr/lib/libicucore.A.dylib",
+              "base": 6572318720,
+              "size": 2973012,
+              "uuid": "53a3e31e-06a8-325e-b5a8-316b88aa3c92",
+              "arch": "arm64e",
+              "source": "P"
+            },
+            {
+              "index": 2,
+              "name": "CoreFoundation",
+              "path": "/System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation",
+              "base": 6508589056,
+              "size": 5629376,
+              "uuid": "9b672762-7b1f-30bc-96de-f176b372d66d",
+              "arch": "arm64e",
+              "source": "P"
+            },
+            {
+              "index": 3,
+              "name": "Foundation",
+              "path": "/System/Library/Frameworks/Foundation.framework/Versions/C/Foundation",
+              "base": 6534209536,
+              "size": 16661152,
+              "uuid": "91dace39-fa28-3191-818d-1fcc6a0e615a",
+              "arch": "arm64e",
+              "source": "P"
+            },
+            {
+              "index": 0,
+              "name": "GraphGoblinLauncherInstaller",
+              "path": "/Users/USER/Library/Caches/*/GraphGoblinLauncherInstaller",
+              "base": 4340531200,
+              "size": 294912,
+              "uuid": "4aff4759-cf44-3623-8d3b-61360570cf32",
+              "arch": "arm64",
+              "source": "P"
+            },
+            {
+              "index": 4,
+              "name": "dyld",
+              "path": "/usr/lib/dyld",
+              "base": 6504218624,
+              "size": 734464,
+              "uuid": "74e52480-c2bd-3c8d-812d-95fe2b74a096",
+              "arch": "arm64e",
+              "source": "P"
+            }
+          ]
+        }
+      },
+      "rawWithheld": false,
+      "rawFile": "GraphGoblinLauncherInstaller-48099.ips"
+    }
+  }
+}

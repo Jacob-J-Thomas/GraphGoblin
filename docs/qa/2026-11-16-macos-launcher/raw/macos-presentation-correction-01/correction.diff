@@ -1,0 +1,137 @@
+--- a/apps/macos-launcher/Presentation/LaunchPresentationController.swift
++++ b/apps/macos-launcher/Presentation/LaunchPresentationController.swift
+@@ -136,10 +136,18 @@
+     }
+ 
+     /// Every Quit path: menu, panel button, Dock menu, logout.
++    ///
++    /// Only the first request does the Quit work. A repeated request while that first one still
++    /// awaits its reply answers `.later` again and changes nothing else: `requestQuit()` is not
++    /// repeated, the grace keeps its original deadline and exactly one reply is ever sent. Once
++    /// that reply has been sent, or when none was owed, a repeated request answers `.now`.
+     func terminationRequested() -> TerminationDecision {
+         switch phase {
+-        case .finished, .quitting:
++        case .finished:
+             return .now
++        case .quitting:
++            // A second Quit must never cut short the wait for the engine's own cleanup.
++            return awaitingTerminationReply ? .later : .now
+         case .idle, .waiting, .handingOff, .preparingFailure, .showingFailure, .runningShowLog:
+             break
+         }
+--- a/apps/macos-launcher/Tests/Presentation/QuitTests.swift
++++ b/apps/macos-launcher/Tests/Presentation/QuitTests.swift
+@@ -64,6 +64,8 @@
+         await h.waitForTimer(at: .seconds(10))
+ 
+         #expect(h.controller.terminationRequested() == .now)
++        // The run has returned, so no reply is owed and a repeated Quit is also immediate.
++        #expect(h.controller.terminationRequested() == .now)
+         #expect(h.engine.quitCount == 1)
+         #expect(!h.clock.hasSleeper(until: .seconds(10)))
+         let callsAfterQuit = h.surface.calls.count
+@@ -89,13 +91,81 @@
+         #expect(h.surface.count(.raiseAlert) == 0)
+     }
+ 
+-    @Test("Repeated Quit asks the engine once")
+-    func repeatedQuit() async {
++    @Test("Quit again before the engine returns: still later, one request, one reply, then now")
++    func repeatedQuitBeforeEngineReturns() async {
+         let h = Harness()
+         await h.start()
+         #expect(h.controller.terminationRequested() == .later)
++        await h.waitForTimer(at: .seconds(2))
++        let callsAtQuit = h.surface.calls.count
++
++        // Part-way through the grace, Quit arrives again (menu, Dock and logout).
++        h.clock.advance(by: .seconds(1))
++        await drainMainActor()
++        #expect(h.controller.terminationRequested() == .later)
++        #expect(h.controller.terminationRequested() == .later)
++        await drainMainActor()
++        #expect(h.engine.quitCount == 1)
++        #expect(h.controller.phase == .quitting)
++        #expect(h.surface.calls.count == callsAtQuit)
++        // The grace keeps its original deadline; it was not restarted at 3 s.
++        #expect(h.clock.hasSleeper(until: .seconds(2)))
++        #expect(!h.clock.hasSleeper(until: .seconds(3)))
++
++        await h.finishEngine(with: .cancelled)
++        await waitUntil("the termination reply") { h.surface.replied }
++        await drainMainActor()
++        // The reply retired the grace, so the grace can never reply a second time.
++        #expect(!h.clock.hasSleeper(until: .seconds(2)))
++        h.clock.advance(by: .seconds(5))
++        await drainMainActor()
++        #expect(Array(h.surface.calls.dropFirst(callsAtQuit)) == [.replyToTermination])
++
++        // The one reply has been sent, so nothing is left to wait for.
+         #expect(h.controller.terminationRequested() == .now)
++        await drainMainActor()
+         #expect(h.engine.quitCount == 1)
++        #expect(h.surface.count(.replyToTermination) == 1)
++        #expect(!h.surface.terminated)
++    }
++
++    @Test("Quit again before the grace expires: the original 2 s deadline holds and one reply is sent")
++    func repeatedQuitBeforeGraceExpires() async {
++        let h = Harness()
++        await h.start()
++        #expect(h.controller.terminationRequested() == .later)
++        await h.waitForTimer(at: .seconds(2))
++        let callsAtQuit = h.surface.calls.count
++
++        h.clock.advance(by: .milliseconds(1_500))
++        await drainMainActor()
++        #expect(h.controller.terminationRequested() == .later)
++        await drainMainActor()
++        #expect(!h.clock.hasSleeper(until: .milliseconds(3_500)))
++
++        h.clock.advance(by: .milliseconds(499))
++        await drainMainActor()
++        #expect(!h.surface.replied)
++        #expect(h.controller.terminationRequested() == .later)
++        await drainMainActor()
++        #expect(!h.clock.hasSleeper(until: .milliseconds(3_999)))
++        #expect(h.surface.calls.count == callsAtQuit)
++
++        h.clock.advance(by: .milliseconds(1))
++        await waitUntil("the termination reply at the original 2 s") { h.surface.replied }
++        #expect(Array(h.surface.calls.dropFirst(callsAtQuit)) == [.replyToTermination])
++
++        // After the reply a repeated Quit has nothing to wait for, and a late engine return
++        // adds nothing.
++        #expect(h.controller.terminationRequested() == .now)
++        await h.finishEngine(with: .cancelled)
++        h.clock.advance(by: .seconds(5))
++        await drainMainActor()
++        #expect(h.controller.terminationRequested() == .now)
++        #expect(h.engine.quitCount == 1)
++        #expect(h.surface.count(.replyToTermination) == 1)
++        #expect(Array(h.surface.calls.dropFirst(callsAtQuit)) == [.replyToTermination])
++        #expect(!h.surface.terminated)
+     }
+ 
+     @Test("Quit waits at most 2 s for the engine to return")
+@@ -119,15 +189,18 @@
+         #expect(h.engine.quitCount == 1)
+     }
+ 
+-    @Test("Quit before the attempt starts means the engine never runs")
++    @Test("Quit before the attempt starts means the engine never runs, and Quit again is still now")
+     func quitBeforeStart() async {
+         let h = Harness()
+         #expect(h.controller.terminationRequested() == .now)
++        #expect(h.controller.terminationRequested() == .now)
+         #expect(h.engine.quitCount == 1)
+         h.controller.start()
+         await drainMainActor()
+         #expect(h.engine.runCount == 0)
+         #expect(h.controller.phase == .quitting)
++        #expect(!h.clock.hasSleeper(until: .seconds(2)))
++        #expect(!h.surface.replied)
+     }
+ 
+     @Test("Progress after Quit never reaches the screen")

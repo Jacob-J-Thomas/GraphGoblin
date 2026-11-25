@@ -1,0 +1,29 @@
+--- D242/run-static-gates.ps1
++++ Mac-post-564/run-local-checks.ps1
+@@ -2,8 +2,8 @@
+ param([Parameter(Mandatory=$true)][string]$BindingPath, [switch]$Execute)
+ $ErrorActionPreference = 'Stop'
+ if (-not $Execute) { throw 'UNARMED: root binding and explicit -Execute are required' }
+-$taskRoot = 'G:/ggq/gg-i5-offline-inspector/GraphGoblin'
+-$taskOutput = 'G:/ggq/delivery-evidence/2026-11-17-five-intents/i5-d242-local-static-execution-01'
++$taskRoot = 'G:/ggq/gg-macos-current-main/GraphGoblin'
++$taskOutput = 'G:/ggq/delivery-evidence/2026-11-17-five-intents/mac-post-564-local-checks-01'
+ $binding = Get-Content -Raw -LiteralPath $BindingPath | ConvertFrom-Json -AsHashtable
+ $template = Get-Content -Raw -LiteralPath (Join-Path $PSScriptRoot 'ROOT-BINDING.template.json') | ConvertFrom-Json -AsHashtable
+ function Sha([string]$Path) { (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant() }
+@@ -90,7 +90,7 @@
+   foreach ($key in @('head','tree','mainRef','indexSha256','stagedEntriesSha256','commonHeadSha256','commonIndexExists','status')) {
+     if (-not (Same $Actual[$key] $binding.source[$key])) { throw "Source/index/main drift: $key" }
+   }
+-  if (-not (Same $Actual.source18 $binding.source18)) { throw 'Source18 bytes/blob drift from the corrected documentation-qualified baseline' }
++  if (-not (Same $Actual.source18 $binding.source18)) { throw 'Source18 bytes/blob drift from the frozen post-564 Mac baseline' }
+   if ($Actual.commonIndexExists -or $Actual.status.Count -ne 0) { throw 'NEXT is not clean or common index appeared' }
+ }
+ function Runtime {
+@@ -149,5 +149,5 @@
+   Save 'PHASE-RECEIPT.json' ([ordered]@{stageReached=$stage; failure=$failure; closureFailure=$closureFailure; afterMatchesRootBinding=$afterMatches; rootBindingPath=$BindingPath; rootBindingSha256=(Sha $BindingPath); preparationManifestSha256=$binding.preparationManifestSha256; commands=@($commands); noRetry=$true; noCorrectiveWrites=$true})
+ }
+ if ($failure -or $closureFailure -or -not $afterMatches) { Write-Error "Static phase failed: $failure; closure: $closureFailure"; exit 1 }
+-Write-Output 'All12 static gates completed with exact before/after controls; hosted CI remains separate.'
++Write-Output 'Build and both bounded local test checks completed with exact before/after controls; hosted CI remains separate.'
+ exit 0
