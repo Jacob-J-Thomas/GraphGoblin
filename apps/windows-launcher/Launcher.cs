@@ -25,6 +25,230 @@ namespace GraphGoblin.Desktop
     }
 
     /// <summary>
+    /// The staged installer's versioned enrollment (#566): the gateway's launch digest and the
+    /// canonical store it resolved, bound to the exact gateway inputs it was observed with.
+    /// </summary>
+    public sealed class Enrollment
+    {
+        public const int CurrentVersion = 1;
+        public int Version { get; set; }
+        public string Launch { get; set; }
+        public string DataDir { get; set; }
+        public string Database { get; set; }
+        public string Lookup { get; set; }
+        public string Target { get; set; }
+        public string Inputs { get; set; }
+    }
+
+    public static class EnrollmentText
+    {
+        public static bool IsLaunchDigest(string value)
+        {
+            return value != null && System.Text.RegularExpressions.Regex.IsMatch(value, "\\Av1:[a-f0-9]{64}\\z");
+        }
+
+        public static bool IsInstanceDigest(string value)
+        {
+            return value != null && System.Text.RegularExpressions.Regex.IsMatch(value, "\\A[a-f0-9]{64}\\z");
+        }
+
+        /// <summary>A bounded rooted path without control characters; never displayed by itself.</summary>
+        public static bool IsRootedPath(string value)
+        {
+            if (string.IsNullOrEmpty(value) || value.Length > 32767 || value.Any(char.IsControl)) return false;
+            try { return Path.IsPathRooted(value); }
+            catch (ArgumentException) { return false; }
+        }
+    }
+
+    /// <summary>
+    /// The launcher configuration read through one handle: its bytes, their SHA-256 and the file's
+    /// volume and index. A click that waited reopens it and refuses any replacement or edit.
+    /// </summary>
+    public sealed class ConfigurationFile
+    {
+        public const int MaxBytes = 1048576;
+        public string Text { get; private set; }
+        public string Digest { get; private set; }
+        public uint Volume { get; private set; }
+        public ulong Index { get; private set; }
+
+        public static ConfigurationFile Read(string path)
+        {
+            using (var handle = NativeFiles.Open(path, NativeFiles.GenericRead, NativeFiles.ShareRead | NativeFiles.ShareDelete, NativeFiles.OpenExisting, 0))
+            {
+                if (handle.IsInvalid) throw new FileNotFoundException("launcher configuration unavailable");
+                var identity = NativeFiles.Describe(handle);
+                if ((identity.Attributes & 0x50) != 0 || identity.Size > MaxBytes)
+                    throw new ConfigurationRefusal("The launcher configuration is not an ordinary file of at most 1 MiB. Re-run install-windows-launcher.ps1.");
+                using (var stream = new FileStream(handle, FileAccess.Read, 4096))
+                using (var bytes = new MemoryStream())
+                {
+                    var chunk = new byte[4096];
+                    int count;
+                    while ((count = stream.Read(chunk, 0, chunk.Length)) > 0)
+                    {
+                        if (bytes.Length + count > MaxBytes)
+                            throw new ConfigurationRefusal("The launcher configuration is not an ordinary file of at most 1 MiB. Re-run install-windows-launcher.ps1.");
+                        bytes.Write(chunk, 0, count);
+                    }
+                    byte[] content = bytes.ToArray();
+                    using (var sha = SHA256.Create())
+                    using (var reader = new StreamReader(new MemoryStream(content), new UTF8Encoding(false), true))
+                        return new ConfigurationFile {
+                            Text = reader.ReadToEnd(), Digest = Program.Hex(sha.ComputeHash(content)),
+                            Volume = identity.Volume, Index = identity.Index
+                        };
+                }
+            }
+        }
+
+        public Configuration Parse()
+        {
+            var config = new JavaScriptSerializer().Deserialize<Configuration>(Text);
+            if (config == null) throw new ConfigurationRefusal("The launcher configuration is empty. Re-run install-windows-launcher.ps1.");
+            return config;
+        }
+
+        /// <summary>Refuse when the file disappeared, was replaced or its bytes changed.</summary>
+        public void Recheck(string path)
+        {
+            ConfigurationFile current = null;
+            try { current = Read(path); }
+            catch (Exception) { }
+            if (current == null || current.Volume != Volume || current.Index != Index || current.Digest != Digest)
+                throw new LauncherFailure("configuration-changed", "The launcher configuration was changed, replaced or removed while this click waited for another launch. Launch again to use the current configuration. No gateway was started.");
+        }
+    }
+
+    /// <summary>
+    /// One flat JSON object of string members, parsed exactly once from the raw decoded helper
+    /// output. Framework's JavaScriptSerializer also accepts JavaScript syntax and overwrites
+    /// duplicate names. Names are decoded before allowlist and uniqueness checks; the wire is
+    /// never normalized with Trim first. Returns null for anything else.
+    /// </summary>
+    public sealed class FlatStringObject
+    {
+        readonly string text; int position;
+        FlatStringObject(string source) { text = source; }
+
+        public static Dictionary<string, string> Read(string source, ICollection<string> allowed)
+        {
+            try { return new FlatStringObject(source).Members(allowed); }
+            catch (FormatException) { return null; }
+        }
+
+        void Whitespace()
+        {
+            while (position < text.Length && (text[position] == ' ' || text[position] == '\t' || text[position] == '\r' || text[position] == '\n')) position++;
+        }
+        bool Take(char value)
+        {
+            Whitespace();
+            if (position >= text.Length || text[position] != value) return false;
+            position++; return true;
+        }
+        static int Hex(char value)
+        {
+            if (value >= '0' && value <= '9') return value - '0';
+            if (value >= 'a' && value <= 'f') return value - 'a' + 10;
+            if (value >= 'A' && value <= 'F') return value - 'A' + 10;
+            throw new FormatException();
+        }
+        string ReadString()
+        {
+            if (!Take('"')) throw new FormatException();
+            var result = new StringBuilder();
+            while (position < text.Length) {
+                char value = text[position++];
+                if (value == '"') return result.ToString();
+                if (value < 0x20) throw new FormatException();
+                if (value != '\\') { result.Append(value); continue; }
+                if (position >= text.Length) throw new FormatException();
+                char escape = text[position++];
+                switch (escape) {
+                    case '"': case '\\': case '/': result.Append(escape); break;
+                    case 'b': result.Append('\b'); break;
+                    case 'f': result.Append('\f'); break;
+                    case 'n': result.Append('\n'); break;
+                    case 'r': result.Append('\r'); break;
+                    case 't': result.Append('\t'); break;
+                    case 'u':
+                        if (text.Length - position < 4) throw new FormatException();
+                        int unit = 0;
+                        for (int i = 0; i < 4; i++) unit = unit * 16 + Hex(text[position++]);
+                        // JSON escapes represent UTF-16 code units; do not canonicalize or
+                        // discard legal producer escapes, including escaped surrogate units.
+                        result.Append((char)unit); break;
+                    default: throw new FormatException();
+                }
+            }
+            throw new FormatException();
+        }
+        Dictionary<string, string> Members(ICollection<string> allowed)
+        {
+            if (text == null || !Take('{')) return null;
+            var members = new Dictionary<string, string>(StringComparer.Ordinal);
+            do {
+                string name = ReadString();
+                if (!allowed.Contains(name) || members.ContainsKey(name) || !Take(':')) return null;
+                members[name] = ReadString();
+                if (Take('}')) break;
+                if (!Take(',')) return null;
+            } while (true);
+            Whitespace();
+            return position == text.Length ? members : null;
+        }
+    }
+
+    /// <summary>A fresh contained enrollment observation from the built read-only helper.</summary>
+    public sealed class EnrollmentObservation
+    {
+        static readonly string[] Names = { "version", "launch", "instance", "dataDir", "database", "lookup", "target" };
+        public string Launch, Instance, DataDir, Database, Lookup, Target;
+
+        /// <summary>Strict: version 1, both digests, rooted store paths, file lookup/target or non-file only.</summary>
+        public static bool TryRead(string text, out EnrollmentObservation observed)
+        {
+            observed = null;
+            var members = FlatStringObject.Read(text, Names);
+            if (members == null) return false;
+            string version, launch, instance, dataDir, database, lookup = null, target = null;
+            if (!members.TryGetValue("version", out version) || version != "1" ||
+                !members.TryGetValue("launch", out launch) || !EnrollmentText.IsLaunchDigest(launch) ||
+                !members.TryGetValue("instance", out instance) || !EnrollmentText.IsInstanceDigest(instance) ||
+                !members.TryGetValue("dataDir", out dataDir) || !EnrollmentText.IsRootedPath(dataDir) ||
+                !members.TryGetValue("database", out database))
+                return false;
+            if (database == "file")
+            {
+                if (members.Count != 7 || !members.TryGetValue("lookup", out lookup) || !EnrollmentText.IsRootedPath(lookup) ||
+                    !members.TryGetValue("target", out target) || !EnrollmentText.IsRootedPath(target))
+                    return false;
+            }
+            else if (database != "non-file" || members.Count != 5) return false;
+            observed = new EnrollmentObservation { Launch = launch, Instance = instance, DataDir = dataDir, Database = database, Lookup = lookup, Target = target };
+            return true;
+        }
+
+        /// <summary>The installer's record of this observation, bound to the exact gateway inputs.</summary>
+        public Enrollment ToEnrollment(Configuration config)
+        {
+            return new Enrollment {
+                Version = Enrollment.CurrentVersion, Launch = Launch, DataDir = DataDir, Database = Database,
+                Lookup = Lookup, Target = Target, Inputs = config.GatewayInputsDigest()
+            };
+        }
+
+        /// <summary>Ordinal equality with the installed enrollment's digest and store metadata.</summary>
+        public bool Matches(Enrollment enrolled)
+        {
+            return enrolled != null && Launch == enrolled.Launch && DataDir == enrolled.DataDir &&
+                Database == enrolled.Database && (Lookup ?? "") == (enrolled.Lookup ?? "") && (Target ?? "") == (enrolled.Target ?? "");
+        }
+    }
+
+    /// <summary>
     /// A closed launcher outcome: fixed text, a closed cause code and only validated, bounded
     /// operator locations. Raw exceptions, helper output and configuration values never enter it.
     /// </summary>
@@ -65,21 +289,21 @@ namespace GraphGoblin.Desktop
         public Dictionary<string, string> Environment { get; set; }
         public int StartupTimeoutSeconds { get; set; }
         public int WindowTimeoutSeconds { get; set; }
+        /// <summary>Written only by the staged installer (#566); never refreshed at runtime.</summary>
+        public Enrollment Enrollment { get; set; }
 
+        /// <summary>
+        /// Configuration shape and PWA routing metadata only. The runtime, checkout, startup files
+        /// and Chrome proxy executable are not consulted: warm reuse needs none of them (#566).
+        /// Cold startup and the staged installer check them separately.
+        /// </summary>
         public void Validate(bool gatewayOnly)
         {
-            if (!Path.IsPathRooted(Repo ?? "") || !Directory.Exists(Repo) ||
-                !Path.IsPathRooted(Node ?? "") || !File.Exists(Node) ||
+            if (!Path.IsPathRooted(Repo ?? "") || !Path.IsPathRooted(Node ?? "") ||
                 !Path.IsPathRooted(DataDir ?? "") || Port < 1 || Port > 65535 ||
                 StartupTimeoutSeconds < 1 || StartupTimeoutSeconds > 300 ||
                 WindowTimeoutSeconds < 1 || WindowTimeoutSeconds > 120)
                 throw new ConfigurationRefusal("Invalid launcher paths, port or timeouts. Re-run install-windows-launcher.ps1.");
-            foreach (string file in BuiltFiles)
-                if (!File.Exists(Path.Combine(Repo, file)))
-                    throw new ConfigurationRefusal("The configured checkout is not built: " + file + ". Build it with Node 22 before launching.");
-            // A stale entry beside a current guard module still refuses before any spawn.
-            if (!HasLogProtocol(Path.Combine(Repo, "apps/api/dist/main.js")))
-                throw new ConfigurationRefusal("The configured checkout's built gateway does not match this launcher (apps/api/dist/main.js). Stop any running GraphGoblin gateway, rebuild the checkout with Node 22 and reinstall the launcher.");
             Environment = Environment ?? new Dictionary<string, string>();
             if (Environment.Keys.Any(key => string.Equals(key, "GG_MASTER_KEY", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(key, "GG_JEV_API_KEY", StringComparison.OrdinalIgnoreCase)))
@@ -87,16 +311,90 @@ namespace GraphGoblin.Desktop
             foreach (var item in Environment)
                 if (!item.Key.StartsWith("GG_", StringComparison.Ordinal) || item.Value == null || item.Key.IndexOfAny(new[] { '=', '\0' }) >= 0 || item.Value.Contains("\0"))
                     throw new ConfigurationRefusal("Launcher Environment must contain GG_* string overrides only.");
+            // Windows environment names are case-insensitive: one spelling per name, so the child's
+            // value and the enrollment's input digest can never disagree about the winner.
+            if (Environment.Keys.GroupBy(key => key, StringComparer.OrdinalIgnoreCase).Any(group => group.Count() > 1))
+                throw new ConfigurationRefusal("Launcher Environment repeats a GG_* override with different letter case. Keep one spelling and re-run install-windows-launcher.ps1.");
             foreach (string key in new[] { "GG_HOST", "GG_PORT", "GG_DATA_DIR", "GG_WEB_DIST" })
                 if (Environment.ContainsKey(key)) throw new ConfigurationRefusal(key + " is owned by the launcher's explicit configuration fields.");
             if (Environment.Keys.Any(key => string.Equals(key, LogDirectoryVariable, StringComparison.OrdinalIgnoreCase)))
                 throw new ConfigurationRefusal(LogDirectoryVariable + " is reserved for the launcher.");
-            if (!gatewayOnly && (!File.Exists(ChromeProxy ?? "") || string.IsNullOrWhiteSpace(ChromeProfile) ||
+            if (!gatewayOnly && (!Path.IsPathRooted(ChromeProxy ?? "") || string.IsNullOrWhiteSpace(ChromeProfile) ||
                 !System.Text.RegularExpressions.Regex.IsMatch(ChromeAppId ?? "", "^[a-p]{32}$") ||
                 string.IsNullOrWhiteSpace(PwaAppUserModelId) || string.IsNullOrWhiteSpace(LauncherAppUserModelId)))
                 throw new ConfigurationRefusal("The installed Chrome PWA is not configured. Re-run install-windows-launcher.ps1 with its shortcut.");
             if (!gatewayOnly && ChromeAppId != Program.ChromeAppId(Port))
                 throw new ConfigurationRefusal("The installed Chrome PWA belongs to another origin. Install GraphGoblin from http://127.0.0.1:" + Port + "/app/ and configure its shortcut.");
+        }
+
+        /// <summary>The runtime and built read-only helper that enrollment executes.</summary>
+        public void ValidateRuntime()
+        {
+            if (!Directory.Exists(Repo) || !File.Exists(Node))
+                throw new ConfigurationRefusal("The configured checkout or Node runtime is unavailable. Check the Repo and Node paths or re-run install-windows-launcher.ps1. No gateway was started.");
+            if (!File.Exists(Path.Combine(Repo, "apps/api/dist/instance-identity.js")))
+                throw new ConfigurationRefusal("The configured checkout is not built: apps/api/dist/instance-identity.js. Build it with Node 22 before launching.");
+        }
+
+        /// <summary>Cold startup prerequisites: runtime, built checkout and the log protocol.</summary>
+        public void ValidateStartup()
+        {
+            ValidateRuntime();
+            foreach (string file in BuiltFiles)
+                if (!File.Exists(Path.Combine(Repo, file)))
+                    throw new ConfigurationRefusal("The configured checkout is not built: " + file + ". Build it with Node 22 before launching.");
+            // A stale entry beside a current guard module still refuses before any spawn.
+            if (!HasLogProtocol(Path.Combine(Repo, "apps/api/dist/main.js")))
+                throw new ConfigurationRefusal("The configured checkout's built gateway does not match this launcher (apps/api/dist/main.js). Stop any running GraphGoblin gateway, rebuild the checkout with Node 22 and reinstall the launcher.");
+        }
+
+        /// <summary>The installer's selected PWA source; the click itself classifies it at handoff.</summary>
+        public void ValidatePwaSource()
+        {
+            if (!File.Exists(ChromeProxy ?? ""))
+                throw new ConfigurationRefusal("The installed Chrome PWA is not configured. Re-run install-windows-launcher.ps1 with its shortcut.");
+        }
+
+        /// <summary>
+        /// The enrollment must be complete, current in format and bound to these exact gateway
+        /// inputs. An edited Repo, Node, DataDir, Port or GG_* override needs re-enrollment.
+        /// </summary>
+        public void ValidateEnrollment()
+        {
+            var enrolled = Enrollment;
+            bool file = enrolled != null && enrolled.Database == "file";
+            if (enrolled == null || enrolled.Version != Enrollment.CurrentVersion ||
+                !EnrollmentText.IsLaunchDigest(enrolled.Launch) || !EnrollmentText.IsRootedPath(enrolled.DataDir) ||
+                !(file ? EnrollmentText.IsRootedPath(enrolled.Lookup) && EnrollmentText.IsRootedPath(enrolled.Target)
+                    : enrolled.Database == "non-file" && string.IsNullOrEmpty(enrolled.Lookup) && string.IsNullOrEmpty(enrolled.Target)) ||
+                !string.Equals(enrolled.Inputs, GatewayInputsDigest(), StringComparison.Ordinal))
+                throw new ConfigurationRefusal("This launcher configuration is not enrolled for its current Repo, Node, DataDir, Port and GG_* overrides. Re-run install-windows-launcher.ps1 to enroll them. No gateway was started.");
+        }
+
+        /// <summary>
+        /// SHA-256 of the exact gateway inputs: a fixed tag, Repo, Node, DataDir, Port, the override
+        /// count and each ordinally sorted name and value, every field length-prefixed (32-bit
+        /// big-endian byte count of strict UTF-8). PWA-only fields and startup bytes are excluded.
+        /// </summary>
+        public string GatewayInputsDigest()
+        {
+            var encoding = new UTF8Encoding(false, true);
+            using (var buffer = new MemoryStream())
+            {
+                Action<string> field = value =>
+                {
+                    byte[] bytes = encoding.GetBytes(value ?? "");
+                    buffer.Write(new[] { (byte)(bytes.Length >> 24), (byte)(bytes.Length >> 16), (byte)(bytes.Length >> 8), (byte)bytes.Length }, 0, 4);
+                    buffer.Write(bytes, 0, bytes.Length);
+                };
+                var overrides = (Environment ?? new Dictionary<string, string>()).OrderBy(item => item.Key, StringComparer.Ordinal).ToList();
+                field("graphgoblin-launcher-gateway-inputs/v1");
+                field(Repo); field(Node); field(DataDir);
+                field(Port.ToString(CultureInfo.InvariantCulture));
+                field(overrides.Count.ToString(CultureInfo.InvariantCulture));
+                foreach (var item in overrides) { field(item.Key); field(item.Value); }
+                using (var sha = SHA256.Create()) return Program.Hex(sha.ComputeHash(buffer.ToArray()));
+            }
         }
 
         /// <summary>The exact marker bytes must lie within the first 4 KiB of the built entry.</summary>
@@ -155,7 +453,7 @@ namespace GraphGoblin.Desktop
             // change a nonexistent console code page; explicitly encode only our pipe writers.
             Console.SetOut(new StreamWriter(Console.OpenStandardOutput(), new UTF8Encoding(false)) { AutoFlush = true });
             Console.SetError(new StreamWriter(Console.OpenStandardError(), new UTF8Encoding(false)) { AutoFlush = true });
-            if (args.Contains("--validate-install") || args.Contains("--stage-shortcut"))
+            if (args.Contains("--validate-install") || args.Contains("--stage-shortcut") || args.Contains("--enroll-install"))
                 return PrepareInstallation(args);
             string configFile = Application.ExecutablePath + ".json";
             bool gatewayOnly = args.Contains("--ensure-gateway");
@@ -174,8 +472,9 @@ namespace GraphGoblin.Desktop
                     else if (args[i] == "--create-shortcut" && i + 1 < args.Length) createShortcut = args[++i];
                     else if (args[i] != "--ensure-gateway") throw new LauncherFailure("invalid-argument", "Unknown launcher argument. Use --config <file>, optionally with --ensure-gateway.");
                 stage = "configuration";
-                var config = new JavaScriptSerializer().Deserialize<Configuration>(File.ReadAllText(configFile));
-                if (config == null) throw new ConfigurationRefusal("The launcher configuration is empty. Re-run install-windows-launcher.ps1.");
+                // One handle supplies the bytes, their digest and the file identity (#566).
+                var file = ConfigurationFile.Read(configFile);
+                var config = file.Parse();
                 config.Validate(gatewayOnly);
                 if (shortcut != null) { stage = "shortcut"; ShellIdentity.StampShortcut(shortcut, config.LauncherAppUserModelId); return 0; }
                 if (createShortcut != null) {
@@ -183,30 +482,39 @@ namespace GraphGoblin.Desktop
                     ShellIdentity.CreateShortcut(createShortcut, Application.ExecutablePath, "--config " + Program.Quote(Path.GetFullPath(configFile)) + (gatewayOnly ? " --ensure-gateway" : ""), config.IconLocation, config.LauncherAppUserModelId);
                     return 0;
                 }
-                stage = "launch-lock";
-                string mutexName = "Local\\GraphGoblin.Launch." + Hash(config.DataDir.ToUpperInvariant());
-                using (var mutex = new Mutex(false, mutexName))
-                using (var portMutex = new Mutex(false, "Local\\GraphGoblin.Port." + config.Port))
+                config.ValidateEnrollment();
+                stage = "gateway";
+                var gateway = new Gateway(config, Path.GetDirectoryName(Path.GetFullPath(configFile)), configFile, file, next => stage = next);
+                // Lock-free warm probe: before startup files, logs, jobs or either startup mutex.
+                if (!gateway.Warm())
                 {
-                    bool owned = false, portOwned = false;
-                    try
+                    stage = "launch-lock";
+                    using (var mutex = new Mutex(false, StoreMutexName(config.DataDir)))
+                    using (var portMutex = new Mutex(false, PortMutexName(config.Port)))
                     {
-                        try { owned = mutex.WaitOne(TimeSpan.FromSeconds(360)); } catch (AbandonedMutexException) { owned = true; }
-                        if (!owned) throw new LauncherFailure("launch-busy", "Another GraphGoblin launch is still waiting. Inspect launcher.log before trying again.");
-                        try { portOwned = portMutex.WaitOne(TimeSpan.FromSeconds(360)); } catch (AbandonedMutexException) { portOwned = true; }
-                        if (!portOwned) throw new LauncherFailure("port-busy", "Another GraphGoblin launcher is still checking port " + config.Port + ".");
-                        stage = "gateway";
-                        new Gateway(config, Path.GetDirectoryName(Path.GetFullPath(configFile))).Ensure();
-                        stage = "window";
-                        if (!gatewayOnly) ShellIdentity.OpenPwa(config, configFile);
+                        bool owned = false, portOwned = false;
+                        try
+                        {
+                            try { owned = mutex.WaitOne(TimeSpan.FromSeconds(360)); } catch (AbandonedMutexException) { owned = true; }
+                            if (!owned) throw new LauncherFailure("launch-busy", "Another GraphGoblin launch is still waiting. Inspect launcher.log before trying again.");
+                            try { portOwned = portMutex.WaitOne(TimeSpan.FromSeconds(360)); } catch (AbandonedMutexException) { portOwned = true; }
+                            if (!portOwned) throw new LauncherFailure("port-busy", "Another GraphGoblin launcher is still checking port " + config.Port + ".");
+                            stage = "configuration";
+                            file.Recheck(configFile);
+                            stage = "gateway";
+                            gateway.EnsureLocked();
+                        }
+                        finally { if (portOwned) portMutex.ReleaseMutex(); if (owned) mutex.ReleaseMutex(); }
                     }
-                    finally { if (portOwned) portMutex.ReleaseMutex(); if (owned) mutex.ReleaseMutex(); }
                 }
+                // Store and port mutexes are released before Chrome opens; the window has its own.
+                stage = "window";
+                if (!gatewayOnly) ShellIdentity.OpenPwa(config, configFile);
                 return 0;
             }
             catch (Exception error)
             {
-                // Store and port mutexes are already released; the log pair has its own mutex.
+                // Store, port and window mutexes are already released; the log pair has its own mutex.
                 string message = Present(error, stage, configFile);
                 LauncherLog.Record(configFile, error, stage);
                 Console.Error.WriteLine(message);
@@ -255,16 +563,34 @@ namespace GraphGoblin.Desktop
             return "\u2026" + path.Substring(path.Length - keep);
         }
 
+        public static string StoreMutexName(string dataDir) { return "Local\\GraphGoblin.Launch." + Hash(dataDir.ToUpperInvariant()); }
+        public static string PortMutexName(int port) { return "Local\\GraphGoblin.Port." + port.ToString(CultureInfo.InvariantCulture); }
+
         static int PrepareInstallation(string[] args)
         {
             try
             {
                 bool validate = args.Length == 3 && args[0] == "--validate-install" && args[1] == "--config";
+                bool enroll = args.Length == 3 && args[0] == "--enroll-install" && args[1] == "--config";
                 bool stage = args.Length == 4 && args[0] == "--stage-shortcut";
-                if (!validate && !stage) throw new ConfigurationRefusal("Invalid staged launcher arguments.");
+                if (!validate && !enroll && !stage) throw new ConfigurationRefusal("Invalid staged launcher arguments.");
                 if (!IsFullyQualifiedWindowsPath(args[2])) throw new ConfigurationRefusal("Invalid staged launcher configuration path.");
                 var config = new JavaScriptSerializer().Deserialize<Configuration>(File.ReadAllText(args[2]));
+                if (enroll)
+                {
+                    // Gateway inputs only: the contained configured runtime observes the cold
+                    // launch environment once. The installer embeds this one versioned record.
+                    config.Validate(true);
+                    config.ValidateRuntime();
+                    HelperProcess.CheckCapability();
+                    var observed = Gateway.ReadEnrollment(config, HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds));
+                    Console.WriteLine(new JavaScriptSerializer().Serialize(observed.ToEnrollment(config)));
+                    return 0;
+                }
                 config.Validate(false);
+                config.ValidateStartup();
+                config.ValidatePwaSource();
+                config.ValidateEnrollment();
                 HelperProcess.CheckCapability();
                 if (stage)
                 {
@@ -306,7 +632,12 @@ namespace GraphGoblin.Desktop
 
         public static string Hash(string value)
         {
-            using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(value))).Replace("-", "").ToLowerInvariant();
+            using (var sha = SHA256.Create()) return Hex(sha.ComputeHash(Encoding.UTF8.GetBytes(value)));
+        }
+
+        public static string Hex(byte[] bytes)
+        {
+            return BitConverter.ToString(bytes).Replace("-", "").ToLowerInvariant();
         }
 
         public static string ChromeAppId(int port)
@@ -407,6 +738,12 @@ namespace GraphGoblin.Desktop
         static extern SafeFileHandle CreateFile(string path, uint access, uint share, IntPtr security, uint disposition, uint flags, IntPtr template);
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern bool GetFileInformationByHandle(SafeFileHandle handle, out FileInformation information);
+        /// <summary>FILE_ID_INFO: the 64-bit volume serial, then the 128-bit FILE_ID_128 as two halves.</summary>
+        [StructLayout(LayoutKind.Sequential)]
+        struct FileIdInformation { public ulong Volume, Low, High; }
+        const int FileIdInfo = 18; // FILE_INFO_BY_HANDLE_CLASS
+        [DllImport("kernel32.dll", SetLastError = true)]
+        static extern bool GetFileInformationByHandleEx(SafeFileHandle handle, int type, out FileIdInformation information, uint size);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         static extern uint GetFinalPathNameByHandle(SafeFileHandle handle, StringBuilder path, uint size, uint flags);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
@@ -438,6 +775,29 @@ namespace GraphGoblin.Desktop
                 Index = ((ulong)information.IndexHigh << 32) | information.IndexLow,
                 Size = ((long)information.SizeHigh << 32) | information.SizeLow
             };
+        }
+
+        /// <summary>
+        /// A full FILE_ID_INFO identity: the 64-bit volume serial and all 128 file ID bits, kept as
+        /// the ID's first and last eight bytes. The legacy 64-bit index can collide on ReFS.
+        /// </summary>
+        public sealed class FileId
+        {
+            public ulong Volume, Low, High;
+            /// <summary>An all-zero or all-one ID identifies nothing.</summary>
+            public bool Usable { get { return (Low | High) != 0 && (Low & High) != ulong.MaxValue; } }
+            public bool Same(FileId other)
+            {
+                return other != null && Usable && other.Usable && Volume == other.Volume && Low == other.Low && High == other.High;
+            }
+        }
+
+        /// <summary>The opened object's full file ID, or null when Windows cannot supply it.</summary>
+        public static FileId DescribeId(SafeFileHandle handle)
+        {
+            FileIdInformation information;
+            if (!GetFileInformationByHandleEx(handle, FileIdInfo, out information, (uint)Marshal.SizeOf(typeof(FileIdInformation)))) return null;
+            return new FileId { Volume = information.Volume, Low = information.Low, High = information.High };
         }
 
         public static string FinalPath(SafeFileHandle handle)
@@ -1067,26 +1427,60 @@ namespace GraphGoblin.Desktop
 
     public sealed class Gateway
     {
+        public const string LaunchHeader = "X-GraphGoblin-Launch-Identity";
+        static readonly string[] ObservablePhases = { "running", "draining", "awaiting-choice", "forcing", "force-failed", "drain-failed" };
+        static readonly string[] ClosingPhases = { "ready", "exiting", "stopped" };
+
+        /// <summary>One loopback observation. Definitive mismatches throw instead.</summary>
+        public enum Seen { Free, Unknown, Closing, Ready }
+
         readonly Configuration config;
+        readonly Enrollment enrollment;
         readonly string logDirectory;
         readonly string log;
         readonly string origin;
-        string expected;
+        readonly string configFile;
+        readonly ConfigurationFile file;
+        readonly Action<string> enter;
+        // Set only after a fresh contained observation and this click's own spawn.
+        string freshInstance;
         int? spawnedPid;
-        bool closing;
-        public Gateway(Configuration configuration, string directory)
+        LauncherFailure unknown;
+
+        public Gateway(Configuration configuration, string directory, string configPath, ConfigurationFile snapshot, Action<string> stage)
         {
             config = configuration;
+            enrollment = configuration.Enrollment;
             logDirectory = directory;
             log = Path.Combine(directory, "gateway.log");
             origin = "http://127.0.0.1:" + config.Port;
+            configFile = configPath;
+            file = snapshot;
+            enter = stage ?? new Action<string>(ignored => { });
         }
 
-        string ReadHelper(string argument, string stage, HelperProcess.WorkDeadline work, Func<string, bool> validate)
+        static string ReadHelper(Configuration config, string argument, string stage, HelperProcess.WorkDeadline work, Func<string, bool> validate)
         {
             return work.Within(stage, () => HelperProcess.Read(config.Node,
                 Program.Quote(Path.Combine(config.Repo, "apps/api/dist/instance-identity.js")) + argument,
                 config.Repo, config.ChildEnvironment(), stage, work, validate));
+        }
+
+        string ReadHelper(string argument, string stage, HelperProcess.WorkDeadline work, Func<string, bool> validate)
+        {
+            return ReadHelper(config, argument, stage, work, validate);
+        }
+
+        /// <summary>
+        /// The contained configured runtime's enrollment with the cold launch environment. The
+        /// installer and every cold start use this one strict, bounded helper operation.
+        /// </summary>
+        public static EnrollmentObservation ReadEnrollment(Configuration config, HelperProcess.WorkDeadline work)
+        {
+            EnrollmentObservation observed = null;
+            ReadHelper(config, " --launch-enrollment", "enrollment", work, value => EnrollmentObservation.TryRead(value, out observed));
+            work.Check("enrollment");
+            return observed;
         }
 
         bool Listening()
@@ -1119,6 +1513,10 @@ namespace GraphGoblin.Desktop
             }
         }
 
+        /// <summary>
+        /// One GET without proxy, redirect or cache. A completed HTTP error status is a response,
+        /// returned for the caller to classify and dispose; only transport outcomes throw.
+        /// </summary>
         HttpWebResponse Get(string path)
         {
             var request = (HttpWebRequest)WebRequest.Create(origin + path);
@@ -1126,38 +1524,166 @@ namespace GraphGoblin.Desktop
             request.KeepAlive = false;
             request.CachePolicy = new System.Net.Cache.RequestCachePolicy(System.Net.Cache.RequestCacheLevel.NoCacheNoStore);
             request.Timeout = 1500; request.ReadWriteTimeout = 1500;
-            return (HttpWebResponse)request.GetResponse();
+            try { return (HttpWebResponse)request.GetResponse(); }
+            catch (WebException error)
+            {
+                var completed = error.Status == WebExceptionStatus.ProtocolError ? error.Response as HttpWebResponse : null;
+                if (completed != null) return completed;
+                if (error.Response != null) error.Response.Close();
+                throw;
+            }
         }
 
-        bool Probe()
+        LauncherFailure NotReady(WebExceptionStatus status)
         {
-            closing = false;
-            if (!Listening()) return false;
+            return new LauncherFailure("listener-not-ready", "Port " + config.Port + " is occupied but the configured GraphGoblin gateway is not ready: " + status + ". Inspect " + Program.RenderPath(log) + ". No process was stopped.");
+        }
+
+        /// <summary>
+        /// One IPv4 loopback observation without proxy, redirect, cache or shutdown action.
+        /// A match needs the enrolled launch digest, a positive PID and a known phase; after this
+        /// click's spawn also the fresh full fingerprint and the child's PID. A matching
+        /// gateway must still resolve the enrolled store, then serve `/app/`. Identity, store,
+        /// phase and web mismatches, including a definite `/app/` 404 or 410, are definitive and
+        /// throw before any startup mutex; transport outcomes and other HTTP errors are Unknown.
+        /// Every completed response is disposed here.
+        /// </summary>
+        Seen Observe()
+        {
+            unknown = null;
+            bool listening;
+            try { listening = Listening(); }
+            catch (LauncherFailure inconclusive) { unknown = inconclusive; return Seen.Unknown; }
+            if (!listening) return Seen.Free;
             try
             {
+                string phase;
                 using (var response = Get("/healthz"))
                 {
-                    if (response.StatusCode != HttpStatusCode.OK || response.Headers["X-GraphGoblin-Instance"] != expected)
+                    // An HTTP error from the health route keeps its earlier, ambiguous meaning.
+                    if ((int)response.StatusCode >= 400) { unknown = NotReady(WebExceptionStatus.ProtocolError); return Seen.Unknown; }
+                    if (response.StatusCode != HttpStatusCode.OK || response.Headers[LaunchHeader] != enrollment.Launch ||
+                        (freshInstance != null && response.Headers["X-GraphGoblin-Instance"] != freshInstance))
                         throw new LauncherFailure("foreign-listener", "Port " + config.Port + " belongs to an unrelated or differently configured service (or an older GraphGoblin build). Stop the intended gateway deliberately or correct the launcher configuration. No process was stopped.");
                     int pid;
                     if (!int.TryParse(response.Headers["X-GraphGoblin-Pid"], out pid) || pid < 1 || (spawnedPid.HasValue && spawnedPid.Value != pid))
                         throw new LauncherFailure("foreign-gateway", "The listening gateway does not belong to this startup attempt. No process was stopped.");
-                    string phase = response.Headers["X-GraphGoblin-Phase"];
-                    if (phase == "ready" || phase == "exiting" || phase == "stopped") { closing = true; return false; }
-                    if (!new[] { "running", "draining", "awaiting-choice", "forcing", "force-failed", "drain-failed" }.Contains(phase))
-                        throw new LauncherFailure("unknown-phase", "The gateway returned an unrecognized shutdown phase. Inspect it before starting another gateway.");
+                    phase = response.Headers["X-GraphGoblin-Phase"];
                 }
+                bool closing = ClosingPhases.Contains(phase);
+                if (!closing && !ObservablePhases.Contains(phase))
+                    throw new LauncherFailure("unknown-phase", "The gateway returned an unrecognized shutdown phase. Inspect it before starting another gateway.");
+                VerifyStore();
+                if (closing) return Seen.Closing;
                 using (var response = Get("/app/"))
+                {
+                    int status = (int)response.StatusCode;
+                    // A matching gateway that definitely lacks its shell is refused at once (#566).
+                    if (status != 404 && status != 410 && status >= 400) { unknown = NotReady(WebExceptionStatus.ProtocolError); return Seen.Unknown; }
                     if (response.StatusCode != HttpStatusCode.OK) throw new LauncherFailure("web-unavailable", "The gateway answers but its built web app is unavailable.");
-                return true;
+                }
+                return Seen.Ready;
             }
             catch (WebException error)
             {
-                // Our child may finish binding while an earlier connection attempt is failing.
-                // Keep polling its known PID; a transport failure is not a foreign identity.
-                if (spawnedPid.HasValue) return false;
-                throw new LauncherFailure("listener-not-ready", "Port " + config.Port + " is occupied but the configured GraphGoblin gateway is not ready: " + error.Status + ". Inspect " + Program.RenderPath(log) + ". No process was stopped.");
+                // A transport failure is not a foreign identity. Our child may still be binding;
+                // elsewhere the locked re-probe decides, and a persisting one is refused.
+                unknown = NotReady(error.Status);
+                return Seen.Unknown;
             }
+        }
+
+        /// <summary>
+        /// The configured data directory and any enrolled database lookup must currently resolve,
+        /// through read-attributes handles with full sharing, to the enrolled canonical targets.
+        /// </summary>
+        void VerifyStore()
+        {
+            if (!ResolvesTo(config.DataDir, enrollment.DataDir) ||
+                (enrollment.Database == "file" && !ResolvesTo(enrollment.Lookup, enrollment.Target)))
+                throw new LauncherFailure("store-mismatch", "Port " + config.Port + " has a gateway with this launcher's enrolled settings, but the configured data directory or database no longer resolves to the enrolled store (for example a moved store, a retargeted link or an edited path). Stop that gateway deliberately and re-run install-windows-launcher.ps1 for the intended store. No process was stopped.");
+        }
+
+        /// <summary>
+        /// One held path: its final name read from the open handle, and a reader of that same
+        /// handle's full file ID. Disposing it closes the handle.
+        /// </summary>
+        public sealed class ResolvedPath : IDisposable
+        {
+            public string FinalPath;
+            /// <summary>Reads the held object's full file ID; null when that proof is unavailable.</summary>
+            public Func<NativeFiles.FileId> ReadId;
+            /// <summary>The held handle; compiled checks substitute their own scope.</summary>
+            public IDisposable Scope;
+            public void Dispose() { var scope = Scope; Scope = null; if (scope != null) scope.Dispose(); }
+        }
+
+        /// <summary>
+        /// Open a path once with read attributes, full sharing and backup semantics and read its final
+        /// name from that handle, which stays open until the result is disposed. Null when the path
+        /// cannot be opened or named.
+        /// </summary>
+        public static ResolvedPath Resolve(string path)
+        {
+            SafeFileHandle handle = null;
+            try
+            {
+                handle = NativeFiles.Open(path, NativeFiles.ReadAttributes, NativeFiles.ShareRead | NativeFiles.ShareWrite | NativeFiles.ShareDelete, NativeFiles.OpenExisting, NativeFiles.BackupSemantics);
+                if (handle.IsInvalid) return null;
+                var held = handle;
+                var opened = new ResolvedPath { FinalPath = NativeFiles.FinalPath(held), ReadId = () => NativeFiles.DescribeId(held), Scope = held };
+                handle = null;
+                return opened;
+            }
+            catch (System.ComponentModel.Win32Exception) { return null; }
+            catch (ArgumentException) { return null; }
+            finally { if (handle != null) handle.Dispose(); }
+        }
+
+        public static bool ResolvesTo(string lookup, string target)
+        {
+            return ResolvesTo(lookup, target, Resolve);
+        }
+
+        /// <summary>
+        /// The lookup's current final path must be the enrolled canonical target. A case-sensitive
+        /// directory can hold distinct objects whose names differ only in case, so a case-only
+        /// difference is accepted only when the enrolled target, opened while the lookup's handle is
+        /// still held, reports the same full file ID as that handle: the 64-bit volume serial and all
+        /// 128 ID bits. An unavailable or unusable ID refuses, and the legacy index is never consulted.
+        /// The proof covers this one comparison of two held handles, not a lasting pin of either path.
+        /// The resolver is injected only by checks.
+        /// </summary>
+        internal static bool ResolvesTo(string lookup, string target, Func<string, ResolvedPath> resolve)
+        {
+            using (var current = resolve(lookup))
+            {
+                if (current == null || current.FinalPath == null) return false;
+                if (string.Equals(current.FinalPath, target, StringComparison.Ordinal)) return true;
+                if (!string.Equals(current.FinalPath, target, StringComparison.OrdinalIgnoreCase)) return false;
+                using (var enrolled = resolve(target))
+                {
+                    if (enrolled == null) return false;
+                    var held = HeldId(current);
+                    return held != null && held.Same(HeldId(enrolled));
+                }
+            }
+        }
+
+        static NativeFiles.FileId HeldId(ResolvedPath opened) { return opened.ReadId == null ? null : opened.ReadId(); }
+
+        /// <summary>Lock-free warm reuse. Only a ready match succeeds; anything else takes the locks.</summary>
+        public bool Warm()
+        {
+            return Observe() == Seen.Ready;
+        }
+
+        /// <summary>Under both startup mutexes, a still ambiguous endpoint is refused, never free.</summary>
+        Seen ObserveLocked()
+        {
+            var seen = Observe();
+            if (seen == Seen.Unknown) throw unknown;
+            return seen;
         }
 
         /// <summary>
@@ -1200,18 +1726,30 @@ namespace GraphGoblin.Desktop
             return root;
         }
 
-        public void Ensure()
+        /// <summary>
+        /// Cold or release progression under the store and port mutexes, after the caller
+        /// rechecked the configuration file. A matching ready gateway still succeeds with no
+        /// helper; closing gateways get the existing release bounds; only a confirmed free port
+        /// reaches cold prerequisites, the fresh contained enrollment and ownership checks.
+        /// </summary>
+        public void EnsureLocked()
         {
-            var identityWork = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
-            expected = ReadHelper("", "identity", identityWork,
-                value => System.Text.RegularExpressions.Regex.IsMatch(value.Trim(), "\\A[a-f0-9]{64}\\z"));
-            if (Probe()) return;
+            var seen = ObserveLocked();
+            if (seen == Seen.Ready) return;
             var releaseClock = Stopwatch.StartNew();
-            while (closing)
+            while (seen == Seen.Closing)
             {
                 if (ReleaseRemaining(releaseClock) <= 0) throw new LauncherFailure("still-releasing", "The existing gateway is still releasing its store. Let deliberate shutdown finish and launch again. No process was stopped.");
-                Thread.Sleep((int)Math.Min(200, ReleaseRemaining(releaseClock))); if (Probe()) return;
+                Thread.Sleep((int)Math.Min(200, ReleaseRemaining(releaseClock)));
+                seen = ObserveLocked();
+                if (seen == Seen.Ready) return;
             }
+            enter("configuration");
+            config.ValidateStartup();
+            enter("gateway");
+            var fresh = ReadEnrollment(config, HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds));
+            if (!fresh.Matches(enrollment))
+                throw new LauncherFailure("settings-drift", "GraphGoblin's current effective gateway settings differ from this launcher's enrollment (for example a changed default, serving root, store target or protocol). Re-run install-windows-launcher.ps1 to enroll the current settings deliberately. No gateway was started.");
             var sampleClock = Stopwatch.StartNew();
             var ownershipWork = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
             bool held = StoreHasLiveOwner(ownershipWork);
@@ -1221,7 +1759,7 @@ namespace GraphGoblin.Desktop
                 long work = RecheckWork(releaseClock);
                 if (work < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
                 Thread.Sleep((int)Math.Min(200, Math.Max(0, work)));
-                if (Probe()) return;
+                if (ObserveLocked() == Seen.Ready) return;
                 var retryWork = HelperProcess.WorkDeadline.Recheck(() => releaseClock.ElapsedMilliseconds,
                     (long)config.StartupTimeoutSeconds * 1000);
                 if (retryWork.Remaining < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
@@ -1231,16 +1769,22 @@ namespace GraphGoblin.Desktop
                 sampleMilliseconds = sampleClock.ElapsedMilliseconds;
             }
             LogRoot root = AdmitLogRoot(releaseClock);
+            enter("configuration");
+            file.Recheck(configFile);
+            enter("gateway");
             ChildProcess child;
             try { child = NativeProcess.Start(config.Node, Program.Quote(Path.Combine(config.Repo, "apps/api/dist/main.js")), config.Repo, config.GatewayEnvironment(root.Path)); }
             catch (System.ComponentModel.Win32Exception) { throw new LauncherFailure("spawn-failed", "Windows could not start the configured Node runtime for the gateway. Check the Node path and the built checkout. No gateway was started."); }
             using (child)
             {
+                // Readiness needs the fresh full fingerprint, the enrolled launch digest and this
+                // exact child PID. A mismatch is refused; no process is ever stopped.
+                freshInstance = fresh.Instance;
                 spawnedPid = child.Pid;
                 var deadline = DateTime.UtcNow.AddSeconds(config.StartupTimeoutSeconds);
                 while (DateTime.UtcNow < deadline)
                 {
-                    if (Probe()) return;
+                    if (Observe() == Seen.Ready) return;
                     int code;
                     if (child.TryGetExit(out code)) throw StartupOutcome.ForChildExit(code, root.Path);
                     Thread.Sleep(200);
@@ -1293,88 +1837,32 @@ namespace GraphGoblin.Desktop
             return new LauncherFailure(ownership.Code, guidance, null, ownership.Lock, 0);
         }
 
+        static readonly string[] OwnershipNames = { "state", "path", "detail" };
+
         /// <summary>
-        /// Only the ownership wire shape: one flat object of JSON strings. Framework's
-        /// JavaScriptSerializer also accepts JavaScript syntax and overwrites duplicate names.
-        /// Decode names before checking uniqueness; never normalize the wire with Trim first.
+        /// Only the ownership wire shape, through the shared strict flat-object reader: exactly
+        /// free, or held with a nonblank path and detail. The protocol itself is unchanged.
         /// </summary>
-        sealed class OwnershipReader
+        public static bool TryReadOwnership(string text, out string state)
         {
-            readonly string text; int position;
-            public OwnershipReader(string source) { text = source; }
-            void Whitespace()
-            {
-                while (position < text.Length && (text[position] == ' ' || text[position] == '\t' || text[position] == '\r' || text[position] == '\n')) position++;
-            }
-            bool Take(char value)
-            {
-                Whitespace();
-                if (position >= text.Length || text[position] != value) return false;
-                position++; return true;
-            }
-            static int Hex(char value)
-            {
-                if (value >= '0' && value <= '9') return value - '0';
-                if (value >= 'a' && value <= 'f') return value - 'a' + 10;
-                if (value >= 'A' && value <= 'F') return value - 'A' + 10;
-                throw new FormatException();
-            }
-            string ReadString()
-            {
-                if (!Take('"')) throw new FormatException();
-                var result = new StringBuilder();
-                while (position < text.Length) {
-                    char value = text[position++];
-                    if (value == '"') return result.ToString();
-                    if (value < 0x20) throw new FormatException();
-                    if (value != '\\') { result.Append(value); continue; }
-                    if (position >= text.Length) throw new FormatException();
-                    char escape = text[position++];
-                    switch (escape) {
-                        case '"': case '\\': case '/': result.Append(escape); break;
-                        case 'b': result.Append('\b'); break;
-                        case 'f': result.Append('\f'); break;
-                        case 'n': result.Append('\n'); break;
-                        case 'r': result.Append('\r'); break;
-                        case 't': result.Append('\t'); break;
-                        case 'u':
-                            if (text.Length - position < 4) throw new FormatException();
-                            int unit = 0;
-                            for (int i = 0; i < 4; i++) unit = unit * 16 + Hex(text[position++]);
-                            // JSON escapes represent UTF-16 code units; do not canonicalize or
-                            // discard legal producer escapes, including escaped surrogate units.
-                            result.Append((char)unit); break;
-                        default: throw new FormatException();
-                    }
-                }
-                throw new FormatException();
-            }
-            public Ownership Read()
-            {
-                if (text == null || !Take('{')) return null;
-                var owner = new Ownership();
-                var names = new HashSet<string>(StringComparer.Ordinal);
-                do {
-                    string name = ReadString();
-                    if ((name != "state" && name != "path" && name != "detail") || !names.Add(name) || !Take(':')) return null;
-                    string value = ReadString();
-                    if (name == "state") owner.state = value;
-                    else if (name == "path") owner.path = value;
-                    else owner.detail = value;
-                    if (Take('}')) break;
-                    if (!Take(',')) return null;
-                } while (true);
-                Whitespace();
-                if (position != text.Length) return null;
-                if (owner.state == "free") return names.Count == 1 ? owner : null;
-                return owner.state == "held" && names.Count == 3 && !String.IsNullOrWhiteSpace(owner.path) && !String.IsNullOrWhiteSpace(owner.detail) ? owner : null;
-            }
+            Ownership owner;
+            bool valid = TryReadOwnership(text, out owner);
+            state = valid ? owner.state : null;
+            return valid;
         }
 
         static bool TryReadOwnership(string text, out Ownership owner)
         {
-            try { owner = new OwnershipReader(text).Read(); }
-            catch (FormatException) { owner = null; }
+            owner = null;
+            var members = FlatStringObject.Read(text, OwnershipNames);
+            if (members == null) return false;
+            string state, path, detail;
+            members.TryGetValue("state", out state);
+            members.TryGetValue("path", out path);
+            members.TryGetValue("detail", out detail);
+            if (state == "free" ? members.Count == 1
+                : state == "held" && members.Count == 3 && !String.IsNullOrWhiteSpace(path) && !String.IsNullOrWhiteSpace(detail))
+                owner = new Ownership { state = state, path = path, detail = detail };
             return owner != null;
         }
 
@@ -1634,16 +2122,129 @@ namespace GraphGoblin.Desktop
             return found;
         }
 
+        /// <summary>
+        /// Session-local, PWA-only: keyed to the selected Chrome installation directory, profile
+        /// and app ID, upper-cased like the ordinal case-insensitive window selection. It never
+        /// covers gateway readiness or startup.
+        /// </summary>
+        public static string WindowMutexName(Configuration config)
+        {
+            string proxyDirectory = (Path.GetDirectoryName(config.ChromeProxy) ?? "").ToUpperInvariant();
+            return "Local\\GraphGoblin.Window." + Program.Hash("graphgoblin-pwa-window/v1\0" + proxyDirectory + "\0" +
+                (config.ChromeProfile ?? "").ToUpperInvariant() + "\0" + (config.ChromeAppId ?? ""));
+        }
+
+        static string Address(Configuration config) { return "http://127.0.0.1:" + config.Port.ToString(CultureInfo.InvariantCulture) + "/app/"; }
+
+        public static LauncherFailure BrowserUnavailable(Configuration config)
+        {
+            return new LauncherFailure("browser-unavailable", "The verified GraphGoblin gateway is already running at " + Address(config) + ", but Windows could not start the installed Chrome app (its chrome_proxy.exe is missing or was refused). Open that address in Chrome, or reinstall the GraphGoblin Chrome app and configure the launcher again. The gateway keeps running.");
+        }
+
+        static LauncherFailure WindowBusy(Configuration config)
+        {
+            return new LauncherFailure("window-busy", "The verified GraphGoblin gateway is already running at " + Address(config) + ", but another GraphGoblin click is still opening its Chrome app window. Try again in a moment. The gateway keeps running.");
+        }
+
+        /// <summary>A Chrome start needs time left for at least one window poll after it.</summary>
+        public const int WindowPollMilliseconds = 200;
+
+        /// <summary>
+        /// The native control points of one window handoff, read against one clock. The click binds
+        /// window discovery, the PWA mutex, the Chrome start preparation, the start itself,
+        /// activation and sleep; compiled checks bind deterministic ones to the same decision.
+        /// </summary>
+        internal sealed class WindowHandoff
+        {
+            public Func<long> Elapsed;
+            public Func<IntPtr> Discover;
+            public Func<long, bool> Acquire;
+            public Action Release;
+            public Func<ProcessStartInfo> Prepare;
+            public Action<ProcessStartInfo> Start;
+            public Action<IntPtr> Activate;
+            public Action<int> Sleep;
+        }
+
+        /// <summary>
+        /// After gateway readiness and with the startup mutexes released. One window budget starts
+        /// before the first discovery and covers the PWA mutex, a rediscovery under it, the Chrome
+        /// start and the wait for its window.
+        /// </summary>
         public static void OpenPwa(Configuration config, string configFile)
         {
-            IntPtr window = FindWindow(config);
-            if (window == IntPtr.Zero)
+            var budget = Stopwatch.StartNew();
+            using (var mutex = new Mutex(false, WindowMutexName(config)))
+                Handoff(config, new WindowHandoff {
+                    Elapsed = () => budget.ElapsedMilliseconds,
+                    Discover = () => FindWindow(config),
+                    Acquire = wait => {
+                        try { return mutex.WaitOne(TimeSpan.FromMilliseconds(wait)); }
+                        catch (AbandonedMutexException) { return true; }
+                    },
+                    Release = () => mutex.ReleaseMutex(),
+                    Prepare = () => PrepareChrome(config),
+                    Start = start => StartChrome(config, start),
+                    Activate = window => Activate(window, config, configFile),
+                    Sleep = Thread.Sleep,
+                });
+        }
+
+        /// <summary>
+        /// An existing window is activated directly. Otherwise the click waits for the PWA mutex
+        /// within the remaining budget and rediscovers under it. A click with less than one poll
+        /// interval left refuses at once; otherwise the proxy path check, arguments and start
+        /// information are prepared first, and the final remaining-time sample is taken directly
+        /// before the start is issued. Chrome starts only when at least one poll interval remains at
+        /// that sample, so a near-expired click never opens a late window even when preparation used
+        /// the margin; every sleep is capped to the remainder. The mutex is released after
+        /// activation or refusal.
+        /// </summary>
+        internal static void Handoff(Configuration config, WindowHandoff native)
+        {
+            long limit = config.WindowTimeoutSeconds * 1000L;
+            IntPtr window = native.Discover();
+            if (window != IntPtr.Zero) { native.Activate(window); return; }
+            if (!native.Acquire(Math.Max(0, limit - native.Elapsed()))) throw WindowBusy(config);
+            try
             {
-                Process.Start(new ProcessStartInfo(config.ChromeProxy, "--profile-directory=" + Program.Quote(config.ChromeProfile) + " --app-id=" + config.ChromeAppId) { UseShellExecute = false });
-                var deadline = DateTime.UtcNow.AddSeconds(config.WindowTimeoutSeconds);
-                while (DateTime.UtcNow < deadline && (window = FindWindow(config)) == IntPtr.Zero) Thread.Sleep(200);
+                window = native.Discover();
+                if (window == IntPtr.Zero)
+                {
+                    if (limit - native.Elapsed() < WindowPollMilliseconds) throw WindowBusy(config);
+                    var start = native.Prepare();
+                    // The final admission sample: only the prepared start itself follows it.
+                    if (limit - native.Elapsed() < WindowPollMilliseconds) throw WindowBusy(config);
+                    native.Start(start);
+                    while ((window = native.Discover()) == IntPtr.Zero)
+                    {
+                        long remaining = limit - native.Elapsed();
+                        if (remaining <= 0) break;
+                        native.Sleep((int)Math.Min(WindowPollMilliseconds, remaining));
+                    }
+                }
+                if (window == IntPtr.Zero) throw new LauncherFailure("window-missing", "The verified GraphGoblin gateway is already running at " + Address(config) + ", but the installed Chrome GraphGoblin app did not open within " + config.WindowTimeoutSeconds.ToString(CultureInfo.InvariantCulture) + " seconds. Check its installed PWA/profile and configure the launcher again. The gateway keeps running.");
+                native.Activate(window);
             }
-            if (window == IntPtr.Zero) throw new LauncherFailure("window-missing", "The gateway is ready, but the installed Chrome GraphGoblin app did not open. Check its installed PWA/profile and configure the launcher again. The gateway keeps running.");
+            finally { native.Release(); }
+        }
+
+        /// <summary>The proxy path check, arguments and start information, before the final sample.</summary>
+        static ProcessStartInfo PrepareChrome(Configuration config)
+        {
+            if (!File.Exists(config.ChromeProxy)) throw BrowserUnavailable(config);
+            return new ProcessStartInfo(config.ChromeProxy, "--profile-directory=" + Program.Quote(config.ChromeProfile) + " --app-id=" + config.ChromeAppId) { UseShellExecute = false };
+        }
+
+        /// <summary>Only the prepared process start; a refused start is the handoff's browser failure.</summary>
+        static void StartChrome(Configuration config, ProcessStartInfo start)
+        {
+            try { using (Process.Start(start)) { } }
+            catch (System.ComponentModel.Win32Exception) { throw BrowserUnavailable(config); }
+        }
+
+        static void Activate(IntPtr window, Configuration config, string configFile)
+        {
             string relaunch = RelaunchCommand(Application.ExecutablePath, configFile, false);
             StampWindow(window, config.LauncherAppUserModelId, relaunch, config.IconLocation ?? (Application.ExecutablePath + ",0"));
             ShowWindow(window, 9); SetForegroundWindow(window);

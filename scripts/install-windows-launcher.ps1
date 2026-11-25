@@ -386,7 +386,7 @@ try {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $identity = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($exe.ToUpperInvariant())))).Replace('-', '').ToLowerInvariant().Substring(0, 24) }
     finally { $sha.Dispose() }
-    # Only explicitly supplied overrides are persisted.
+    # Only explicitly supplied overrides are persisted, with one enrollment and no runtime refresh.
     $config = [ordered]@{
         Repo = $RepoPath; Node = $NodePath; DataDir = $DataDir; Port = $Port
         ChromeProxy = $pwa.TargetPath; ChromeProfile = $profile; ChromeAppId = $appId
@@ -394,6 +394,16 @@ try {
         PwaAppUserModelId = $pwaId; LauncherAppUserModelId = "GraphGoblin.$identity"
         Environment = $Environment; StartupTimeoutSeconds = 60; WindowTimeoutSeconds = 30
     }
+    [IO.File]::WriteAllText($stagedConfig, ($config | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
+    # Enrollment (#566): the contained configured runtime observes the cold launch environment
+    # once. Its bounded helper work (15 s) and cleanup (2 s) finish within this stage timeout.
+    $enrollmentRefusal = 'The staged launcher configuration was refused while enrolling its gateway settings. Check the launcher paths, Node runtime, built checkout, reserved GG_* overrides and the Windows job policy.'
+    try { $enrollment = Invoke-InstallerProcess $stagedExe @('--enroll-install', '--config', $stagedConfig) 40 }
+    catch { Refuse-LauncherInstall $enrollmentRefusal }
+    if ($enrollment.Code -ne 0 -or $enrollment.Stderr) { Refuse-LauncherInstall $enrollmentRefusal }
+    try { $config.Enrollment = $enrollment.Stdout | ConvertFrom-Json }
+    catch { Refuse-LauncherInstall $enrollmentRefusal }
+    if (!$config.Enrollment) { Refuse-LauncherInstall $enrollmentRefusal }
     [IO.File]::WriteAllText($stagedConfig, ($config | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
     $validation = Invoke-InstallerProcess $stagedExe @('--validate-install', '--config', $stagedConfig) 15
     if ($validation.Code -ne 0 -or $validation.Stderr -or $validation.Stdout) {

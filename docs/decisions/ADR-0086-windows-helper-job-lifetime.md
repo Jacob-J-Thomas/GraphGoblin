@@ -1,6 +1,9 @@
 # ADR-0086: Windows launcher helpers own a private job
 
 Status: Selected under delegated coordinator authority (D160); consolidated owner review pending.
+[ADR-0090](ADR-0090-windows-launcher-warm-discovery.md) supersedes the warm-click sentences below:
+warm reuse starts no helper, so an incompatible host refuses only a cold start. The job, pipe,
+deadline and cleanup decisions are unchanged for every helper that still runs.
 
 ## Context
 
@@ -100,6 +103,10 @@ control and a separate active-process limit that actually refuses creation. Cold
 refusals occur before helper execution while unrelated processes and the existing gateway
 survive. UI-only nesting refusal remains unobserved on this host. This evidence refinement
 does not change the private job's flags or establish behavior on every supported Windows build.
+Under ADR-0090 the warm case under that limit succeeds with no admission attempt instead; its
+evidence is calibrated by the actual cold refusal on the same job observer. The compatible
+control's outer job is kill-on-close and held by its fixture owner until an explicit release, so a
+cancelled measurement also settles that control's launcher, helpers and gateway.
 
 Microsoft references: [process attributes](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute),
 [nested jobs](https://learn.microsoft.com/en-us/windows/win32/procthread/nested-jobs),

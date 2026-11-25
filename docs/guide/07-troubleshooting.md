@@ -4,9 +4,9 @@
 
 "Windows could not start an isolated launcher check" means the configured runtime could not be
 started inside the helper's private job. Use Windows 10 or Windows Server 2016 or later and check
-the enclosing shell or management tool's job policy. This applies to warm clicks too; a running
-gateway remains available at its existing address. A known missing or invalid runtime has its
-own Node-path guidance.
+the enclosing shell or management tool's job policy. Only enrollment and cold starts run that
+check; a click that reuses a running matching gateway starts no process. A known missing or
+invalid runtime has its own Node-path guidance.
 
 Identity and initial ownership checks each allow 15 seconds of work, followed by at most two
 seconds for helper cleanup. Synchronous Windows calls have separate limits. Slow but legitimate
@@ -53,10 +53,29 @@ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
 - **Built gateway does not match this launcher:** the checkout was built before this launcher
   version. Stop the running gateway, rebuild and reinstall the launcher together.
 
+- **Not enrolled for its current Repo, Node, DataDir, Port and `GG_*` overrides:** the launcher JSON
+  was edited, or was written by an earlier installer. Rerun `install-windows-launcher.ps1` with the
+  intended values; the launcher never updates its enrollment itself.
+- **Current effective gateway settings differ from this launcher's enrollment:** a cold start
+  found that the checkout now resolves different settings (for example a changed default, serving
+  root, store target or protocol). Rerun the installer to enroll them deliberately.
+- **Gateway no longer resolves to the enrolled store:** the gateway on the port has the enrolled
+  settings, but the configured data directory or database path now leads elsewhere (a moved store
+  or a retargeted junction or link). Restore the path, or stop that gateway deliberately and rerun
+  the installer for the intended store. The running gateway is never stopped by the launcher.
+- **Gateway answers but its built web app is unavailable:** the gateway on the port has the
+  enrolled settings, but its `/app/` shell is missing (404 or 410) or not an ordinary page. The
+  click refuses at once, without waiting for other launches; rebuild the web app with the checkout
+  and restart that gateway deliberately. The launcher never stops it.
+- **Configuration changed, replaced or removed while this click waited:** another launch held the
+  startup locks while the JSON was edited. Launch again to use the current file.
+- **Port is occupied but the configured gateway is not ready:** something accepts connections on
+  the port without answering as GraphGoblin, even after the launcher waited for other clicks.
+  Check what listens there; the launcher never starts a second gateway or stops that process.
 - **Port belongs to another or differently configured service:** check the configured checkout,
   Node runtime, port, `GG_DB_URL`, store and GG_* overrides. The launcher refuses plain health from
-  older builds too. Stop the intended old gateway through its deliberate shutdown before launching
-  the new build. It never stops an unrelated listener.
+  older builds too, including a gateway from before the launch identity: stop it once through its
+  deliberate shutdown before launching the new build. It never stops an unrelated listener.
 - **Existing process owns the store:** it may be starting, serving another port or releasing its
   store. Wait for it or correct the configuration. Do not delete ownership files to make it start.
 - **Store ownership is held or cannot be verified after a reboot:** Windows can reuse a process
@@ -85,6 +104,14 @@ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
   and `127.0.0.1`, or two ports, are different PWA identities.
 - **Gateway ready but PWA did not open:** check Chrome's installed app, profile and executable;
   rerun the configuration script. The gateway keeps running.
+- **Gateway already running but Chrome could not be started:** the installed app's
+  `chrome_proxy.exe` is missing or Windows refused to start it. The message names the gateway's
+  address; open it in Chrome, or reinstall the Chrome app and rerun the installer. The gateway
+  keeps running.
+- **Another click is still opening the Chrome app window:** simultaneous clicks wait for each
+  other while the window opens. A click whose window time is nearly spent when its turn comes does
+  not start Chrome late, so it cannot open a second window. Try again in a moment; the gateway
+  keeps running.
 - **Taskbar cold click opens disconnected Chrome directly:** remove the old direct Chrome pin,
   open through the new desktop launcher and pin that running GraphGoblin button. Verify the cold
   taskbar route; rewriting a pin file alone may leave Explorer's cached direct Chrome command.

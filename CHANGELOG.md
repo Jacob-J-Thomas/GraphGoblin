@@ -4,6 +4,29 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Windows launcher reuses a running gateway without waiting for helpers, locks or the
+  checkout's files (#566, #544, ADR-0090). `/healthz` adds `X-GraphGoblin-Launch-Identity`, a
+  versioned digest of the effective non-secret settings and canonical store and serving paths that
+  ignores the Node runtime and build. The installer enrolls it once through the configured runtime
+  and binds it to the launcher's exact checkout, Node, data-directory, port and `GG_*` inputs; a
+  click first probes the port and reuses a ready gateway with that identity whose store still
+  resolves to the enrolled locations. Startup locks, helper containment and the full fingerprint
+  check apply only to cold start, which also refuses settings that drifted from the enrollment.
+  Under a host job policy that refuses process creation, a warm click now succeeds without
+  attempting one; a cold start still refuses. A configuration changed while a click waited, a
+  retargeted store alias (including one that now names a different object differing only in
+  letter case), a matching gateway whose `/app/` answers 404 or 410, and an occupied but silent
+  port are refused without stopping anything; the missing web shell is refused at once. Both
+  health digests and the enrollment come from one observation of the store and serving paths.
+  Simultaneous clicks open one PWA window, a click whose window time is nearly spent never starts
+  Chrome late, and a missing or refused Chrome start names the running gateway's address. The full
+  fingerprint, `/healthz` body and other headers are unchanged.
+  **Upgrade:** a coordinated cutover. Shut down a running gateway from an earlier build
+  deliberately once, update and build the checkout, then rerun
+  `scripts/install-windows-launcher.ps1`; a launcher JSON without enrollment is refused until
+  then. Rerun the installer after editing the launcher's Repo, Node, DataDir, Port or overrides.
+  No store, export or stored-data change.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under

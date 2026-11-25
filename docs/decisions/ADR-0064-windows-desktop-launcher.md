@@ -6,6 +6,10 @@ The PID-only ownership precheck is superseded by
 [ADR-0069](ADR-0069-windows-lock-process-identity.md); other decisions remain unchanged.
 Explicit secret-bearing overrides are refused by
 [ADR-0085](ADR-0085-refuse-launcher-secret-overrides.md).
+[ADR-0090](ADR-0090-windows-launcher-warm-discovery.md) refines readiness and identity: a click
+first observes a running gateway without locks by an installer-enrolled launch digest, and the
+per-click expected fingerprint and store/port serialization below apply only to cold start. Its
+browser handoff runs under one window deadline that never starts Chrome late.
 
 ## Decision
 

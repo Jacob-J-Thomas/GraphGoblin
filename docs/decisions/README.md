@@ -107,3 +107,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0087 - Shorten the pinned Codex SDK schema-directory prefix](ADR-0087-short-codex-schema-temp-prefix.md) extends the existing managed SDK patch with a shorter native `mkdtemp` prefix, retaining schema enforcement and cleanup at the measured Windows temp-root boundary (#363).
 
 [ADR-0089 - Bound optional Claude start-refusal diagnosis](ADR-0089-bounded-claude-refusal-diagnosis.md) gives post-refusal metadata a private monotonic deadline, retaining timely facts and returning the known refusal with unknown cause when optional diagnosis expires (#364).
+
+[ADR-0090 - Windows launcher warm discovery through an enrolled launch identity](ADR-0090-windows-launcher-warm-discovery.md) publishes a versioned launch digest on `/healthz`, enrolls it once through the staged installer, reuses a matching gateway without locks, helpers or startup files, and keeps the store/port mutexes and helper containment for cold start only; it refines ADR-0064 and supersedes ADR-0086's warm-click refusal (#566, #544).
