@@ -4,6 +4,17 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- API startup now prints a refused hard-linked SQLite database as one stack-free line with exit
+  code 1 (#533), as it already does for held or unverifiable ownership. Under any of the file's
+  names the line names its canonical path and keeps the existing guidance to use one ordinary
+  SQLite file so GraphGoblin can establish exclusive ownership, with control characters and line
+  separators escaped; it previously printed the same text with a stack trace. The refusal, its
+  wording, the untouched database bytes and the released locks are unchanged, as are `--reset`
+  and `--create-api-key` output for the same file. The Windows launcher's managed gateway keeps
+  its closed `store`/`store-unavailable` record and exit code 74. Other startup failures,
+  including unexpected filesystem errors and errors that only repeat this text, keep their stack.
+  No store, lock, export or contract change.
+
 - `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
   `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
   template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so

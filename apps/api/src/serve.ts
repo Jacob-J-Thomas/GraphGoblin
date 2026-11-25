@@ -3,7 +3,7 @@ import type { DestinationStream } from 'pino';
 import { buildApp } from './app.js';
 import { bundledGoblinDist, bundledWebDist, loadConfig } from './config.js';
 import { createContainer } from './container.js';
-import { StoreOwnershipRefusedError } from './data-dir-lock.js';
+import { HardLinkedDatabaseRefusedError, StoreOwnershipRefusedError } from './data-dir-lock.js';
 import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { createGatewayLogger, managedClientErrorHandler } from './gateway-logger.js';
 import { StoreRefusedError } from './store-refusal.js';
@@ -184,13 +184,24 @@ export function startupFailureCause(stage: StartupStage, error: unknown): Startu
   }
 }
 
-/** Store, ownership and GG_DEFAULTS refusals carry complete operator explanations. */
+/** One display line: control characters and line separators become `\uXXXX` escapes. */
+const escapeDisplayControls = (message: string): string =>
+  message.replace(
+    /[\p{Cc}\p{Zl}\p{Zp}]/gu,
+    (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
+  );
+
+/**
+ * Store, ownership, hard-linked database and GG_DEFAULTS refusals carry complete operator
+ * explanations. Only these error classes qualify; matching text alone keeps the error object.
+ */
 export function shellFailureOutput(error: unknown): unknown {
-  if (error instanceof StoreOwnershipRefusedError)
-    return error.message.replace(
-      /[\p{Cc}\p{Zl}\p{Zp}]/gu,
-      (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
-    );
+  // Both name a configured filesystem path, which can contain controls.
+  if (
+    error instanceof StoreOwnershipRefusedError ||
+    error instanceof HardLinkedDatabaseRefusedError
+  )
+    return escapeDisplayControls(error.message);
   return error instanceof StoreRefusedError || error instanceof ProcessDefaultsRefusedError
     ? error.message
     : error;
