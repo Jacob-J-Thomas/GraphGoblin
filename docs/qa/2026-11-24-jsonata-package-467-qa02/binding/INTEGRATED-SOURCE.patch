@@ -1,0 +1,129 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 638476dfa..9b14e31d8 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -314,6 +314,7 @@ jobs:
+       - uses: actions/checkout@v4
+ 
+       - name: Build the distributed image
++        id: image
+         run: docker build --tag graphgoblin-template-check .
+ 
+       - name: Load installed templates without network or writable storage
+@@ -354,3 +355,40 @@ jobs:
+               draftNodes: draft.nodes.length }));
+           }
+           JS
++
++      # Expression evaluation needs patches/jsonata@2.2.2.patch (docs/research/licenses.md). Check
++      # the image's own installed copy through the compiled @graphgoblin/domain entry the API
++      # resolves, never source or host node_modules. Every expression is finite. The restrictive
++      # limits refuse at the first evaluator entry; without the patch the symbol-keyed hooks are
++      # never bound, so those probes would succeed and fail their assertions instead of hanging.
++      - name: Evaluate expressions with the installed JSONata patch
++        if: ${{ !cancelled() && steps.image.outcome == 'success' }}
++        run: |
++          docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --workdir /app/apps/api --entrypoint node graphgoblin-template-check --input-type=module <<'JS'
++          import assert from 'node:assert/strict';
++          import { ExpressionError, observeExpression } from '@graphgoblin/domain';
++          const ordinary = await observeExpression('a + b', { a: 1, b: 2 });
++          assert.deepEqual(ordinary, { ok: true, value: 3 });
++          // Wider than the default depth of 200: accepted only when siblings are evaluated in turn.
++          const width = Array.from({ length: 250 }, (_, n) => n);
++          const wide = JSON.stringify({ array: width,
++            object: Object.fromEntries(width.map((n) => [`k${n}`, n])) });
++          const siblings = await observeExpression(wide, {});
++          assert.ok(siblings.ok, `wide literal refused (${siblings.reason}): ${siblings.error?.message}`);
++          assert.equal(JSON.stringify(siblings.value), wide);
++          const refused = async (options, reason, message) => {
++            const result = await observeExpression('1', {}, options);
++            assert.equal(result.ok, false, `${reason} probe was not refused`);
++            assert.equal(result.reason, reason);
++            assert.ok(result.error instanceof ExpressionError);
++            assert.equal(result.error.message, message);
++            return { reason, message };
++          };
++          const depth = await refused({ maxDepth: 0 }, 'depth', 'expression exceeded max depth 0');
++          const time = await refused({ timeoutMs: -1 }, 'time', 'expression exceeded -1ms');
++          // The same cached source at the default limits: neither refusal may carry over.
++          const fresh = await observeExpression('1', {});
++          assert.deepEqual(fresh, { ok: true, value: 1 });
++          console.log(JSON.stringify({ check: 'installed-jsonata-patch', ordinary: ordinary.value,
++            wideSiblings: width.length, depth, time, fresh: fresh.value }));
++          JS
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index ab650495c..1977f17a9 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- The Template image CI job also checks that the built image's installed jsonata carries
++  `patches/jsonata@2.2.2.patch` (#467). A separate step runs the image under the template
++  step's isolation (no network, read-only, no capabilities or new privileges) from
++  `/app/apps/api` and calls the compiled `@graphgoblin/domain` there with finite expressions: an
++  ordinary expression and a flat literal wider than the 200-level depth limit evaluate at the
++  default limits; `1` with `maxDepth: 0` and with `timeoutMs: -1` is refused with reason `depth`
++  or `time` and its exact message; and the same cached source then evaluates normally. It prints
++  one JSON line to the job log. The licence ledger now records what the patch does and what a
++  jsonata upgrade must show before the patch is reapplied, rebased or removed. The template
++  checks, the job's budget, the patch and lockfile, the evaluator's defaults and the product's
++  behaviour are unchanged; no dependency or licence changes.
++
+ - Windows launcher evidence records a test that node:test cancels as failed at its cancellation,
+   as node:test reports it (#534). Cancellations include the test's own timeout, a parent or the
+   whole run that finished first, and a subtest started after its parent ended. The end record
+diff --git a/docs/10-testing-and-quality.md b/docs/10-testing-and-quality.md
+index 4e7dfd105..9fbe0fef2 100644
+--- a/docs/10-testing-and-quality.md
++++ b/docs/10-testing-and-quality.md
+@@ -237,6 +237,16 @@ Browser exclusions and conditional modes, also written to the job summary on eve
+ 
+ The `template-image` job builds the distributed container and checks installed template contents without network or writable storage. It runs on pull requests as well as pushes to `main`.
+ 
++A separate step in the same job (#467) checks that the image's installed jsonata carries `patches/jsonata@2.2.2.patch`, whose responsibilities and upgrade obligations are in the [licence ledger](research/licenses.md#jsonata-patch). It runs the image with the same switches as the template step (no network, read-only root filesystem, all capabilities dropped, no new privileges) and a working directory of `/app/apps/api`, where `node --input-type=module` imports the compiled `@graphgoblin/domain` entry the API resolves, never source or host `node_modules`. It runs whenever the image built, even after a template failure. Each probe calls the public `observeExpression` with a finite expression:
++
++- `a + b` over `{ "a": 1, "b": 2 }` at the default limits returns 3.
++- A JSON literal holding a 250-item array and a 250-member object, wider than the default depth of 200, returns itself at the default limits. Only sequential siblings accept it.
++- `1` with `maxDepth: 0` is refused with reason `depth` and the `ExpressionError` message `expression exceeded max depth 0`.
++- `1` with `timeoutMs: -1`, a deadline already spent at the first evaluator entry, is refused with reason `time` and the message `expression exceeded -1ms`.
++- `1` again at the default limits, the same cached source, then returns 1, so neither refusal carried over into a later evaluation.
++
++Without the patch the symbol-keyed hooks are never bound, so both refusal probes succeed and fail their assertions at once instead of hanging. These restrictive options exist only in the probe; the evaluator's 200-level and 2,000 ms defaults are unchanged. The step prints one JSON line (`"check":"installed-jsonata-patch"`) that the job log retains. The per-evaluation timestamp has no image probe: only `packages/domain/src/expression.test.ts` covers it. The source regressions do not prove the distributed image, and this step does not replace them.
++
+ Live/paid smoke checks remain separate, manually authorized checks. CI schedules no recurring paid-provider job or Postgres matrix.
+ 
+ `pnpm check:migrations` runs Drizzle Kit against the current schema and a disposable copy of the shipped migration ledger and snapshots. It never changes shipped SQL, snapshots, or the ledger. Additive schema drift is covered by a tooling regression test.
+diff --git a/docs/research/licenses.md b/docs/research/licenses.md
+index cc063b1e5..b2f12c862 100644
+--- a/docs/research/licenses.md
++++ b/docs/research/licenses.md
+@@ -12,7 +12,7 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
+ | ---------------------------------------------------------------------------------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+ | Node.js                                                                                                                | MIT        | All packages and apps use Node >=22 at runtime                                                                                                                                                                                            |
+ | zod                                                                                                                    | MIT        | `packages/contracts`, `packages/adapter-jev`, and `apps/api`, `apps/mcp`, `apps/plugin-codex`, `apps/web` runtime                                                                                                                         |
+-| ajv, ajv-formats, jsonata, liquidjs                                                                                    | MIT        | `packages/domain` runtime graph validation, expression evaluation, and templates                                                                                                                                                          |
++| ajv, ajv-formats, jsonata, liquidjs                                                                                    | MIT        | `packages/domain` runtime graph validation, expression evaluation, and templates; jsonata 2.2.2 carries a required pnpm patch (see [JSONata patch](#jsonata-patch))                                                                       |
+ | @libsql/client, libsql                                                                                                 | MIT        | `packages/infrastructure` runtime SQLite; N-API binary, prebuilt for all Node versions; see `sqlite-libsql.md`                                                                                                                            |
+ | croner                                                                                                                 | MIT        | `packages/infrastructure` runtime 10.x cron slots in `src/scheduler` (adopted in M6)                                                                                                                                                      |
+ | drizzle-orm                                                                                                            | Apache-2.0 | `packages/infrastructure` runtime database queries                                                                                                                                                                                        |
+@@ -62,6 +62,18 @@ MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD, Unlicense, CC0-1.0.
+ | OpenDyslexic 0.990 (font)                                                                                              | OFL-1.1    | Font files, not npm: upstream Regular and Bold woff2, unmodified (Reserved Font Name), with `OFL-OpenDyslexic.txt` (#40); see Font files below                                                                                            |
+ | Inter 4.001 (font)                                                                                                     | OFL-1.1    | Font file, not npm: optical size fixed at 14, subset woff2 with `OFL-Inter.txt` (#40); see Font files below                                                                                                                               |
+ 
++## JSONata patch
++
++`packages/domain` evaluates every authored expression with jsonata 2.2.2 plus `patches/jsonata@2.2.2.patch`, which pnpm applies at install (`patchedDependencies` in `pnpm-workspace.yaml`; the lockfile records its hash). jsonata remains MIT and no dependency is added; the patch is GraphGoblin's own change to that package. It edits only `jsonata.js`, the file the package's `main` and `module` fields name. The bundled `jsonata.min.js`, `jsonata-es5.js` and `jsonata-es5.min.js` stay upstream code, and nothing may load them. The evaluator (`packages/domain/src/expression.ts`) compiles without jsonata's own `stack` and `timeout` options, so its hooks are the only depth and time limits. It relies on all three changes:
++
++- **Symbol-keyed hooks in the invocation's frame.** Upstream `evaluate(input, bindings)` copies bindings into that call's own frame with `Object.keys`, which skips symbols, so the `Symbol.for('jsonata.__evaluate_entry')` and `Symbol.for('jsonata.__evaluate_exit')` hooks never arrive and the 200-level, 2,000 ms default budget is silently absent. The patch binds every own enumerable key, symbols included, into the same per-call frame. Each evaluation of a cached compiled expression therefore keeps its own hooks and bindings; nothing is assigned to the shared compiled environment.
++- **Timestamp per evaluation.** Upstream binds `$now()` and `$millis()` once per compiled expression over one timestamp that every call resets, so an evaluation that awaits while another call of the same cached source starts reads the later call's time. The patch creates the timestamp and both functions in each call's frame.
++- **Siblings evaluated in turn.** Upstream starts every array constructor item and every object constructor value at once (`Promise.all`) and sets `environment.isParallelCall`. Siblings share one depth counter with their caller, so a flat collection wider than the depth limit was refused as though it were nested. The patch finishes each sibling before starting the next, so depth measures the stack rather than width. It no longer sets `isParallelCall`. In jsonata 2.2.2, `createFrame` reads that flag only to copy it from the enclosing frame into each new frame; no evaluation logic acts on it, and GraphGoblin's hooks do not read it. Separate evaluations still run concurrently.
++
++The **Template image** CI job evaluates expressions through the compiled `@graphgoblin/domain` installed in the distributed image ([10](../10-testing-and-quality.md#ci-gates-decided)). An image without the hook or sibling change fails that job. The timestamp change has no image probe; only the source regression covers it. Source unit tests do not establish what the image installed.
++
++**Upgrading jsonata.** The patch is keyed to exactly 2.2.2. Before moving to another version, compare that release's `evaluate` entry point and its binding loop, the `$now` and `$millis` bindings, and the array and object constructors against the three changes above. Recheck and reapply, rebase or remove each change only after demonstrating equivalent behaviour on the new version: the domain tests, in particular `packages/domain/src/expression.test.ts` (wide flat literals at the default limits, nested and recursive depth limits, depth and time budgets, concurrent isolation of budgets, bindings and deadlines, and the interleaved timestamp), and then the Template image job against the rebuilt image. Drop a change only where the new release behaves the same unpatched, and remove the patch file and its `patchedDependencies` entry only when all three hold upstream. A regenerated patch changes the lockfile's patch hash.
++
+ ## Font files
+ 
+ The faces Settings → Appearance → Font offers (#40) are vendored files in `apps/web/public/fonts/`, each with its licence text beside it; no npm package is added, so the npm allowlist is unchanged. Every one is SIL OFL 1.1, which allows bundling, modifying, and redistributing with the licence. A modified font may not use a Reserved Font Name (RFN), and the OFL FAQ (2.6) counts subsetting a web font as modification, so only faces without an RFN are subset.
