@@ -1,0 +1,129 @@
+"""Run fresh Claude acceptance only for the reviewed exact post-author #524 binding."""
+
+from datetime import datetime, timezone
+from importlib import import_module
+import re
+import subprocess
+import sys
+from threading import Thread
+from time import sleep
+
+sys.dont_write_bytecode = True
+import common as qa
+
+OUT = qa.ROOT / 'claude-qa-01'
+DEADLINE = 900
+
+
+def terminate(child):
+    if child.poll() is None:
+        subprocess.run(['taskkill.exe', '/PID', str(child.pid), '/T', '/F'],
+                       capture_output=True, timeout=20, creationflags=subprocess.CREATE_NO_WINDOW)
+        if child.poll() is None:
+            child.kill()
+
+
+def watch(path, child):
+    while child.poll() is None:
+        if any(row.get('rate_limit_info', {}).get('isUsingOverage') is True for row in qa.events(path)):
+            terminate(child)
+            return
+        sleep(1)
+
+
+def launch(binding):
+    sys.path.insert(0, str(qa.SHARED))
+    shared = import_module('prepare-scope')
+    env = shared.subscription_environment()
+    auth = shared.require_subscription(env)
+    qa.need(auth == qa.AUTH, 'ORDINARY_MAX_AUTH_REQUIRED')
+    OUT.mkdir(exist_ok=False)
+    commands = qa.commands()
+    source = binding['source']
+    identity = {key: source[key] for key in ('head', 'target', 'indexSha256', 'changedPaths', 'changedFileSha256',
+                                               'patchSha256', 'targetToCandidatePatchSha256', 'packetPathCount')}
+    prompt = '\n\n'.join((
+        (qa.ROOT / 'QA-BRIEF.md').read_text(encoding='utf-8'),
+        'Run every exact foreground command once in the listed order, including after an unexpected failure.\n'
+        + '\n'.join(commands),
+        'Exact candidate binding\n' + qa.json.dumps(identity, indent=2),
+    )).encode('utf-8')
+    (OUT / 'CLAUDE-BRIEF.private.txt').write_bytes(prompt)
+    args = shared.common_cli_options() + [
+        '--tools', 'Bash', '--allowed-tools', *[f'Bash({command})' for command in commands],
+        '--disallowed-tools', 'Bash(run_in_background:true)', '--system-prompt',
+        'You are fresh independent QA for the admitted exact #524 correction. Use only the three '
+        'foreground commands in the stated order. Preserve first outcomes. No edits, side commands, '
+        'delegation, source changes, publication or formal review. Report observed evidence.',
+    ]
+    event_path = OUT / 'CLAUDE-EVENTS.private.jsonl'
+    timed_out = False
+    with event_path.open('xb') as stdout, (OUT / 'CLAUDE-STDERR.private.log').open('xb') as stderr:
+        with subprocess.Popen(args, cwd=OUT, env=env, stdin=subprocess.PIPE, stdout=stdout, stderr=stderr,
+                              creationflags=subprocess.CREATE_NO_WINDOW) as child:
+            qa.save(OUT / 'CLAUDE-LAUNCH.json', {'pid': child.pid, 'auth': auth, 'model': qa.MODEL,
+                    'effort': 'xhigh', 'startedUtc': qa.utc(), 'commands': commands,
+                    'promptSha256': qa.sha(prompt), 'candidate': identity, 'deadlineSeconds': DEADLINE})
+            Thread(target=watch, args=(event_path, child), daemon=True).start()
+            try:
+                child.communicate(prompt, timeout=DEADLINE)
+            except subprocess.TimeoutExpired:
+                timed_out = True
+                terminate(child)
+                child.communicate(timeout=20)
+    init, answer, rates, calls, verified = qa.provider_evidence(event_path)
+    report = answer.get('result') or ''
+    if report:
+        (OUT / 'QA-REPORT.claude.md').write_text(report + '\n', encoding='utf-8', newline='\n')
+    expected_calls = list(commands)
+    actual_calls = [call['input'].get('command') for call in calls]
+    permitted = (init.get('tools') == ['Bash'] and actual_calls == expected_calls
+                 and all(call['tool'] == 'Bash' and not call['input'].get('run_in_background') for call in calls)
+                 and not answer.get('permission_denials'))
+    distinct_session = bool(init.get('session_id') and init['session_id'] != binding['author']['sessionId'])
+    paths = {mode: qa.ROOT / 'runs' / mode / 'RESULT.json' for mode in qa.CHECKS}
+    receipts = {mode: qa.load(path) for mode, path in paths.items() if path.is_file()}
+    passed = (list(receipts) == list(qa.CHECKS) and all(call.get('success') is True for call in calls)
+              and all(row['exitCode'] == 0 and row['sourceUnchanged'] and row['source'] == source
+                      for row in receipts.values()))
+    error = None
+    try:
+        unchanged = qa.bound() == binding
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as failure:
+        unchanged, error = False, str(failure)
+    verdict = re.search(r'(?im)^\s*[*# ]*Verdict for #524\s*:\s*(PASS|FAIL|BLOCKED)\b', report)
+    provider = child.returncode == 0 and not timed_out and verified and distinct_session
+    accepted = bool(provider and permitted and passed and unchanged and verdict and verdict[1] == 'PASS')
+    qa.save(OUT / 'CLAUDE-EXIT.json', {
+        'issue': 524, 'role': 'fresh independent QA', 'providerExitCode': child.returncode,
+        'timedOut': timed_out, 'providerModel': init.get('model'), 'providerApiKeySource': init.get('apiKeySource'),
+        'providerProvenanceVerified': bool(provider), 'providerSessionId': init.get('session_id'),
+        'authorSessionId': binding['author']['sessionId'], 'distinctFromAuthor': distinct_session,
+        'rateLimitObservations': rates, 'calls': calls, 'exactToolScope': bool(permitted),
+        'allChecksPassed': bool(passed), 'sourceUnchanged': unchanged, 'postflightError': error,
+        'verdict': verdict[1] if verdict else None, 'qaAccepted': accepted, 'completedUtc': qa.utc(),
+        'reportSha256': qa.sha(report.encode()) if report else None,
+        'checkReceipts': {key: qa.digest(paths[key]) for key in receipts},
+    })
+    return int(not accepted)
+
+
+def main():
+    qa.need(sys.argv[1:] in ([], ['--admission-only']), 'USE: launch-independent-qa.py [--admission-only]')
+    binding = qa.bound()
+    qa.approved(binding)
+    if sys.argv[1:]:
+        print(qa.json.dumps({'issue': 524, 'commands': qa.commands(), 'providerInvoked': False, 'checksRun': False}))
+        return 0
+    reset = datetime.fromisoformat(qa.NOT_BEFORE)
+    qa.need(datetime.now(timezone.utc) >= reset, 'ORDINARY_MAX_RESET_NOT_REACHED')
+    qa.need(not OUT.exists() and not (qa.ROOT / 'runs').exists(), 'FRESH_QA_SLOT_ALREADY_USED')
+    return launch(binding)
+
+
+if __name__ == '__main__':
+    try:
+        raise SystemExit(main())
+    except (OSError, RuntimeError, ValueError, KeyError) as error:
+        print(str(error), file=sys.stderr)
+        raise SystemExit(2)

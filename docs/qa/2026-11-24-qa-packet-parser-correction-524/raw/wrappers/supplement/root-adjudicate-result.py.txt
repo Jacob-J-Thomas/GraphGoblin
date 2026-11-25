@@ -1,0 +1,32 @@
+from pathlib import Path
+import json,hashlib,sys
+from datetime import datetime,timezone
+sys.dont_write_bytecode=True
+import evidence
+R=Path(__file__).resolve().parent
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+observed,raw,projection,terminal=evidence.assemble()
+out=R/'claude-supplement-01';receipt=json.loads((out/'CLAUDE-EXIT.json').read_bytes())
+assert receipt['validated'] and receipt['scopedLocalEvidenceAccepted'] and receipt['sourceAndRawEvidenceUnchanged']
+assert receipt['originalQaResult']=='FAIL' and not receipt['originalQaAccepted']
+assert receipt['providerModel']=='claude-opus-5-5' and receipt['providerApiKeySource']=='none'
+assert receipt['ordinaryMaxObserved'] and not receipt['overageObserved'] and not receipt['toolCalls']
+assert receipt['distinctFromOriginalQaAndAuthor']
+report=(out/'SUPPLEMENT-REPORT.claude.md').read_bytes()
+assert hashlib.sha256(report.removesuffix(b'\n')).hexdigest()==receipt['reportSha256']
+original=evidence.QA/'claude-qa-01/QA-REPORT.claude.md'
+assert hashlib.sha256(original.read_bytes().removesuffix(b'\n')).hexdigest()==terminal['reportSha256']
+record={'issue':524,'at':datetime.now(timezone.utc).isoformat(),'scopedLocalEvidenceAccepted':True,
+ 'originalQaResult':'FAIL','originalQaAccepted':False,'supplementVerdict':'SCOPED QA PASS',
+ 'supplementReceiptSha256':sha(out/'CLAUDE-EXIT.json'),'supplementReportFileSha256':sha(out/'SUPPLEMENT-REPORT.claude.md'),
+ 'originalReportHashReconciliation':{'fileSha256':sha(original),'providerTextWithoutTerminalNewlineSha256':terminal['reportSha256'],
+ 'verified':True,'explanation':'The terminal hashes provider result text; the saved report appends a newline. Original bytes and receipt remain unchanged.'},
+ 'rootRecomputed':{'testsPassed':observed['testsPassed'],'coverage':observed['checkerCoverage'],
+ 'fixtureIntegrityFiles':observed['fixtureIntegritySha256'],'selectedPaths':66,'retainedDigests':65,'sameCandidateAndIndex':True},
+ 'limits':['Original focused wrapper exited 1; native command, coverage and all fixture/packet checks passed.',
+ 'The supplemental actor read 29 exact files as encoded text and compared supplied hashes; root independently recomputed them.',
+ 'Root additionally verified all eight integrity files and unchanged source/packet binding. Original failed focused RESULT did not itself hash every child artifact; this supplementary seal is retrospective.',
+ 'No source tests, native fixtures or model calls were repeated by this adjudication.',
+ 'Publication-head/current-target CI and the FUP030 targeted fresh final scan4 remain mandatory.']}
+with (R/'ROOT-RESULT-ADJUDICATION.json').open('x',encoding='utf-8',newline='\n') as f:json.dump(record,f,indent=2);f.write('\n')
+print(json.dumps({'acceptedScopedEvidence':True,'originalQa':'FAIL','tests':12,'lines':'91/91','branches':'57/57','reportHashReconciled':True}))

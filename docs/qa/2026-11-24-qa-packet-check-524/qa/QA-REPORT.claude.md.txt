@@ -1,0 +1,85 @@
+# Independent QA result for GraphGoblin #524: all three criteria PASS
+
+All three checks passed. Each allowlisted wrapper ran once, in order, with no retries, and every run exited 0. In all three runs the harness reported the frozen patch hash and `sourceUnchanged: true`. I edited nothing and wrote no files.
+
+| # | Criterion | Result | Main stdout receipt (SHA-256) |
+|---|---|---|---|
+| 1 | Focused public-CLI coverage | **PASS** | `focused.stdout.log` `034f03e2…6b041c0` |
+| 2 | Disposable CRLF false-selection repo | **PASS** | `controls.stdout.log` `bae0cc77…dfa8605` |
+| 3 | Real `pnpm check:qa` on the frozen worktree | **PASS** | `real.stdout.log` `2e5f213f…3f944e4` |
+
+**Candidate patch:** `8e637cfc58897ae39b1d7b5feff303a058420e479d7f0309fc05c454f6713423` against base `d2df8600c2c8574bec420947de686b936910b245`. The harness reported this same hash before and after all three runs, and it matches the frozen value you gave.
+
+## 1. Focused coverage: PASS
+- **Command:** `pnpm --filter @graphgoblin/tooling test:coverage scripts/check-qa-packet.test.mjs --coverage.include=scripts/check-qa-packet.mjs`. It exited 0.
+- **Tests:** 1 file, **11 of 11 passed**.
+- **Module coverage** (`check-qa-packet.mjs` only):
+
+| Measure | Covered |
+|---|---|
+| Statements | 100% (96/96) |
+| Branches | 100% (55/55) |
+| Functions | 100% (15/15) |
+| Lines | 100% (83/83) |
+
+- **Where each required behaviour is tested** (passing test names linked to the excerpt you supplied):
+
+| Required behaviour | Passing test |
+|---|---|
+| Only changed `docs/qa` paths are selected | "no changed QA path…": unformatted files outside `docs/qa` select 0 paths |
+| Markdown hidden by an ignore rule is still checked | "new Markdown hidden by an archive ignore rule…", which includes a `prettier --check` control |
+| Original bytes stay unchanged and keep their hash | "new formatted prose passes and a raw original stored as .md.txt…" |
+| New Markdown named as an original is refused, `.md.txt` is allowed | "a newly added Markdown original is refused…": 3 refused, plus `.md.txt` kept, a historical path and look-alike names |
+| Committed, staged, unstaged, untracked, deleted and renamed paths, with duplicate controls | "…selected once; nothing is written" (duplicates and stale timestamps, index unchanged) and "ordinary deletions pass…" |
+| Sparse checkout and missing paths are refused | "a sparse checkout fails…" and the committed-but-missing case |
+| Bad argument or base | "an unusable argument, base or repository…": 9 cases, exit 2, nothing on stdout |
+| Importing the module has no side effects | "importing the module runs no check" |
+
+- **Limits:** the coverage covers this one module only, not the 90% coverage gate for the whole tooling package. The mapping above relies on the supplied excerpt matching the test file that ran. The patch hash ties the two together, but I didn't read the files myself.
+
+## 2. Disposable CRLF repo: PASS
+- **Setup:** Node v22.23.4 and Git 2.49.0.windows.1. The `.gitattributes` hash is `fdda81ab…`, which the harness reports as the current repository's file; I didn't hash the real file myself. Local config was `core.autocrlf=true` and `diff.autoRefreshIndex=true`.
+- **Normalized blobs:** `README.md` and `notes [v2].md` both have indexed blob `8576426a…`, which equals their normalized blob. Both were listed as stale by timestamp.
+- **CLI output (exit 0):** exactly two entries were selected:
+  - `retained …/2026-11-17-ci-intent-1-independent-qa/immutable-original.md.txt` with `sha256=27e5f691…`, which equals the file's raw hash before and after the run.
+  - `formatted …/qa524-control/notes 2.md`
+  
+  The two normalized-away paths were not selected. The bracketed name did not match its look-alike neighbour.
+- **Before and after (identical):**
+
+| Item | Hash |
+|---|---|
+| Index | `5ee775e8…` |
+| HEAD | `1e2d2ade…` |
+| `.git/config` | `62d10e8d…` |
+| `.gitattributes` | `fdda81ab…` |
+
+  The four fixture files were also unchanged. So even with `autoRefreshIndex=true` configured, the index was not rewritten.
+- **Checker that ran:** SHA-256 `eb17c9c6…`. The stderr log is empty.
+
+## 3. Real worktree: PASS
+- **Command:** `pnpm check:qa --base d2df8600c2c8574bec420947de686b936910b245`, run once. It exited 0.
+- **Output:** the merge base equals the base. It reported `Selected docs/qa paths: 0`, then `No docs/qa path changed; nothing to check.` and `Result: passed`.
+- **Integrity:** the harness reported `sourceUnchanged: true` and `zeroRealSelectedPathsIfApplicable: true`.
+- **Limit:** the wrapper's JSON doesn't print separate before/after hashes of the real index, HEAD or Git config. For "no source, index or config change" I'm relying on the harness's combined true/false flag and on the CLI passing settings with `-c` rather than writing them. The full detail is in the logs, which the allowlist didn't let me read. I didn't run any broad historical formatting.
+
+## Commands and receipts
+- **Bash calls:** 3 of 3 allowlisted commands, each run once, sequentially, all exit 0, no retries or changed thresholds.
+- **Commands inside the wrappers:** 1 Vitest coverage run, 1 Node controls script and 1 `pnpm check:qa`.
+- **stderr logs:**
+
+| Log | Size | SHA-256 |
+|---|---|---|
+| `focused.stderr.log` | 123 B | `8bc9c32d…` |
+| `controls.stderr.log` | 0 B | `e3b0c442…` (empty file) |
+| `real.stderr.log` | 91 B | `7c3dfad6…` |
+
+  The 123 B and 91 B logs are consistent with pnpm's echoed `$ …` command lines. That is an inference; I didn't read the files.
+
+## What this does not cover
+- **Stated limits, not tested:**
+  - **One Git process per comparison:** each file changed only in the working tree (not staged) gets its own `git diff --patch` run, so cost grows with the number of changed files.
+  - **256 MiB output cap:** if Git's buffered output for a diff exceeds it, the error falls through to exit 2.
+- **No high-volume stress test.**
+- **Not full tooling coverage:** the coverage run measured this one module only, with no typecheck or lint, and no `pnpm format:check`.
+- **Nothing beyond local acceptance:** no live CI, no publication, and not the reserved formal review of this exact candidate.
