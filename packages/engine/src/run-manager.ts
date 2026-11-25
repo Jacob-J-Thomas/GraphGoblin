@@ -55,7 +55,6 @@ import {
   nodesOfKind,
   outcomeStatus,
   outgoingEdge,
-  renderTemplate,
   reconcileThread,
   replayThread,
   replayStateAt,
@@ -2428,11 +2427,6 @@ export class RunManager {
     let previousWait = run.waiting;
 
     const services: HandlerServices = {
-      render: (template, extras = {}) =>
-        renderTemplate(template, {
-          ...(threadView(thread) as unknown as Record<string, unknown>),
-          ...extras,
-        }),
       record: async (draft) => {
         await append(draft);
         if (

@@ -54,8 +54,6 @@ export type WorkingDirectoryResult =
 
 /** Services the executor hands to handlers. Everything that touches the outside world goes through here. */
 export interface HandlerServices {
-  /** Render a Liquid template against the thread view plus extras. */
-  render(template: string, extras?: Record<string, unknown>): Promise<string>;
   /** Append events to the run log right away (progress and usage). Decision completion is appended atomically by the executor. */
   record(draft: EventDraft): Promise<void>;
   /** Resolve the model and effort for an inferencing or decision step. */
