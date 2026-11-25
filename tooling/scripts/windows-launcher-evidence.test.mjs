@@ -1969,6 +1969,7 @@ test('the Windows job runs the exact native command after a successful build wha
   const commands = Object.fromEntries(
     steps.filter((step) => step.id).map((step) => [step.id, step.run]),
   );
+  const apiEntry = 'pnpm --filter @graphgoblin/api test src/main.test.ts';
   assert.deepEqual(
     [
       commands.install,
@@ -1976,6 +1977,7 @@ test('the Windows job runs the exact native command after a successful build wha
       commands.sqlite_paths,
       commands.database_config,
       commands.native,
+      commands['api-entry'],
     ],
     [
       'pnpm install --frozen-lockfile',
@@ -1983,8 +1985,12 @@ test('the Windows job runs the exact native command after a successful build wha
       'pnpm --filter @graphgoblin/infrastructure exec vitest run src/sqlite/db.test.ts --maxWorkers=1',
       'pnpm --filter @graphgoblin/api exec vitest run src/config.test.ts --maxWorkers=1',
       'pnpm test:windows-launcher',
+      apiEntry,
     ],
   );
+  // The #565 API built-entry step is last and needs only a successful build in an uncancelled run.
+  assert.equal(steps.at(-1).id, 'api-entry');
+  assert.equal(steps.at(-1).if, "${{ !cancelled() && steps.build.outcome == 'success' }}");
   assert.ok(
     steps.every((step) => !('continue-on-error' in step)),
     'no step hides a failure',
@@ -2014,12 +2020,14 @@ test('the Windows job runs the exact native command after a successful build wha
     'native',
     'finalize',
     'upload',
+    'api-entry',
   ]);
   assert.equal(passing.ran.native.env[DIRECTORY_VARIABLE], nominal.setup.directory);
   assert.equal(passing.conclusion, 'success');
 
-  // A failed preparation, even one that left outputs, still runs the native command after a
-  // successful build, keeps its outcome, hands the suite no folder, uploads nothing and fails.
+  // A failed preparation, even one that left outputs, still runs the native command and the API
+  // entry after a successful build, keeps its outcome, hands the suite no folder, uploads nothing
+  // and fails.
   for (const native of ['success', 'failure']) {
     const failedPrepare = prepared();
     const result = schedule(steps, { ...failedPrepare, end: { evidence: 'failure', native } });
@@ -2030,8 +2038,11 @@ test('the Windows job runs the exact native command after a successful build wha
       'database_config',
       'evidence',
       'native',
+      'api-entry',
     ]);
     assert.equal(result.ran.native.run, 'pnpm test:windows-launcher');
+    assert.equal(result.ran['api-entry'].run, apiEntry);
+    assert.equal(result.outcomes.evidence, 'failure');
     assert.equal(result.outcomes.native, native);
     assert.deepEqual([result.outcomes.finalize, result.outcomes.upload], ['skipped', 'skipped']);
     assert.equal(result.conclusion, 'failure');
@@ -2043,13 +2054,21 @@ test('the Windows job runs the exact native command after a successful build wha
   for (const setupStep of ['#0', 'node']) {
     const result = schedule(steps, { ...prepared(), end: { [setupStep]: 'failure' } });
     assert.ok(
-      !['sqlite_paths', 'database_config', 'evidence', 'native', 'finalize', 'upload'].some(
-        (id) => id in result.ran,
-      ),
+      ![
+        'sqlite_paths',
+        'database_config',
+        'evidence',
+        'native',
+        'finalize',
+        'upload',
+        'api-entry',
+      ].some((id) => id in result.ran),
     );
+    assert.equal(result.outcomes['api-entry'], 'skipped');
   }
 
-  // After a failed install or build the prepared folder still uploads truthful not-run metadata.
+  // After a failed install or build the prepared folder still uploads truthful not-run metadata,
+  // and the API entry is skipped with the native command.
   for (const failing of ['install', 'build']) {
     const { setup, outputs } = prepared();
     const result = schedule(steps, { outputs, end: { [failing]: 'failure' } });
@@ -2058,10 +2077,11 @@ test('the Windows job runs the exact native command after a successful build wha
         result.outcomes.sqlite_paths,
         result.outcomes.database_config,
         result.outcomes.native,
+        result.outcomes['api-entry'],
         'finalize' in result.ran,
         'upload' in result.ran,
       ],
-      ['skipped', 'skipped', 'skipped', true, true],
+      ['skipped', 'skipped', 'skipped', 'skipped', true, true],
     );
     const outcome = finalizeFrom(result, setup);
     assert.equal(outcome.status, 'not-run');
@@ -2075,7 +2095,8 @@ test('the Windows job runs the exact native command after a successful build wha
   // The focused native checks run after a successful build, the second under GitHub's implicit
   // success(), so it is skipped once the first fails. A failed check fails the job yet still
   // prepares evidence and runs the exact native command with its folder, then finalizes and
-  // uploads; a cancelled check starts no evidence preparation, native work or upload.
+  // uploads. The API entry also runs after a failure. Cancellation skips evidence, native work
+  // and the API entry.
   for (const [check, focused] of [
     ['sqlite_paths', ['sqlite_paths']],
     ['database_config', ['sqlite_paths', 'database_config']],
@@ -2090,6 +2111,7 @@ test('the Windows job runs the exact native command after a successful build wha
       'native',
       'finalize',
       'upload',
+      'api-entry',
     ]);
     assert.deepEqual(
       [failed.outcomes.sqlite_paths, failed.outcomes.database_config],
@@ -2098,27 +2120,46 @@ test('the Windows job runs the exact native command after a successful build wha
     assert.equal(failed.ran.native.run, 'pnpm test:windows-launcher');
     assert.equal(failed.ran.native.env[DIRECTORY_VARIABLE], setup.directory);
     assert.equal(failed.outcomes.native, 'success');
+    assert.equal(failed.outcomes['api-entry'], 'success');
     assert.equal(failed.conclusion, 'failure');
 
     const cancelled = schedule(steps, { outputs, end: { [check]: 'cancelled' } });
     assert.deepEqual(ran(cancelled).slice(3), ['install', 'build', ...focused]);
     assert.deepEqual(
-      ['evidence', 'native', 'finalize', 'upload'].map((id) => cancelled.outcomes[id]),
-      ['skipped', 'skipped', 'skipped', 'skipped'],
+      ['evidence', 'native', 'finalize', 'upload', 'api-entry'].map((id) => cancelled.outcomes[id]),
+      ['skipped', 'skipped', 'skipped', 'skipped', 'skipped'],
     );
     assert.equal(cancelled.conclusion, 'cancelled');
   }
 
-  // A failed or cancelled native step is finalized and uploaded; its outcome sets the status.
-  for (const [native, conclusion] of [
-    ['failure', 'failure'],
-    ['cancelled', 'cancelled'],
+  // A failed or cancelled native step is finalized and uploaded; its outcome sets the status. The
+  // API entry still runs after a native failure, but not once the run is cancelled.
+  for (const [native, conclusion, api] of [
+    ['failure', 'failure', 'success'],
+    ['cancelled', 'cancelled', 'skipped'],
   ]) {
     const { setup, outputs } = prepared();
     const result = schedule(steps, { outputs, end: { native } });
     assert.ok('upload' in result.ran);
+    assert.equal(result.outcomes['api-entry'], api);
     assert.equal(result.conclusion, conclusion);
     assert.equal(finalizeFrom(result, setup).status, 'native-failed');
+  }
+
+  // A failed API entry fails the job, while the native, finalize and upload steps before it keep
+  // their established outcomes and the finalized step record is unchanged.
+  for (const native of ['success', 'failure']) {
+    const baseline = schedule(steps, { ...nominal, end: { native } });
+    const result = schedule(steps, { ...nominal, end: { native, 'api-entry': 'failure' } });
+    assert.equal(baseline.conclusion, native);
+    assert.deepEqual(ran(result), ran(baseline));
+    assert.deepEqual(
+      [result.outcomes.native, result.outcomes.finalize, result.outcomes.upload],
+      [native, 'success', 'success'],
+    );
+    assert.deepEqual(result.ran.finalize.env, baseline.ran.finalize.env);
+    assert.equal(result.outcomes['api-entry'], 'failure');
+    assert.equal(result.conclusion, 'failure');
   }
 
   // A refusal publishes no paths and nothing is uploaded; an incomplete result still uploads.
