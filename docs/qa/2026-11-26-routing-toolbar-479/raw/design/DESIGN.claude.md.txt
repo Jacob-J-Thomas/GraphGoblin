@@ -1,0 +1,57 @@
+# ACCEPT
+
+The design is accepted: the toolbar stays next to its edge and is kept inside the pane, with the specifics below.
+
+**What the screenshots and evidence JSON show.** Fit pads around the cards by 8%, but the Decision loop-back runs above the top card. In desktop Fit with the panels collapsed, its label sits at y≈144.5 and the pane top is at 113. That leaves 31.5 px of room where 50 are needed, so only the bottom 13.5 px of the button is drawn. Coarse collapsed-panels Fit and the 320 opening each leave a strip of about 7 px. The JSON adds one more case. Coarse default Fit with the panels open loses its top 6.2 px (49/63 hits), so its 44 px target fails even though its centre is hittable. Narrow 390 and every view after pan or zoom are fully inside the pane and must not move.
+
+**Placement** (screen px, measured from the pane). The boundary is xyflow's measured pane `width×height`, inset 8 px (`NOTE_MARGIN`) so the focus ring is never clipped. The row size is the controls row's own measured box, read with a layout effect and a `ResizeObserver`: 146.58×32 fine, 146.58×44 coarse, wider when Reset or Crosses shows. Never use the 420×48 frame constants. On coarse pointers the full 44 px rect must fit. L is the label's centre.
+
+1. **Above** (today's position): row bottom = L.y − 18. Use it when it fits inside.
+2. **Below**: row top = L.y + 18. Use it when it fits inside and covers no handle hit area. That means this edge's segment handles and any node port taken from xyflow's `nodeLookup` handle data.
+3. **Clamp**: on the side with more room, pinned at the 8 px inset. It may cover the label but stays on top, because the selected edge sits at z 2000 and the toolbar is drawn after the handles.
+
+Each step first shifts the row sideways into the inset so it stays over the label. At 320 with Crosses + Reset + Remove, the row is wider than the pane less 16 px, so it wraps with Remove last.
+
+These steps apply only while the label centre is inside the pane. Once the label leaves, the toolbar travels off with it unclamped, as today: a pinned action for a connection you can't see loses its link to that connection.
+
+No connector, pointer, animation or new design token. The link to the edge is the matching 18 px gap above or below the label, or touching the label when clamped.
+
+**Predicted centres:**
+- Desktop collapsed: (475.2, 178.5)
+- Coarse collapsed: (376.6, 186.1)
+- Coarse opening: (472.7, 183.9)
+- Coarse default: (473.0, 216.8)
+- 320 opening: (130.2, 336.5)
+
+In the three cases I have screenshots for, these rects cover only card corners and no handle. For example, on desktop the row covers x402–408 of "Return to the gate".
+
+**Reset hold, focus and refusal.**
+- Compute the placement in a `useStore` selector with an equality check, so a pan only re-renders when the result changes. Handle positions are read only after Above fails.
+- When Reset is pressed, store the chosen side and offsets in `ToolbarHold` next to `at`. During the hold, only a transform or pane-size change recalculates the placement; route or handle changes never do. So later presses land on the held, aria-disabled Reset, not on a card corner that would otherwise be uncovered.
+- Unchanged: Reset moving focus to the edge, Remove's `detail > 1` guard, `TOOLBAR_KEYS`/Escape, the settling state, the protected refusal's disabled title, and the #481 note's `aria-describedby`.
+- The #481 note goes on the far side of the controls when `NOTE_ROOM` fits, otherwise on the other side of the label. The controls never move for it.
+
+**Fit and motion.** Opening Fit and public Fit need no special handling; they are just transforms the selector reads. Fit, pan and zoom recalculate in the same render, so a flip happens on the frame its condition changes. The mouse-pan gate is untouched, and touch, wheel and keyboard moves never enter it. Camera moves never write.
+
+**Where the code goes.** A pure, unit-tested `toolbarPlacement()` next to `notePlacement`. The `RouteHandles` wiring and the hold change go in `OrthogonalEdge.tsx`, and the wrap in `canvas-routes.css`. The numbered docs describe the above → below → clamp order. `Canvas.tsx`, `viewport-gesture.ts`, the store and saved routes/labels stay untouched.
+
+**Alternatives turned down.**
+- Canvas-corner action strip: weak link to the edge and new focus wiring.
+- Parallel always-on toolbar: a duplicate action and tab stop.
+- Always below: moves the overflow elsewhere and moves cases that work today.
+- Changing `FIT_PADDING` or making Fit route-aware: global, and shared with Space cards.
+- Removing the pane's overflow clipping.
+
+A separate fallback placement away from the edge would need native evidence of a visible label where no step fits, or where every step that fits covers a handle. Nothing in the evidence shows that.
+
+**Browser assertions**, run by someone other than the implementer. Edge, both themes; 1280×900, coarse 1024×768, 390×844, 320×800. Stages: opening Fit, public Fit with panels open and collapsed, settled pan, zoom.
+
+1. **Geometry:** Remove's client rect sits at least 8 px inside the `.react-flow` pane rect, not the browser window. Centres match the predictions, and cases that should not move match their recorded centres within 0.5 px.
+2. **Hit probes** (`elementFromPoint` only, no events fired): a 9×7 grid inset 4 px returns Remove 63/63. Empty points in the frame and uncovered card bodies and ports return the same element as with nothing selected. Each segment handle centre returns its handle.
+3. **Partial-region control:** on the pre-fix build only, a trusted mouse click at (406,115) on the visible strip. It shows partial clipping, not that the button was unreachable, and is never acceptance evidence.
+4. **Acceptance click/tap:** on the fixed build, with no pan or zoom, a trusted mouse click (desktop, narrow) or CDP touch tap (coarse, emulated, not physical hardware) at the computed centre. Expect one conditional PUT that removes only that edge. One Undo sends one PUT, an API GET equals the bytes from before the removal, and the edge is present after reload.
+5. **Recovered controls:** the after-zoom tap at (399,156) and click at (502,209) still pass. These count as regression checks only.
+6. **Reset:** in the below position over a card corner, three trusted presses on Reset. Expect one PUT and one history entry. Before each later press, `elementFromPoint` at that point returns the same aria-disabled Reset. Focus stays on the edge, no node editor opens, and Remove is not touched.
+7. **History:** zero PUTs and zero history entries across Fit, flips, pan and zoom. Every native Undo/Redo is matched by an API readback.
+8. **Guards:** stale, ambiguous, protected and #481 refusals, Enter/Space/Escape, and mouse-pan gating are unchanged.
+9. Contrast and keyboard checks are reported separately from geometry.

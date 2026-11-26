@@ -6,10 +6,18 @@ import {
   ReactFlowProvider,
   useStoreApi,
   type EdgeProps,
+  type InternalNode,
+  type ReactFlowState,
 } from '@xyflow/react';
-import type { ReactNode } from 'react';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { notePlacement, OrthogonalEdge, type OrthogonalFlowEdge } from './OrthogonalEdge.js';
+import { Profiler, type ReactNode } from 'react';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  notePlacement,
+  OrthogonalEdge,
+  toolbarPlacement,
+  type HitArea,
+  type OrthogonalFlowEdge,
+} from './OrthogonalEdge.js';
 import { RouteEditingContext, type RouteEditing } from './route-editing.js';
 import type { RoutedEdge } from './routing.js';
 import { createRouteChannels } from './route-channels.js';
@@ -1428,5 +1436,578 @@ describe('notePlacement (#481)', () => {
     expect(notePlacement({ x: 500, y: 200 }, [0, 0, 1], { width: 1000, height: 300 }).below).toBe(
       false,
     );
+  });
+
+  it('keeps the note on the far side of controls below the label, and beside clamped ones on the other side of the label (#479)', () => {
+    /** A 48 px frame 18 px under the label. */
+    const below = { below: true, top: 18, bottom: 66, clamped: false };
+    // 800 - (100 + 66) - 8 = 626 px under the controls.
+    expect(notePlacement({ x: 500, y: 100 }, [0, 0, 1], pane, below).below).toBe(true);
+    // 126 px there, less than its room but more than the 82 px above the label.
+    const short = { width: 1000, height: 300 };
+    expect(notePlacement({ x: 500, y: 100 }, [0, 0, 1], short, below).below).toBe(true);
+    // 26 px there and 32 px above the label: above.
+    const shorter = { width: 1000, height: 150 };
+    expect(notePlacement({ x: 500, y: 50 }, [0, 0, 1], shorter, below).below).toBe(false);
+    // A clamped row leaves no far side.
+    const pinnedHigh = { below: false, top: -12, bottom: 36, clamped: true };
+    expect(notePlacement({ x: 500, y: 20 }, [0, 0, 1], pane, pinnedHigh).below).toBe(true);
+    const pinnedLow = { below: true, top: -11, bottom: 37, clamped: true };
+    expect(notePlacement({ x: 500, y: 60 }, [0, 0, 1], pane, pinnedLow).below).toBe(false);
+  });
+});
+
+describe('toolbarPlacement (#479)', () => {
+  const pane = { width: 1000, height: 800 };
+  const row = { width: 146, height: 32 };
+  const coarseRow = { width: 146, height: 44 };
+  const nothing = (): HitArea[] => [];
+  const above = {
+    step: 'above',
+    shift: 0,
+    edge: 'bottom',
+    y: -18,
+    below: false,
+    fits: true,
+    covers: false,
+  } as const;
+
+  it('keeps the place above the label until the pane and the row are measured, reading no handle', () => {
+    const handles = vi.fn(nothing);
+    const unmeasured = { ...above, step: 'unmeasured' };
+    expect(toolbarPlacement({ x: 0, y: 0 }, undefined, pane, handles)).toEqual(unmeasured);
+    expect(toolbarPlacement({ x: 0, y: 0 }, row, { width: 0, height: 0 }, handles)).toEqual(
+      unmeasured,
+    );
+    expect(toolbarPlacement({ x: 0, y: 0 }, { width: 0, height: 0 }, pane, handles)).toEqual(
+      unmeasured,
+    );
+    expect(handles).not.toHaveBeenCalled();
+  });
+
+  it('uses Above while the row fits inside the 8 px inset, reading no handle', () => {
+    const handles = vi.fn(nothing);
+    expect(toolbarPlacement({ x: 500, y: 400 }, row, pane, handles)).toEqual(above);
+    // 58 - 18 - 32 = 8: the row's top on the inset.
+    expect(toolbarPlacement({ x: 500, y: 58 }, row, pane, handles)).toEqual(above);
+    expect(handles).not.toHaveBeenCalled();
+    // A coarse pointer's 44 px row needs 12 px more; a fraction less fails too. Only now are the
+    // handles read, once each.
+    expect(toolbarPlacement({ x: 500, y: 58 }, coarseRow, pane, handles).step).toBe('below');
+    expect(toolbarPlacement({ x: 500, y: 57.9 }, row, pane, handles).step).toBe('below');
+    expect(handles).toHaveBeenCalledTimes(2);
+  });
+
+  it('moves the row sideways into the inset, over its label, at every step', () => {
+    // 20 - 73 = -53 is the centred left; 8 is the inset: 61 px right.
+    expect(toolbarPlacement({ x: 20, y: 400 }, row, pane, nothing)).toEqual({
+      ...above,
+      shift: 61,
+    });
+    // 995 - 73 = 922; the last left inside is 1000 - 8 - 146 = 846: 76 px left.
+    expect(toolbarPlacement({ x: 995, y: 400 }, row, pane, nothing)).toEqual({
+      ...above,
+      shift: -76,
+    });
+    expect(toolbarPlacement({ x: 20, y: 30 }, row, pane, nothing)).toMatchObject({
+      step: 'below',
+      shift: 61,
+    });
+    // The pane's own edge is inside it.
+    expect(toolbarPlacement({ x: 0, y: 400 }, row, pane, nothing)).toEqual({ ...above, shift: 81 });
+  });
+
+  it('leaves the row above a label outside the pane, unshifted, so it goes with the label', () => {
+    const handles = vi.fn(nothing);
+    for (const label of [
+      { x: 500, y: -1 },
+      { x: -1, y: 400 },
+      { x: 1001, y: 30 },
+      { x: 500, y: 801 },
+    ])
+      expect(toolbarPlacement(label, row, pane, handles)).toEqual({ ...above, step: 'off-pane' });
+    expect(handles).not.toHaveBeenCalled();
+  });
+
+  it('uses Below, 18 px under the label, when Above does not fit and it covers no handle’s target', () => {
+    expect(toolbarPlacement({ x: 500, y: 30 }, row, pane, nothing)).toEqual({
+      ...above,
+      step: 'below',
+      edge: 'top',
+      y: 18,
+      below: true,
+    });
+    // The label's own lane handle, 40 px beside it: a fine 12 px target ends 6 px short of the row
+    // (top 48); a coarse 22 px one reaches 4 px in. Below is on the roomier side, so the clamped
+    // row stays there and reports covering it.
+    const lane = (r: number): HitArea[] => [{ x: 540, y: 30, rx: r, ry: r, round: true }];
+    expect(toolbarPlacement({ x: 500, y: 30 }, row, pane, () => lane(12)).step).toBe('below');
+    expect(toolbarPlacement({ x: 500, y: 30 }, coarseRow, pane, () => lane(22))).toEqual({
+      ...above,
+      step: 'clamp',
+      edge: 'top',
+      y: 18,
+      below: true,
+      covers: true,
+    });
+    // Round targets are circles: one diagonally off the row's corner (427, 48) misses it.
+    const corner: HitArea[] = [{ x: 417, y: 38, rx: 12, ry: 12, round: true }];
+    expect(toolbarPlacement({ x: 500, y: 30 }, row, pane, () => corner).step).toBe('below');
+    // A port's box inside the place, and one only touching its bottom (80).
+    const inside: HitArea[] = [{ x: 520, y: 60, rx: 6, ry: 6, round: false }];
+    expect(toolbarPlacement({ x: 500, y: 30 }, row, pane, () => inside)).toMatchObject({
+      step: 'clamp',
+      covers: true,
+    });
+    const touching: HitArea[] = [{ x: 520, y: 86, rx: 6, ry: 6, round: false }];
+    expect(toolbarPlacement({ x: 500, y: 30 }, row, pane, () => touching).step).toBe('below');
+  });
+
+  it('clamps the row into the inset on the side with more room when neither fits, over the label if it must', () => {
+    const short = { width: 1000, height: 85 };
+    // 30 px down, 55 px of room below: Below's bottom (80) passes the inset (77) and pins there.
+    expect(toolbarPlacement({ x: 500, y: 30 }, row, short, nothing)).toEqual({
+      ...above,
+      step: 'clamp',
+      edge: 'bottom',
+      y: 47,
+      below: true,
+    });
+    // 50 px down, more room above: Above's top (0) pins to the inset, over the label.
+    expect(toolbarPlacement({ x: 500, y: 50 }, row, short, nothing)).toEqual({
+      ...above,
+      step: 'clamp',
+      edge: 'top',
+      y: -42,
+      below: false,
+    });
+  });
+
+  it('reports a row wider or taller than the pane less its insets', () => {
+    // 146 px in a 150 px pane: at the left inset, still above.
+    expect(toolbarPlacement({ x: 75, y: 400 }, row, { width: 150, height: 800 }, nothing)).toEqual({
+      ...above,
+      shift: 6,
+      fits: false,
+    });
+    // An 80 px wrapped row in a 90 px pane: at the top inset.
+    expect(
+      toolbarPlacement(
+        { x: 500, y: 45 },
+        { width: 146, height: 80 },
+        { width: 1000, height: 90 },
+        nothing,
+      ),
+    ).toEqual({ ...above, step: 'clamp', edge: 'top', y: -37, below: false, fits: false });
+  });
+
+  it('counts a row measured a rounding residue past the pane less its insets as fitting', () => {
+    // A wrapped row at its 214 px max-width in a 230 px pane, measured at a fractional zoom.
+    const wrapped = { width: 214.00003, height: 72 };
+    const narrow = { width: 230, height: 800 };
+    const placed = toolbarPlacement({ x: 115, y: 400 }, wrapped, narrow, nothing);
+    expect(placed.fits).toBe(true);
+    expect(placed.step).toBe('above');
+    expect(placed.shift).toBeCloseTo(0, 3);
+    // The same residue in height: a 784 px row in an 800 px pane fits; half a pixel more does not.
+    const tallPane = { width: 1000, height: 800 };
+    expect(
+      toolbarPlacement({ x: 500, y: 400 }, { width: 146, height: 784.00003 }, tallPane, nothing)
+        .fits,
+    ).toBe(true);
+    expect(
+      toolbarPlacement({ x: 115, y: 400 }, { width: 214.6, height: 72 }, narrow, nothing).fits,
+    ).toBe(false);
+    expect(
+      toolbarPlacement({ x: 500, y: 400 }, { width: 146, height: 784.6 }, tallPane, nothing).fits,
+    ).toBe(false);
+  });
+});
+
+/**
+ * The real component in xyflow's provider, its store set as a measured pane sets it. The row's
+ * measured box and the resize observer are controlled mocks (jsdom has no layout), so these tests
+ * establish what is placed from given measurements, never physical geometry or hit-testing (#479).
+ */
+describe('The selected connection’s toolbar is placed inside the pane (#479)', () => {
+  let size = { width: 146, height: 32 };
+  const observers = new Set<FakeResizeObserver>();
+  class FakeResizeObserver {
+    callback: ResizeObserverCallback;
+    constructor(callback: ResizeObserverCallback) {
+      this.callback = callback;
+      observers.add(this);
+    }
+    observe() {}
+    unobserve() {}
+    disconnect() {
+      observers.delete(this);
+    }
+  }
+  /** Every observer reports, as a browser does after a layout that resized what it observes. */
+  const resized = () =>
+    act(() => {
+      for (const observer of [...observers]) observer.callback([], observer);
+    });
+  /** The lane of `route` moved far left, so its handle sits beside the label pill (-143, 180). */
+  const wide: RoutedEdge = {
+    ...route,
+    points: [
+      { x: 100, y: 0 },
+      { x: 130, y: 0 },
+      { x: 130, y: 180 },
+      { x: -200, y: 180 },
+      { x: -200, y: 40 },
+      { x: 0, y: 40 },
+    ],
+    label: { x: -35, y: 180 },
+    labelBounds: { id: '', left: -72, right: 2, top: 169, bottom: 191 },
+  };
+  /** A card at the origin with one input port xyflow measured at `at` (flow px, 12 px square). */
+  const cardWithPort = (id: string, at: { x: number; y: number }): InternalNode => ({
+    id,
+    position: { x: 0, y: 0 },
+    data: {},
+    measured: { width: 200, height: 100 },
+    internals: {
+      positionAbsolute: { x: 0, y: 0 },
+      z: 0,
+      userNode: { id, position: { x: 0, y: 0 }, data: {} },
+      handleBounds: {
+        source: null,
+        target: [
+          {
+            id: 'in',
+            nodeId: id,
+            type: 'target',
+            position: Position.Left,
+            width: 12,
+            height: 12,
+            ...at,
+          },
+        ],
+      },
+    },
+  });
+
+  beforeEach(() => {
+    size = { width: 146, height: 32 };
+    observers.clear();
+    useEditorStore.setState({ definition: undefined, systemChat: false });
+    vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return DOMRect.fromRect(
+        this.classList.contains('gg-route-toolbar') ? size : { width: 0, height: 0 },
+      );
+    });
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+    useEditorStore.setState({ definition: undefined, systemChat: false });
+  });
+
+  function mount(edge: ReactNode, editing = editor()) {
+    let flowStore: ReturnType<typeof useStoreApi> | undefined;
+    function FlowStore() {
+      flowStore = useStoreApi();
+      return null;
+    }
+    const renders = vi.fn();
+    const tree = (child: ReactNode) =>
+      inFlow(
+        <>
+          <FlowStore />
+          <Profiler id="edge" onRender={renders}>
+            {child}
+          </Profiler>
+        </>,
+        editing,
+      );
+    const view = render(tree(edge));
+    return {
+      view,
+      editing,
+      renders,
+      rerender: (child: ReactNode) => view.rerender(tree(child)),
+      set: (state: Partial<ReactFlowState>) => act(() => flowStore!.setState(state)),
+      frame: () => view.container.querySelector('foreignObject')!,
+      row: () => view.container.querySelector<HTMLElement>('.gg-route-toolbar')!,
+    };
+  }
+
+  it('keeps a toolbar that fits above its label where it was, and a pan that keeps its place renders nothing', () => {
+    const { set, frame, row, renders } = mount(<OrthogonalEdge {...props} selected />);
+    // The label (55, 180) at (455, 480) in a 1000 x 800 pane.
+    set({ width: 1000, height: 800, transform: [400, 300, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'above');
+    // The frame of before #479: 420 x 48 and centred, its bottom 18 px above the label.
+    expect(frame().parentElement).toHaveAttribute('transform', 'translate(55 162) scale(1)');
+    expect(frame()).toHaveAttribute('x', '-210');
+    expect(frame()).toHaveAttribute('y', '-48');
+    expect(frame()).toHaveAttribute('width', '420');
+    expect(frame()).toHaveAttribute('height', '48');
+    expect(frame().firstElementChild).toHaveClass('justify-end');
+    // It may wrap only at the pane less its 8 px insets.
+    expect(row()).toHaveStyle({ maxWidth: '984px' });
+    const settled = renders.mock.calls.length;
+    set({ transform: [380, 280, 1] });
+    set({ transform: [420, 320, 1] });
+    expect(renders).toHaveBeenCalledTimes(settled);
+    // Near the pane's right side the row moves left into the inset: from 990 - 73 = 917 to 846.
+    set({ transform: [935, 300, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'above');
+    expect(frame()).toHaveAttribute('x', String(-71 - 210));
+    expect(frame()).toHaveAttribute('y', '-48');
+    expect(renders.mock.calls.length).toBeGreaterThan(settled);
+  });
+
+  it('puts the row below a label near the pane’s top, reports a port it must cover there, and pins it inside a short pane', () => {
+    const { set, frame, row } = mount(<OrthogonalEdge {...props} selected />);
+    // The label at (455, 30): Above's top would be at 30 - 18 - 32 = -20.
+    set({ width: 1000, height: 800, transform: [400, -150, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    expect(row()).not.toHaveAttribute('data-covers-handle');
+    expect(row()).not.toHaveAttribute('data-overflow');
+    // Its top 18 px under the label: 36 px under the group, which stays 18 px above the label.
+    expect(frame().parentElement).toHaveAttribute('transform', 'translate(55 162) scale(1)');
+    expect(frame()).toHaveAttribute('x', '-210');
+    expect(frame()).toHaveAttribute('y', '36');
+    expect(frame().firstElementChild).toHaveClass('justify-start');
+    // A card's input port under that place, at (446, 64). Below is on the roomier side, so the
+    // clamped row stays there and reports covering it.
+    set({ nodeLookup: new Map([['work', cardWithPort('work', { x: 40, y: 208 })]]) });
+    expect(row()).toHaveAttribute('data-placement', 'clamp');
+    expect(row()).toHaveAttribute('data-covers-handle', 'true');
+    expect(frame()).toHaveAttribute('y', '36');
+    // A port elsewhere changes nothing.
+    set({ nodeLookup: new Map([['work', cardWithPort('work', { x: 40, y: 300 })]]) });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    // Under that place, a hidden card's port and a card xyflow has not measured are no targets;
+    // an output port is one, as an input port is.
+    const port = cardWithPort('work', { x: 40, y: 208 });
+    const { handleBounds, ...unmeasured } = port.internals;
+    set({
+      nodeLookup: new Map([
+        ['hidden', { ...port, hidden: true }],
+        ['unmeasured', { ...port, internals: unmeasured }],
+      ]),
+    });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    set({
+      nodeLookup: new Map([
+        [
+          'output',
+          {
+            ...port,
+            internals: {
+              ...port.internals,
+              handleBounds: { source: handleBounds!.target, target: null },
+            },
+          },
+        ],
+      ]),
+    });
+    expect(row()).toHaveAttribute('data-placement', 'clamp');
+    expect(row()).toHaveAttribute('data-covers-handle', 'true');
+    set({ nodeLookup: new Map() });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    // An 85 px pane: Below's bottom (80) passes the inset (77), so the row's bottom pins there,
+    // 47 px under the label; the 48 px frame then starts 1 px above it.
+    set({ height: 85 });
+    expect(row()).toHaveAttribute('data-placement', 'clamp');
+    expect(row()).not.toHaveAttribute('data-covers-handle');
+    expect(frame()).toHaveAttribute('y', String(-1 + 18));
+    expect(frame().firstElementChild).toHaveClass('justify-end');
+  });
+
+  it('keeps the row above a label outside the pane, unshifted, so it leaves with the label', () => {
+    const { set, frame, row } = mount(<OrthogonalEdge {...props} selected />);
+    // The label at (5, -10): above the pane, near its left side.
+    set({ width: 1000, height: 800, transform: [-50, -190, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'off-pane');
+    expect(frame()).toHaveAttribute('x', '-210');
+    expect(frame()).toHaveAttribute('y', '-48');
+  });
+
+  it('measures the row again as the pointer turns coarse or fine, settles, and reads the handles at their targets', () => {
+    let coarse = false;
+    const changes = new Set<() => void>();
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn(() => ({
+        get matches() {
+          return coarse;
+        },
+        addEventListener: (_: string, listener: () => void) => changes.add(listener),
+        removeEventListener: (_: string, listener: () => void) => changes.delete(listener),
+      })),
+    );
+    const pointer = (next: boolean) => {
+      act(() => {
+        coarse = next;
+        size = { width: 146, height: next ? 44 : 32 };
+        for (const change of changes) change();
+      });
+      resized();
+    };
+    const { set, frame, row, renders, rerender } = mount(
+      <OrthogonalEdge {...props} data={data(wide)} selected />,
+    );
+    // The label (-35, 180) at (365, 60): a 32 px row fits above, its top on the inset.
+    set({ width: 1000, height: 800, transform: [400, -120, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'above');
+    // Measured again at the same size: nothing renders, so measuring settles.
+    const settled = renders.mock.calls.length;
+    resized();
+    resized();
+    expect(renders).toHaveBeenCalledTimes(settled);
+    // Coarse: 44 px controls no longer fit above. Below clears the lane handle, beside the pill at
+    // (257, 60), even at its 22 px target.
+    pointer(true);
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    expect(row()).not.toHaveAttribute('data-covers-handle');
+    expect(frame()).toHaveAttribute('y', '36');
+    // A lane too short to move its handle off the label, at (455, 60): its coarse target reaches
+    // 4 px into Below's place, which is reported.
+    rerender(<OrthogonalEdge {...props} selected />);
+    expect(row()).toHaveAttribute('data-placement', 'clamp');
+    expect(row()).toHaveAttribute('data-covers-handle', 'true');
+    // Fine again, panned up to put the label at 30: its 12 px target leaves Below clear.
+    pointer(false);
+    set({ transform: [400, -150, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    expect(row()).not.toHaveAttribute('data-covers-handle');
+  });
+
+  it('lets the row wrap in a narrow pane, Remove connection last, and places it by its wrapped box', () => {
+    size = { width: 304, height: 72 };
+    const { set, frame, row } = mount(
+      <OrthogonalEdge
+        {...props}
+        data={data({ ...route, manual: true, crossing: true })}
+        selected
+      />,
+    );
+    // A 320 px pane, the label at (160, 400).
+    set({ width: 320, height: 800, transform: [105, 220, 1] });
+    expect(row()).toHaveStyle({ maxWidth: '304px' });
+    expect([...row().children].map((child) => child.textContent)).toEqual([
+      'Crosses a card',
+      'Reset route',
+      'Remove connection',
+    ]);
+    expect(row()).toHaveAttribute('data-placement', 'above');
+    expect(row()).not.toHaveAttribute('data-overflow');
+    // The frame holds both lines; the row's bottom stays 18 px above the label.
+    expect(frame()).toHaveAttribute('height', '72');
+    expect(frame()).toHaveAttribute('y', '-72');
+    expect(frame()).toHaveAttribute('x', '-210');
+    // With the label at 40, the wrapped row goes below it.
+    set({ transform: [105, -140, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    expect(frame()).toHaveAttribute('y', '36');
+    // A pane too narrow for the row says so.
+    set({ width: 300 });
+    expect(row()).toHaveAttribute('data-overflow', 'true');
+  });
+
+  it('holds the row where Reset route was pressed while the view stays, whatever the route and ports do, and places it again after a pan', async () => {
+    const channels = createRouteChannels();
+    const channel = channels.edge('return', { ...route, manual: true });
+    const { set, frame, row, editing } = mount(
+      <OrthogonalEdge {...props} data={{ channel, forward: false, suspended: false }} selected />,
+    );
+    set({ width: 1000, height: 800, transform: [400, -150, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    const placed = () => [
+      frame().parentElement!.getAttribute('transform'),
+      frame().getAttribute('x'),
+      frame().getAttribute('y'),
+    ];
+    const before = placed();
+    const reset = screen.getByRole('button', { name: 'Reset route' });
+    await userEvent.setup().click(reset);
+    expect(editing.reset).toHaveBeenCalledTimes(1);
+    // The automatic route draws its label and handles elsewhere, and a port now lies under the row.
+    act(() =>
+      channels.publish(
+        new Map([
+          [
+            'return',
+            {
+              ...route,
+              points: [
+                { x: 100, y: 0 },
+                { x: 120, y: 0 },
+                { x: 120, y: 120 },
+                { x: -10, y: 120 },
+                { x: -10, y: 40 },
+                { x: 0, y: 40 },
+              ],
+              label: { x: 40, y: 120 },
+            },
+          ],
+        ]),
+        new Set(['return']),
+      ),
+    );
+    set({ nodeLookup: new Map([['work', cardWithPort('work', { x: 40, y: 208 })]]) });
+    expect(placed()).toEqual(before);
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    expect(screen.getByRole('button', { name: 'Reset route' })).toBe(reset);
+    expect(reset).toHaveAttribute('aria-disabled', 'true');
+    // A pan places it again beside the held label: the port is under Below now.
+    set({ transform: [401, -150, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'clamp');
+    expect(frame().parentElement).toHaveAttribute('transform', 'translate(55 162) scale(1)');
+    // Back in the view it was pressed in, it is where it was pressed.
+    set({ transform: [400, -150, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    expect(placed()).toEqual(before);
+    expect(editing.reset).toHaveBeenCalledTimes(1);
+  });
+
+  it('puts a shared id’s note on the far side of controls below the label, or above the label when that has more room (#481)', () => {
+    const own = { id: 'return', from: { node: 'done', port: 'out' }, to: { node: 'work' } };
+    const other = { id: 'return', from: { node: 'start', port: 'out' }, to: { node: 'work' } };
+    useEditorStore.setState({
+      systemChat: false,
+      definition: {
+        schemaVersion: 4,
+        name: 'Shared id',
+        nodes: [
+          { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+          { id: 'work', kind: 'mutate', label: 'Work', config: { operations: [] } },
+          { id: 'done', kind: 'mutate', label: 'Done', config: { operations: [] } },
+        ],
+        edges: [other, own],
+      } as unknown as LoopDefinitionInput,
+    });
+    const { set, frame, row, view } = mount(<OrthogonalEdge {...props} selected />);
+    set({ width: 1000, height: 800, transform: [400, -150, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    const note = view.container.querySelector<HTMLElement>('.gg-route-note')!;
+    // Under the controls, in their frame, which starts 18 px under the label.
+    expect(row().nextElementSibling).toBe(note);
+    expect(view.container.querySelectorAll('foreignObject')).toHaveLength(1);
+    expect(frame()).toHaveAttribute('x', '-420');
+    expect(frame()).toHaveAttribute('y', '36');
+    expect(frame()).toHaveAttribute('height', String(48 + 240));
+    expect(screen.getByRole('button', { name: 'Remove connection' })).toHaveAttribute(
+      'aria-describedby',
+      note.id,
+    );
+    // A 150 px pane, the label at 50: 26 px under the controls and 32 px above the label.
+    set({ height: 150, transform: [400, -130, 1] });
+    expect(row()).toHaveAttribute('data-placement', 'below');
+    const [controls, noteFrame] = view.container.querySelectorAll('foreignObject');
+    expect(noteFrame!.contains(view.container.querySelector('.gg-route-note'))).toBe(true);
+    expect(noteFrame).toHaveAttribute('y', '-240');
+    expect(noteFrame!.parentElement).toHaveAttribute('transform', 'translate(55 162) scale(1)');
+    expect(controls).toHaveAttribute('y', '36');
+    expect(controls).toHaveAttribute('height', '48');
   });
 });

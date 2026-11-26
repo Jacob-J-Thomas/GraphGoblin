@@ -1,0 +1,80 @@
+
+Running 8 tests using 1 worker
+
+  ✓  1 [chromium] › e2e\routing-toolbar.spec.ts:546:5 › desktop 1280 x 900 › light: after Fit with the panels collapsed Remove connection is below its label and wholly hittable; pans and zooms place it without a write; one click removes it and one Undo restores the draft (#479) (9.0s)
+  ✓  2 [chromium] › e2e\routing-toolbar.spec.ts:546:5 › desktop 1280 x 900 › dark: after Fit with the panels collapsed Remove connection is below its label and wholly hittable; pans and zooms place it without a write; one click removes it and one Undo restores the draft (#479) (6.4s)
+  ✓  3 [chromium] › e2e\routing-toolbar.spec.ts:621:3 › desktop 1280 x 900 › Reset route below its label, over a card corner: three trusted presses reset once, each later press lands on the held Reset route, and one Undo restores the manual route (#479, #207) (4.6s)
+  ✘  4 [chromium] › e2e\routing-toolbar.spec.ts:717:3 › desktop 1280 x 900 › a shared id’s note goes under controls below the label, inside the pane, and the unavailable Remove connection changes nothing (#479, #481) (11.7s)
+  ✓  5 [chromium] › e2e\routing-toolbar.spec.ts:769:3 › coarse pointer 1024 x 768 › dark: the opening and both Fits keep the full 44 px Remove connection inside the pane; zoomed out it stays above; one tap removes it and one tap on Undo restores the draft (#479) (5.4s)
+  ✓  6 [chromium] › e2e\routing-toolbar.spec.ts:819:3 › narrow 390 x 844 › light: the opening and Fit keep the row above the label where it was; one click removes and one Undo restores (#479) (3.5s)
+  ✓  7 [chromium] › e2e\routing-toolbar.spec.ts:846:3 › narrow 320 x 800 › dark: the opening puts Remove connection below the label inside the pane; Crosses a card, Reset route and Remove connection wrap with Remove connection last (#479) (3.9s)
+  ✘  8 [chromium] › e2e\routing-toolbar.spec.ts:897:3 › a pane too short for Above and Below › light: the row is clamped inside the pane on the side with more room and stays wholly hittable (#479) (2.0s)
+
+
+  1) [chromium] › e2e\routing-toolbar.spec.ts:717:3 › desktop 1280 x 900 › a shared id’s note goes under controls below the label, inside the pane, and the unavailable Remove connection changes nothing (#479, #481) 
+
+    Error: expect(locator).toHaveCount(expected) failed
+
+    Locator:  locator('.react-flow__edge[data-id="fit-repeat-edge"]').filter({ has: locator('title').filter({ hasText: 'Use fallback' }) })
+    Expected: 1
+    Received: 2
+    Timeout:  10000ms
+
+    Call log:
+      - Expect "toHaveCount" locator('.react-flow__edge[data-id="fit-repeat-edge"]').filter({ has: locator('title').filter({ hasText: 'Use fallback' }) }) with timeout 10000ms
+      - waiting for locator('.react-flow__edge[data-id="fit-repeat-edge"]').filter({ has: locator('title').filter({ hasText: 'Use fallback' }) })
+        23 × locator resolved to 2 elements
+           - unexpected value "2"
+
+
+      733 |       has: page.locator('title', { hasText: 'Use fallback' }),
+      734 |     });
+    > 735 |     await expect(connection).toHaveCount(1);
+          |                              ^
+      736 |     await select(page, connection);
+      737 |     const geometry = await measure(connection, 'shared-id');
+      738 |     await record(page, info, [geometry], geometry);
+        at G:\ggq\gg-fu-ui-479-20261124\GraphGoblin\apps\web\e2e\routing-toolbar.spec.ts:735:30
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-24-followups\ui-479-515-555\claude-window-author-03\browser-output-01\routing-toolbar-desktop-12-1d1a2-on-changes-nothing-479-481--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-24-followups\ui-479-515-555\claude-window-author-03\browser-output-01\routing-toolbar-desktop-12-1d1a2-on-changes-nothing-479-481--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-24-followups\ui-479-515-555\claude-window-author-03\browser-output-01\routing-toolbar-desktop-12-1d1a2-on-changes-nothing-479-481--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e\routing-toolbar.spec.ts:897:3 › a pane too short for Above and Below › light: the row is clamped inside the pane on the side with more room and stays wholly hittable (#479) 
+
+    Error: a pane shorter than Above and Below need
+
+    expect(received).toBeLessThan(expected)
+
+    Expected: < 116
+    Received:   263
+
+      908 |     let geometry = await measure(connection, 'short-fit');
+      909 |     const paneHeight = geometry.pane.height;
+    > 910 |     expect(paneHeight, 'a pane shorter than Above and Below need').toBeLessThan(
+          |                                                                    ^
+      911 |       2 * (GAP + 32 + INSET),
+      912 |     );
+      913 |     // Pan the label to the pane's middle: neither Above nor Below fits.
+        at G:\ggq\gg-fu-ui-479-20261124\GraphGoblin\apps\web\e2e\routing-toolbar.spec.ts:910:68
+
+    Error Context: ..\..\..\..\delivery-evidence\2026-11-24-followups\ui-479-515-555\claude-window-author-03\browser-output-01\routing-toolbar-a-pane-too-49dea--stays-wholly-hittable-479--chromium\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    ..\..\..\..\delivery-evidence\2026-11-24-followups\ui-479-515-555\claude-window-author-03\browser-output-01\routing-toolbar-a-pane-too-49dea--stays-wholly-hittable-479--chromium\trace.zip
+    Usage:
+
+        pnpm exec playwright show-trace ..\..\..\..\delivery-evidence\2026-11-24-followups\ui-479-515-555\claude-window-author-03\browser-output-01\routing-toolbar-a-pane-too-49dea--stays-wholly-hittable-479--chromium\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › e2e\routing-toolbar.spec.ts:717:3 › desktop 1280 x 900 › a shared id’s note goes under controls below the label, inside the pane, and the unavailable Remove connection changes nothing (#479, #481) 
+    [chromium] › e2e\routing-toolbar.spec.ts:897:3 › a pane too short for Above and Below › light: the row is clamped inside the pane on the side with more room and stays wholly hittable (#479) 
+  6 passed (1.2m)

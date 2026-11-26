@@ -55,6 +55,16 @@
   pointer-events: none;
 }
 
+/*
+ * The row of controls (#479) is as wide as its controls, so its measured box places it inside the
+ * pane. Wider than the pane less its 8 px insets (its inline max-width), it wraps in DOM order, so
+ * Remove connection goes last; each line keeps the controls' own height (44 px coarse).
+ */
+.react-flow__edge .gg-route-toolbar {
+  width: fit-content;
+  flex-wrap: wrap;
+}
+
 .react-flow__edge .gg-route-toolbar > *,
 .react-flow__edge .gg-route-note {
   pointer-events: all;
