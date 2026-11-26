@@ -83,6 +83,7 @@ export const CASES = Object.freeze([
   'checkout-alias',
   'lock-contention',
   'bounded-logs',
+  'warm-review1',
 ]);
 const TOOLS = [
   'compiler',
@@ -1474,7 +1475,13 @@ export function summarize(records) {
  * Cases whose native work runs through observed `execFile` children. Lock contention starts its
  * long-lived contenders with `spawn`; its required evidence is the contention trial records.
  */
-const CHILD_CASES = new Set(['installer', 'launcher', 'checkout-alias', 'bounded-logs']);
+const CHILD_CASES = new Set([
+  'installer',
+  'launcher',
+  'checkout-alias',
+  'bounded-logs',
+  'warm-review1',
+]);
 
 /** Required observations that a passing native run has not provided. */
 export function missingRequirements(summary) {

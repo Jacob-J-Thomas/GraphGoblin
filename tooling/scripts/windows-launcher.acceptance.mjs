@@ -4397,7 +4397,7 @@ control:process.env.GRAPHGOBLIN_FIXTURE_CONTROL??null}));}
 test(
   'native Windows warm review1 owned fixture and handoff regressions',
   { skip: process.platform !== 'win32', timeout: 180_000 },
-  async (t) => {
+  ciEvidence.observeTest('warm-review1', async (t) => {
     await mkdir(join(root, '.tmp'), { recursive: true });
     const base = await mkdtemp(join(root, '.tmp', 'windows-launcher-review1-'));
     ciEvidence.fixture('launcher', base);
@@ -4877,5 +4877,5 @@ setInterval(()=>{},1000);`,
     console.log(
       JSON.stringify({ evidence: 'windows-launcher-review1', artifacts: base, ...handoffCounts }),
     );
-  },
+  }),
 );

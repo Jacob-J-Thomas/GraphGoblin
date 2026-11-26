@@ -1322,6 +1322,8 @@ test('parent returns first', evidence.observeTest('bounded-logs', async (t) => {
       ['checkout-alias', 'fail', 2, 1, 1, 0],
       ['lock-contention', 'fail', 2, 0, 2, 0],
       ['bounded-logs', 'fail', 1, 0, 1, 0],
+      // This fixture run has no warm review-1 case, so it never starts.
+      ['warm-review1', null, 0, 0, 0, 0],
     ],
   );
 
@@ -1666,6 +1668,51 @@ test('required observations name every missing case, alias, contention and fixtu
   for (const name of ['launcher-start', 'launcher-children', 'lock-contention-children'])
     assert.ok(!missing.includes(name), name);
   assert.ok(missing.includes('lock-contention-start') && missing.includes('bounded-logs-children'));
+  assert.ok(missing.includes('warm-review1-start') && missing.includes('warm-review1-children'));
+});
+
+test('fixture and cleanup records take their case scope and are refused outside any case', async () => {
+  const setup = initialized();
+  const { recorder, close } = recorderFor(setup);
+  const fixture = temporary();
+  const run = recorder.observeExecFile(() => Promise.resolve({ stdout: '', stderr: '' }));
+  const drained = { action: 'gateway-drain', result: 'drained', count: null };
+  // Outside every case a fixture or cleanup has no scope and is refused; a child counts as suite.
+  recorder.fixture('launcher', fixture);
+  recorder.record('cleanup', drained);
+  await run('C:\\Windows\\System32\\icacls.exe', ['x']);
+  await recorder.observeTest('warm-review1', async (t) => {
+    recorder.fixture('launcher', fixture);
+    await t.test('handoff', async () => {
+      await run('C:\\a\\GraphGoblin.exe', ['--ensure-gateway']);
+      recorder.record('cleanup', drained);
+    });
+  })(context());
+  close();
+  const records = lines(join(setup.directory, FILES.observations));
+  assert.deepEqual(
+    records
+      .filter((record) => ['fixture', 'cleanup', 'child', 'rejected'].includes(record.type))
+      .map((record) => [record.type, record.case ?? record.recordType, record.subtest]),
+    [
+      ['rejected', 'fixture', undefined],
+      ['rejected', 'cleanup', undefined],
+      ['child', 'suite', 0],
+      ['fixture', 'warm-review1', 0],
+      ['child', 'warm-review1', 1],
+      ['cleanup', 'warm-review1', 1],
+    ],
+  );
+  assert.deepEqual(summarize(records).cases['warm-review1'], {
+    started: true,
+    result: 'pass',
+    subtestsStarted: 1,
+    subtestsPassed: 1,
+    subtestsFailed: 0,
+    subtestsUnpaired: 0,
+    children: 1,
+    childFailures: 0,
+  });
 });
 
 test('invalid observation bytes are rejected whole and never uploaded', () => {

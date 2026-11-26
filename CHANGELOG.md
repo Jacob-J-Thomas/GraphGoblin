@@ -4,6 +4,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Windows launcher evidence records the native warm review-1 regressions (#566, #544) as their
+  own required `warm-review1` case. That test ran outside every recorded case, so its fixture and
+  gateway cleanup records had no case scope and were rejected, and a passing native run finalized
+  as `incomplete` with `records-rejected`. Its records now carry the case and subtest, its start,
+  end, subtests and child processes are required like the other cases', and the schema, the
+  rejection rule and the finalize gate are unchanged. No stored, export or contract change.
+
 - `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
   `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
   template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so
