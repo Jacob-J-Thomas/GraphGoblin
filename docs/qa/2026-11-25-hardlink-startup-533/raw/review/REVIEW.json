@@ -1,0 +1,449 @@
+{
+  "issue": 533,
+  "decision": "FUP-027",
+  "formalReviewRound": 1,
+  "formalReviewBudget": 3,
+  "verdict": "READY",
+  "approvedFor": "separate independent candidate QA after root disposition of author tool deviations",
+  "findings": [],
+  "reviewAt": "2026-11-25T11:07:13.597470+00:00",
+  "source": {
+    "worktree": "G:/ggq/gg-fu-533/GraphGoblin",
+    "head": "631d16e39b8e9932f4763390a4166fa67eea8df3",
+    "treeOfHead": "af1c053c40e852536035299daf66296cbe1c7e49",
+    "branch": "codex/gg-fu-hardlink-display-533-20261125",
+    "rawIndexSha256": "3b0def9c5ad260e4d41d440ab8bd90baa2aebdfc7f5d1096dbb06b0cd64a1bf7",
+    "stagedPaths": [],
+    "untrackedPaths": [],
+    "patchSha256": "7e84ace8adf3bb104a131dd999b06ff0807206e314b018beba0f43b08a5f627e",
+    "patchBytes": 25631,
+    "changedPathSha256": {
+      "CHANGELOG.md": "ce849f43bb485e71e7360e6fd4b46717a6602396dfb2ee96461bc9612e3ad07c",
+      "apps/api/src/data-dir-lock.ts": "35622804fc9107f37cc37ebdd74232dc5c9ae970789ca18f5d063fc72a90fc94",
+      "apps/api/src/main.test.ts": "be8e95bb747983381fea07e7dff25f05031c6aeca152c34e345841b93f9cacbc",
+      "apps/api/src/serve-failure-output.test.ts": "29ff44cefe1802721754147f1091c845734c944635c7be4161bfa8da8670f63d",
+      "apps/api/src/serve.ts": "667244cf1e7c9392584b4642ec90bbad46ec5fd1abe2fdbb266a1f07b3239ad5",
+      "docs/11-security-and-distribution.md": "20a3763ddace9642222fc1dfaaecc93a250fc0a1f24ab11c0d92c93294cdae1a"
+    }
+  },
+  "reviewer": {
+    "family": "OpenAI GPT",
+    "configuredModel": "gpt-6.1-sol",
+    "configuredEffort": "xhigh",
+    "servingIdentityIndependentlyAttested": false
+  },
+  "issueSource": "https://github.com/Jacob-J-Thomas/GraphGoblin/issues/533",
+  "implementationContractSha256": "07bb1be2f2c09fc112feb7b7426481eef158aa6ed34cc7414bd472e34d818de0",
+  "priorPhysicalBaseline": {
+    "sha256": "5dccfda98bc76644ab29420955559da15d001fd105ffc158720f871275b299a1",
+    "sourceEquivalenceReceipt": {
+      "baseline": "154e78d54ee485330816d606032280de44d6e891",
+      "source": "631d16e39b8e9932f4763390a4166fa67eea8df3",
+      "files": {
+        "apps/api/src/data-dir-lock.ts": "5f3ab443bcc4e91bc4a97b444000f85801c6276f2a2deb63a004e277f4cc5d3f",
+        "apps/api/src/serve.ts": "4ced8e4b6d36d0f08013f46abeaa777384f6b8f869649614b7797313b5787f34",
+        "apps/api/src/serve-failure-output.test.ts": "d2741e9009df041174add056fa031d9226cd3d1fde9c69a850fbdef51ce35dbe",
+        "apps/api/src/main.test.ts": "1fb2a53a1ad2062e0b644938c12d28b65cb38056fd86abfffd342dc892388370"
+      }
+    },
+    "sourceEquivalenceSha256": "69807af4393a3f4df08895c8596a732a9f457bb31a18bb4e0424d86483b4c24a"
+  },
+  "author": {
+    "actualModel": "claude-opus-5-5",
+    "providerSessionId": "ceea67e9-cdf9-4378-a99c-7f78cf1ba5b9",
+    "requestedEffort": "xhigh",
+    "perTurnEffortActive": true,
+    "ordinaryMaxVerified": true,
+    "overageObserved": false,
+    "providerExitCode": 0,
+    "originalInvocationSucceeded": true,
+    "strictToolContractCompliant": false,
+    "pairedToolCount": 81,
+    "deniedCommands": [
+      {
+        "id": "toolu_011LutmZjNAUCwKTNUdV8ry7",
+        "callLine": 11,
+        "resultLine": 13,
+        "command": "wc -l docs/15-issue-workflow.md; git --no-pager log --oneline -3",
+        "exactAuthorizedCommand": false,
+        "resultError": true,
+        "resultSha256": "ecaeca8d0ac93ec2eb4e56cf51556097e466a86cb7560b949ef4c8e0643fb830",
+        "resultPrefix": "Permission to use Bash has been denied because Claude Code is running in don't ask mode."
+      }
+    ],
+    "successfulNonexactCommands": [
+      {
+        "id": "toolu_01UBX22EYZw3ezWPHBppE3JB",
+        "callLine": 53,
+        "resultLine": 54,
+        "command": "wc -l apps/api/src/main.test.ts",
+        "exactAuthorizedCommand": false,
+        "resultError": false,
+        "resultSha256": "ae6a66a3cf1adab286a62f44007abf1cb9375f43ce4f4feb4a405be80ac6676e",
+        "actualOutput": "424 apps/api/src/main.test.ts"
+      }
+    ],
+    "allBashReceipts": [
+      {
+        "id": "toolu_01NHy4h6eTvrHdQYBUcZJk4s",
+        "callLine": 4,
+        "resultLine": 8,
+        "command": "git --no-optional-locks status --short",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843"
+      },
+      {
+        "id": "toolu_011LutmZjNAUCwKTNUdV8ry7",
+        "callLine": 11,
+        "resultLine": 13,
+        "command": "wc -l docs/15-issue-workflow.md; git --no-pager log --oneline -3",
+        "exactAuthorizedCommand": false,
+        "resultError": true,
+        "resultSha256": "ecaeca8d0ac93ec2eb4e56cf51556097e466a86cb7560b949ef4c8e0643fb830"
+      },
+      {
+        "id": "toolu_01LSz3v7oEdjiRSisKydM6hu",
+        "callLine": 51,
+        "resultLine": 52,
+        "command": "node --version",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "1ec2355c1edc4c2e8906bc78a8f7a9ad7ddb566f71ec48d6e5370878714ecdfb",
+        "observedSummary": [
+          "v22.23.4"
+        ]
+      },
+      {
+        "id": "toolu_01UBX22EYZw3ezWPHBppE3JB",
+        "callLine": 53,
+        "resultLine": 54,
+        "command": "wc -l apps/api/src/main.test.ts",
+        "exactAuthorizedCommand": false,
+        "resultError": false,
+        "resultSha256": "ae6a66a3cf1adab286a62f44007abf1cb9375f43ce4f4feb4a405be80ac6676e"
+      },
+      {
+        "id": "toolu_01G2M5SPx8bb89ZNhxCJi6h9",
+        "callLine": 172,
+        "resultLine": 175,
+        "command": "pnpm --filter @graphgoblin/api test src/serve-failure-output.test.ts",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "a5f220a5aa52b8ce879a1f4a2c383c6eb3c4dd0dd688d2c7cc889e6e87568e00",
+        "observedSummary": [
+          "Test Files  1 passed (1)",
+          "Tests  8 passed (8)"
+        ]
+      },
+      {
+        "id": "toolu_01VtyPZZkCAm2CvgUvKAveBE",
+        "callLine": 305,
+        "resultLine": 309,
+        "command": "pnpm build --filter=@graphgoblin/api --force",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "283a220439b25cc807e9b8be37d2bbce89e469afc93a52a6dc3edbf82b554180",
+        "observedSummary": [
+          "Tasks:    7 successful, 7 total"
+        ]
+      },
+      {
+        "id": "toolu_011cCWNoGUTXXew7wd93cLUQ",
+        "callLine": 310,
+        "resultLine": 314,
+        "command": "pnpm --filter @graphgoblin/api test src/main.test.ts -t hard-linked",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "0a7945ffdf16484d65427602b794ed116587d7948ab2db56335b37fbb43704e7",
+        "observedSummary": [
+          "Test Files  1 passed (1)",
+          "Tests  3 passed | 19 skipped (22)"
+        ]
+      },
+      {
+        "id": "toolu_013wAqLNZV8PeJVTkw3Y9dvz",
+        "callLine": 320,
+        "resultLine": 325,
+        "command": "pnpm --filter @graphgoblin/api test src/database-ownership.test.ts -t multiply",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "287a988c73c95eb2d678fafe8fc3a0c37f8c21775a406c9a0380fc31840b9861",
+        "observedSummary": [
+          "Test Files  1 passed (1)",
+          "Tests  1 passed | 8 skipped (9)"
+        ]
+      },
+      {
+        "id": "toolu_01FseQR1gvXGnV47o9fZ77vK",
+        "callLine": 321,
+        "resultLine": 328,
+        "command": "pnpm --filter @graphgoblin/api typecheck",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "1b75a9d48c1e5044ae9e3604090a87f0ba62297aadc92a3f8f9958d3b266d283"
+      },
+      {
+        "id": "toolu_01WUECmmTDspTp8rfqE7RFB8",
+        "callLine": 329,
+        "resultLine": 332,
+        "command": "pnpm --filter @graphgoblin/api lint",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "8a879e17a12d3c809909888a8b789d812b02574afddee033026f42897016aee1"
+      },
+      {
+        "id": "toolu_012m3PD4Tsw9PNpF8r5kvMUi",
+        "callLine": 359,
+        "resultLine": 360,
+        "command": "pnpm exec prettier --check apps/api/src/data-dir-lock.ts apps/api/src/serve.ts apps/api/src/serve-failure-output.test.ts apps/api/src/main.test.ts docs/11-security-and-distribution.md CHANGELOG.md",
+        "exactAuthorizedCommand": true,
+        "resultError": true,
+        "resultSha256": "2e0391a262f61d47389503a7d6957ba7c4be08d4c42e704dd1a7631f1419b060",
+        "firstFailureSummary": [
+          "[warn] apps/api/src/serve.ts",
+          "[warn] apps/api/src/main.test.ts",
+          "[warn] CHANGELOG.md",
+          "[warn] Code style issues found in 3 files. Run Prettier with --write to fix."
+        ]
+      },
+      {
+        "id": "toolu_018zFjjK5HmDgAARxc8cNPeE",
+        "callLine": 361,
+        "resultLine": 362,
+        "command": "pnpm exec prettier --write apps/api/src/data-dir-lock.ts apps/api/src/serve.ts apps/api/src/serve-failure-output.test.ts apps/api/src/main.test.ts docs/11-security-and-distribution.md CHANGELOG.md",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "f64272a4fea08cdd74acc1c8335604fffbfe2349f001451aea660cdd7c9eb18b"
+      },
+      {
+        "id": "toolu_01NtbpqkDiBV9wPnXByRsipa",
+        "callLine": 371,
+        "resultLine": 372,
+        "command": "git --no-pager diff --check",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843"
+      },
+      {
+        "id": "toolu_01XEDbME3UewkkCZvfQmZ17Z",
+        "callLine": 384,
+        "resultLine": 385,
+        "command": "pnpm exec prettier --check apps/api/src/data-dir-lock.ts apps/api/src/serve.ts apps/api/src/serve-failure-output.test.ts apps/api/src/main.test.ts docs/11-security-and-distribution.md CHANGELOG.md",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "686dc9421712565fa159cea3f5ad7ecb79ea07b8ebfb363563d0b7d288c0d19c"
+      },
+      {
+        "id": "toolu_012Y9ST7A7izVWgE4zZFSwze",
+        "callLine": 387,
+        "resultLine": 390,
+        "command": "pnpm build --filter=@graphgoblin/api --force",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "ccac893ae00b68a38ea910a39c38508cbc2a3d028c592b42ea530da4e9ba1c01",
+        "observedSummary": [
+          "Tasks:    7 successful, 7 total"
+        ]
+      },
+      {
+        "id": "toolu_01YaZX468QnDfrZCAA8WFXuj",
+        "callLine": 391,
+        "resultLine": 398,
+        "command": "pnpm --filter @graphgoblin/api test src/main.test.ts -t hard-linked",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "d86c257d2c4b5f2509b8ef89df8dfabad100846d8ee525e144da1ca99664fa7e",
+        "observedSummary": [
+          "Test Files  1 passed (1)",
+          "Tests  3 passed | 19 skipped (22)"
+        ]
+      },
+      {
+        "id": "toolu_01JyHJJvAcmEqqxamMPA71M1",
+        "callLine": 392,
+        "resultLine": 401,
+        "command": "pnpm --filter @graphgoblin/api test src/serve-failure-output.test.ts",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "697ad9bf0b412171d9c081b6d6c3632cfc91b43f70bf12cf884232f6c681b54d",
+        "observedSummary": [
+          "Test Files  1 passed (1)",
+          "Tests  8 passed (8)"
+        ]
+      },
+      {
+        "id": "toolu_017v5Pa5gFvSTrjbxrr2quJZ",
+        "callLine": 393,
+        "resultLine": 404,
+        "command": "pnpm --filter @graphgoblin/api test src/database-ownership.test.ts -t multiply",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "35cc01303badc1567cbe68603cb08da6cf22c6638a2a19ba2acaacf317c8ca6a",
+        "observedSummary": [
+          "Test Files  1 passed (1)",
+          "Tests  1 passed | 8 skipped (9)"
+        ]
+      },
+      {
+        "id": "toolu_01J3y4knVVf7k9721aCn2YSc",
+        "callLine": 405,
+        "resultLine": 411,
+        "command": "pnpm --filter @graphgoblin/api typecheck",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "1b75a9d48c1e5044ae9e3604090a87f0ba62297aadc92a3f8f9958d3b266d283"
+      },
+      {
+        "id": "toolu_015QoWKfS8ALW5cq4jJ5ioW3",
+        "callLine": 406,
+        "resultLine": 414,
+        "command": "pnpm --filter @graphgoblin/api lint",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "8a879e17a12d3c809909888a8b789d812b02574afddee033026f42897016aee1"
+      },
+      {
+        "id": "toolu_01VZ27BUmm42ZuKibxB6QyZD",
+        "callLine": 407,
+        "resultLine": 415,
+        "command": "git --no-pager diff --check",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "cac1685585590361647e7a27b58a25a590f335bfcd0ab70fcdc0424e40c20843"
+      },
+      {
+        "id": "toolu_01QrueRcCiJnQEwc6ZJNkpZK",
+        "callLine": 408,
+        "resultLine": 416,
+        "command": "git --no-optional-locks status --short",
+        "exactAuthorizedCommand": true,
+        "resultError": false,
+        "resultSha256": "c718268bdebc24804af3dbcde32de297e1db2753bfc4276480a193e1961df4d1"
+      }
+    ],
+    "directEdits": [
+      {
+        "id": "toolu_01DAJmN4ibq18mSFUdmgAwPg",
+        "tool": "Edit",
+        "path": "apps/api/src/data-dir-lock.ts",
+        "callLine": 136,
+        "resultLine": 137
+      },
+      {
+        "id": "toolu_01FCmxRThbpq9hhGLXZqfDUc",
+        "tool": "Edit",
+        "path": "apps/api/src/data-dir-lock.ts",
+        "callLine": 141,
+        "resultLine": 142
+      },
+      {
+        "id": "toolu_01FY2wqJJCW4EJpeAf84BvZD",
+        "tool": "Edit",
+        "path": "apps/api/src/serve.ts",
+        "callLine": 144,
+        "resultLine": 145
+      },
+      {
+        "id": "toolu_012DQeVNW7FHszkeZtGeEbJG",
+        "tool": "Edit",
+        "path": "apps/api/src/serve.ts",
+        "callLine": 146,
+        "resultLine": 147
+      },
+      {
+        "id": "toolu_01AUm3MVwtLuU4T2qCdmLsS8",
+        "tool": "Write",
+        "path": "apps/api/src/serve-failure-output.test.ts",
+        "callLine": 161,
+        "resultLine": 162
+      },
+      {
+        "id": "toolu_01HxADbQmPMFmyBqPFnhHYzZ",
+        "tool": "Edit",
+        "path": "apps/api/src/serve-failure-output.test.ts",
+        "callLine": 167,
+        "resultLine": 168
+      },
+      {
+        "id": "toolu_01B46NXWxr1bcfnFpLmLPzrP",
+        "tool": "Edit",
+        "path": "apps/api/src/serve-failure-output.test.ts",
+        "callLine": 169,
+        "resultLine": 171
+      },
+      {
+        "id": "toolu_01LQtUzG5gXe9ML8vVpjowaC",
+        "tool": "Edit",
+        "path": "apps/api/src/main.test.ts",
+        "callLine": 271,
+        "resultLine": 272
+      },
+      {
+        "id": "toolu_01TRDo9XEdM5vHozc29TKz6d",
+        "tool": "Edit",
+        "path": "apps/api/src/main.test.ts",
+        "callLine": 298,
+        "resultLine": 299
+      },
+      {
+        "id": "toolu_01CuaZCW2GXMUAxUuNiSjhGL",
+        "tool": "Edit",
+        "path": "docs/11-security-and-distribution.md",
+        "callLine": 347,
+        "resultLine": 348
+      },
+      {
+        "id": "toolu_01UbfwVQdyZukd4bN762ctXG",
+        "tool": "Edit",
+        "path": "docs/11-security-and-distribution.md",
+        "callLine": 349,
+        "resultLine": 350
+      },
+      {
+        "id": "toolu_01FGFSn5KCMm8gsioZL82PGJ",
+        "tool": "Edit",
+        "path": "docs/11-security-and-distribution.md",
+        "callLine": 355,
+        "resultLine": 356
+      },
+      {
+        "id": "toolu_01XmESaktyQg9TzMW1o7Sd6A",
+        "tool": "Edit",
+        "path": "CHANGELOG.md",
+        "callLine": 357,
+        "resultLine": 358
+      },
+      {
+        "id": "toolu_01UajJwtysvg3rqeJMn228se",
+        "tool": "Edit",
+        "path": "CHANGELOG.md",
+        "callLine": 377,
+        "resultLine": 378
+      }
+    ],
+    "originalArtifactsSha256": {
+      "CLAUDE-LAUNCH.json": "91ddf68839a78b4d4dfcce3bbba087534a165657b785f3911d2e97652af24a15",
+      "CLAUDE-EXIT.json": "d58135fa4aa3c45bdf587528b5cf31668be5267b47b5d5c7be37c6b82caffbac",
+      "CLAUDE-EVENTS.private.jsonl": "3c07ba90aee5e54526f1094bd69046d9c98422905259652bdb74553e45714f6d",
+      "IMPLEMENTATION-REPORT.claude.md": "34ec42444ca3a4d8846a049f127ffe7de9472471ac45b6aec7a1888c2f8bad9e",
+      "CLAUDE-STDERR.private.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "builtFileReadbackSha256": {
+    "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+    "apps/api/dist/serve.js": "6536de534c789f8c933163b0cac27c34afa7869d2ef1a3111f4d095cc587a061",
+    "apps/api/dist/data-dir-lock.js": "6f93e59c0cca79a40d8051072e48b58484f00c84782b75b25c85cda2a5a79ffd",
+    "apps/api/dist/windows-log/guard.js": "cba6e1d032fd09f1d3e19f9772f65b4776510860669ffb45e78ac7a41475355c"
+  },
+  "authorQueue": {
+    "id": "hardlink-display-533-author-01",
+    "status": "controller_exited",
+    "activeCandidateWriterObserved": false
+  },
+  "reviewerRanProductChecks": false,
+  "independentQaComplete": false,
+  "coverageGateVerified": false,
+  "currentTargetCiComplete": false,
+  "freshAstraMaxFinalReserved": true
+}

@@ -1,0 +1,62 @@
+{
+  "before": {
+    "byteLength": 4096,
+    "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+  },
+  "after": {
+    "byteLength": 4096,
+    "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+  },
+  "sameInode": true,
+  "linkCount": 2,
+  "ordinary": {
+    "code": 0,
+    "signal": null,
+    "listened": true,
+    "stdout": "{\"level\":30,\"time\":1795574332743,\"pid\":52828,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:53597\"}\n{\"level\":30,\"time\":1795574332744,\"pid\":52828,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":0,\"dataDir\":\"G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\store-recovery-542-537-560-533\\\\hardlink-533-y09o0e\\\\ordinary\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1795574332780,\"pid\":52828,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:53597\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":53598},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795574332790,\"pid\":52828,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":9.050600000000031,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795574332800,\"pid\":52828,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:53597\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":53599},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795574332806,\"pid\":52828,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":5.5999000000001615,\"msg\":\"request completed\"}\n",
+    "stderr": ""
+  },
+  "refusals": [
+    {
+      "name": "original",
+      "lines": 5,
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Error: database G:\\ggq\\delivery-evidence\\2026-11-24-followups\\store-recovery-542-537-560-533\\hardlink-533-y09o0e\\store.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership\n    at acquireDatabaseLock (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/data-dir-lock.js:401:15)\n    at async createContainer (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/container.js:63:28)\n    at async file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/serve.js:53:23\n    at async serve (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/serve.js:111:16)\n"
+    },
+    {
+      "name": "alias",
+      "lines": 5,
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "Error: database G:\\ggq\\delivery-evidence\\2026-11-24-followups\\store-recovery-542-537-560-533\\hardlink-533-y09o0e\\alias.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership\n    at acquireDatabaseLock (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/data-dir-lock.js:401:15)\n    at async createContainer (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/container.js:63:28)\n    at async file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/serve.js:53:23\n    at async serve (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/serve.js:111:16)\n"
+    }
+  ],
+  "unexpected": {
+    "code": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "Error: ENOTDIR: not a directory, mkdir 'G:\\ggq\\delivery-evidence\\2026-11-24-followups\\store-recovery-542-537-560-533\\hardlink-533-y09o0e\\blocker'\n    at async mkdir (node:internal/fs/promises:858:10)\n    at async acquireDataDirLock (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/data-dir-lock.js:350:9)\n    at async createContainer (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/container.js:46:18)\n    at async file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/serve.js:53:23\n    at async serve (file:///G:/ggq/gg-fu-store-recovery-20261124/GraphGoblin/apps/api/dist/serve.js:111:16) {\n  errno: -4052,\n  code: 'ENOTDIR',\n  syscall: 'mkdir',\n  path: 'G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\store-recovery-542-537-560-533\\\\hardlink-533-y09o0e\\\\blocker'\n}\n"
+  },
+  "managed": {
+    "code": 74,
+    "signal": null,
+    "stdout": "",
+    "stderr": "",
+    "records": [
+      {
+        "level": 50,
+        "time": 1795574341196,
+        "pid": 55048,
+        "msg": "GraphGoblin startup failed",
+        "stage": "store",
+        "cause": "store-unavailable",
+        "detail": "The store could not be opened.",
+        "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+      }
+    ]
+  },
+  "locksClean": true
+}

@@ -1,0 +1,21 @@
+PASS
+
+I ran the wrapper once, with no retries. It exited 0, and the source tree and built files matched the bound hashes before and after the run. I read all eight receipts directly, and their contents agree with the summary the wrapper printed.
+
+**Native stage:**
+- **Hard-link pair:** `sameInode: true` and `linkCount: 2`.
+- **Refusals:** both paths exited 1 with empty stdout and a single stderr line. Each line names its own path (`...\store.db` and `...\alias.db`) and gives the remedy "use one ordinary SQLite file so GraphGoblin can establish exclusive ownership".
+- **Database bytes and locks:** the database was 4096 bytes before and after, with the same SHA-256 (`e3ba0653…`). `locksClean: true`, so no lock was left behind.
+- **Ordinary control:** it was configured with `port: 0`, listened on 127.0.0.1:65069, accepted `POST /system/shutdown` (202) and exited 0 with empty stderr.
+- **Unexpected failure:** a separate ENOTDIR `mkdir` error exited 1 and kept its full stack (`acquireDataDirLock` → `createContainer` → `serve`).
+- **Managed refusal:** exit 74, with stdout and stderr both empty. It wrote exactly one record: `stage: "store"`, `cause: "store-unavailable"`, with generic wording and no path.
+- **Process cleanup:** exit 0, not timed out, 0 active processes in the Windows Job, no forced close needed. `stderr.log` is empty.
+
+**Reset stage:** the maintained control "names the database stage when the lock module refuses a database with another hard link" passed (1 passed, 12 skipped). Its Windows Job went from 1 active process to 0 in 31 ms, with no forced close.
+
+**What this run can't confirm:**
+- **Hashes:** they come from the wrapper. I didn't recompute them, because extra commands were out of scope, but every hash I could cross-check between receipts matches.
+- **Database bytes per path:** the receipt records one before/after hash, not one for each path. The two paths having equal bytes follows from them being the same file (`sameInode`).
+- **Database-stage label:** this is checked inside the reset test. The output only shows the test's title and that it passed.
+- **Escaping:** the refusal paths contain no control characters, so the escaping code wasn't actually exercised.
+- **Different receipt hash:** this run's native receipt hash (`a77e42a2…`) differs from the historical one (`5dccfda9…`). That's expected, since each run uses a different temp folder, PIDs, timestamps and port. The historical run also printed stack traces on both refusals, where this run printed one-line messages.

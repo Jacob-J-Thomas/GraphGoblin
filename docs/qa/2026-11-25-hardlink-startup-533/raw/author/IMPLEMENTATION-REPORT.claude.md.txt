@@ -1,0 +1,26 @@
+I've implemented #533 in the six authorized files. Every check in the contract passes on this Windows host, but nothing outside the narrow test selections has been run. Changes are unstaged; I didn't commit, stash, push or touch any issue.
+
+**What changed**
+- **`data-dir-lock.ts`**: a new `HardLinkedDatabaseRefusedError` is thrown at the existing hard-link check in `acquireDatabaseLock`. It takes the canonical database path and builds the exact same message as before. It is a separate class, not a held or unknown owner.
+- **`serve.ts`**: `shellFailureOutput` now applies the existing control-character escaping to the new refusal as well as to the store-ownership refusal, through one shared helper. `startupFailureCause` and the managed categories are unchanged, so a hard-linked database still falls through to `store-unavailable`. A plain `Error` with the same text still comes back as the error object with its stack.
+- **Reset and offline API-key creation (`--create-api-key`)** use the same check and only read `error.message`, which is unchanged, so their output and behaviour should be the same.
+- **`docs/11-security-and-distribution.md` and `CHANGELOG.md`** describe the one-line refusal under any of the file's names, the unchanged bytes and locks, the unchanged managed record (`store`/`store-unavailable`, exit 74), and that unexpected failures keep their stack.
+
+**Tests**
+- **`serve-failure-output.test.ts`** (8 pass): typed refusal prints its full message and keeps `store-unavailable`. An impersonating plain `Error` keeps its object and stack. A path containing the ownership message prefixes still maps to `store-unavailable`. Control characters are escaped while the original message stays the same. A real hard link refuses under both names with the canonical path, unchanged bytes and no lock or reclaim guard left.
+- **`main.test.ts`**, new block "hard-linked database startup refusal (#533)", run against the built entry (3 pass). Every child gets its own store and port, `GG_OLLAMA_ENABLED=false`, and Codex/Claude paths that don't exist:
+  - Both names of a real SQLite store exit 1 with exactly one stderr line and empty stdout, leave the bytes unchanged and leave no locks. After removing the extra link, the same file starts and serves an authenticated request.
+  - An unexpected database filesystem failure still exits 1 with a stack.
+  - Windows only: the managed launcher entry exits 74 with no stdout/stderr and exactly one closed `store`/`store-unavailable` log record that names neither the path nor the hard links.
+
+**Commands run (all pass):** `node --version` (v22.23.4), build, the three test selections, typecheck, lint, Prettier check (after `--write`), `git diff --check` and status.
+
+**Gaps and risks**
+- **Not run:** the full API suite and coverage gate, the reset and API-key tests, and Linux/macOS CI. Running the existing reset hard-link test would need an extra command: `pnpm --filter @graphgoblin/api test src/reset/reset-acquisition.test.ts -t "another hard link"`.
+- **Platform-dependent test:** the unexpected-failure test fails at a different point on POSIX than on Windows. Its assertions are written to accept both, but it has only run on Windows.
+- **Not proven against the old code:** I didn't revert to show the new tests fail on the previous source. They should, because the old code printed a stack and the unit test imports a class that didn't exist.
+- **Name:** the unexpected-failure test is called "…(not hard-linked)" so that `-t hard-linked` selects it.
+
+**Contract deviation:** early on I ran `wc -l apps/api/src/main.test.ts`, which isn't on the command list. It was read-only. An earlier combined `wc`/`git log` call was denied and I didn't retry it.
+
+The draft's line about holding this on a separate worktree away from the overlapping recovery work still applies; I didn't touch the recovery worktree.

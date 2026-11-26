@@ -1,0 +1,24 @@
+$ vitest run --reporter=verbose src/database-ownership.test.ts -t multiply
+
+ RUN  v5.0.3 G:/ggq/gg-t509/GraphGoblin/apps/api
+
+ ↓ src/database-ownership.test.ts > refuses fresh process defaults not-in-catalog/low before creating an external database parent
+ ↓ src/database-ownership.test.ts > refuses fresh process defaults gpt-5.5/none before creating an external database parent
+ ↓ src/database-ownership.test.ts > rechecks catalog created by a writer before database ownership is acquired
+ ↓ src/database-ownership.test.ts > rechecks format created by a writer before database ownership is acquired
+ ✓ src/database-ownership.test.ts > refuses multiply hard-linked databases before acquiring a writer lock 11ms
+ ↓ src/database-ownership.test.ts > locks the same external SQLite file across data directories and refuses an offline key writer
+ ↓ src/database-ownership.test.ts > canonicalizes directory aliases, future database paths and the health identity without writing
+ ↓ src/database-ownership.test.ts > refuses reset before store reads while a writer owns the database (file exists: false)
+ ↓ src/database-ownership.test.ts > refuses reset before store reads while a writer owns the database (file exists: true)
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 8 skipped (9)
+   Start at  21:34:15
+   Duration  7.36s (import 68%, transform 31%, setup 1%)
+
+  Transform  transforming modules took 2.15s · 31% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit=0

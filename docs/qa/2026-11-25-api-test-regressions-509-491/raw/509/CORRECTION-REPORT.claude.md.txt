@@ -1,0 +1,45 @@
+I fixed P2 in both test helpers. Every acquired resource (the held port, the scratch folder, the port-root override) now gets its own `try/finally` as soon as it exists. Cleanup is still attempted for each one if a later setup step fails or another cleanup step throws. Only the two authorized files changed, nothing is staged, and the protected `api-port.ts` still shows unmodified in `git status`. No tests were added.
+
+## Changes
+
+**`apps/api/src/testing/api-port.test.ts`** (only the concurrency test, lines 113–180):
+- The `try` now starts directly after `held = await reserveApiPort()`. The `activeClaim` read and the `mkdtemp` call happen inside it.
+- The scratch folder (`root`) gets its own `try/finally` that deletes it.
+- Switching the port root to `root` gets its own `try/finally` that switches it back to `shared`.
+- The final `access` checks stay after all cleanup. To make that work, `heldClaim` and `root` are declared with `let` ahead of time, the same way the first test already does it.
+- Cleanup order changes from (restore root, release hold, delete folder) to (restore root, delete folder, release hold). The folder and the hold live in separate directories, so the order doesn't affect the assertions.
+- Everything else is the same: the eight contenders, the refusal text, both rounds of competing claims, the stale-release race, the marker-state checks and the final checks. The only other changes are indentation, Prettier wrapping `claimants` onto two lines, and one new comment. The original "must pick the winner" comment keeps its wording, which makes that line 101 columns. Prettier doesn't reflow comments and lint has no line-length rule.
+
+**`apps/api/src/testing/api-port-platform.test.ts`** (only `reserveAs`; this file is new and untracked):
+- The order stays the same: create the scratch folder, then take the hold.
+- The folder now enters a `try/finally` before the hold is taken. The hold is released in an inner `finally`, so the folder is still deleted if the hold fails to be taken or fails to release.
+- The block that overrides `listen` and `process.platform`, the spy, `afterEach`, the probe and conflict checks, and the return value are unchanged.
+
+## What each failure now cleans up
+
+| Failure | Concurrency test | Platform helper |
+|---|---|---|
+| Taking the hold fails | nothing to clean up | folder deleted |
+| `activeClaim` / `mkdtemp` fails | hold released | — / nothing to clean up |
+| Test body fails | root restored, folder deleted, hold released | hold released, folder deleted |
+| Deleting the folder fails | hold still released | hold was already released |
+| Releasing the hold fails | folder was already deleted | folder still deleted |
+
+## Checks (each run once, after the final edit)
+- `node --version`: v22.23.4
+- `prettier --write`: reformatted `api-port.test.ts`; the platform file was unchanged. `prettier --check`: passed.
+- `git diff --check`: clean
+- API typecheck and lint: both clean
+- Two-file test run: **2 files and 22 tests passed** in 2.46 s
+- `git status --short`: ` M api-port.test.ts`, `?? api-port-platform.test.ts`
+
+## Limits
+- **The failure paths were not run.** The 22 passing tests only exercise the success path. The table above follows from the code structure; no failure was injected.
+- **A cleanup error can hide the original error.** If the test fails and then a cleanup step also throws, JavaScript reports only the cleanup error. Every cleanup is still attempted.
+- **One theoretical gap was left alone because it is outside P2.** In the platform helper, the switch-back steps share one `finally`. If restoring `process.platform` ever threw, the `listen` spy and port root would not be restored, though `afterEach` would flag it.
+- **Unchanged from before:**
+  - If the concurrency test fails partway, claims won inside the scratch folder are removed with the folder rather than released one by one. They hold no open sockets.
+  - Deleting the folder still has no Windows retry setting.
+- **Not run (outside this task's allowed commands):** coverage, build, full `pnpm check` and CI. The test run used the API build already present in the worktree. Independent review, QA, coverage and CI on the current branch are still to be done.
+
+The earlier mutation experiments were not repeated, and no earlier denied calls were retried. Time limits, fixture counts and `GG_OLLAMA_ENABLED=false` are unchanged.

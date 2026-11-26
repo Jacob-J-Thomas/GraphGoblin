@@ -1,0 +1,62 @@
+{
+  "before": {
+    "byteLength": 4096,
+    "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+  },
+  "after": {
+    "byteLength": 4096,
+    "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+  },
+  "sameInode": true,
+  "linkCount": 2,
+  "ordinary": {
+    "code": 0,
+    "signal": null,
+    "listened": true,
+    "stdout": "{\"level\":30,\"time\":1795609003676,\"pid\":55836,\"hostname\":\"DESKTOP-RQPA3QI\",\"msg\":\"Server listening at http://127.0.0.1:65069\"}\n{\"level\":30,\"time\":1795609003677,\"pid\":55836,\"hostname\":\"DESKTOP-RQPA3QI\",\"host\":\"127.0.0.1\",\"port\":0,\"dataDir\":\"G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\hardlink-display-533\\\\independent-qa-preparation-01\\\\native-evidence\\\\verification\\\\native\\\\hardlink-533-t7eYWQ\\\\ordinary\",\"requireApiKey\":false,\"msg\":\"GraphGoblin API listening\"}\n{\"level\":30,\"time\":1795609003709,\"pid\":55836,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"req\":{\"method\":\"GET\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:65069\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":65070},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795609003715,\"pid\":55836,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":5.261700000000019,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795609003725,\"pid\":55836,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:65069\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":65071},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795609003730,\"pid\":55836,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":4.377399999999852,\"msg\":\"request completed\"}\n",
+    "stderr": ""
+  },
+  "refusals": [
+    {
+      "name": "original",
+      "lines": 1,
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "database G:\\ggq\\delivery-evidence\\2026-11-24-followups\\hardlink-display-533\\independent-qa-preparation-01\\native-evidence\\verification\\native\\hardlink-533-t7eYWQ\\store.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership\n"
+    },
+    {
+      "name": "alias",
+      "lines": 1,
+      "code": 1,
+      "signal": null,
+      "stdout": "",
+      "stderr": "database G:\\ggq\\delivery-evidence\\2026-11-24-followups\\hardlink-display-533\\independent-qa-preparation-01\\native-evidence\\verification\\native\\hardlink-533-t7eYWQ\\alias.db has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership\n"
+    }
+  ],
+  "unexpected": {
+    "code": 1,
+    "signal": null,
+    "stdout": "",
+    "stderr": "Error: ENOTDIR: not a directory, mkdir 'G:\\ggq\\delivery-evidence\\2026-11-24-followups\\hardlink-display-533\\independent-qa-preparation-01\\native-evidence\\verification\\native\\hardlink-533-t7eYWQ\\blocker'\n    at async mkdir (node:internal/fs/promises:858:10)\n    at async acquireDataDirLock (file:///G:/ggq/gg-fu-533/GraphGoblin/apps/api/dist/data-dir-lock.js:350:9)\n    at async createContainer (file:///G:/ggq/gg-fu-533/GraphGoblin/apps/api/dist/container.js:46:18)\n    at async file:///G:/ggq/gg-fu-533/GraphGoblin/apps/api/dist/serve.js:53:23\n    at async serve (file:///G:/ggq/gg-fu-533/GraphGoblin/apps/api/dist/serve.js:111:16) {\n  errno: -4052,\n  code: 'ENOTDIR',\n  syscall: 'mkdir',\n  path: 'G:\\\\ggq\\\\delivery-evidence\\\\2026-11-24-followups\\\\hardlink-display-533\\\\independent-qa-preparation-01\\\\native-evidence\\\\verification\\\\native\\\\hardlink-533-t7eYWQ\\\\blocker'\n}\n"
+  },
+  "managed": {
+    "code": 74,
+    "signal": null,
+    "stdout": "",
+    "stderr": "",
+    "records": [
+      {
+        "level": 50,
+        "time": 1795609014018,
+        "pid": 22240,
+        "msg": "GraphGoblin startup failed",
+        "stage": "store",
+        "cause": "store-unavailable",
+        "detail": "The store could not be opened.",
+        "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+      }
+    ]
+  },
+  "locksClean": true
+}
