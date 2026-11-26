@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import {
   access,
+  lstat,
   mkdir,
   mkdtemp,
   readFile,
@@ -87,17 +88,42 @@ it('reads the same identity and store state through a checkout link', async () =
         stdout: '',
         stderr: 'Launcher configuration is invalid. Check the configured GG_* overrides.\n',
       });
-    const imported = await run(
+    // A real wrapper file is Node's entry and imports the helper through the alias, so the
+    // helper's entry guard compares two different existing files (#494). The wrapper records the
+    // argv[1] and file identity its own process observed, outside the store and before importing.
+    const wrapper = join(scratch, 'import wrapper.mjs');
+    const witness = join(scratch, 'import witness.json');
+    await writeFile(
+      wrapper,
       [
-        '--input-type=module',
-        '-e',
-        `await import(${JSON.stringify(pathToFileURL(aliasedEntry).href)})`,
-      ],
-      alias,
-      { GG_PORT: 'invalid' },
+        "import { lstatSync, writeFileSync } from 'node:fs';",
+        'const entry = process.argv[1];',
+        'const observed = lstatSync(entry, { bigint: true });',
+        'const { dev, ino } = observed;',
+        'const facts = { entry, file: observed.isFile(), dev: String(dev), ino: String(ino) };',
+        `writeFileSync(${JSON.stringify(witness)}, JSON.stringify(facts), { flag: 'wx' });`,
+        `await import(${JSON.stringify(pathToFileURL(aliasedEntry).href)});`,
+        '',
+      ].join('\n'),
     );
+    const imported = await run([wrapper], alias, { GG_PORT: 'invalid' });
     expect(imported).toEqual({ stdout: '', stderr: '' });
     expect(await readdir(dataDir)).toEqual([]);
+    const wrapperFile = await lstat(wrapper, { bigint: true });
+    const helperFile = await lstat(identityEntry, { bigint: true });
+    expect(JSON.parse(await readFile(witness, 'utf8'))).toEqual({
+      entry: wrapper,
+      file: true,
+      dev: String(wrapperFile.dev),
+      ino: String(wrapperFile.ino),
+    });
+    expect(wrapperFile.isFile()).toBe(true);
+    expect(helperFile.isFile()).toBe(true);
+    for (const id of [wrapperFile.dev, wrapperFile.ino, helperFile.dev, helperFile.ino]) {
+      expect(id).toBeGreaterThan(0n);
+    }
+    expect([wrapperFile.dev, wrapperFile.ino]).not.toEqual([helperFile.dev, helperFile.ino]);
+    expect(await realpath(wrapper)).not.toBe(await realpath(identityEntry));
   } finally {
     if (linked) await unlink(alias);
     await rm(scratch, { recursive: true, force: true, maxRetries: 10 });
