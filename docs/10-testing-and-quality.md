@@ -216,6 +216,31 @@ They establish native routes and ABI behavior; actual installed Chrome/taskbar p
 tracked separately with native shell evidence. No live provider turn or owner service/store is
 used. The existing cross-platform coverage thresholds and general CI gates remain unchanged.
 
+Two further subtests of the installer case use genuine file symbolic links (#499); each link must
+read back natively as a file reparse point that is not a directory. `a PWA source or existing
+output observed as a reparse point is refused before its digest` refuses a linked `-PwaShortcut`,
+with and without `-NoShortcuts`, and linked `-DesktopShortcut` and `-PinnedShortcut` outputs with
+a message naming that parameter, while another process holds the link's target without sharing.
+The installer's zero-access identity read still succeeds there, but a digest or shortcut read
+would fail with a different refusal, so the expected messages show that these refusals come
+before any content read. No stage is created, and every output, target, link and the store keep
+their state; a Desktop output linked to the source still gets the distinct-files collision refusal
+first. `the late source check re-observes the original selected lexical leaf as a link to the same
+target` installs once through a junction to an ordinary source, then retargets that junction when
+the next run stages, so the selected leaf becomes a file link to the same previously accepted
+target. The refusal, with the installed files, target and store unchanged and no stage left, shows
+that the late check observed that leaf again. Because the target stays readable and identical,
+this subtest cannot show whether the digest ran before the refusal: the installer source shows
+that ordering, and the early no-sharing subtest is the separate evidence of refusal before content
+reads. Both subtests need a Windows venue whose test account can already create file symbolic
+links, such as the hosted `windows-latest` runner. On a host without `SeCreateSymbolicLinkPrivilege`
+or Developer Mode, `symlink` fails with EPERM before any installer assertion. That is a failed
+prerequisite of a required case, never a pass or a skip: run it on a capable venue rather than
+changing host privileges or security policy, skipping the subtests or substituting another link
+type. The parent case then fails as a whole, although it also carries the #498, #532, #520 and
+#536 regressions and the default-discovery controls above; their own subtest results stay separate
+evidence, and an EPERM at link creation is not an installer regression.
+
 The separate-process recovery check runs with `pnpm build` followed by `pnpm test:recovery-process`. It starts the built API against disposable mixed healthy/damaged SQLite history and removes its temporary data directory on success.
 
 `apps/api/src/pinned-run-restart.test.ts` kills and restarts the built API on a disposable store. It verifies that an admitted child and Replay retain the original published definition while a new run selects the newer publish. API subprocess fixtures collect closed native SQLite objects before deleting their stores: on Windows, closed connections and statements can retain file handles until collection, including after read-only observers close.
