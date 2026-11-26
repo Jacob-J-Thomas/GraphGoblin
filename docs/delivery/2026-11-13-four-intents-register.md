@@ -32,6 +32,187 @@ The owner clarified [delivery routing on 2026-11-14](https://github.com/Jacob-J-
 
 Validator, builder and integration architecture uses GPT-6.1 Sol xhigh with Claude Opus 5.5 xhigh review. Stateful form/canvas UI uses Claude Opus 5.5 xhigh with independent GPT-6.1 Sol xhigh review. The in-progress #235 GPT proposal was frozen uncommitted and handed to Claude for design and final implementation. Mixed #209/#273 work separates GPT architecture/domain and Claude UI surfaces into bounded slices. The test-only #452 prerequisite is assigned to GPT-6 Luna xhigh; it changes observation timing, never product focus behavior or assertion deadlines.
 
+## Current macOS launcher checkpoint - 2026-11-17
+
+Seventeen batch PRs have merged. PR #501 / #456 remains draft and incomplete. Two of its
+three formal scans have completed: GPT reviewed Claude's presentation and actual Claude Code
+Opus 5.5 xhigh reviewed the GPT native/API implementation. The accepted corrections are in
+the candidate; fresh independent Astra MAX final audit remains scan 3. No review budget is reset.
+
+Historical CI at `370a12b5784252356807bfc7676f65f6cb19b5e0` passed all five jobs.
+Independent native QA then exposed a locale-sensitive Foundation JSON sorting crash. The
+launcher and installer corrections at source `18089bba4b1c5f4fad19627d4c118b48b656a247`
+built successfully on the owner Mac. Engineering acceptance passed two tests and all nine
+native checkpoints, including malformed-locale installation and cold launch, replacement,
+verified shutdown and disposable cleanup. Those results are separate from independent QA
+and do not establish Finder/Dock acceptance.
+
+Independent QA 05 stopped at a missing draft version ID. Actual Claude corrected that request,
+the accepted-shutdown-response oracle and cross-install configuration comparison. The correction
+passed 49 controls, eight mutation challenges and an actual portless API test. QA 06 then met
+all 342 selected native checks on the same frozen product build, without forced recovery.
+Actual Claude independently assessed the evidence and found no product defect. A fresh read-only
+observation confirmed the retained fixture stopped, with matching apps and receipts. The owner
+then performed the Finder launch and reported a port 7443 pairing window. Read-only samples at
+02:02:57 and 02:02:58 UTC on November 17 (November 16 locally) verified one matching detached
+QA gateway, PID 58208 on port 62241, with unchanged apps/receipts and a Chrome connection.
+The owner clarified that Chrome had hung/crashed on its previous page; after restarting Chrome,
+the correct destination opened. This is an owner-observed browser recovery, not an established
+launcher defect. At the owner's request, the existing Codex chat on the Mac received the
+remaining Finder, alias, Dock, browser-close and replacement checks through computer use.
+The owner recovered its stalled `Inspecting Finder` call. The Mac agent then reported a successful
+warm Finder launch at 03:35:47 UTC on November 17, supported by the same correct gateway PID58208.
+Its next compound call, `Verifying alias and inspecting Dock`, stopped returning results at
+03:38:22 UTC. Remote session control was unavailable for a second recovery. The owner authorized
+a fresh direct Codex CLI session on the Mac. A read-only capability probe successfully called
+`cua.getState()` through the actual `mcp__cua_repl` tool. The fresh QA session launched at
+04:45:14 UTC and also completed `cua.getState()`, then computer use denied control of the Codex app
+for safety reasons. The owner subsequently confirmed the old turn was stopped. The fresh session
+resumed at 04:51:32 UTC and reverified the native fixture through automatic approval review.
+Finder access was denied; Chrome initially worked, then native-pipe startup failed during the
+dedicated-window check. The session completed scoped cancellation, ordinary drain and managed
+replacement file checks, leaving the fixture stopped. Actual Claude independently assessed this
+partial evidence; root retained the distinction between driver assertions, direct observations
+and pending persistence checks. Alias, Dock, browser-close and restarted history remain unverified.
+Earlier failed attempts retain their original outcomes. See the
+[native evidence snapshot](../qa/2026-11-16-macos-launcher/README.md).
+
+On November 17 the owner transferred all remaining Mac work to a new local Mac session,
+replacing the remote-session relay and pending Finder-permission question here. A complete
+handoff was saved on the Mac and its bytes verified; it binds the current managed app as the
+new baseline, retains the completed observations and requires the remaining alias/Dock,
+browser-close, replacement and restarted-history checks. This transfer is not a new QA result.
+The new session handles its own supported computer-use permissions directly with the owner.
+No old Mac chat is resumed, and no additional Mac execution is dispatched from this workflow.
+
+CI 03 run `43971560928` passed all five jobs at published evidence checkpoint
+`635a637c4be4f8d63647c01996cdb80e3c262323`; product paths equal `18089bba`. The synthetic
+merge has the expected target/head parents and the same tree as the head. The 13 V8 workspace
+coverage summaries meet existing thresholds; Browser passed 481 tests with one expected skip
+and zero retries, and Swift passed 105 tests.
+
+A native coverage audit of that historical export found only 21 of 25 product files mapped, with
+60.67% line and 49.75% region coverage in that subset and no branch counters. An explicit
+missed-branch capability probe also produced no Swift branch counters. The owner
+[approved the scoped Swift policy and shutdown clarification](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6935644999)
+on November 16: require at least 90% production lines and regions plus explicit branch-outcome
+tests, leaving V8 thresholds unchanged. Complete source mapping, additional behavior tests and
+the failing native CI gate are implemented. GPT authored collection/backend tests and actual
+Claude Opus 5.5 xhigh authored presentation tests. CI04 exposed throwing optional reads inside
+Swift Testing assertions, corrected without weakening the assertions at `448168ab`. CI05 and
+verbose CI06 then failed during Swift compilation with only SwiftPM's generic build failure,
+before tests executed. Both separately passed native API integration and public installer/gateway
+acceptance. The complete raw compiler streams are retained externally; no new production
+coverage result existed at that checkpoint. Bounded compiler diagnostics in CI07/CI08 isolated a presentation helper
+that omitted `import Testing` while using a caller-expanded Testing default macro. Actual Claude
+added that one import at `e16a3877`. CI09 run `44012433527` compiled and linked the test runner
+in 22.50 seconds, then reached the unchanged 270-second command timeout without a completed test
+report. Its build-only diagnostic passed and all 28 test-source objects were present. Native API
+and public installer/gateway acceptance passed separately. CI09 produced neither test completion
+nor new production coverage. Historical partial coverage does not satisfy the gate, and these
+implementation diagnostics reset no formal review slot.
+CI10 run `44014916376` retained 726 complete event records and exposed five backend test issues.
+All live AppKit and four GUI child-process tests passed. The bound-port fixture did not establish
+TCP refusal on Darwin; repeated installed-engine waits then exhausted the 270-second deadline.
+The cold fixture returned its expected 202 but its child remained alive at the three-second check.
+GPT's test-only corrections release the reserved socket and require observed refusal before the
+engine attempt, and close the drain response's connection. A local Node22 control reproduced the
+old keepalive behavior and the corrected bounded close; it is separate from native Swift proof.
+Actual Claude also bounded the GUI helper's fallback exit waits, a known harness defect that
+the passing GUI scenarios did not encounter. No shipping source, test population, assertions,
+coverage threshold or deadline changed.
+
+CI11 at `bdabca42` passed all 154 Swift tests in 6.265 seconds, 203 API tests with eight skips,
+and both native acceptance tests. The coverage gate stopped after `llvm-cov` exported valid
+zero-baseline JSON with exit 0 and four object-newer warnings on stderr. The raw production
+baseline has 23 mapped files and two declaration-only files, with zero hits across 3,627 lines
+and 2,056 regions. Measured production coverage percentages were unavailable in that run. The subsequent
+collector correction indexes only the unrelated sentinel's raw counters after the instrumented
+objects are built, preserving strict stderr checks and the approved thresholds.
+[CI11 run](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44017248649)
+
+CI12 at `53f41045` validated that correction: both zero and observed LLVM exports exited 0
+with empty stderr, and all 154 Swift tests passed. The complete source set measured 3,439/3,627
+lines (94.82%) and 1,775/2,056 regions (86.33%). The approved region threshold correctly failed.
+All other CI12 jobs passed, including the complete shared gates and Browser suite. A test-only
+batch now covers descriptor errors, receipt and path refusals, interrupted installer recovery,
+rollback and exact warm-peer failure behavior. Its 57-file Swift package compiled and linked on
+the owner Mac in an isolated build-only check after correcting two test imports. The local
+Command Line Tools require an explicit search path to their installed Testing framework. The
+focused local test attempt then failed to load a transitive Testing runtime library before any
+test executed; no repository build settings changed. Those local attempts do not establish a
+native test pass. Thresholds, source denominator, assertions and deadlines are unchanged, and no
+branch counters are available.
+[CI12 run](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44019677654)
+
+CI13 at `4d72503321e587d7a36341462a49e442f3e51a6f`, against target
+`6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`, passed all five jobs on attempt 1. The complete
+native gate passed 168 Swift tests and measured 3,492/3,627 lines (96.28%) and 1,868/2,056
+regions (90.86%). Its synthetic merge `21c570dfec222973a2906307496fd20fce769f31` has the
+expected base/head parents and the same tree as the head. Browser passed 481 tests; shared
+Vitest passed 9,839 with 50 skips; Mac API passed 203 with eight skips, and native installer/
+gateway acceptance passed. All 13 V8 workspace summaries meet their existing thresholds.
+Root independently verified all 255 files in the sealed CI13 packet. These results do not
+complete interactive Mac QA or the final audit. Subsequent documentation/evidence-only
+publication requires its own current-head checks; the frozen shipping source remains
+`18089bba4b1c5f4fad19627d4c118b48b656a247`.
+[CI13 evidence](../qa/2026-11-16-macos-launcher/raw/macos-pr501-ci-13/README.md)
+
+The approved plan now uses the existing authenticated shutdown API. No visible start-shutdown
+control is added; current browser wait/force behavior during drain stays unchanged. No API action
+is represented as an owner UI action. Native coverage passed in CI13; required interactive
+observations and the fresh final audit remain open. Recheck CI at any later head.
+Owner closure and deployment are separate; PR #460 and the owner Windows instance remain protected.
+
+## Authorized successor batch - 2026-11-17
+
+Live issue/PR reconciliation on November 17 found 17 of the 22 scoped implementation issues
+merged: nine closed as completed and eight awaiting their existing owner observations. The
+four conditional reports remain historical non-reproductions, and #456 is the sole remaining
+engineering item. #414 is incorporated into #381; prerequisite #452 and parent/intent trackers
+are outside that denominator. This issue count does not measure effort or owner acceptance.
+
+The four individual issues now link their qualified historical results directly:
+[#64](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/64#issuecomment-6957990876),
+[#125](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/125#issuecomment-6957991310),
+[#221](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/221#issuecomment-6957991766), and
+[#323](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/323#issuecomment-6957992230).
+Their labels, acceptance boxes and native relationships remain unchanged; these comments are
+not fresh retests, fixes or owner acceptance. An [updated owner-acceptance readiness draft](2026-11-17-owner-acceptance-readiness.md)
+replaces the obsolete pre-#487 build context for the future handoff. Its integrated build is
+TBD after #501 merges; no deployment or owner session has been scheduled.
+
+The owner approved [five further intents in strict order](2026-11-17-five-intents-register.md),
+starting only after #456 / PR #501 completes its engineering gates and merges. Recording that
+approval does not admit their implementation early, waive a plan/refinement gate or release
+PR #460's hold. Integrated-build owner acceptance and the fresh revisit of conditional reports
+#64/#125/#221/#323 follow macOS engineering delivery. The new register records the issue/UoW
+sequence, bounded diagnostics, conditional scope and protected exclusions. The present work
+remains evidence publication and current-batch reconciliation while the local Mac session
+owns the remaining interactive verification.
+
+## Earlier launcher implementation checkpoint - 2026-11-16
+
+PR #500 (#438) merged as `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`, with tree
+`430d34fda9d7e91752a7dbc93794242b4c17a5aa` identical to the reviewed head. Independent
+behavior QA, opposite-family review, corrected-head CI and fresh Astra MAX sign-off completed
+with two of three formal scans. The original failed CI attempt remains recorded separately
+from the successful unchanged-source retry. [Final audit and disposition](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/500#issuecomment-6926418968).
+
+#456 proceeds from that merged base. Actual Claude Code Opus 5.5 xhigh authored the AppKit
+presentation and corrected repeated Quit so it cannot bypass the pending cleanup wait.
+GPT-6.1 Sol xhigh authored the API admission integration, native engine, installer and native
+acceptance driver in separate file scopes. The first owner-Mac component invocation compiled
+the original presentation but failed test compilation because Command Line Tools lacked
+`Testing`; no tests ran. The full Swift suites move to hosted macOS with Xcode, while owner
+release compilation and native interactive acceptance remain required. No toolchain was
+installed on the owner Mac. [Implementation dispatch](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/456#issuecomment-6926775616).
+
+This is an implementation checkpoint, not review, native QA, CI or audit approval. Formal
+#456 scans have not started. Its mixed implementation requires Claude review of GPT-owned
+code, GPT review of Claude-owned code and the fresh final Astra MAX audit within the shared
+three-scan limit. #456/#326 retain owner closure, and PR #460 remains under its separate hold.
+
 ## Reconciliation completed
 
 The fresh inventory had 158 open issues. Reconciliation closed 18 records, leaving 140; every remaining non-epic has a gate or parking marker. See [reconciliation evidence](../qa/2026-11-13-backlog-reconciliation/README.md).
@@ -430,3 +611,13 @@ The frozen affected baseline reproduced the parser canary leaks, the 393,216-byt
 The fixed pressure sequence did not reach oversized-record markers in either build; exact 65,536-byte backlog records were reached. Retained-payload samples are separate from allocator capacity and whole-heap accounting. The root note corrects two overbroad report phrases, while preserving the original report, baseline, preparation failures and all raw receipts. The [archived scan 1](../qa/2026-11-16-bounded-logging-formal-review-1/README.md) and [historical 4dbb CI](../qa/2026-11-16-bounded-logging-final-ci/README.md) retain their original source identities.
 
 Corrected exact-head ordinary CI and fresh independent GPT-6 Astra max review of that exact head and target remain required. One of three formal scans has been used. #438 remains open, and #456 is the next product issue after #438 merges. Owner acceptance on #276/#325 and owner installation remain separate, and PR #460 remains held.
+
+## macOS launcher — PR #501 correction checkpoint (2026-11-16)
+
+PR #500 merged at 19:14:24 UTC as `6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1`, after corrected CI and fresh Astra MAX sign-off. Issue #438 is engineering-complete. Its merge tree matches the reviewed tree; two of three formal scans were used. This advances the batch to #456, while owner acceptance and the separate PR #460 hold remain unchanged.
+
+The macOS launcher implements the owner's approved plan in [PR #501](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/501). GPT-6.1 Sol xhigh owns the native engine, installer and API; actual Claude Code Opus 5.5 xhigh owns the AppKit presentation. Separate GPT review of the UI and actual Claude review of the backend both returned changes required against `8bddb93aaa61ebb1b962385efa97a468a379929d`. These consume two of the three formal scans. The correction batch addresses failure classification before gateway commitment, bounded final timeout diagnostics, conditional cancellation/store guidance, the absolute Show Log deadline, and missing troubleshooting and receipt-recovery documentation. The final fresh independent Astra MAX audit remains required.
+
+The first CI run, [43942201334](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43942201334), is retained as a failed run. Windows passed 25/25, Browser passed 481 with one declared live-provider skip, and Template image passed. The Mac job built the TypeScript applications and passed 203 API tests with eight skips, then failed Swift compilation. Gates passed 2,123 API tests with 29 skips but failed API function coverage at 882/985 (89.54%); later gates were skipped. The three compiler corrections built successfully on the owner's Mac at `8bddb93`, using the actual arm64 Node 22.22.2 and Swift 6.3.1 toolchain. This was a build only, not Swift test or launcher acceptance evidence. The subsequent public-installer acceptance attempt stopped before installation because `/usr/bin/realpath` does not exist on that Mac. A direct read-only diagnostic verified `/bin/realpath`; the correction uses that path. New Linux default-adapter tests target the uncovered real file-operation path without claiming Darwin lock semantics.
+
+The corrected candidate still needs current-head CI, native acceptance, separate actual Claude behavior QA, the required Finder/Dock observations and final audit. The owner Mac's SSH context does not have Accessibility trust; no permission prompts or preference changes have been performed. Agent tests and native process evidence do not substitute for the specified interactive observations or post-merge owner acceptance. The owner Windows installation, store and ports 4747/4748 remain untouched.

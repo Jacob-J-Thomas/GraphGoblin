@@ -1,0 +1,152 @@
+{
+  "scope": "Web-only bounded browser QA after graceful-EOF/second-loss hook revision; API behavior remains outside this check",
+  "testedBaseCommit": "eadb202946d4e76db5d8e2ff4af1733197e96ea2",
+  "outcome": {
+    "identicalExternalProbe": "passed",
+    "wholeInspectorAvailabilitySpec": "5 passed, 0 failed, 0 retries",
+    "assetManifestRecheck": "28 OK, 0 FAILED"
+  },
+  "runtime": {
+    "node": "22.22.2",
+    "pnpm": "12.8.1 via Corepack",
+    "playwright": "1.63.0",
+    "browser": "Google Chrome for Testing 153.0.8010.12; bundled Chromium revision 1243",
+    "platform": "macOS arm64"
+  },
+  "sha256": {
+    "externalProbe": "ed2cb8bfc7fdd999acc45cc23972eab968ef7ba6cac00be6659a4fbd6be9bde0",
+    "copiedWebbuild03Manifest": "9dfd54784c692c69334b218bcf20e6818df1910a602a282b3b913446d662eacf",
+    "copiedIndex": "b9e7cafa075aa748e94a79252e988fedb4fcb41ec8321777c152602355f3db1c",
+    "copiedAppJs": "18697b179aead5667ed3ab61451a3a944c92ff8061a4386296d53cc12f643b59",
+    "useRunEvents": "a8e6ab1e36a872cc357a11f715427160385837be2f3dfb5f92f4b5ecf09f8977",
+    "inspectorReadProvenance": "a7905377d30436f328a18ab8039cd8118248edd9bc4e594151188dd395ede728",
+    "inspectorAvailabilitySpec": "83e10daa5bbec12ec0059180ce500c890dfe4d1bdab9811009fe3ad02d3180e9",
+    "externalResult": "4c0f28d60cfedb921c3a85425e224d70baacc8bcb4c811c1449652722a7808f1",
+    "externalTrace": "0bdd375ed28628ab8ddf55efa101a3bd19e8b5da38674b933bf5020c437bf2e2",
+    "fullSpecLog": "e99c007916bc9c91f1da7a0b5565c0bbe49f5069df3b5e6d024dd7b97bb15e7c"
+  },
+  "externalChronology": [
+    {
+      "at": "2026-11-25T07:36:39.100Z",
+      "kind": "browser-run-get",
+      "ordinal": 1,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:39.261Z",
+      "kind": "browser-run-get",
+      "ordinal": 2,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:39.272Z",
+      "kind": "preloss-run-response-held",
+      "ordinal": null,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:39.272Z",
+      "kind": "before-loss-ready",
+      "ordinal": null,
+      "runGets": 2
+    },
+    {
+      "at": "2026-11-25T07:36:39.275Z",
+      "kind": "listener-stopped",
+      "ordinal": null,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:39.331Z",
+      "kind": "global-outage-visible",
+      "ordinal": null,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:39.332Z",
+      "kind": "preloss-run-response-delivered",
+      "ordinal": null,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:39.337Z",
+      "kind": "browser-run-get",
+      "ordinal": 3,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:39.448Z",
+      "kind": "stale-gate-verified",
+      "ordinal": null,
+      "runGets": 3
+    },
+    {
+      "at": "2026-11-25T07:36:39.449Z",
+      "kind": "listener-restored",
+      "ordinal": null,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:40.343Z",
+      "kind": "browser-run-get",
+      "ordinal": 4,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:40.481Z",
+      "kind": "browser-run-get",
+      "ordinal": 5,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:40.503Z",
+      "kind": "recovery-and-submit-verified",
+      "ordinal": null,
+      "runGets": null
+    },
+    {
+      "at": "2026-11-25T07:36:40.583Z",
+      "kind": "browser-run-get",
+      "ordinal": 6,
+      "runGets": null
+    }
+  ],
+  "transportFailures": [
+    {
+      "at": "2026-11-25T07:36:39.276Z",
+      "class": "run events",
+      "error": "net::ERR_INCOMPLETE_CHUNKED_ENCODING"
+    },
+    {
+      "at": "2026-11-25T07:36:39.338Z",
+      "class": "run events",
+      "error": "net::ERR_CONNECTION_REFUSED"
+    },
+    {
+      "at": "2026-11-25T07:36:39.338Z",
+      "class": "run record",
+      "error": "net::ERR_CONNECTION_REFUSED"
+    }
+  ],
+  "browserWrites": [
+    {
+      "at": "2026-11-25T07:36:40.450Z",
+      "method": "POST",
+      "class": "run input",
+      "listenerDown": false
+    }
+  ],
+  "cleanup": {
+    "disposableApiAndControlPorts": "both closed after run",
+    "browserContexts": "disposed",
+    "distAssets": "copy remains hash-verified"
+  },
+  "commands": {
+    "externalProbe": "GG_QA_REPO=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair GG_QA_WEB_DIST=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/graceful-final-dist GG_QA_OUT=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/graceful-final-run /opt/homebrew/bin/node /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/read-crosses-listener-loss.mjs",
+    "wholeSpec": "GG_E2E_WEB_DIST=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/graceful-final-dist GG_E2E_MAIN_PORT=0 GG_E2E_CONTROL_PORT=0 /opt/homebrew/bin/corepack pnpm exec playwright test -c playwright.config.ts e2e/inspector-availability.spec.ts --output=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/graceful-final-inspector-results --reporter=list"
+  },
+  "limits": [
+    "This browser run exercises a hard listener refusal with a pre-loss run response crossing the boundary. It does not independently exercise graceful SSE EOF and a quick second drop; the root-owned reviewer diagnostic covers that case.",
+    "Root will bind exact final commit blobs and webbuild03 asset identity; later API #581 integration is outside this web-only check."
+  ]
+}

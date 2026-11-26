@@ -1,0 +1,83 @@
+{
+  "mode": "identity",
+  "exitCode": 0,
+  "sourceUnchanged": true,
+  "sourcePatchSha256": "98df17ae1ff9b17ae21055c87707520d946fe2589b29fc74add21bb27f90074a",
+  "before": {
+    "head": "d312119ccbb8be2690fe719d460f31ee0a804221",
+    "tree": "806813008973429e85c18f343f2cbffaef9d91f9",
+    "branch": "codex/gg-fu-jsonata-package-20261124",
+    "clean": true,
+    "parents": [
+      "7064dab41e11f38229a31a8626f930a8f139b915",
+      "631d16e39b8e9932f4763390a4166fa67eea8df3"
+    ],
+    "sourceFilesSha256": {
+      ".github/workflows/ci.yml": "258392369515c01dacd4932a0a8ab90bd8001be3fd03159ced9734c484a14900",
+      "CHANGELOG.md": "73dd6a62f663e63e5ab826cc7b9adad05d3f4b6cd8b127dac1913086abff759d",
+      "docs/10-testing-and-quality.md": "9fc1557fdba75b892739890328a3b926e359371d3defbf5718a4e4861a63875f",
+      "docs/research/licenses.md": "b7bb8605b0f711b100f5111d5d6259f7ed29a45dab26d31d2adcc5cb855d7a88"
+    },
+    "indexSha256": "d60a33410d8cb7bbadf3f159f29ba1296ecae025fd5385a1fc9791edfe6021b5",
+    "sourcePatchSha256": "98df17ae1ff9b17ae21055c87707520d946fe2589b29fc74add21bb27f90074a"
+  },
+  "after": {
+    "head": "d312119ccbb8be2690fe719d460f31ee0a804221",
+    "tree": "806813008973429e85c18f343f2cbffaef9d91f9",
+    "branch": "codex/gg-fu-jsonata-package-20261124",
+    "clean": true,
+    "parents": [
+      "7064dab41e11f38229a31a8626f930a8f139b915",
+      "631d16e39b8e9932f4763390a4166fa67eea8df3"
+    ],
+    "sourceFilesSha256": {
+      ".github/workflows/ci.yml": "258392369515c01dacd4932a0a8ab90bd8001be3fd03159ced9734c484a14900",
+      "CHANGELOG.md": "73dd6a62f663e63e5ab826cc7b9adad05d3f4b6cd8b127dac1913086abff759d",
+      "docs/10-testing-and-quality.md": "9fc1557fdba75b892739890328a3b926e359371d3defbf5718a4e4861a63875f",
+      "docs/research/licenses.md": "b7bb8605b0f711b100f5111d5d6259f7ed29a45dab26d31d2adcc5cb855d7a88"
+    },
+    "indexSha256": "d60a33410d8cb7bbadf3f159f29ba1296ecae025fd5385a1fc9791edfe6021b5",
+    "sourcePatchSha256": "98df17ae1ff9b17ae21055c87707520d946fe2589b29fc74add21bb27f90074a"
+  },
+  "result": {
+    "pr": 571,
+    "liveHead": "d312119ccbb8be2690fe719d460f31ee0a804221",
+    "liveMain": "631d16e39b8e9932f4763390a4166fa67eea8df3",
+    "currentMergeCommit": "ad2bab47f4d9d70a63737bb10e8b6083cb905cff",
+    "boundTarget": "631d16e39b8e9932f4763390a4166fa67eea8df3",
+    "boundMergeCommit": "ad2bab47f4d9d70a63737bb10e8b6083cb905cff",
+    "imageMergeIsCurrent": true,
+    "recordedRawReceiptHashesVerified": 12,
+    "packetVerification": "Original/prior/current committed blobs and current index; sparse omission is unchanged.",
+    "dependencyInputRevisionsVerified": [
+      "87dcfec6883568494f75d8279347110e5bf62e01",
+      "7064dab41e11f38229a31a8626f930a8f139b915",
+      "d312119ccbb8be2690fe719d460f31ee0a804221",
+      "631d16e39b8e9932f4763390a4166fa67eea8df3"
+    ],
+    "licenseDocumentation": "`packages/domain` evaluates every authored expression with jsonata 2.2.2 plus `patches/jsonata@2.2.2.patch`, which pnpm applies at install (`patchedDependencies` in `pnpm-workspace.yaml`; the lockfile records its hash). jsonata remains MIT and no dependency is added; the patch is GraphGoblin's own change to that package. It edits only `jsonata.js`, the file the package's `main` and `module` fields name. The bundled `jsonata.min.js`, `jsonata-es5.js` and `jsonata-es5.min.js` stay upstream code, and nothing may load them. The evaluator (`packages/domain/src/expression.ts`) compiles without jsonata's own `stack` and `timeout` options, so its hooks are the only depth and time limits. It relies on all three changes:\n\n- **Symbol-keyed hooks in the invocation's frame.** Upstream `evaluate(input, bindings)` copies bindings into that call's own frame with `Object.keys`, which skips symbols, so the `Symbol.for('jsonata.__evaluate_entry')` and `Symbol.for('jsonata.__evaluate_exit')` hooks never arrive and the 200-level, 2,000 ms default budget is silently absent. The patch binds every own enumerable key, symbols included, into the same per-call frame. Each evaluation of a cached compiled expression therefore keeps its own hooks and bindings; nothing is assigned to the shared compiled environment.\n- **Timestamp per evaluation.** Upstream binds `$now()` and `$millis()` once per compiled expression over one timestamp that every call resets, so an evaluation that awaits while another call of the same cached source starts reads the later call's time. The patch creates the timestamp and both functions in each call's frame.\n- **Siblings evaluated in turn.** Upstream starts every array constructor item and every object constructor value at once (`Promise.all`) and sets `environment.isParallelCall`. Siblings share one depth counter with their caller, so a flat collection wider than the depth limit was refused as though it were nested. The patch finishes each sibling before starting the next, so depth measures the stack rather than width. It no longer sets `isParallelCall`. In jsonata 2.2.2, `createFrame` reads that flag only to copy it from the enclosing frame into each new frame; no evaluation logic acts on it, and GraphGoblin's hooks do not read it. Separate evaluations still run concurrently.\n\nThe **Template image** CI job evaluates expressions through the compiled `@graphgoblin/domain` installed in the distributed image ([10](../10-testing-and-quality.md#ci-gates-decided)). An image without the hook or sibling change fails that job. The timestamp change has no image probe; only the source regression covers it. Source unit tests do not establish what the image installed.\n\n**Upgrading jsonata.** The patch is keyed to exactly 2.2.2. Before moving to another version, compare that release's `evaluate` entry point and its binding loop, the `$now` and `$millis` bindings, and the array and object constructors against the three changes above. Recheck and reapply, rebase or remove each change only after demonstrating equivalent behaviour on the new version: the domain tests, in particular `packages/domain/src/expression.test.ts` (wide flat literals at the default limits, nested and recursive depth limits, depth and time budgets, concurrent isolation of budgets, bindings and deadlines, and the interleaved timestamp), and then the Template image job against the rebuilt image. Drop a change only where the new release behaves the same unpatched, and remove the patch file and its `patchedDependencies` entry only when all three hold upstream. A regenerated patch changes the lockfile's patch hash.",
+    "timestampUnitTestSourceLines": [
+      "82:   it('keeps one timestamp throughout an evaluation despite an interleaved call', async () => {",
+      "85:       const expression = '($start := $millis(); $pause(); [$start, $millis()])';"
+    ],
+    "imageWorkflowSourceLines": [
+      "316:       - name: Build the distributed image",
+      "364:       - name: Evaluate expressions with the installed JSONata patch",
+      "365:         if: ${{ !cancelled() && steps.image.outcome == 'success' }}",
+      "367:           docker run --rm -i --network none --read-only --cap-drop ALL --security-opt no-new-privileges --workdir /app/apps/api --entrypoint node graphgoblin-template-check --input-type=module <<'JS'"
+    ],
+    "imageBuildDeploySourceLines": [
+      "30: RUN pnpm --filter @graphgoblin/api deploy --prod --legacy /out/apps/api \\",
+      "44: COPY --from=build --chown=root:root /out/ /app/"
+    ],
+    "domainPublicExport": {
+      ".": {
+        "development": "./src/index.ts",
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      }
+    }
+  },
+  "error": null,
+  "capturedAt": "2026-11-25T05:38:02.738756+00:00"
+}

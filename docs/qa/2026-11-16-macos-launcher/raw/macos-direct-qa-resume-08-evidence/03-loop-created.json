@@ -1,0 +1,112 @@
+{
+  "at": "2026-11-17T04:54:45.575Z",
+  "status": 201,
+  "body": {
+    "loop": {
+      "id": "01M7KXQ11YSTSGQZZJHYRAANB4",
+      "ownerId": "local",
+      "name": "QA browser close resume08 20261117T0452 fde14a78",
+      "description": "Authorized provider-free GUI continuity QA. Manual trigger, 1800-second timer, quiet exit.",
+      "draftVersionId": "01M7KXQ11YSTSGQZZJHYRAANB5",
+      "createdAt": "2026-11-17T04:54:45.566Z",
+      "updatedAt": "2026-11-17T04:54:45.566Z"
+    },
+    "draft": {
+      "id": "01M7KXQ11YSTSGQZZJHYRAANB5",
+      "loopId": "01M7KXQ11YSTSGQZZJHYRAANB4",
+      "version": 1,
+      "status": "draft",
+      "definition": {
+        "schemaVersion": 4,
+        "name": "QA browser close resume08 20261117T0452 fde14a78",
+        "description": "Authorized provider-free GUI continuity QA. Manual trigger, 1800-second timer, quiet exit.",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 0
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "pause",
+            "label": "Pause",
+            "ui": {
+              "x": 260,
+              "y": 0
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "duration",
+              "seconds": 1800,
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 520,
+              "y": 0
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": []
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "start-pause",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "pause",
+              "port": "in"
+            }
+          },
+          {
+            "id": "pause-done",
+            "from": {
+              "node": "pause",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "createdAt": "2026-11-17T04:54:45.566Z"
+    },
+    "issues": []
+  }
+}

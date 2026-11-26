@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "issue": 573,
+  "status": "READY",
+  "formalScan": 1,
+  "ordinaryFormalScanBudget": 3,
+  "reviewer": {
+    "family": "OpenAI",
+    "role": "Fresh independent opposite-family formal source and evidence review",
+    "delegated": false
+  },
+  "author": {
+    "providerModel": "claude-opus-5-5",
+    "receipt": "../claude-implementation-01/CLAUDE-EXIT.json",
+    "providerSuccess": true
+  },
+  "candidate": {
+    "worktree": "G:\\ggq\\gg-565-web-coverage-triage-20261124\\GraphGoblin",
+    "head": "154e78d54ee485330816d606032280de44d6e891",
+    "comparisonBase": "154e78d54ee485330816d606032280de44d6e891",
+    "comparison": "HEAD versus unstaged worktree binary diff",
+    "branch": "codex/gg-565-chat-coverage-timing-20261124",
+    "path": "apps/web/src/chat/ChatSurface.test.tsx",
+    "sourceSha256": "b33811fae78e2420730fa3a22c2c1fdbbc9f0efd0b0494d8636be70138e2c945",
+    "baseSourceSha256": "9012e910a4bd4b156ebb8075d61ba4f938efad70134e6202da562024ab136027",
+    "diffBinarySha256": "9529cf6890641faf2d9788d7a1591f57fb695c8ca1821991ec7d0748ea6c2df5",
+    "diffBinaryBytes": 1828,
+    "indexBindingKind": "SHA256 of git ls-files --stage -z output (logical staged entries; no direct .git read)",
+    "indexEntriesSha256": "b8051f1b7b53e6274ce49d713b56d27b4363aae0ebcda9dc7bc25e5d5e014522",
+    "indexEntryCount": 43046,
+    "candidateIndexEntry": "100644 6149b8b065c516c749425a07a8eae1a64c65a8aa 0\tapps/web/src/chat/ChatSurface.test.tsx",
+    "cachedDiffBytes": 0,
+    "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sourceUnstaged": true
+  },
+  "scope": {
+    "onlyExistingTestBody": "R2 clears the previous reply live announcement on intentional New chat and conversation selection",
+    "testStartLine": 952,
+    "testEndLine": 981,
+    "changedPathCount": 1,
+    "lineAdditions": 14,
+    "lineDeletions": 4,
+    "outsideBodyByteIdentical": true,
+    "prefixMatchesAuthorBinding": true,
+    "suffixMatchesAuthorBinding": true,
+    "productionOrConfigurationChanges": false,
+    "timeoutRetrySkipOrOrderingChanges": false
+  },
+  "findings": [],
+  "acceptance": [
+    {
+      "criterion": "Wait for the existing New chat button to be enabled after the reply transcript appears",
+      "status": "PASS",
+      "evidence": "ChatSurface.test.tsx:960-965; existing waitFor import and setup asyncUtilTimeout=5000; no wait options added."
+    },
+    {
+      "criterion": "Assert the exact polite reply status",
+      "status": "PASS",
+      "evidence": "ChatSurface.test.tsx:966-969 uses exact-default text matching constrained to [role=\"status\"][aria-live=\"polite\"], and requires the found element in getAllByRole(\"status\")."
+    },
+    {
+      "criterion": "Use the settled control, preserve New chat heading and saved transcript assertions",
+      "status": "PASS",
+      "evidence": "ChatSurface.test.tsx:970-978."
+    },
+    {
+      "criterion": "Keep the same reply status mounted and empty after both transitions",
+      "status": "PASS",
+      "evidence": "ChatSurface.test.tsx:972-973 and 979-980 retain the identical element reference, assert document membership, then emptiness."
+    },
+    {
+      "criterion": "Preserve all source outside the existing R2 body and the Git index",
+      "status": "PASS",
+      "evidence": "Independent raw-byte prefix/suffix and whole-outside-body comparison; one unstaged path; cached diff empty; full logical stage-entry digest unchanged."
+    }
+  ],
+  "verification": {
+    "reviewerReranMaintainedChecks": false,
+    "reason": "No concrete concern requiring a repeat. The task prohibits redundant maintained reruns; actual provider tool results were inspected.",
+    "nodeVersion": "v22.23.4",
+    "commands": [
+      {
+        "command": "pnpm --filter @graphgoblin/web test src/chat/ChatSurface.test.tsx",
+        "toolUseId": "toolu_01BQgcyBhqRNXHfmKsM3exSg",
+        "isError": false,
+        "result": "1 file passed; 57/57 tests; 8.59s"
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/web test src/chat/ChatSurface.test.tsx",
+        "toolUseId": "toolu_01A5FsuXohXuJAv4DyZuYqUA",
+        "isError": false,
+        "result": "1 file passed; 57/57 tests; 8.86s"
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/web typecheck",
+        "toolUseId": "toolu_01KTNpBStpG8gmRSXGbxuvuM",
+        "isError": false,
+        "result": "tsc -p tsconfig.json --noEmit passed"
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/web lint",
+        "toolUseId": "toolu_01DenzWE9cEpuKzhh7Kv98uh",
+        "isError": false,
+        "result": "0 errors; 5 warnings in untouched RunInspectorPage.tsx and SessionRecoveryControls.tsx"
+      },
+      {
+        "command": "pnpm exec prettier --check apps/web/src/chat/ChatSurface.test.tsx",
+        "toolUseId": "toolu_01TrdBMXTGV9EJd8ufA88fgc",
+        "isError": false,
+        "result": "All matched files use Prettier code style"
+      },
+      {
+        "command": "git --no-pager diff --check",
+        "toolUseId": "toolu_01QqyA7L9EByAg3EXE2zBBAC",
+        "isError": false,
+        "result": "No output; reviewer also independently obtained a clean diff check"
+      }
+    ],
+    "evidenceSource": "../claude-implementation-01/CLAUDE-EVENTS.private.jsonl; extracted named tool-use inputs and matching tool-result blocks only.",
+    "evidenceHashes": {
+      "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\chat-announcement-573\\claude-implementation-01\\CLAUDE-EVENTS.private.jsonl": "fe8c893a47792ce6cfa9172f7454033251427658da0fba50cf36389bf1a6004e",
+      "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\chat-announcement-573\\claude-implementation-01\\CLAUDE-EXIT.json": "c4efa64a76702c40833aba113bf55b20a8bbbd5714f12db5bef5251d15b5b101",
+      "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\chat-announcement-573\\claude-implementation-01\\IMPLEMENTATION-REPORT.claude.md": "0c5ae334e1aa9796a827d4b25b6bcdcff927fd30033df8babc071c936a05d1e9",
+      "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\api-fixtures-565\\hosted-ci-02\\web-coverage-triage\\diagnostic-control.test.tsx": "cfd865691c5d0bf4d8d65e383c00c6db74392aa52d2ef9b6e089c6aa3f4af134",
+      "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\api-fixtures-565\\hosted-ci-02\\web-coverage-triage\\controlled-boundary.stdout.log": "07d648ec375a6609b45e34033e29810a1619324db471cb0a773e5c7396ebea07",
+      "G:\\ggq\\gg-565-web-coverage-triage-20261124\\GraphGoblin\\apps\\web\\src\\chat\\ChatSurface.tsx": "3ff0a857e7f59e1be759c91936ab177311427a73fdb3e556f5d84d00f6f9565d",
+      "G:\\ggq\\gg-565-web-coverage-triage-20261124\\GraphGoblin\\apps\\web\\src\\chat\\controller.ts": "2abf2120a0f93ebec825bbc811b4c46544e6143cd989c0f9dda4ed9a6cad9b2c",
+      "G:\\ggq\\gg-565-web-coverage-triage-20261124\\GraphGoblin\\apps\\web\\src\\chat\\__fixtures__\\chat.ts": "a327dc6859f100ac4d91d597afffe4caf92670eaba9c48d57d46ab588d452704",
+      "G:\\ggq\\gg-565-web-coverage-triage-20261124\\GraphGoblin\\apps\\web\\package.json": "1cea9d5eeaee3d31ff109dc61a9ec1d169ddb0d5b4b76a1bc34a2de3eac71911",
+      "G:\\ggq\\gg-565-web-coverage-triage-20261124\\GraphGoblin\\pnpm-lock.yaml": "bcc908d0f7aa32ba4a64302a9f74284c1a0679e2372ca1ba83176af5b5bbcce2"
+    },
+    "providerFinalText": {
+      "utf8Sha256": "699aeca1f491416b14a13671198122e3825f666a055e1c3c8f78733b27516a39",
+      "markdownRawSha256": "0c5ae334e1aa9796a827d4b25b6bcdcff927fd30033df8babc071c936a05d1e9",
+      "equivalence": "Markdown normalized from CRLF to LF equals provider result text plus one terminal LF."
+    }
+  },
+  "evidenceQualifications": [
+    "Local maintained tests use Windows Node 22.23.4 and jsdom with a mocked ChatClient. They do not establish hosted Ubuntu coverage or native/browser/provider acceptance.",
+    "Retained controlled-boundary evidence forces a real controller subscription commit at the accept-before-finally boundary; this supports the fault mechanism and enabled-control boundary. It is not an observation of hosted scheduler execution.",
+    "The diagnostic fixture and controlled stdout match the retained recorded SHA256 values; production surface/controller/client fixture/package/lockfile hashes match the scoped retained source evidence.",
+    "The original test already did not cover arbitrary later announcements after saved-history rendering; the patch preserves its assertion boundary. No new current-PR root cause was admitted from this known limitation.",
+    "CLAUDE-EXIT records one denied direct Read of the worktree .git path. The reviewer did not repeat or bypass that Read. Read-only git CLI head/branch/status/diff/logical-stage queries independently resolved candidate identity. Coordinator QA-admission adjudication remains separate.",
+    "The index fingerprint binds canonical staged entries from git ls-files --stage -z; raw physical index bytes were not opened or hashed.",
+    "READY applies to this formal scan only. Independent Claude QA, fresh exact-candidate CI and reserved fresh final review remain separate gates; this is not overall merge approval."
+  ],
+  "preservation": {
+    "before": {
+      "capturedAtUtc": "2026-11-25T05:21:41.440770+00:00",
+      "worktree": "G:\\ggq\\gg-565-web-coverage-triage-20261124\\GraphGoblin",
+      "nodeVersion": "v22.23.4",
+      "head": "154e78d54ee485330816d606032280de44d6e891",
+      "branch": "codex/gg-565-chat-coverage-timing-20261124",
+      "statusPorcelain": [
+        " M apps/web/src/chat/ChatSurface.test.tsx"
+      ],
+      "sourcePath": "apps/web/src/chat/ChatSurface.test.tsx",
+      "sourceSha256": "b33811fae78e2420730fa3a22c2c1fdbbc9f0efd0b0494d8636be70138e2c945",
+      "baseSourceSha256": "9012e910a4bd4b156ebb8075d61ba4f938efad70134e6202da562024ab136027",
+      "diffBinarySha256": "9529cf6890641faf2d9788d7a1591f57fb695c8ca1821991ec7d0748ea6c2df5",
+      "diffBinaryBytes": 1828,
+      "cachedDiffSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "cachedDiffBytes": 0,
+      "indexBindingKind": "SHA256 of git ls-files --stage -z output (logical staged entries; no direct .git read)",
+      "indexEntriesSha256": "b8051f1b7b53e6274ce49d713b56d27b4363aae0ebcda9dc7bc25e5d5e014522",
+      "indexEntryCount": 43046,
+      "candidateIndexEntry": "100644 6149b8b065c516c749425a07a8eae1a64c65a8aa 0\tapps/web/src/chat/ChatSurface.test.tsx",
+      "prefixMatchesAuthorBinding": true,
+      "suffixMatchesAuthorBinding": true,
+      "outsideExistingR2BodyByteIdentical": true,
+      "changedPaths": [
+        "apps/web/src/chat/ChatSurface.test.tsx"
+      ],
+      "changedLineSummary": "14\t4\tapps/web/src/chat/ChatSurface.test.tsx",
+      "baseTestDeclarations": 36,
+      "currentTestDeclarations": 36
+    },
+    "after": {
+      "capturedAtUtc": "2026-11-25T05:22:43.457155+00:00",
+      "head": "154e78d54ee485330816d606032280de44d6e891",
+      "branch": "codex/gg-565-chat-coverage-timing-20261124",
+      "statusPorcelain": [
+        " M apps/web/src/chat/ChatSurface.test.tsx"
+      ],
+      "sourceSha256": "b33811fae78e2420730fa3a22c2c1fdbbc9f0efd0b0494d8636be70138e2c945",
+      "diffBinarySha256": "9529cf6890641faf2d9788d7a1591f57fb695c8ca1821991ec7d0748ea6c2df5",
+      "cachedDiffBytes": 0,
+      "indexEntriesSha256": "b8051f1b7b53e6274ce49d713b56d27b4363aae0ebcda9dc7bc25e5d5e014522"
+    },
+    "headBranchSourceDiffAndLogicalIndexUnchanged": true,
+    "sourceIndexCommitOrGithubMutations": false,
+    "evidenceWritesOnly": "G:/ggq/delivery-evidence/2026-11-24-followups/chat-announcement-573/review-01"
+  }
+}

@@ -1,0 +1,37 @@
+# Independent review 01: #534 / #539
+
+Verdict: **PASS**. No actionable findings were admitted against the frozen four-file candidate. This satisfies this bounded opposite-family source review; separate QA, repository/CI gates and final review remain open. It does not authorize merge, publication or issue closure.
+
+## Candidate identity
+
+- Worktree: G:/ggq/gg-fu-evidence-20261124/GraphGoblin
+- Base and HEAD: d2df8600c2c8574bec420947de686b936910b245
+- Branch: codex/gg-fu-evidence-20261124
+- Index: empty; exactly the four expected files remain unstaged.
+- Binary diff SHA-256: 526d5eea2f8a8e8dd3d809365f9211cf04a774d746a1e84fcdf36b6f8dd6ce47 (33663 bytes).
+- Frozen manifest SHA-256: b4b4b980ab17f9780339ab6af74bac5475e1eb2089cda62dc0c30f9d2052a271.
+- Every file SHA-256 matched the manifest before inspection and again at report creation. REVIEW.json records those hashes.
+
+## Assessment
+
+The recorder end is idempotent. Cancellation through a real AbortSignal, an already-aborted signal, and starting after an ended parent each produce a failure at the first end; a late return or throw cannot write a second end. Existing assertion/thrown-value failures retain their original failure fields. Direct-child running and failed counters correctly handle either the child or parent ending first. AsyncLocalStorage scope survives into late bodies, so subsequent child and cleanup records keep the cancelled test's identity.
+
+The maintained native Node22 fixture exercises ordinary pass/failure, a subtest timeout, a parent timeout, an unawaited child cancelled when its parent returns, and a subtest started after its parent ended. It checks runner TAP outcomes/counts and exit, record ordering/counts, one end per start, late cleanup, diagnostic privacy, valid closed observations, native-failed finalization and exact upload paths. The run with evidence disabled keeps the same runner outcomes.
+
+For #539, literal single-field count changes necessarily violate the existing sum constraint. The new test explicitly establishes that shape refusal, then changes one compensating field to make each per-field variant structurally valid. Each retains exactly one totals row and unchanged trial receipts, reaches exactly contention-trials, retains observation bytes and upload paths, and preserves native-failed behavior. Duplicate-totals regressions remain. These are offline evidence tests; production contention predicates are unchanged.
+
+The CHANGELOG and numbered testing documentation describe the implementation and its evidence boundary accurately. No format or stored-data migration is introduced.
+
+## Verification
+
+- Independently executed with Node v22.23.4: pnpm.cmd --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs — **43/43 passed**, 6.33 seconds. Raw receipt: maintained-tests.log.
+- Independently executed: git --no-pager diff --check — passed.
+- Inspected frozen author/provider receipts: focused evidence-file coverage 99.48% lines / 97.43% branches, tooling lint and scoped formatting passed. These checks were not rerun by this reviewer and do not establish whole-package coverage.
+
+The initial red receipt showed cancelledByParent in TAP alongside a passing artifact. Its initial fixture also had lifecycle differences; it does not independently establish a timeout-specific baseline.
+
+## Finding ledger and limits
+
+The admitted finding ledger is empty: no blocker, in-scope correction or new follow-up candidate met the review policy's evidence and introduction tests. No speculative or inherited debt was promoted into a finding.
+
+This was review pass 1 within the three-scan cap, preserving the reserved final Astra scan. No native product launcher, broad API/default-discovery suite, owner store, credential, product service/process, Git index, GitHub or publication action was used. The real Node22 disposable runner checks establish evidence-recorder behavior; they do not establish native GraphGoblin launcher acceptance or a hosted CI result.

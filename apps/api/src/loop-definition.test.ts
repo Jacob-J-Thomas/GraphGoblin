@@ -41,6 +41,63 @@ describe('canonical loop definition inputs', () => {
     },
   );
 
+  it('returns ordered literal pointers in the validation problem and accepts valid input', async () => {
+    const source = minimalLoop();
+    const invalid = {
+      ...source,
+      name: '',
+      variables: { 'literal/~': { type: 'string' } },
+      nodes: [
+        source.nodes[0],
+        { id: 'infer', kind: 'inference', label: 'Infer', config: { prompt: { template: 1 } } },
+        source.nodes[1],
+      ],
+    };
+    for (const [payload, errors] of [
+      [
+        { definition: invalid },
+        [
+          {
+            path: '/definition/name',
+            message: 'Too small: expected string to have >=1 characters',
+          },
+          { path: '/definition/variables/literal~1~0', message: 'Invalid key in record' },
+          {
+            path: '/definition/nodes/1/config/prompt/template',
+            message: 'Invalid input: expected string, received number',
+          },
+        ],
+      ],
+      [[], [{ path: '/', message: 'Invalid input: expected object, received array' }]],
+    ] as const) {
+      const response = await t.app.inject({ method: 'POST', url: '/loops', payload });
+      expect(response.statusCode, response.body).toBe(400);
+      expect(response.headers['content-type']).toMatch(/^application\/problem\+json\b/);
+      expect(response.json()).toEqual({
+        type: 'https://graphgoblin.dev/problems/validation-failed',
+        title: 'validation failed',
+        status: 400,
+        code: 'VALIDATION_FAILED',
+        detail: 'the request did not match the schema',
+        errors,
+      });
+    }
+    const created = await t.app.inject({
+      method: 'POST',
+      url: '/loops',
+      payload: { definition: { ...source, variables: { literal: { type: 'string' } } } },
+    });
+    expect(created.statusCode, created.body).toBe(201);
+    expect(created.json()).toMatchObject({
+      draft: {
+        definition: {
+          variables: { literal: { type: 'string' } },
+          settings: { workingDirectory: { kind: 'temp' } },
+        },
+      },
+    });
+  });
+
   it('rejects an unsupported inference harness with its node path', async () => {
     const loopId = await t.publishLoop(minimalLoop());
     const source = minimalLoop();

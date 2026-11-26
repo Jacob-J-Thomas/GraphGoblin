@@ -1,0 +1,9 @@
+# API coverage and held-store diagnostic correction
+
+Changed apps/api/src/macos-log/guard-node.test.ts and tooling/scripts/macos-launcher.acceptance.mjs. No other product paths. The external reviewed proposal was hash-verified before and after copying. The checked-in candidate then received formatting and a namespace import to satisfy ESLint. The original lint failure remains in focus-lint-01. Thresholds, exclusions, production exports and the acceptance suite's 450-second deadline are untouched.
+
+The two Linux tests call the actual default adapter. The mock is confined to the raw open callback, where it translates Darwin O_EXLOCK for Linux and optionally reports one EAGAIN. Root/slot FDs, metadata, repair, write acknowledgement, refusal and close are actual Linux filesystem operations. The original Gates summary reports 882/985 functions. A fresh Linux coverage result must establish at least 887/985. The tests do not establish native APFS contention.
+
+The driver checks the same verified alternate log root immediately before and after the real 60-second store-blocked case. It reads the private active launcher slot within its 256 KiB native cap. If there is an existing log, the preceding bytes and inode must match. The sole new record must be the exact stage=waiting-for-store outcome=store-blocked LF line. The raw post-attempt file is retained as held-store.launcher.log before checking the record. The transport allowlist needs that exact basename.
+
+Final local checks on Node 22.23.4 and pnpm 12.8.1 passed. Receipts include focus-lint-02, focus-prettier-check-02, acceptance-syntax-01 and api-typecheck-02. The Linux test runtime and coverage delta, and the held-store record from the actual native process, remain for CI/hosted verification. No build, coverage run, SSH, native execution, or Git/index operation occurred in this correction.

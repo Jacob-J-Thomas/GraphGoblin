@@ -1,0 +1,100 @@
+Exit code 1
+$ vitest run src/testing/provider-isolation.test.ts
+
+ RUN  v5.0.3 G:/ggq/gg-fu-api-fixtures-20261124/GraphGoblin/apps/api
+
+{"level":30,"time":1795569367689,"pid":45164,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5628"}
+{"level":30,"time":1795569367691,"pid":45164,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5628,"dataDir":"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-process-LWFvR5","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":40,"time":1795569367703,"pid":45164,"hostname":"DESKTOP-RQPA3QI","deletedRuns":0,"pendingResources":0,"preservedResources":0,"msg":"Storage pressure: cleanup is limited to confirmed eligible history"}
+{"level":30,"time":1795569367711,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/loops","host":"127.0.0.1:5628","remoteAddress":"127.0.0.1","remotePort":53894},"msg":"incoming request"}
+{"level":30,"time":1795569367726,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":14.745199999997567,"msg":"request completed"}
+{"level":30,"time":1795569367729,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-2","req":{"method":"GET","url":"/harness/ollama/connection","host":"127.0.0.1:5628","remoteAddress":"127.0.0.1","remotePort":53895},"msg":"incoming request"}
+{"level":30,"time":1795569367735,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-2","res":{"statusCode":200},"responseTime":5.043699999998353,"msg":"request completed"}
+{"level":30,"time":1795569370154,"pid":45164,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5630"}
+{"level":30,"time":1795569370155,"pid":45164,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5630,"dataDir":"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-api-process-iHb4Vf","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":40,"time":1795569370166,"pid":45164,"hostname":"DESKTOP-RQPA3QI","deletedRuns":0,"pendingResources":0,"preservedResources":0,"msg":"Storage pressure: cleanup is limited to confirmed eligible history"}
+{"level":30,"time":1795569370173,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/loops","host":"127.0.0.1:5630","remoteAddress":"127.0.0.1","remotePort":53899},"msg":"incoming request"}
+{"level":30,"time":1795569370180,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":6.467500000002474,"msg":"request completed"}
+{"level":30,"time":1795569370183,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-2","req":{"method":"GET","url":"/harness/ollama/connection","host":"127.0.0.1:5630","remoteAddress":"127.0.0.1","remotePort":53900},"msg":"incoming request"}
+{"level":30,"time":1795569370186,"pid":45164,"hostname":"DESKTOP-RQPA3QI","reqId":"req-2","res":{"statusCode":200},"responseTime":2.568199999997887,"msg":"request completed"}
+ ❯ src/testing/provider-isolation.test.ts (4 tests | 2 failed) 22055ms
+   ❯ built API subprocess: Ollama discovery at startup (#565) (2)
+     × makes no discovery request under the fixture default 5393ms
+   ❯ in-process main(): Ollama discovery at startup (#565) (2)
+     × makes no discovery request under the fixture default 9253ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/testing/provider-isolation.test.ts > built API subprocess: Ollama discovery at startup (#565) > makes no discovery request under the fixture default
+AssertionError: expected { connection: { …(3) }, …(1) } to deeply equal { connection: { …(3) }, …(1) }
+
+- Expected
++ Received
+
+  {
+    "connection": {
+      "baseUrl": "http://127.0.0.1:58228",
+-     "enabled": false,
++     "enabled": true,
+      "revision": 1,
+    },
+    "discovery": {
+-     "state": "idle",
++     "lastAttemptAt": "2026-11-25T01:15:53.144Z",
++     "lastSuccessAt": "2026-11-25T01:15:53.462Z",
++     "state": "ready",
+    },
+  }
+
+ ❯ src/testing/provider-isolation.test.ts:117:30
+    115|       if (!discovers) {
+    116|         // Deterministic: a disabled connection never starts discovery…
+    117|         expect(await view()).toEqual({
+       |                              ^
+    118|           connection: { enabled: false, baseUrl: ollama.origin, revisi…
+    119|           discovery: { state: 'idle' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/testing/provider-isolation.test.ts > in-process main(): Ollama discovery at startup (#565) > makes no discovery request under the fixture default
+AssertionError: expected { connection: { …(3) }, …(1) } to deeply equal { connection: { …(3) }, …(1) }
+
+- Expected
++ Received
+
+  {
+    "connection": {
+      "baseUrl": "http://127.0.0.1:58251",
+-     "enabled": false,
++     "enabled": true,
+      "revision": 1,
+    },
+    "discovery": {
+-     "state": "idle",
++     "lastAttemptAt": "2026-11-25T01:16:07.377Z",
++     "lastSuccessAt": "2026-11-25T01:16:07.710Z",
++     "state": "ready",
+    },
+  }
+
+ ❯ src/testing/provider-isolation.test.ts:117:30
+    115|       if (!discovers) {
+    116|         // Deterministic: a disabled connection never starts discovery…
+    117|         expect(await view()).toEqual({
+       |                              ^
+    118|           connection: { enabled: false, baseUrl: ollama.origin, revisi…
+    119|           discovery: { state: 'idle' },
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+   Start at  19:15:47
+   Duration  22.55s (tests 99%, import 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-fu-api-fixtures-
+  │ 20261124\GraphGoblin\apps\api

@@ -1,0 +1,43 @@
+"""Bind an exact finished author correction. This step runs no tests or provider commands."""
+
+import sys
+
+sys.dont_write_bytecode = True
+import common as qa
+
+
+def main():
+    qa.need(sys.argv[1:] in ([], ['--check-only']), 'USE: bind-after-author.py [--check-only]')
+    baseline = qa.prep()
+    receipt, author = qa.author_evidence()
+    source = qa.snapshot(candidate=True)
+    qa.verify_baseline(source, baseline)
+    qa.need(receipt['worktreeChanges'] == source['changedFileSha256'], 'AUTHOR_FINAL_RAW_SOURCE_MISMATCH')
+    patch = qa.git('diff', '--binary', '--no-ext-diff', '--no-textconv', 'HEAD')
+    integrated = qa.git('diff', '--binary', '--no-ext-diff', '--no-textconv', qa.TARGET)
+    qa.need(source == qa.snapshot(candidate=True) and qa.sha(patch) == source['patchSha256']
+            and qa.sha(integrated) == source['targetToCandidatePatchSha256'], 'SOURCE_CHANGED_DURING_BINDING')
+    print(qa.json.dumps({'readyToBind': True, 'sourceHead': source['head'], 'target': source['target'],
+                         'patchSha256': source['patchSha256'], 'indexSha256': source['indexSha256'],
+                         'checksExecuted': False, 'providerInvoked': False}))
+    if sys.argv[1:]:
+        return 0
+    outputs = ('candidate-correction.patch', 'candidate-target.patch', 'CANDIDATE-BINDING.json',
+               'QUEUE-ITEM.proposed.json')
+    qa.need(not any((qa.ROOT / name).exists() for name in outputs), 'BINDING_SLOT_ALREADY_USED')
+    for name, data in zip(outputs[:2], (patch, integrated)):
+        with (qa.ROOT / name).open('xb') as stream:
+            stream.write(data)
+    qa.save(qa.ROOT / outputs[2], {'issue': 524, 'source': source, 'author': author,
+            'bindingTimeUtc': qa.utc(), 'patchFilesSha256': {name: qa.digest(qa.ROOT / name) for name in outputs[:2]},
+            'checksExecuted': False, 'providerInvoked': False})
+    qa.save(qa.ROOT / outputs[3], qa.load(qa.ROOT / 'QUEUE-TEMPLATE.json'))
+    return 0
+
+
+if __name__ == '__main__':
+    try:
+        raise SystemExit(main())
+    except (OSError, RuntimeError, ValueError, KeyError) as error:
+        print(str(error), file=sys.stderr)
+        raise SystemExit(2)

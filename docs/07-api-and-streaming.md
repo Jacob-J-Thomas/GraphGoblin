@@ -98,6 +98,12 @@ and effort) in `failure.details.provenance`. Late results cannot change the fail
 or thread. Explicit Cancel remains `cancelled`, without a timeout failure. Export/API
 clients must accept this nullable pin and the new `RunErrorCode` value.
 
+A run that fails in an authored field names that field in `failure.details.boundary`.
+`GET /runs/{id}` and the MCP `get_run` tool return the whole failure; MCP run summaries, as in
+`list_runs`, omit `details`. The closed identifiers, the location fields
+beside them and the failures that carry none are listed under
+[Authored boundary identifiers](05-execution-engine.md#authored-boundary-identifiers).
+
 ## Artifact downloads
 
 `GET /runs/{id}/artifacts/{artifactId}` returns the artifact's verified content, with SHA-256 checked before decoding. Missing artifact metadata or content returns `404 ARTIFACT_NOT_FOUND`; bytes that do not match the reference return `500 ARTIFACT_CORRUPT`, without serving partial or corrupt content. `ARTIFACT_CORRUPT` is an API problem code, not a run failure code. A publication failure during a run is the resumable run failure `ARTIFACT_WRITE_FAILED`, with the artifact `ref` in its details; resuming the run continues the recorded provider session (docs/05).
@@ -648,6 +654,17 @@ taken at start, readable at `GET /loops/{id}/versions/{versionId}` (status `snap
 listed in the version history. Starting a snapshot directly answers 409 `VERSION_NOT_PUBLISHED`.
 `label` and `name` are those of the pinned definition, so renaming or editing the loop later does
 not change them. MCP compact runs (`list_runs`, control tools) include `definition`, the label.
+
+`GET /loops/{id}/versions/{versionId}` serves a stored record of any status as the current
+`LoopVersionRecordSchema` reads it, through the same response model (#525). A current-format record
+that omits a field the schema defaults, such as an inference node's `harness` in a hand-authored
+draft-run snapshot, is served with the schema's default. The stored row is not rewritten: such a
+snapshot needs no edit to be read here and keeps its immutability protection. Before the record is
+validated, the caller must own the loop (otherwise 404 `LOOP_NOT_FOUND`) and the version must belong
+to it (otherwise 404 `VERSION_NOT_FOUND`). A retired Event destination still answers 409
+`LOOP_UPGRADE_REQUIRED` (below). A record the current schema refuses answers the sanitized 500
+`RESPONSE_INVALID`, which carries nothing from the stored record. The rule is this endpoint's: the
+loop detail, version history and export serve their records as before.
 
 **Stored definitions that predate ADR-0044 (#242).** A version, draft or draft-run snapshot saved
 before exits stopped publishing Events can still hold an exit destination `{ kind: "event" }`.

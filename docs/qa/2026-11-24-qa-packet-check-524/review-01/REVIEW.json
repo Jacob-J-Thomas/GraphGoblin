@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "issue": 524,
+  "review": "review-01",
+  "formalPass": 1,
+  "formalPassMaximum": 3,
+  "mode": "stable full independent opposite-family review",
+  "verdict": "CHANGES_REQUIRED",
+  "completedAtUtc": "2026-11-25T01:20:35.0218107Z",
+  "worktree": "G:\\ggq\\gg-fu-qa-packets-20261124\\GraphGoblin",
+  "base": "d2df8600c2c8574bec420947de686b936910b245",
+  "head": "04a74c51612c5f82da61844d58a58a6796b5a323",
+  "tree": "1419c3af0468e2ae919ac0f6cf99b503a15b0c2c",
+  "sourceBindings": [
+    {
+      "path": "CHANGELOG.md",
+      "expected": "1f994b8d71ba49c4c73ef4dacdbd75b1a6e91bd38afd1844479d4da3d0dbf518",
+      "actual": "1f994b8d71ba49c4c73ef4dacdbd75b1a6e91bd38afd1844479d4da3d0dbf518",
+      "matches": true
+    },
+    {
+      "path": "docs/10-testing-and-quality.md",
+      "expected": "65bce4e34f541a95c9f573f12c8cba833bcf31fd624e4a77793322c770dd13e9",
+      "actual": "65bce4e34f541a95c9f573f12c8cba833bcf31fd624e4a77793322c770dd13e9",
+      "matches": true
+    },
+    {
+      "path": "docs/15-issue-workflow.md",
+      "expected": "5ad0e447dfc44643e7cfde6c6d300f3dc97d856a6583d19515a20a1811633d1b",
+      "actual": "5ad0e447dfc44643e7cfde6c6d300f3dc97d856a6583d19515a20a1811633d1b",
+      "matches": true
+    },
+    {
+      "path": "package.json",
+      "expected": "b1a4aa7b76e8837973571f4c09346d5e9755135e1819d4811ee83ae3e53de7b8",
+      "actual": "b1a4aa7b76e8837973571f4c09346d5e9755135e1819d4811ee83ae3e53de7b8",
+      "matches": true
+    },
+    {
+      "path": "tooling/scripts/check-qa-packet.mjs",
+      "expected": "6786405b6bdcc368c91a8b61331b92edd20cdb48328b2a49899047cc4dff2895",
+      "actual": "6786405b6bdcc368c91a8b61331b92edd20cdb48328b2a49899047cc4dff2895",
+      "matches": true
+    },
+    {
+      "path": "tooling/scripts/check-qa-packet.test.mjs",
+      "expected": "c0218793847698a53848b1970c77f90da4aa252f45186fa81707c89dbf72368f",
+      "actual": "c0218793847698a53848b1970c77f90da4aa252f45186fa81707c89dbf72368f",
+      "matches": true
+    }
+  ],
+  "finalWorktreeStatus": [],
+  "finalIndexSha256": "42b41687b30e1af106c8575cf5b106bad5ab1b6d0db7e130cc043f4076c10f07",
+  "sourceMutationByReviewer": false,
+  "repositoryIndexMutationByReviewer": false,
+  "externalMutationByReviewer": false,
+  "checks": [
+    {
+      "name": "focused-public-cli-tests",
+      "result": "FAILED",
+      "passed": 9,
+      "failed": 1,
+      "exitCode": 1,
+      "firstOutput": "FIRST-FAILURE.log",
+      "provenance": "First unified-exec result session 77533/chunk 0cddec; labelled transcription retained; original tool result is primary"
+    },
+    {
+      "name": "targeted-readonly-reproduction",
+      "result": "FAILED",
+      "passed": 0,
+      "failed": 1,
+      "skipped": 9,
+      "exitCode": 1,
+      "output": "targeted-readonly-run.log"
+    },
+    {
+      "name": "independent-cli-and-individual-command-reproduction",
+      "result": "CONFIRMED_INDEX_MUTATION",
+      "output": "readonly-repro-result.json"
+    },
+    {
+      "name": "automatic-index-refresh-disabled-control",
+      "result": "INDEX_UNCHANGED",
+      "output": "autorefresh-disabled-control.json"
+    },
+    {
+      "name": "git-diff-check",
+      "result": "PASSED"
+    }
+  ],
+  "rootCauseLedger": [
+    {
+      "signature": "qa-diff/auto-refresh-writes-index",
+      "severity": "P2",
+      "disposition": "FIX-IN-PR",
+      "introduced": true,
+      "blocksCurrentContract": true,
+      "file": "tooling/scripts/check-qa-packet.mjs",
+      "line": 117,
+      "title": "Prevent the unstaged diff from refreshing the index",
+      "evidence": [
+        "FIRST-FAILURE.log",
+        "targeted-readonly-run.log",
+        "readonly-repro-result.json",
+        "readonly-repro-git-trace.jsonl",
+        "autorefresh-disabled-control.json"
+      ],
+      "resolution": "Unresolved; author correction required",
+      "requiredOutcome": "Selection remains correct while source and index bytes remain unchanged when a clean tracked file has stale stat data",
+      "verification": "Existing ten public-command tests plus deterministic stale-stat invariant, focused gates and delta review"
+    }
+  ],
+  "deferredRootCauses": [],
+  "limitations": [
+    "Windows Git 2.49.0.windows.1 / Node v22.23.4 reproduction",
+    "No broad API/native/browser/provider suite run",
+    "Independent actual-Claude QA, exact-head/current-target CI and fresh Astra MAX final review remain separate"
+  ],
+  "nextReview": "targeted review 02 of correction delta",
+  "artifact": "REVIEW.md"
+}

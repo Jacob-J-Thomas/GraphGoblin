@@ -1,0 +1,47 @@
+The correction is in place and every authorized check passes. A CRLF-only rewrite of a historical file is no longer selected, and the index and source files keep their bytes. All changes are unstaged in the same three files; `docs/15-issue-workflow.md`, `CHANGELOG.md` and `package.json` are unchanged because they say nothing inaccurate about the mechanism.
+
+**What changed in the checker** (`tooling/scripts/check-qa-packet.mjs`)
+- **Selection:** the `git ls-files --modified` step is gone. An unstaged `M` path that is not also staged or committed is now kept only if `git diff --patch --no-ext-diff --no-textconv --no-color -- <path>` produces output. To build that patch, Git hashes the work-tree file the way it would store it, applying attributes, line-ending normalization and the loaded index, then compares contents. A path whose stored content would not change gives an empty patch and is dropped.
+- **Read-only:** index refresh stays off (`--no-optional-locks` and `-c diff.autoRefreshIndex=false`), and no Git config is changed. I added `--literal-pathspecs`, because the per-path call passes a file path as a pathspec. Without it, a name like `notes [v2].md` also matches `notes 2.md`.
+- **Comments:** the header and function comments now describe this mechanism.
+
+**Tests** (`tooling/scripts/check-qa-packet.test.mjs`)
+- **New regression test.** It uses the repository's `* text=auto eol=lf` rule, and checks that rule against the repository's own `.gitattributes`, with `core.autocrlf=true` in the throwaway repository:
+  - **Not selected:** historical `README.md`, a JSON file and `notes [v2].md`, each rewritten from LF to CRLF only.
+  - **Selected:** a same-size edit given an older timestamp, a JSON file with new content written with CRLF, and a CRLF rewrite of a `-text` original (Git stores its bytes unchanged).
+  - **Controls:** before the check, each rewritten path is listed by `git diff-files` as stale with a changed size, and `git hash-object --path` equals both the index and the base blob. After the check, the index and file bytes are unchanged, and an ordinary `git diff` selects exactly the same paths.
+- **Renames:** the suite had no rename case, so I added staged (`git mv`) and unstaged renames to the combination test. Each shows the old path as deleted and the new path as formatted.
+- **Existing coverage:** committed, staged, unstaged, untracked, deleted, sparse/unavailable, retained-original and timestamp-only tests are unchanged and pass.
+
+**Docs:** in `docs/10-testing-and-quality.md`, I replaced the inaccurate `ls-files --modified` text with a "Content changes only" bullet, updated the read-only bullet, and extended the test list. The full-gate and raw-evidence rules are untouched.
+
+**Red, control and green runs**
+- **Red (current checker, new tests):** 1 of 11 failed. The fixture controls passed, then the CLI exited with status 1 instead of 0. It listed `UNFORMATTED docs/qa/2026-11-01-historical/README.md` and `retained …/evidence.json`, both CRLF-only rewrites. The rename cases passed.
+- **Green (after the change):** 11 of 11 passed, on two separate runs.
+- **Mutation control (`--literal-pathspecs` removed temporarily):** 1 failed. `notes [v2].md` was falsely selected as UNFORMATTED through `notes 2.md`, while `README.md` and `evidence.json` were still correctly left out. I restored the flag before the final runs.
+
+**Final checks:** Node v22.23.4.
+
+| Check | Result |
+|---|---|
+| Focused tests | 11 of 11 passed |
+| Focused coverage of the checker | 100% statements (96/96), branches (55/55), functions (15/15), lines (83/83) |
+| `pnpm --filter @graphgoblin/tooling lint` | clean |
+| `prettier --write` | changed nothing |
+| `prettier --check` | passed |
+| `git diff --check` | no output |
+| `git status --short` | the same three modified files |
+
+**Remaining limits and gaps**
+- **Cost:** the checker now starts one Git process per unstaged-only modified path. A mass line-ending rewrite across many files would start many processes.
+- **Large patches:** a real change's patch is held in memory, capped at 256 MiB. A larger patch would stop the check with exit 2 rather than report it.
+- **Line-ending format verdict (unchanged design):** formatting is still judged on the work-tree bytes. A real edit saved with CRLF under `eol=lf` is reported UNFORMATTED. That is a false failure, never a false pass, and I left it alone as out of scope.
+- **Reasoned but not tested:** three cases rest on my reading of Git's source rather than a test.
+  - Mode-only changes are still selected; this host has `core.filemode=false`.
+  - Files whose indexed blob already has CRLF are not normalized, because `git diff` uses the loaded index.
+  - Binary and very large files are compared by content or hash.
+- **Version tie:** the fixture controls depend on Git's current stat and size behavior. I couldn't run `git --version`; the Git 2.49.0.windows.1 figure comes from your brief.
+- **Not run (outside the command contract):** full `pnpm test:coverage`, `pnpm check`, CI, and `pnpm check:qa` against the real repository.
+- **Command note:** once, I tried `git --no-pager diff --check` with `; echo "exit=$?"` appended. Permissions refused it and nothing ran; every later command was run exactly as authorized.
+
+Independent review, QA, CI, publication and issue changes are still yours.

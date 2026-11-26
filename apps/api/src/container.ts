@@ -81,6 +81,7 @@ import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
+import { macosDatabaseFile, requireMacosLocalKey } from './macos-local-key.js';
 import { explainStoreRefusal } from './store-refusal.js';
 import { PollTriggers } from './triggers/poll.js';
 import { TriggerService } from './triggers/trigger-service.js';
@@ -108,6 +109,8 @@ export interface ContainerOverrides {
   classifiers?: ClassifierRegistryPort;
   structured?: StructuredPort;
   masterKey?: Buffer;
+  /** The detached Mac launcher uses only a verified local key source. */
+  localKeySource?: 'macos';
   probes?: HttpProbePort;
   scripts?: ScriptPort;
   /** Extra secret-change hooks, run after the container's own. */
@@ -186,7 +189,12 @@ export async function createContainer(
 ): Promise<Container> {
   // Own the directory before even opening SQLite or generating the master key. Direct container
   // callers get the same protection as main(); ownership lasts until stop() finishes.
-  const lock = await acquireDataDirLock(config.dataDir);
+  const attest = { attestLocalArtifact: true } as const;
+  const macosLease =
+    overrides.localKeySource === 'macos'
+      ? await acquireDataDirLock(config.dataDir, undefined, attest)
+      : undefined;
+  const lock = macosLease ?? (await acquireDataDirLock(config.dataDir));
   let databaseLock: DataDirLock | undefined;
   let opened: DatabaseHandle | undefined;
   try {
@@ -202,7 +210,19 @@ export async function createContainer(
     // database lock is held, inspect/validate again: another writer may have created it meanwhile.
     if (dbFile && !existsSync(dbFile))
       validateProcessDefaults(config.defaults, DEFAULT_MODEL_CATALOG);
-    if (dbFile) databaseLock = await acquireDatabaseLock(dbFile);
+    if (macosLease) {
+      const file = await macosDatabaseFile(config.dataDir, config.dbUrl, dbFile);
+      const lease = await acquireDatabaseLock(file, attest);
+      databaseLock = lease;
+      await requireMacosLocalKey(
+        config.dataDir,
+        macosLease,
+        lease,
+        config.masterKey !== undefined || overrides.masterKey !== undefined,
+      );
+    } else if (dbFile) {
+      databaseLock = await acquireDatabaseLock(dbFile);
+    }
     // An unsupported store stops startup with the data directory, the found and required formats
     // and the explicit reset command; nothing is converted or removed (ADR-0042).
     const refuseStore = explainStoreRefusal({

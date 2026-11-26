@@ -1,0 +1,34 @@
+The FUP-013 correction is in place. The domain now returns a third count, `repairedConnections` (one per changed edge), alongside `repairedSources` and `repairedEndpoints`. The editor takes its connection count from it and no longer recounts edges. All the checks I ran pass: domain coverage, the editor count and component tests, typecheck, lint, format and diff. Nothing is staged, committed or published.
+
+**What changed in this pass**
+- **`packages/domain/src/node-references.ts`:** added `repairedConnections` to the `renamed` result. It is counted in the same loop that moves the edge ends, adding 1 per edge when either end changes; each moved end still adds 1 to `repairedEndpoints`. A self-edge therefore counts 1 connection and 2 endpoints. No-ops and refusals still return no counts.
+- **`packages/domain/src/node-references.test.ts`:** the per-shape table now checks connections as well, e.g. self-edge only → 0/1/2 (sources/connections/endpoints); sources, connections and a self-edge → 2/3/4. The self-edge test's exact-keys check now includes `repairedConnections` and asserts 4 connections against 5 endpoints. The refusal test already uses exact equality, so it confirms refusals carry no counts.
+- **`apps/web/src/editor/store.ts`:** `connections: result.repairedConnections`. The `def.edges.filter(...)` recount is removed, and the `RenameReport.connections` comment now names the domain as its source. The report's shape is unchanged, so the notice wording can't change.
+- **`apps/web/src/editor/store.rename.test.ts`:** the #476 test keeps its exact wording check ("Updated 2 references … and 4 connections."). It now also calls `renameLoopNode` on the exact draft the store renamed, checks 2 sources, 4 connections and 5 endpoints, and checks that the report's counts equal the domain's.
+- **Docs:** `docs/03-domain-model.md` now describes three separate counts. `docs/09-frontend-and-pwa.md` says both notice counts come from the domain unchanged. The `CHANGELOG.md` entry is updated; its #477 `syntaxIssues` sentences are untouched.
+- **Not touched:** `syntax.ts`, `syntax.test.ts`, `index.ts` (the #477 consolidation), `graph.test.ts`, `parse-identity.test.ts` and `EditorPage.rename.test.tsx`.
+
+The old and new connection counts are the same number. The source repairs only rewrite settings and node config, never edges, so the domain checks the same condition on the same edges that the removed filter did.
+
+**Checks run fresh on this candidate** (Node v22.23.4)
+
+| Check | Result |
+|---|---|
+| Prettier `--write`, then `--check` (13 files) | No file changed; all pass |
+| Domain tests with coverage | 31 files, 499 tests pass; coverage 97.82% statements, 95.6% branches, 98.33% functions, 98.77% lines |
+| Domain typecheck and lint | Clean |
+| Web `store.rename.test.ts` + `EditorPage.rename.test.tsx` | 2 files, 24 tests pass |
+| Web typecheck | Clean |
+| Web lint | 0 errors; 5 warnings, all in files this work doesn't modify (`RunInspectorPage.tsx`, `SessionRecoveryControls.tsx`) |
+| `git diff --check` | Clean |
+| `git status --short` | The same 10 modified files as before; nothing new |
+
+**Not rerun:**
+- I skipped the targeted domain test command because the coverage run already ran those four test files.
+- Broader suites (the full web suite, other packages, `pnpm check`) weren't rerun, as you allowed. Earlier results apply only to files that are identical, and this pass changed the domain source, the store, the two test files and the docs.
+
+**Gaps:**
+- **Unrerun dependent:** `EditorPage.rename-activation.test.tsx` goes through `renameNode` and expects "and 2 connections." It is unchanged and, since the count is unchanged, should still pass. But it isn't in the command list, so it hasn't been rerun. Running it needs `pnpm --filter @graphgoblin/web test src/editor/EditorPage.rename-activation.test.tsx`.
+- **Partial count checks:** the 15 older checks in the reference-scope tests still check sources and endpoints but not connections. In each one the endpoint count is 1, which means exactly one changed edge, and the new connection count is covered by the dedicated count tests. Adding it there would have line-wrapped all 15 lines.
+- **No browser test of the self-edge notice:** no component test shows the notice for a self-edge. The one-connection wording is checked at store level through `renameSummary`, the same function `RenameNotice` uses to build the text.
+- **Command not run:** `git diff` isn't in the command list, so I compared the edits by reading the files rather than from the diff output.

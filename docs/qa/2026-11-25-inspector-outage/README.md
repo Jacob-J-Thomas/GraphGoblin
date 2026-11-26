@@ -1,0 +1,23 @@
+# Run inspector outage recovery — #575
+
+The event hook records an established transport loss synchronously in the inspector's existing query-owned read provenance. A queued write sees the loss before React commits. Last-observed evidence and typed input remain available; recovery requires a qualified GET begun after the loss. If a requested refetch joins an older GET, the existing inspector effect supplies a later read after it settles.
+
+## Failure and repair history
+
+Postmerge [CI45557768046](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/45557768046) on `eadb2029` exposed a preexisting race: the actual listener closed across an already active run GET, whose old success left controls available. The affected web files were unchanged by PR501. Its completed three-round review remains closed. [Original independent browser QA](QA-REPORT.md) preserves the baseline failure and first correction; [the earlier browser supplement](final/QA-SUPPLEMENT.md) binds the intermediate runtime subsequently committed as `32a7b68e`. These historical records retain their original source and asset identities.
+
+Root finding F575-1 covered an actually reopened stream dropping again within the existing heartbeat/cursor refetch window. [Independent review round1](reviews/r1/report.md) then found R1-575-1: graceful EOF cleared the reopen evidence, so the next refused connection skipped the write gate. Its unchanged full-app diagnostic sent one implicit input request despite the confirmed second outage. The reviewer response and original negative control are retained. The [routing correction](reviews/r1/routing-correction.json) distinguishes configured reviewer assignment from unverified serving-model inference.
+
+The revised hook preserves a confirmed stream-open fact across ordinary EOF and retryable nontransport errors, then consumes it when an eligible transport failure records a loss. Per-connection timing and the direct-refetch budget remain separate. EOF alone records no loss. Repeated refusals with no intervening confirmed open record no new loss and request no additional direct reread. No synthetic HTTP error, polling loop, copied cache body or global-health write gate was introduced.
+
+## Revised validation
+
+The exact original reviewer diagnostic now passes unchanged: controls stay disabled at the second failure and after the older success, with zero implicit input requests. Permanent tests cover graceful EOF, retryable HTTP error and slow-consumer endings followed by refusal, preserved recovery reads, bounded retries, queued writes, implicit submission and later recovery. All **93** focused tests pass. Web typechecking and lint pass, with five preexisting warnings; webbuild03 passes. [Repair disposition and source hashes](r1-repair/disposition.json) preserve exact commands, logs and the original review identity.
+
+The [revised independent browser QA](r1-repair/browser/QA-REPORT.md) passes the same external probe and all five permanent browser tests with zero retries, using a copied webbuild03 and rechecking all 28 assets. The [source-binding correction](r1-repair/browser/source-binding-correction.json) corrects the inherited base label to HEAD32a7b68e / base600f36fa plus the tested working-tree edits. Its actual listener-failure sequence proves the original hard-drop race; the exact reviewer diagnostic and permanent full-app test prove the second graceful-EOF/refusal sequence. The original #416 test body is unchanged. Private browser traces are retained by hash but not published because captured headers may contain shutdown controls.
+
+## Implementation and remaining delivery
+
+Actual Claude Code Opus5.5/xhigh implemented the product changes in three Max-subscription invocations. The first two completed. The third saved the graceful-reconnect repair, then hit the five-hour limit before its final report. Its interrupted result and full receipt remain explicit; root tested and inspected the saved edits. No API fallback or account change was made. Root owns architecture, integration, numbered documentation and verification.
+
+This web patch changes no dependency, timeout, retry, coverage threshold, launcher, API or stored format. Current CI45566702222 additionally exposed the separate preexisting Windows reclaim defect tracked in [#581](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/581). That leaf and this leaf retain distinct review budgets. Final integration, fresh full gates, review round2, bound integrated Mac A–E, actual Claude assessment, guarded merge and postmerge verification remain required. No claim of final engineering or owner acceptance is made here; #456/#64/#323/#125/#221 stay open for their existing owner obligations.

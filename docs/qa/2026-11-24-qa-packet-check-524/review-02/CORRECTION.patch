@@ -1,0 +1,117 @@
+diff --git a/docs/10-testing-and-quality.md b/docs/10-testing-and-quality.md
+index 257cf3063..301171c44 100644
+--- a/docs/10-testing-and-quality.md
++++ b/docs/10-testing-and-quality.md
+@@ -107,9 +107,9 @@ The [#264 QA record](qa/2026-10-26-wp-a5b-coverage-gaps/README.md) records exact
+ - **Checks.** Markdown, as Prettier infers it, is checked in memory with the repository Prettier configuration, even when `.gitignore` or `.prettierignore` hides it from `prettier --check .`; the report marks such pages as checked only here. Other files Prettier would check are checked as it would. Files Prettier would not check (no parser, or ignored raw evidence such as JSON) are retained untouched and listed with their SHA-256, as are `.md.txt` originals. A newly added Markdown file named as an original is refused without a format verdict, so its fix is never to format it.
+ - **Coverage.** Every selected path is listed as formatted, unformatted, refused original, retained, deleted or unavailable, with the counts. A path that existed at the merge base and is removed from the working tree or the index is a deletion. Any other selected path missing from the working tree (outside a sparse checkout's cone, marked skip-worktree, or an addition committed or staged and then removed) is unavailable: it is reported as not checked and fails the check with scope guidance.
+ - **Exit codes.** 0 when every selected path passed, including when none changed; 1 when any is unformatted, a refused original or unavailable; 2 when the arguments, base, merge base or repository are unusable, with no partial report.
+-- **Read-only.** Git runs with `--no-optional-locks`, so not even an index stat refresh is written, and Prettier checks text in memory.
++- **Read-only.** Git runs with `--no-optional-locks` and, for that command alone, `-c diff.autoRefreshIndex=false`: optional locks do not stop `git diff` from writing the index stat refresh it performs after comparing entries whose stat data is stale. Repository and global Git configuration are not changed. A path whose index stat data alone is stale is not selected, because `git ls-files --modified` confirms each unstaged modification by content without writing the index. Prettier checks text in memory.
+ 
+-`tooling/scripts/check-qa-packet.test.mjs` drives the public command over disposable Git repositories with spaced paths and no inherited Git configuration. It covers clean new prose; malformed new Markdown and HTML from a spaced subdirectory; an unformatted CRLF raw original stored as `.md.txt`, retained with unchanged bytes and hash; formatted and unformatted new Markdown originals refused, while a historical `README-original.md`, an `original-final-audit/` page and `original-hash-verification.md` are not; malformed new Markdown under an archive ignore rule, with the control that `prettier --check` passes it; no changed QA path; a cone-mode sparse checkout lacking a selected page beside a deletion; staged and unstaged deletions and a removed committed addition; committed, staged, unstaged and untracked combinations listed once with the index and file bytes unchanged; and refused arguments, bases, unrelated history and a directory outside any repository.
++`tooling/scripts/check-qa-packet.test.mjs` drives the public command over disposable Git repositories with spaced paths and no inherited Git configuration. It covers clean new prose; malformed new Markdown and HTML from a spaced subdirectory; an unformatted CRLF raw original stored as `.md.txt`, retained with unchanged bytes and hash; formatted and unformatted new Markdown originals refused, while a historical `README-original.md`, an `original-final-audit/` page and `original-hash-verification.md` are not; malformed new Markdown under an archive ignore rule, with the control that `prettier --check` passes it; no changed QA path; a cone-mode sparse checkout lacking a selected page beside a deletion; staged and unstaged deletions and a removed committed addition; committed, staged, unstaged and untracked combinations listed once, beside a historical page and an unformatted historical original given only an older modification time, which the plumbing `git diff-files` confirms as stale stat data and which are neither selected nor refreshed, with the index and file bytes unchanged; and refused arguments, bases, unrelated history and a directory outside any repository.
+ 
+ ## Test layers (Decided)
+ 
+diff --git a/tooling/scripts/check-qa-packet.mjs b/tooling/scripts/check-qa-packet.mjs
+index 6767818c6..58af4f21b 100644
+--- a/tooling/scripts/check-qa-packet.mjs
++++ b/tooling/scripts/check-qa-packet.mjs
+@@ -10,7 +10,8 @@
+  * Markdown file named as an original is refused: immutable Markdown originals are stored as
+  * `*.md.txt`. Paths missing from this working tree (a sparse checkout) are reported and fail.
+  *
+- * Read-only: Git runs without optional locks and formatting is checked in memory. It complements,
++ * Read-only: Git runs without optional locks or automatic index refresh, a path whose index stat
++ * data alone is stale is not selected, and formatting is checked in memory. It complements,
+  * and never replaces, `pnpm format:check` and CI. See docs/15-issue-workflow.md.
+  */
+ import { execFileSync } from 'node:child_process';
+@@ -60,8 +61,14 @@ const FIXES = {
+     'restore a removed file or stage its removal with git rm.',
+ };
+ 
++/**
++ * Runs Git read-only. Optional locks cover `git status`, not the stat refresh `git diff` writes to
++ * the index after comparing stale entries, so each invocation switches that refresh off with `-c`,
++ * leaving repository and global Git configuration unchanged.
++ */
+ function git(cwd, args) {
+-  return execFileSync('git', ['--no-pager', '--no-optional-locks', ...args], {
++  const readOnly = ['--no-pager', '--no-optional-locks', '-c', 'diff.autoRefreshIndex=false'];
++  return execFileSync('git', [...readOnly, ...args], {
+     cwd,
+     encoding: 'utf8',
+     env: { ...process.env, GIT_OPTIONAL_LOCKS: '0' },
+@@ -115,6 +122,11 @@ export async function checkQaPacket({ base, cwd = process.cwd() }) {
+   const diff = ['diff', '--name-status', '-z', '--no-renames', '--no-color'];
+   const staged = nameStatus(git(root, [...diff, '--cached', mergeBase, '--', QA_ROOT]));
+   const unstaged = nameStatus(git(root, [...diff, '--', QA_ROOT]));
++  // Without its automatic index refresh, `git diff` also reports entries whose stat data alone is
++  // stale; `ls-files --modified` compares their content and writes nothing.
++  const modified = new Set(git(root, ['ls-files', '--modified', '-z', '--', QA_ROOT]).split('\0'));
++  for (const [path, status] of unstaged)
++    if (status === 'M' && !modified.has(path)) unstaged.delete(path);
+   const untracked = git(root, ['ls-files', '--others', '--exclude-standard', '-z', '--', QA_ROOT])
+     .split('\0')
+     .filter(Boolean);
+diff --git a/tooling/scripts/check-qa-packet.test.mjs b/tooling/scripts/check-qa-packet.test.mjs
+index b6bc614e0..f2a22919e 100644
+--- a/tooling/scripts/check-qa-packet.test.mjs
++++ b/tooling/scripts/check-qa-packet.test.mjs
+@@ -8,6 +8,7 @@ import {
+   realpathSync,
+   rmSync,
+   unlinkSync,
++  utimesSync,
+   writeFileSync,
+ } from 'node:fs';
+ import { createRequire } from 'node:module';
+@@ -304,8 +305,22 @@ test('committed, staged, unstaged and untracked changes are selected once and no
+   git(root, 'rm', '--cached', '--quiet', 'docs/qa/p/recreated.md');
+   write(root, 'docs/qa/p/untracked.md', FORMATTED);
+   write(root, 'docs/qa/p/session.log', 'Git ignores this file.\n');
+-  // Same bytes with a new modification time: stale index stat data, but no content change.
+-  write(root, 'docs/qa/2026-11-01-historical/README.md', FORMATTED);
++  // Same bytes with an older modification time: stale index stat data but no content change, which
++  // a plain `git diff` refreshes by rewriting the index. Neither path is selected, so the
++  // unformatted historical original under the archive rule is not reported either.
++  const touched = [
++    'docs/qa/2026-11-01-historical/README.md',
++    'docs/qa/archive-packet/author/report-original.md',
++  ];
++  write(root, touched[0], FORMATTED);
++  const past = new Date('2020-01-01T00:00:00Z');
++  for (const path of touched) utimesSync(join(root, path), past, past);
++  // Control: the plumbing diff-files compares stat data only and writes nothing.
++  const stale = git(root, 'diff-files', '--name-only', '-z', '--', 'docs/qa').split('\0');
++  assert.deepEqual(
++    touched.filter((path) => !stale.includes(path)),
++    [],
++  );
+   const selected = [
+     'docs/qa/p/committed-then-edited.md',
+     'docs/qa/p/edited.md',
+@@ -314,7 +329,8 @@ test('committed, staged, unstaged and untracked changes are selected once and no
+     'docs/qa/p/staged.md',
+     'docs/qa/p/untracked.md',
+   ];
+-  const before = ['.git/index', ...selected].map((path) => read(root, path));
++  const snapshot = () => ['.git/index', ...selected, ...touched].map((path) => read(root, path));
++  const before = snapshot();
+ 
+   const result = check(root, '--base', 'main');
+ 
+@@ -327,10 +343,7 @@ test('committed, staged, unstaged and untracked changes are selected once and no
+     result.stdout,
+     /^Selected docs\/qa paths: 6 = checked with Prettier 6 \(Markdown 6\) \+/m,
+   );
+-  assert.deepEqual(
+-    ['.git/index', ...selected].map((path) => read(root, path)),
+-    before,
+-  );
++  assert.deepEqual(snapshot(), before);
+ });
+ 
+ test('an unusable argument, base or repository stops with exit 2 and no partial report', () => {

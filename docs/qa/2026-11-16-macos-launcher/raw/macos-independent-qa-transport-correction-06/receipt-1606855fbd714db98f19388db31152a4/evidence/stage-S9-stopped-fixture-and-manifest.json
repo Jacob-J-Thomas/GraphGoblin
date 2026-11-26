@@ -1,0 +1,755 @@
+{
+  "id": "S9-stopped-fixture-and-manifest",
+  "cases": [
+    "X1-observation",
+    "GUI-fixture"
+  ],
+  "startedAt": "2026-11-16T22:59:00.530Z",
+  "checks": [
+    {
+      "id": "ports-refused",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "no-qa-process",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "store-leases-free",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "store-free",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "final-a:bundle-physical",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "kind": "dir"
+      }
+    },
+    {
+      "id": "final-a:bundle-inventory",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        ".": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "Contents"
+          ]
+        },
+        "Contents": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "Info.plist",
+            "MacOS",
+            "Resources"
+          ]
+        },
+        "Contents/MacOS": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "GraphGoblin"
+          ]
+        },
+        "Contents/Resources": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "launcher.json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "final-a:files-owned-single-link",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "Contents/Info.plist": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "600",
+          "nlink": 1,
+          "size": 960,
+          "sha256": "91ab9736a6ed59044ca1cef13d2ca03f449b75e08fca352cc021db2e84ac1c19"
+        },
+        "Contents/MacOS/GraphGoblin": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "700",
+          "nlink": 1,
+          "size": 725576,
+          "sha256": "96df6b507a0480e3a8e5da70320bfc1f328c98e58b09ca7838e8093eb5126eba"
+        },
+        "Contents/Resources/launcher.json": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "600",
+          "nlink": 1,
+          "size": 332,
+          "sha256": "9284b34c336c407129ece6d8799c2fa131721764a4ff9b1d2cb4486826213499"
+        }
+      }
+    },
+    {
+      "id": "final-a:arm64-executable",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "final-a:no-quarantine",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "xattr": []
+      }
+    },
+    {
+      "id": "final-a:installation-id",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "id": "8d57594d45c347c5b23853ade14c4635",
+        "expected": "8d57594d45c347c5b23853ade14c4635"
+      }
+    },
+    {
+      "id": "final-a:bundle-identifier",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "bundleIdentifier": "com.graphgoblin.launcher.instance.8d57594d45c347c5b23853ade14c4635"
+      }
+    },
+    {
+      "id": "final-a:regular-app-plist",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "keys": [
+          "CFBundleDevelopmentRegion",
+          "CFBundleExecutable",
+          "CFBundleIdentifier",
+          "CFBundleInfoDictionaryVersion",
+          "CFBundleName",
+          "CFBundlePackageType",
+          "CFBundleShortVersionString",
+          "CFBundleVersion",
+          "GraphGoblinInstallationID",
+          "LSMinimumSystemVersion",
+          "NSHighResolutionCapable",
+          "NSPrincipalClass"
+        ]
+      }
+    },
+    {
+      "id": "final-a:config-closed-keys",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "keys": [
+          "checkout",
+          "dataDirectory",
+          "node",
+          "ollamaEnabled",
+          "port",
+          "requireAPIKey",
+          "version"
+        ]
+      }
+    },
+    {
+      "id": "final-a:config-values",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "checkout": "/Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo",
+        "node": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node",
+        "port": 62241,
+        "dataDirectoryHex": "2f55736572732f6a616b652f4c6962726172792f4361636865732f6772617068676f626c696e2d3435362d71612d66646531346137382f646174612f514120646174612075cc8820253431202331"
+      }
+    },
+    {
+      "id": "final-a:config-options",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "final-a:no-canary-in-config",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "final-a:receipt-private",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "mode": "600"
+      }
+    },
+    {
+      "id": "final-a:receipt-binding",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "receipt": {
+          "applications": {
+            "device": "16777232",
+            "inode": "1116841"
+          },
+          "id": "8d57594d45c347c5b23853ade14c4635",
+          "installed": {
+            "bundle": {
+              "device": "16777232",
+              "inode": "179131115"
+            },
+            "configuration": "9284b34c336c407129ece6d8799c2fa131721764a4ff9b1d2cb4486826213499",
+            "executable": "96df6b507a0480e3a8e5da70320bfc1f328c98e58b09ca7838e8093eb5126eba",
+            "plist": "91ab9736a6ed59044ca1cef13d2ca03f449b75e08fca352cc021db2e84ac1c19"
+          },
+          "name": "GraphGoblin QA ü-fde14a78.app",
+          "version": 1
+        },
+        "observedBundle": {
+          "device": "16777232",
+          "inode": "179131115"
+        }
+      }
+    },
+    {
+      "id": "final-a:receipt-settled",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "keys": [
+          "applications",
+          "id",
+          "installed",
+          "name",
+          "version"
+        ]
+      }
+    },
+    {
+      "id": "a:unchanged-since-last-readback",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "final-b:bundle-physical",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "kind": "dir"
+      }
+    },
+    {
+      "id": "final-b:bundle-inventory",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        ".": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "Contents"
+          ]
+        },
+        "Contents": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "Info.plist",
+            "MacOS",
+            "Resources"
+          ]
+        },
+        "Contents/MacOS": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "GraphGoblin"
+          ]
+        },
+        "Contents/Resources": {
+          "kind": "dir",
+          "uid": 501,
+          "mode": "700",
+          "names": [
+            "launcher.json"
+          ]
+        }
+      }
+    },
+    {
+      "id": "final-b:files-owned-single-link",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "Contents/Info.plist": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "600",
+          "nlink": 1,
+          "size": 960,
+          "sha256": "6645c5ec2666c49949b8a9ca92183111147ef51a192dd67297c3583196145fc5"
+        },
+        "Contents/MacOS/GraphGoblin": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "700",
+          "nlink": 1,
+          "size": 725576,
+          "sha256": "429f0f7607ecc3af1e11aa69d517ddddf9b4e51e02872a2a36a8a73f2db548ef"
+        },
+        "Contents/Resources/launcher.json": {
+          "kind": "file",
+          "uid": 501,
+          "mode": "600",
+          "nlink": 1,
+          "size": 332,
+          "sha256": "bea5113ace4bc2a703416c948c72d9042df545aa38efe58e91c13a6dc4d1a5cc"
+        }
+      }
+    },
+    {
+      "id": "final-b:arm64-executable",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "final-b:no-quarantine",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "xattr": []
+      }
+    },
+    {
+      "id": "final-b:installation-id",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "id": "80f735b1146c47bd845b5502890859f5",
+        "expected": "80f735b1146c47bd845b5502890859f5"
+      }
+    },
+    {
+      "id": "final-b:bundle-identifier",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "bundleIdentifier": "com.graphgoblin.launcher.instance.80f735b1146c47bd845b5502890859f5"
+      }
+    },
+    {
+      "id": "final-b:regular-app-plist",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "keys": [
+          "CFBundleDevelopmentRegion",
+          "CFBundleExecutable",
+          "CFBundleIdentifier",
+          "CFBundleInfoDictionaryVersion",
+          "CFBundleName",
+          "CFBundlePackageType",
+          "CFBundleShortVersionString",
+          "CFBundleVersion",
+          "GraphGoblinInstallationID",
+          "LSMinimumSystemVersion",
+          "NSHighResolutionCapable",
+          "NSPrincipalClass"
+        ]
+      }
+    },
+    {
+      "id": "final-b:config-closed-keys",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "keys": [
+          "checkout",
+          "dataDirectory",
+          "node",
+          "ollamaEnabled",
+          "port",
+          "requireAPIKey",
+          "version"
+        ]
+      }
+    },
+    {
+      "id": "final-b:config-values",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "checkout": "/Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo",
+        "node": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node",
+        "port": 62241,
+        "dataDirectoryHex": "2f55736572732f6a616b652f4c6962726172792f4361636865732f6772617068676f626c696e2d3435362d71612d66646531346137382f646174612f514120646174612075cc8820253431202331"
+      }
+    },
+    {
+      "id": "final-b:config-options",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "final-b:no-canary-in-config",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "final-b:receipt-private",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "mode": "600"
+      }
+    },
+    {
+      "id": "final-b:receipt-binding",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "receipt": {
+          "applications": {
+            "device": "16777232",
+            "inode": "1116841"
+          },
+          "id": "80f735b1146c47bd845b5502890859f5",
+          "installed": {
+            "bundle": {
+              "device": "16777232",
+              "inode": "179132193"
+            },
+            "configuration": "bea5113ace4bc2a703416c948c72d9042df545aa38efe58e91c13a6dc4d1a5cc",
+            "executable": "429f0f7607ecc3af1e11aa69d517ddddf9b4e51e02872a2a36a8a73f2db548ef",
+            "plist": "6645c5ec2666c49949b8a9ca92183111147ef51a192dd67297c3583196145fc5"
+          },
+          "name": "GraphGoblin QA ü-fde14a78-b.app",
+          "version": 1
+        },
+        "observedBundle": {
+          "device": "16777232",
+          "inode": "179132193"
+        }
+      }
+    },
+    {
+      "id": "final-b:receipt-settled",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "keys": [
+          "applications",
+          "id",
+          "installed",
+          "name",
+          "version"
+        ]
+      }
+    },
+    {
+      "id": "b:unchanged-since-last-readback",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "a:logs-private-bounded",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "root": "/Users/jake/Library/Logs/GraphGoblin/LauncherInstances/8d57594d45c347c5b23853ade14c4635",
+        "present": true,
+        "kind": "dir",
+        "uid": 501,
+        "mode": "700",
+        "device": "16777232",
+        "inode": "179129040",
+        "files": {
+          "gateway.log": {
+            "kind": "file",
+            "uid": 501,
+            "nlink": 1,
+            "mode": "600",
+            "size": 33178,
+            "device": "16777232",
+            "inode": "179129068",
+            "managed": true,
+            "sha256": "31f5cf4ac1f0e8391c6ae4754bc756dd7b8abd13b6a72a3a9006c7c49089e68a",
+            "tokenHits": 0
+          },
+          "launcher.log": {
+            "kind": "file",
+            "uid": 501,
+            "nlink": 1,
+            "mode": "600",
+            "size": 81,
+            "device": "16777232",
+            "inode": "179132338",
+            "managed": true,
+            "sha256": "052aa8f711ec81d50f3f353fd67b937dcbb248000c5bad9e0bf46c79524536a2",
+            "tokenHits": 0,
+            "lines": [
+              "stage=checking outcome=port-in-use",
+              "stage=waiting-for-store outcome=store-blocked"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "a:no-canary-in-logs",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "b:logs-private-bounded",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "root": "/Users/jake/Library/Logs/GraphGoblin/LauncherInstances/80f735b1146c47bd845b5502890859f5",
+        "present": true,
+        "kind": "dir",
+        "uid": 501,
+        "mode": "700",
+        "device": "16777232",
+        "inode": "179132228",
+        "files": {
+          "gateway.log": {
+            "kind": "file",
+            "uid": 501,
+            "nlink": 1,
+            "mode": "600",
+            "size": 7593,
+            "device": "16777232",
+            "inode": "179132250",
+            "managed": true,
+            "sha256": "3598ee134e2f65b70297b68e54026d42df72142c3a93d08651d8eff3a91b4abf",
+            "tokenHits": 0
+          },
+          "launcher.log": {
+            "kind": "file",
+            "uid": 501,
+            "nlink": 1,
+            "mode": "600",
+            "size": 35,
+            "device": "16777232",
+            "inode": "179132346",
+            "managed": true,
+            "sha256": "a092bf9acb58078a8c4047024315bd3d492431ac642c12d6e5fd21cbf3ac75a2",
+            "tokenHits": 0,
+            "lines": [
+              "stage=checking outcome=port-in-use"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "b:no-canary-in-logs",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "owner-diff-only-qa:applications",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "added": [
+          "4772617068476f626c696e20514120c3bc2d66646531346137382d622e617070",
+          "4772617068476f626c696e20514120c3bc2d66646531346137382e617070"
+        ],
+        "removed": [],
+        "changed": [],
+        "otherChanged": false,
+        "presence": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "owner-diff-only-qa:receipts",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "added": [
+          "38306637333562313134366334376264383435623535303238393038353966352e6a736f6e",
+          "38643537353934643435633334376335623233383533616465313463343633352e6a736f6e"
+        ],
+        "removed": [],
+        "changed": [],
+        "otherChanged": false,
+        "presence": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "owner-diff-only-qa:instanceLogs",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "added": [
+          "3830663733356231313436633437626438343562353530323839303835396635",
+          "3864353735393464343563333437633562323338353361646531346334363335"
+        ],
+        "removed": [],
+        "changed": [],
+        "otherChanged": false,
+        "presence": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "owner-diff-only-qa:locks",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "added": [
+          "64617461626173652d64633939326161383430633731393762373362623832616538343461346533363061633662333066393233646133353365393162656166643531333836656434",
+          "6469726563746f72792d39386234653933386539613530363933386163376136396633663230386531393661333331643864613761626165393765613262303532336538613534396138"
+        ],
+        "removed": [],
+        "changed": [],
+        "otherChanged": false,
+        "presence": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "default-resources-not-created",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "default-resources-unchanged",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "protected-port-listeners-unchanged",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "before": {
+          "4747": [
+            {
+              "pid": 76881,
+              "command": "node",
+              "address": "127.0.0.1:4747"
+            }
+          ],
+          "4748": []
+        },
+        "after": {
+          "4747": [
+            {
+              "pid": 76881,
+              "command": "node",
+              "address": "127.0.0.1:4747"
+            }
+          ],
+          "4748": []
+        }
+      }
+    },
+    {
+      "id": "no-graphgoblin-crash-report",
+      "ok": true,
+      "hard": false,
+      "detail": {
+        "added": [],
+        "removed": [],
+        "changed": [],
+        "otherChanged": false,
+        "presence": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "id": "built-file-unchanged:apps/api/dist/main.js",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "built-file-unchanged:apps/api/dist/instance-identity.js",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "built-file-unchanged:apps/api/dist/macos-log/guard.js",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "built-file-unchanged:apps/api/dist/managed-log/guard.js",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "built-file-unchanged:apps/api/dist/managed-log/gateway-log-writer.js",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "built-file-unchanged:apps/api/dist/windows-log/guard.js",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "built-file-unchanged:apps/web/dist/index.html",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "built-file-unchanged:apps/web/dist-goblin/index.html",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "launcher-source-unchanged",
+      "ok": true,
+      "hard": false
+    },
+    {
+      "id": "checkout-listing-unchanged",
+      "ok": true,
+      "hard": false
+    }
+  ],
+  "notes": {
+    "manifest": "/Users/jake/Library/Caches/graphgoblin-456-qa-fde14a78/evidence/fixture-manifest.json"
+  },
+  "status": "criteria-met",
+  "elapsedMs": 383,
+  "finishedAt": "2026-11-16T22:59:00.914Z"
+}

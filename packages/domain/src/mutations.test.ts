@@ -241,6 +241,92 @@ describe('coerce and repair', () => {
       run(sampleThread(), [{ op: 'coerce', source: '/vars/x', jsonSchema: {}, target: '/run/id' }]),
     ).rejects.toBeInstanceOf(MutationError);
   });
+
+  it.each([{ type: 'not-a-type' }, { type: 'string', pattern: '(' }])(
+    'sends authored schema %j, which does not compile, to repair without either mapper',
+    async (jsonSchema) => {
+      const failure = vi.fn();
+      const fact = vi.fn();
+      const ops = [op({ op: 'coerce', source: '/vars/topic', jsonSchema, target: '/vars/r' })];
+      const result = await applyMutations(sampleThread(), ops, ctx(), 0, failure, fact);
+      expect(result.appliedThrough).toBe(0);
+      expect(result.pending).toMatchObject({ opIndex: 0, jsonSchema, value: 'hello' });
+      expect(result.pending?.errors).toEqual([expect.stringMatching(/^invalid schema: /)]);
+      expect(failure).not.toHaveBeenCalled();
+      expect(fact).not.toHaveBeenCalled();
+      expect(() => completeRepair(result.thread, result.pending!, 'hello')).toThrow(
+        /still fails schema: invalid schema: /,
+      );
+    },
+  );
+
+  it('gives an exception thrown during validation to the ordinary mapper and never a fact', async () => {
+    const thread = sampleThread();
+    // A synthetic JavaScript value exercises the public domain API outside stored run data.
+    const external = new MutationError('getter from caller');
+    thread.vars['value'] = Object.defineProperty({}, 'ok', {
+      enumerable: true,
+      get() {
+        throw external;
+      },
+    });
+    const operation = op({
+      op: 'coerce',
+      source: '/vars/value',
+      jsonSchema: schema,
+      target: '/vars/r',
+    });
+    const legacy = vi.fn((e: unknown) => e);
+    const observed = vi.fn();
+    // With both mappers an authored fact would reach `observed`; this exception reaches `legacy`.
+    await expect(planMutation(thread, operation, ctx(), 3, legacy, observed)).rejects.toBe(
+      external,
+    );
+    expect(legacy.mock.calls).toEqual([[external, 3, 'coerce']]);
+    expect(observed).not.toHaveBeenCalled();
+    // The inference transforms pass only the fact mapper; the original exception propagates.
+    await expect(planMutation(thread, operation, ctx(), 3, undefined, observed)).rejects.toBe(
+      external,
+    );
+    expect(observed).not.toHaveBeenCalled();
+  });
+});
+
+describe('coerce source pointers', () => {
+  const coerce = (source: string) => ({
+    op: 'coerce',
+    source,
+    jsonSchema: { type: 'string' },
+    target: '/vars/r',
+  });
+
+  it.each(['vars/topic', 'topic', '#/vars/topic', '/vars/~2'])(
+    'refuses %j at the contract before the domain reads it',
+    (source) => {
+      const parsed = MutationOperationSchema.safeParse(coerce(source));
+      expect(parsed.error?.issues.map((issue) => issue.path)).toEqual([['source']]);
+    },
+  );
+
+  it('copies or repairs every contract-valid source without either mapper', async () => {
+    const failure = vi.fn();
+    const fact = vi.fn();
+    const sources = {
+      '/vars/topic': 'patch',
+      '/messages/0/content': 'patch',
+      '': 'repair',
+      '/vars/missing': 'repair',
+      '/vars/topic/deeper': 'repair',
+      '/messages/x': 'repair',
+      '/messages/9': 'repair',
+    } as const;
+    for (const [source, kind] of Object.entries(sources)) {
+      const plan = await planMutation(sampleThread(), op(coerce(source)), ctx(), 0, failure, fact);
+      expect(plan.kind, source).toBe(kind);
+    }
+    expect(failure).not.toHaveBeenCalled();
+    expect(fact).not.toHaveBeenCalled();
+  });
 });
 
 it('delivers facts to the inference mapper at the immediate operation while the legacy mapper keeps three arguments', async () => {

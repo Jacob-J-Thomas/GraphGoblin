@@ -1,0 +1,296 @@
+{
+  "node": "v22.23.4",
+  "command": [
+    "pnpm.cmd",
+    "--filter",
+    "@graphgoblin/tooling",
+    "test",
+    "scripts/windows-launcher-evidence.test.mjs",
+    "-t",
+    "#534"
+  ],
+  "exitCode": 0,
+  "testsPassed": 1,
+  "log": "CANCEL.log",
+  "logSha256": "b9620b250bdb5af8dc7afeaedcb36634ee3bb40fdb053cfde81d358e766a3675",
+  "artifact": {
+    "status": "native-failed",
+    "native": "failure",
+    "missing": [
+      "installer-children",
+      "launcher-pass",
+      "launcher-children",
+      "launcher-subtests",
+      "checkout-alias-pass",
+      "checkout-alias-subtests",
+      "lock-contention-pass",
+      "lock-contention-subtests",
+      "bounded-logs-pass",
+      "bounded-logs-children",
+      "bounded-logs-subtests",
+      "alias-junction",
+      "alias-junction-release",
+      "alias-dir",
+      "alias-dir-release",
+      "contention-trials"
+    ],
+    "observations": {
+      "state": "valid",
+      "reason": null,
+      "bytes": 5052,
+      "records": 31,
+      "closed": true,
+      "rejected": 0,
+      "omittedRecords": 0,
+      "omittedBytes": 0,
+      "byType": {
+        "recorder-open": 1,
+        "case-start": 12,
+        "cleanup": 4,
+        "case-end": 12,
+        "child": 1,
+        "recorder-closed": 1
+      }
+    },
+    "cases": {
+      "installer": {
+        "started": true,
+        "result": "pass",
+        "subtestsStarted": 1,
+        "subtestsPassed": 1,
+        "subtestsFailed": 0,
+        "subtestsUnpaired": 0,
+        "children": 0,
+        "childFailures": 0
+      },
+      "launcher": {
+        "started": true,
+        "result": "fail",
+        "subtestsStarted": 1,
+        "subtestsPassed": 0,
+        "subtestsFailed": 1,
+        "subtestsUnpaired": 0,
+        "children": 0,
+        "childFailures": 0
+      },
+      "checkout-alias": {
+        "started": true,
+        "result": "fail",
+        "subtestsStarted": 2,
+        "subtestsPassed": 1,
+        "subtestsFailed": 1,
+        "subtestsUnpaired": 0,
+        "children": 1,
+        "childFailures": 1
+      },
+      "lock-contention": {
+        "started": true,
+        "result": "fail",
+        "subtestsStarted": 2,
+        "subtestsPassed": 0,
+        "subtestsFailed": 2,
+        "subtestsUnpaired": 0,
+        "children": 0,
+        "childFailures": 0
+      },
+      "bounded-logs": {
+        "started": true,
+        "result": "fail",
+        "subtestsStarted": 1,
+        "subtestsPassed": 0,
+        "subtestsFailed": 1,
+        "subtestsUnpaired": 0,
+        "children": 0,
+        "childFailures": 0
+      }
+    },
+    "uploaded": [
+      "manifest.json",
+      "result.json",
+      "observations.ndjson"
+    ],
+    "files": {
+      "manifest.json": {
+        "path": "fixture-cancel/gg-496-runner-COMx3c/windows-launcher-evidence-Xhl2Iw/manifest.json",
+        "sha256": "0fec70f0cb2b0fc8c720e42cc2c929c140992f21479adf42dfd0b49e17f77fd1"
+      },
+      "result.json": {
+        "path": "fixture-cancel/gg-496-runner-COMx3c/windows-launcher-evidence-Xhl2Iw/result.json",
+        "sha256": "ce6a7c294b06003005b5b7eb25cfe59115476dea3be5ca56563b5a3d794c2cae"
+      },
+      "observations.ndjson": {
+        "path": "fixture-cancel/gg-496-runner-COMx3c/windows-launcher-evidence-Xhl2Iw/observations.ndjson",
+        "sha256": "8b149a1912bb4db29f4412c682679b882b922d8cf5ee7aec63fde41008299e39"
+      }
+    },
+    "ends": [
+      [
+        "installer:1",
+        5,
+        "pass",
+        null,
+        0
+      ],
+      [
+        "installer:0",
+        6,
+        "pass",
+        null,
+        0
+      ],
+      [
+        "launcher:1",
+        9,
+        "fail",
+        "assertion",
+        0
+      ],
+      [
+        "launcher:0",
+        10,
+        "fail",
+        "subtests",
+        1
+      ],
+      [
+        "checkout-alias:1",
+        14,
+        "fail",
+        "other",
+        0
+      ],
+      [
+        "checkout-alias:2",
+        16,
+        "pass",
+        null,
+        0
+      ],
+      [
+        "checkout-alias:0",
+        17,
+        "fail",
+        "subtests",
+        1
+      ],
+      [
+        "lock-contention:0",
+        20,
+        "fail",
+        "other",
+        1
+      ],
+      [
+        "lock-contention:1",
+        21,
+        "fail",
+        "other",
+        0
+      ],
+      [
+        "bounded-logs:0",
+        24,
+        "fail",
+        "subtests",
+        1
+      ],
+      [
+        "bounded-logs:1",
+        25,
+        "fail",
+        "other",
+        0
+      ],
+      [
+        "lock-contention:2",
+        27,
+        "fail",
+        "other",
+        0
+      ]
+    ],
+    "cleanup": [
+      [
+        "installer:1",
+        4,
+        "gateway-drain",
+        "not-running",
+        false,
+        false
+      ],
+      [
+        "checkout-alias:1",
+        28,
+        "gateway-drain",
+        "drained",
+        true,
+        true
+      ],
+      [
+        "lock-contention:1",
+        29,
+        "contenders",
+        "closed",
+        true,
+        true
+      ],
+      [
+        "bounded-logs:1",
+        30,
+        "window-fixture",
+        "closed",
+        true,
+        true
+      ]
+    ],
+    "children": [
+      [
+        "checkout-alias:1",
+        13,
+        "ensure-gateway",
+        3,
+        26
+      ]
+    ],
+    "nativeRunner": {
+      "command": "pnpm exec node --test <maintained disposable child file>",
+      "evidenceEnabled": false,
+      "exitCode": 1,
+      "counts": {
+        "tests": "12",
+        "pass": "3",
+        "fail": "5",
+        "cancelled": "4"
+      },
+      "tapCases": [
+        "passes",
+        "ordinary pass",
+        "fails",
+        "ordinary failure",
+        "times out",
+        "runs after the cancelled subtest",
+        "subtest timeout",
+        "outstanding when its parent times out",
+        "parent timeout",
+        "outstanding when its parent returns",
+        "parent returns first",
+        "starts after its parent ended"
+      ],
+      "failureTypesInTapOrder": [
+        "testCodeFailure",
+        "subtestsFailed",
+        "testTimeoutFailure",
+        "subtestsFailed",
+        "cancelledByParent",
+        "testTimeoutFailure",
+        "cancelledByParent",
+        "subtestsFailed",
+        "parentAlreadyFinished"
+      ],
+      "fixturePath": "fixture-cancel/gg-496-evidence-WeKUQw/evidence-cancellation.acceptance.mjs",
+      "fixtureSha256": "b00ae88384cb0faac46970f0d60e0bcdf8c12edf7d3c9ab531f9941e9ee53d1a",
+      "tapPath": "CANCEL-NODE-TAP.log",
+      "tapSha256": "c07c477bd6f99f9fb6b52568ed44de436b22244150c59bc3d74a0c1d7ccd4b92"
+    }
+  }
+}

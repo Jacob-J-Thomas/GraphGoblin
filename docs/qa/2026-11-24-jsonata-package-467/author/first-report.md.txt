@@ -1,0 +1,41 @@
+I added the image check and the docs, but the new CI step has not been run: Docker isn't in this contract, so whether the built image actually carries the patch is still unproven until Root QA runs the Template image job. All local checks I could run passed. Everything is unstaged; nothing was committed, pushed or changed on the issues.
+
+## Changed paths
+- **`.github/workflows/ci.yml`** (Template image job only): a new step, "Evaluate expressions with the installed JSONata patch", runs after the template step. It uses the same switches (`--network none --read-only --cap-drop ALL --security-opt no-new-privileges`), adds `--workdir /app/apps/api`, and imports `@graphgoblin/domain` by its package name, so Node loads the compiled `dist/index.js` (no source, no host `node_modules`). It prints one JSON line to the job log. I gave the build step an `id: image`, and the new step has `if: !cancelled() && steps.image.outcome == 'success'`, so it still reports after a template failure. The template step, the 20-minute timeout and the security switches are unchanged.
+- **`docs/research/licenses.md`**: the jsonata row now points to a new "JSONata patch" section. It covers the three things the patch does, the upgrade steps, and states that the licence is unchanged and no dependency is added. The row stays within the table's column width, so Prettier didn't reflow the table.
+- **`docs/10-testing-and-quality.md`**: the Template image paragraph now describes the new step and what it does not cover.
+- **`CHANGELOG.md`**: one Unreleased entry for #467.
+
+## Finite probes chosen
+All probes call the public `observeExpression`. I checked each against the patched `jsonata.js`, `expression.ts`, the compiled `dist/expression.js` and the existing tests.
+1. **Ordinary:** `a + b` over `{a:1,b:2}` at default limits returns `{ok:true, value:3}`.
+2. **Wide siblings:** a JSON literal with a 250-item array and a 250-member object, wider than the default depth of 200, must come back unchanged. This one wasn't in your required list. I added it because it catches a patch that keeps the hooks but loses the sequential-sibling change. It compares JSON text because jsonata builds objects without a prototype, so a strict `deepEqual` would fail.
+3. **Depth:** `'1'` with `{maxDepth:0}` gives reason `depth`, an `ExpressionError`, and the message `expression exceeded max depth 0`.
+4. **Time:** `'1'` with `{timeoutMs:-1}` gives reason `time` and the message `expression exceeded -1ms`. The existing test at line 292 already shows this gives reason `time`.
+5. **Fresh:** `'1'` again at default limits, the same cached source, gives `{ok:true, value:1}`.
+
+Without the patch the hooks are never attached, so probes 3 and 4 would succeed and fail their assertions straight away instead of hanging. The restrictive options exist only in the probe; the 2000 ms / 200 defaults are unchanged.
+
+## Upgrade obligations (now in the licence ledger)
+- The patch applies only to jsonata 2.2.2.
+- Before upgrading, compare the new release's evaluation entry point, its bindings loop, `$now`/`$millis`, and its array and object building against the three changes.
+- Reapply, rebase or remove each change only after the domain tests (especially `expression.test.ts`) and then the Template image job show the same behaviour on the new version.
+- Remove the patch file and its `patchedDependencies` entry only when all three behaviours exist upstream. A regenerated patch changes the lockfile hash.
+- The patch hash and lockfile are unchanged in this slice.
+
+## Checks run
+- `node --version` → v22.23.4.
+- `pnpm --filter @graphgoblin/domain test src/expression.test.ts` → 29/29 passed. My first run had `2>&1 | tail -n 25` appended by mistake, so I reran the exact command; it passed again.
+- `pnpm build --filter=@graphgoblin/api` → 7/7 tasks succeeded, but every task came from the Turbo cache, so nothing was recompiled. I read `packages/domain/dist`: it exports `observeExpression` and `ExpressionError` and contains the exact messages.
+- `pnpm exec prettier --check …` (4 files) → passed, so `--write` wasn't needed.
+- `git --no-pager diff --check` → clean.
+- `git --no-optional-locks status --short` → only the 4 paths above.
+- `git --no-pager diff` was refused because it isn't in the contract; I reviewed the changes by reading the files instead.
+
+## Evidence limits and open items
+- **Pending: the image step has never run.** That includes whether `pnpm deploy --legacy` puts the patched jsonata into `/out/apps/api`, which is exactly what this gate tests, and whether module resolution from `--workdir /app/apps/api` works. A red result there is a real finding, not a reason to weaken the check.
+- **The timestamp change has no image probe.** Only the source regression covers it; the docs say so.
+- **The patch only touches `jsonata.js`.** Its `main`/`module` fields point there, but the package also ships `jsonata.min.js`, `jsonata-es5.js` and `jsonata-es5.min.js` unpatched. The ledger says nothing may load them.
+- **The patch also stops setting `environment.isParallelCall`.** Nothing in 2.2.2 reads it and neither do GraphGoblin's hooks; this is documented.
+- **Older notes are now incomplete.** The note in `docs/12-implementation-plan.md` (line 26) mentions the symbol-keyed hooks but not that they need the patch. `docs/05-execution-engine.md` (line 603) is consistent. Both are outside my authorized paths, so I left them.
+- Independent review, fresh QA, CI and exact-head review remain with you.

@@ -1,0 +1,1117 @@
+﻿2026-11-17T05:28:46.7629510Z Current runner version: '2.338.2'
+2026-11-17T05:28:46.7647770Z ##[group]Runner Image Provisioner
+2026-11-17T05:28:46.7648430Z Hosted Compute Agent
+2026-11-17T05:28:46.7648900Z Version: 20261103.629
+2026-11-17T05:28:46.7649460Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-17T05:28:46.7650000Z Build Date: 2026-11-03T17:26:59Z
+2026-11-17T05:28:46.7650580Z Worker ID: {8f9d52e7-fc59-4c23-ba2d-dc108663047e}
+2026-11-17T05:28:46.7651140Z Region: westus
+2026-11-17T05:28:46.7651640Z Cloud: MacCloud
+2026-11-17T05:28:46.7652170Z ##[endgroup]
+2026-11-17T05:28:46.7653470Z ##[group]Operating System
+2026-11-17T05:28:46.7653960Z macOS
+2026-11-17T05:28:46.7654350Z 15.8.2
+2026-11-17T05:28:46.7654750Z 24H232
+2026-11-17T05:28:46.7655160Z ##[endgroup]
+2026-11-17T05:28:46.7655600Z ##[group]Runner Image
+2026-11-17T05:28:46.7656080Z Image: macos-15-arm64
+2026-11-17T05:28:46.7656460Z Version: 20261112.0539.3
+2026-11-17T05:28:46.7657630Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20261112.0539/images/macos/macos-15-arm64-Readme.md
+2026-11-17T05:28:46.7658880Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20261112.0539
+2026-11-17T05:28:46.7659610Z ##[endgroup]
+2026-11-17T05:28:46.7660520Z ##[group]GITHUB_TOKEN Permissions
+2026-11-17T05:28:46.7662060Z Contents: read
+2026-11-17T05:28:46.7662420Z Metadata: read
+2026-11-17T05:28:46.7662870Z Packages: read
+2026-11-17T05:28:46.7663300Z ##[endgroup]
+2026-11-17T05:28:46.7664920Z Secret source: Actions
+2026-11-17T05:28:46.7665550Z Cache mode: write
+2026-11-17T05:28:46.7666170Z Prepare workflow directory
+2026-11-17T05:28:46.8115570Z Prepare all required actions
+2026-11-17T05:28:46.8154250Z Getting action download info
+2026-11-17T05:28:46.9529560Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-17T05:28:47.1771400Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-17T05:28:48.0105500Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-17T05:28:48.1114270Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-17T05:28:48.2918580Z Complete job name: macOS launcher
+2026-11-17T05:28:48.3442100Z ##[group]Run actions/checkout@v4
+2026-11-17T05:28:48.3442920Z with:
+2026-11-17T05:28:48.3443290Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T05:28:48.3446230Z   token: ***
+2026-11-17T05:28:48.3446630Z   ssh-strict: true
+2026-11-17T05:28:48.3446980Z   ssh-user: git
+2026-11-17T05:28:48.3447320Z   persist-credentials: true
+2026-11-17T05:28:48.3447680Z   clean: true
+2026-11-17T05:28:48.3448020Z   sparse-checkout-cone-mode: true
+2026-11-17T05:28:48.3448420Z   fetch-depth: 1
+2026-11-17T05:28:48.3448750Z   fetch-tags: false
+2026-11-17T05:28:48.3449110Z   show-progress: true
+2026-11-17T05:28:48.3449470Z   lfs: false
+2026-11-17T05:28:48.3449790Z   submodules: false
+2026-11-17T05:28:48.3450130Z   set-safe-directory: true
+2026-11-17T05:28:48.3450540Z   allow-unsafe-pr-checkout: false
+2026-11-17T05:28:48.3451040Z env:
+2026-11-17T05:28:48.3451340Z   LIVE: 0
+2026-11-17T05:28:48.3451980Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:28:48.3452680Z ##[endgroup]
+2026-11-17T05:28:48.7051230Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-17T05:28:48.7052950Z ##[group]Getting Git version info
+2026-11-17T05:28:48.7053600Z Working directory is '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T05:28:48.7054480Z [command]/opt/homebrew/bin/git version
+2026-11-17T05:28:48.7279400Z git version 2.56.1
+2026-11-17T05:28:48.7294540Z ##[endgroup]
+2026-11-17T05:28:48.7299500Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/d6de8530-7900-4661-936a-76a269c3b322/.gitconfig'
+2026-11-17T05:28:48.7305210Z Temporarily overriding HOME='/Users/runner/work/_temp/d6de8530-7900-4661-936a-76a269c3b322' before making global git config changes
+2026-11-17T05:28:48.7306850Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T05:28:48.7308370Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T05:28:48.7409470Z Deleting the contents of '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-17T05:28:48.7411810Z ##[group]Initializing the repository
+2026-11-17T05:28:48.7414690Z [command]/opt/homebrew/bin/git init /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T05:28:48.7638830Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-17T05:28:48.7639790Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-17T05:28:48.7640760Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-17T05:28:48.7641340Z hint: call:
+2026-11-17T05:28:48.7641710Z hint:
+2026-11-17T05:28:48.7642230Z hint: 	git config --global init.defaultBranch <name>
+2026-11-17T05:28:48.7642810Z hint:
+2026-11-17T05:28:48.7643350Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-17T05:28:48.7644070Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-17T05:28:48.7644840Z hint:
+2026-11-17T05:28:48.7645410Z hint: 	git branch -m <name>
+2026-11-17T05:28:48.7645830Z hint:
+2026-11-17T05:28:48.7646330Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-17T05:28:48.7648890Z Initialized empty Git repository in /Users/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-17T05:28:48.7663080Z [command]/opt/homebrew/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T05:28:48.7743190Z ##[endgroup]
+2026-11-17T05:28:48.7743930Z ##[group]Disabling automatic garbage collection
+2026-11-17T05:28:48.7747940Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-17T05:28:48.7814980Z ##[endgroup]
+2026-11-17T05:28:48.7815640Z ##[group]Setting up auth
+2026-11-17T05:28:48.7819970Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T05:28:48.7886720Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T05:28:48.8957090Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T05:28:48.9018580Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T05:28:48.9916310Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T05:28:48.9980110Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T05:28:49.0702470Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-17T05:28:49.0762730Z ##[endgroup]
+2026-11-17T05:28:49.0763430Z ##[group]Fetching the repository
+2026-11-17T05:28:49.0775640Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +21c570dfec222973a2906307496fd20fce769f31:refs/remotes/pull/501/merge
+2026-11-17T05:29:05.2743530Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-17T05:29:05.2754340Z  * [new ref]           21c570dfec222973a2906307496fd20fce769f31 -> pull/501/merge
+2026-11-17T05:29:05.2758590Z ##[endgroup]
+2026-11-17T05:29:05.2759310Z ##[group]Determining the checkout info
+2026-11-17T05:29:05.2760400Z ##[endgroup]
+2026-11-17T05:29:05.2777880Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-17T05:29:05.2859170Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-17T05:29:05.3009510Z ##[group]Checking out the ref
+2026-11-17T05:29:05.3055110Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/501/merge
+2026-11-17T05:29:06.6321900Z Updating files:   6% (1994/31911)
+2026-11-17T05:29:06.8336400Z Updating files:   7% (2234/31911)
+2026-11-17T05:29:06.9107360Z Updating files:   8% (2553/31911)
+2026-11-17T05:29:06.9753380Z Updating files:   9% (2872/31911)
+2026-11-17T05:29:07.0354160Z Updating files:  10% (3192/31911)
+2026-11-17T05:29:07.0866910Z Updating files:  11% (3511/31911)
+2026-11-17T05:29:07.1381080Z Updating files:  12% (3830/31911)
+2026-11-17T05:29:07.2058100Z Updating files:  13% (4149/31911)
+2026-11-17T05:29:07.3031860Z Updating files:  14% (4468/31911)
+2026-11-17T05:29:07.3332360Z Updating files:  15% (4787/31911)
+2026-11-17T05:29:07.4344110Z Updating files:  15% (4926/31911)
+2026-11-17T05:29:07.5651690Z Updating files:  16% (5106/31911)
+2026-11-17T05:29:07.6433440Z Updating files:  17% (5425/31911)
+2026-11-17T05:29:07.6908330Z Updating files:  18% (5744/31911)
+2026-11-17T05:29:07.7287000Z Updating files:  19% (6064/31911)
+2026-11-17T05:29:07.7909840Z Updating files:  20% (6383/31911)
+2026-11-17T05:29:07.8511860Z Updating files:  21% (6702/31911)
+2026-11-17T05:29:07.9760600Z Updating files:  22% (7021/31911)
+2026-11-17T05:29:08.0105650Z Updating files:  23% (7340/31911)
+2026-11-17T05:29:08.2199370Z Updating files:  24% (7659/31911)
+2026-11-17T05:29:08.2673330Z Updating files:  25% (7978/31911)
+2026-11-17T05:29:08.3264780Z Updating files:  26% (8297/31911)
+2026-11-17T05:29:08.3332480Z Updating files:  27% (8616/31911)
+2026-11-17T05:29:08.4514250Z Updating files:  27% (8631/31911)
+2026-11-17T05:29:08.5051710Z Updating files:  28% (8936/31911)
+2026-11-17T05:29:08.5505770Z Updating files:  29% (9255/31911)
+2026-11-17T05:29:08.6333500Z Updating files:  30% (9574/31911)
+2026-11-17T05:29:08.7658300Z Updating files:  31% (9893/31911)
+2026-11-17T05:29:08.8616650Z Updating files:  32% (10212/31911)
+2026-11-17T05:29:08.9288430Z Updating files:  33% (10531/31911)
+2026-11-17T05:29:08.9710230Z Updating files:  34% (10850/31911)
+2026-11-17T05:29:09.0229440Z Updating files:  35% (11169/31911)
+2026-11-17T05:29:09.1339870Z Updating files:  36% (11488/31911)
+2026-11-17T05:29:09.1908420Z Updating files:  37% (11808/31911)
+2026-11-17T05:29:09.2659400Z Updating files:  38% (12127/31911)
+2026-11-17T05:29:09.3309080Z Updating files:  39% (12446/31911)
+2026-11-17T05:29:09.3327630Z Updating files:  40% (12765/31911)
+2026-11-17T05:29:09.4322190Z Updating files:  40% (12768/31911)
+2026-11-17T05:29:09.5468630Z Updating files:  41% (13084/31911)
+2026-11-17T05:29:09.5976750Z Updating files:  42% (13403/31911)
+2026-11-17T05:29:09.6991840Z Updating files:  43% (13722/31911)
+2026-11-17T05:29:09.8053960Z Updating files:  44% (14041/31911)
+2026-11-17T05:29:09.8986190Z Updating files:  45% (14360/31911)
+2026-11-17T05:29:09.9676350Z Updating files:  46% (14680/31911)
+2026-11-17T05:29:10.0024890Z Updating files:  47% (14999/31911)
+2026-11-17T05:29:10.0619920Z Updating files:  48% (15318/31911)
+2026-11-17T05:29:10.1692450Z Updating files:  49% (15637/31911)
+2026-11-17T05:29:10.2332410Z Updating files:  50% (15956/31911)
+2026-11-17T05:29:10.3125760Z Updating files:  51% (16275/31911)
+2026-11-17T05:29:10.3320270Z Updating files:  52% (16594/31911)
+2026-11-17T05:29:10.3763160Z Updating files:  52% (16709/31911)
+2026-11-17T05:29:10.4167570Z Updating files:  53% (16913/31911)
+2026-11-17T05:29:10.4640310Z Updating files:  54% (17232/31911)
+2026-11-17T05:29:10.5138400Z Updating files:  55% (17552/31911)
+2026-11-17T05:29:10.6188060Z Updating files:  56% (17871/31911)
+2026-11-17T05:29:10.7338670Z Updating files:  57% (18190/31911)
+2026-11-17T05:29:10.8004240Z Updating files:  58% (18509/31911)
+2026-11-17T05:29:10.9696330Z Updating files:  59% (18828/31911)
+2026-11-17T05:29:11.0535160Z Updating files:  60% (19147/31911)
+2026-11-17T05:29:11.1929970Z Updating files:  61% (19466/31911)
+2026-11-17T05:29:11.3345140Z Updating files:  62% (19785/31911)
+2026-11-17T05:29:11.3515820Z Updating files:  62% (20086/31911)
+2026-11-17T05:29:11.5533890Z Updating files:  63% (20104/31911)
+2026-11-17T05:29:11.6312040Z Updating files:  64% (20424/31911)
+2026-11-17T05:29:11.7556570Z Updating files:  65% (20743/31911)
+2026-11-17T05:29:11.8260160Z Updating files:  66% (21062/31911)
+2026-11-17T05:29:11.9377810Z Updating files:  67% (21381/31911)
+2026-11-17T05:29:12.0123090Z Updating files:  68% (21700/31911)
+2026-11-17T05:29:12.1159480Z Updating files:  69% (22019/31911)
+2026-11-17T05:29:12.2029220Z Updating files:  70% (22338/31911)
+2026-11-17T05:29:12.2833110Z Updating files:  71% (22657/31911)
+2026-11-17T05:29:12.3403240Z Updating files:  72% (22976/31911)
+2026-11-17T05:29:12.3902110Z Updating files:  72% (23137/31911)
+2026-11-17T05:29:12.5007300Z Updating files:  73% (23296/31911)
+2026-11-17T05:29:12.6207530Z Updating files:  74% (23615/31911)
+2026-11-17T05:29:12.7241970Z Updating files:  75% (23934/31911)
+2026-11-17T05:29:12.8187160Z Updating files:  76% (24253/31911)
+2026-11-17T05:29:12.9044020Z Updating files:  77% (24572/31911)
+2026-11-17T05:29:13.0312320Z Updating files:  78% (24891/31911)
+2026-11-17T05:29:13.1154700Z Updating files:  79% (25210/31911)
+2026-11-17T05:29:13.2229880Z Updating files:  80% (25529/31911)
+2026-11-17T05:29:13.3113750Z Updating files:  81% (25848/31911)
+2026-11-17T05:29:13.3326560Z Updating files:  82% (26168/31911)
+2026-11-17T05:29:13.3897210Z Updating files:  82% (26281/31911)
+2026-11-17T05:29:13.4772000Z Updating files:  83% (26487/31911)
+2026-11-17T05:29:13.5674940Z Updating files:  84% (26806/31911)
+2026-11-17T05:29:13.6217710Z Updating files:  85% (27125/31911)
+2026-11-17T05:29:13.7643250Z Updating files:  86% (27444/31911)
+2026-11-17T05:29:13.8014390Z Updating files:  87% (27763/31911)
+2026-11-17T05:29:13.8696810Z Updating files:  88% (28082/31911)
+2026-11-17T05:29:13.9714710Z Updating files:  89% (28401/31911)
+2026-11-17T05:29:14.0489540Z Updating files:  90% (28720/31911)
+2026-11-17T05:29:14.0880270Z Updating files:  91% (29040/31911)
+2026-11-17T05:29:14.1280560Z Updating files:  92% (29359/31911)
+2026-11-17T05:29:14.1825860Z Updating files:  93% (29678/31911)
+2026-11-17T05:29:14.2395680Z Updating files:  94% (29997/31911)
+2026-11-17T05:29:14.3231670Z Updating files:  95% (30316/31911)
+2026-11-17T05:29:14.3323340Z Updating files:  96% (30635/31911)
+2026-11-17T05:29:14.4645680Z Updating files:  96% (30648/31911)
+2026-11-17T05:29:14.5568210Z Updating files:  97% (30954/31911)
+2026-11-17T05:29:14.5981160Z Updating files:  98% (31273/31911)
+2026-11-17T05:29:14.6589480Z Updating files:  99% (31592/31911)
+2026-11-17T05:29:14.6592690Z Updating files: 100% (31911/31911)
+2026-11-17T05:29:14.6593800Z Updating files: 100% (31911/31911), done.
+2026-11-17T05:29:14.6911220Z HEAD is now at 21c570df Merge 4d72503321e587d7a36341462a49e442f3e51a6f into 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1
+2026-11-17T05:29:14.7156820Z ##[endgroup]
+2026-11-17T05:29:14.7379330Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-17T05:29:14.7478460Z 21c570dfec222973a2906307496fd20fce769f31
+2026-11-17T05:29:14.7896850Z ##[group]Run pnpm/action-setup@v4
+2026-11-17T05:29:14.7897190Z with:
+2026-11-17T05:29:14.7897590Z   dest: ~/setup-pnpm
+2026-11-17T05:29:14.7897850Z   run_install: null
+2026-11-17T05:29:14.7898190Z   cache: false
+2026-11-17T05:29:14.7898480Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-17T05:29:14.7898850Z   package_json_file: package.json
+2026-11-17T05:29:14.7899090Z   standalone: false
+2026-11-17T05:29:14.7899420Z env:
+2026-11-17T05:29:14.7899710Z   LIVE: 0
+2026-11-17T05:29:14.7900150Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:29:14.7900740Z ##[endgroup]
+2026-11-17T05:29:15.0239740Z ##[group]Running self-installer...
+2026-11-17T05:29:15.3776800Z (node:3262) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T05:29:15.3779430Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T05:29:15.5422760Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-17T05:29:15.6462700Z Packages: +2
+2026-11-17T05:29:15.6463220Z ++
+2026-11-17T05:29:16.2624090Z Progress: resolved 15, reused 0, downloaded 2, added 2, done
+2026-11-17T05:29:16.2896850Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-17T05:29:16.8579950Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-17T05:29:16.8590810Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-17T05:29:16.9953950Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-17T05:29:18.5065700Z 
+2026-11-17T05:29:18.5074400Z dependencies:
+2026-11-17T05:29:18.5076200Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-17T05:29:18.5077310Z 
+2026-11-17T05:29:18.5118660Z Done in 3.3s
+2026-11-17T05:29:18.5802750Z ##[endgroup]
+2026-11-17T05:29:18.5876550Z Installation Completed!
+2026-11-17T05:29:18.6201810Z ##[group]Run actions/setup-node@v4
+2026-11-17T05:29:18.6202290Z with:
+2026-11-17T05:29:18.6202730Z   node-version-file: .nvmrc
+2026-11-17T05:29:18.6203020Z   cache: pnpm
+2026-11-17T05:29:18.6203240Z   always-auth: false
+2026-11-17T05:29:18.6203890Z   check-latest: false
+2026-11-17T05:29:18.6209650Z   token: ***
+2026-11-17T05:29:18.6210050Z env:
+2026-11-17T05:29:18.6210410Z   LIVE: 0
+2026-11-17T05:29:18.6211300Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:29:18.6212510Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:29:18.6213150Z ##[endgroup]
+2026-11-17T05:29:18.9386270Z Resolved .nvmrc as 22
+2026-11-17T05:29:18.9591080Z (node:3472) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T05:29:18.9659490Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T05:29:18.9688380Z Found in cache @ /Users/runner/hostedtoolcache/node/22.23.5/arm64
+2026-11-17T05:29:18.9689170Z ##[group]Environment details
+2026-11-17T05:29:19.6718050Z node: v22.23.5
+2026-11-17T05:29:19.6816690Z npm: 10.9.9
+2026-11-17T05:29:19.6918020Z yarn: 1.22.22
+2026-11-17T05:29:19.7020170Z ##[endgroup]
+2026-11-17T05:29:19.7024830Z [command]/Users/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-17T05:29:19.7522140Z /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T05:29:19.8636480Z Cache hit for: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T05:29:19.8686150Z (node:3472) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T05:29:20.9344820Z Received 134217728 of 433669274 (30.9%), 127.9 MBs/sec
+2026-11-17T05:29:22.0354660Z Received 268435456 of 433669274 (61.9%), 122.4 MBs/sec
+2026-11-17T05:29:23.0865400Z Received 402653184 of 433669274 (92.8%), 122.0 MBs/sec
+2026-11-17T05:29:23.5384370Z Received 433669274 of 433669274 (100.0%), 114.9 MBs/sec
+2026-11-17T05:29:23.5483380Z Cache Size: ~414 MB (433669274 B)
+2026-11-17T05:29:23.5586150Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/24e679b4-a99a-4007-a037-3f645872b94a/cache.tzst -P -C /Users/runner/work/GraphGoblin/GraphGoblin --delay-directory-restore --use-compress-program unzstd
+2026-11-17T05:29:41.0621510Z Cache restored successfully
+2026-11-17T05:29:41.0829830Z Cache restored from key: node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83
+2026-11-17T05:29:41.1755800Z ##[group]Run mkdir -p .tmp/macos-launcher-toolchain
+2026-11-17T05:29:41.1756500Z [36;1mmkdir -p .tmp/macos-launcher-toolchain[0m
+2026-11-17T05:29:41.1756890Z [36;1m{[0m
+2026-11-17T05:29:41.1757320Z [36;1m  git rev-parse HEAD 'HEAD^{tree}'[0m
+2026-11-17T05:29:41.1757810Z [36;1m  sw_vers[0m
+2026-11-17T05:29:41.1758100Z [36;1m  uname -m[0m
+2026-11-17T05:29:41.1758550Z [36;1m  xcode-select -p[0m
+2026-11-17T05:29:41.1759770Z [36;1m  xcrun --sdk macosx --show-sdk-version[0m
+2026-11-17T05:29:41.1760280Z [36;1m  xcrun --sdk macosx swift --version[0m
+2026-11-17T05:29:41.1760770Z [36;1m  node --version[0m
+2026-11-17T05:29:41.1761080Z [36;1m  pnpm --version[0m
+2026-11-17T05:29:41.1761520Z [36;1m} > .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-17T05:29:41.1762080Z [36;1mcat .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-17T05:29:41.1762460Z [36;1mtest "$(uname -m)" = arm64[0m
+2026-11-17T05:29:41.3262960Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-17T05:29:41.3263470Z env:
+2026-11-17T05:29:41.3263800Z   LIVE: 0
+2026-11-17T05:29:41.3264240Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:29:41.3264890Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:29:41.3265390Z ##[endgroup]
+2026-11-17T05:29:46.7063190Z 21c570dfec222973a2906307496fd20fce769f31
+2026-11-17T05:29:46.7065170Z 9d55b09931fcca74688b1408ad663ec55257f6cc
+2026-11-17T05:29:46.7066400Z ProductName:		macOS
+2026-11-17T05:29:46.7067490Z ProductVersion:		15.8.2
+2026-11-17T05:29:46.7068030Z BuildVersion:		24H232
+2026-11-17T05:29:46.7068430Z arm64
+2026-11-17T05:29:46.7068760Z /Applications/Xcode_16.4.app/Contents/Developer
+2026-11-17T05:29:46.7069210Z 15.5
+2026-11-17T05:29:46.7069670Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-17T05:29:46.7070110Z Target: arm64-apple-macosx15.0
+2026-11-17T05:29:46.7070440Z v22.23.5
+2026-11-17T05:29:46.7070780Z 12.8.1
+2026-11-17T05:29:46.7115120Z swift-driver version: 1.120.5 
+2026-11-17T05:29:46.7193860Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-17T05:29:46.7195050Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-17T05:29:46.7291080Z shell: /bin/bash -e {0}
+2026-11-17T05:29:46.7291760Z env:
+2026-11-17T05:29:46.7292920Z   LIVE: 0
+2026-11-17T05:29:46.7293890Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:29:46.7294850Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:29:46.7295350Z ##[endgroup]
+2026-11-17T05:29:46.8556770Z Scope: all 14 workspace projects
+2026-11-17T05:29:47.0106320Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-17T05:29:47.3591430Z Packages are cloned from the content-addressable store to the virtual store.
+2026-11-17T05:29:47.3592080Z   Content-addressable store is at: /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-17T05:29:47.3592670Z   Virtual store is at:             node_modules/.pnpm
+2026-11-17T05:29:51.0256650Z ✓ Lockfile passes supply-chain policies (931 entries in 4s)
+2026-11-17T05:29:51.0257710Z Lockfile is up to date, resolution step is skipped
+2026-11-17T05:29:51.0340550Z Packages: +801
+2026-11-17T05:29:51.0341780Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-17T05:29:51.1853690Z Progress: resolved 801, reused 801, downloaded 0, added 801, done
+2026-11-17T05:29:51.3307590Z 
+2026-11-17T05:29:51.3308950Z devDependencies:
+2026-11-17T05:29:51.3309890Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-17T05:29:51.3310300Z + @eslint/js 10.0.1
+2026-11-17T05:29:51.3310850Z + @vitest/coverage-v8 5.0.3
+2026-11-17T05:29:51.3362340Z + dependency-cruiser 18.5.0
+2026-11-17T05:29:51.3364090Z + eslint 10.11.0
+2026-11-17T05:29:51.3364830Z + eslint-config-prettier 10.1.8
+2026-11-17T05:29:51.3377970Z + eslint-plugin-react-hooks 7.1.1
+2026-11-17T05:29:51.3378450Z + prettier 3.9.9
+2026-11-17T05:29:51.3378710Z + turbo 2.11.6
+2026-11-17T05:29:51.3379020Z + typescript 6.0.3
+2026-11-17T05:29:51.3379390Z + typescript-eslint 8.71.0
+2026-11-17T05:29:51.3379700Z + vitest 5.0.3
+2026-11-17T05:29:51.3379860Z 
+2026-11-17T05:29:51.3379990Z Done in 4.5s using pnpm v12.8.1
+2026-11-17T05:29:51.3514590Z ##[group]Run pnpm build
+2026-11-17T05:29:51.3515520Z [36;1mpnpm build[0m
+2026-11-17T05:29:51.3555170Z shell: /bin/bash -e {0}
+2026-11-17T05:29:51.3555430Z env:
+2026-11-17T05:29:51.3556060Z   LIVE: 0
+2026-11-17T05:29:51.3556590Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:29:51.3557130Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:29:51.3557550Z ##[endgroup]
+2026-11-17T05:29:51.4387270Z $ turbo run build
+2026-11-17T05:29:51.6127180Z 
+2026-11-17T05:29:51.6127910Z Attention:
+2026-11-17T05:29:51.6129660Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-17T05:29:51.6130430Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-17T05:29:51.6131270Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-17T05:29:51.6132020Z https://turborepo.dev/docs/telemetry
+2026-11-17T05:29:51.6132220Z 
+2026-11-17T05:29:52.7499540Z 
+2026-11-17T05:29:52.7602640Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-17T05:29:52.7714870Z    • Running build in 13 packages
+2026-11-17T05:29:52.7817770Z    • Remote caching disabled
+2026-11-17T05:29:52.7918900Z 
+2026-11-17T05:29:55.6148370Z ##[group]@graphgoblin/contracts:build
+2026-11-17T05:29:55.6149850Z cache miss, executing 005292293a0ce530
+2026-11-17T05:29:55.6150440Z $ tsc -b tsconfig.build.json
+2026-11-17T05:29:55.6151450Z ##[endgroup]
+2026-11-17T05:29:58.7814610Z ##[group]@graphgoblin/domain:build
+2026-11-17T05:29:58.7815310Z cache miss, executing fe54faa712f8f0d2
+2026-11-17T05:29:58.7815780Z $ tsc -b tsconfig.build.json
+2026-11-17T05:29:58.7816330Z ##[endgroup]
+2026-11-17T05:30:03.1553660Z ##[group]@graphgoblin/engine:build
+2026-11-17T05:30:03.1657550Z cache miss, executing e432a1fafed7e3c8
+2026-11-17T05:30:03.1779020Z $ tsc -b tsconfig.build.json
+2026-11-17T05:30:03.1872750Z ##[endgroup]
+2026-11-17T05:30:06.1050550Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-17T05:30:06.1148960Z cache miss, executing d6b1e0caad9211c5
+2026-11-17T05:30:06.1252220Z $ tsc -b tsconfig.build.json
+2026-11-17T05:30:06.1354150Z ##[endgroup]
+2026-11-17T05:30:06.5851840Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-17T05:30:06.5853470Z cache miss, executing c91305a87635f44e
+2026-11-17T05:30:06.5854410Z $ tsc -b tsconfig.build.json
+2026-11-17T05:30:06.5856040Z ##[endgroup]
+2026-11-17T05:30:11.2429560Z ##[group]@graphgoblin/infrastructure:build
+2026-11-17T05:30:11.2431100Z cache miss, executing 610013b3997e43c7
+2026-11-17T05:30:11.2443080Z $ tsc -b tsconfig.build.json
+2026-11-17T05:30:11.2445120Z ##[endgroup]
+2026-11-17T05:30:17.6236520Z ##[group]@graphgoblin/api:build
+2026-11-17T05:30:17.6237750Z cache miss, executing 6026ea02f92178ef
+2026-11-17T05:30:17.6239130Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-17T05:30:17.6240630Z ##[endgroup]
+2026-11-17T05:30:20.1732600Z ##[group]@graphgoblin/api-client:build
+2026-11-17T05:30:20.1837480Z cache miss, executing 04b387331a8218fa
+2026-11-17T05:30:20.1879380Z $ tsc -b tsconfig.build.json
+2026-11-17T05:30:20.1883460Z ##[endgroup]
+2026-11-17T05:30:23.6451580Z ##[group]@graphgoblin/mcp:build
+2026-11-17T05:30:23.6467870Z cache miss, executing a18ad14e70d2b8a0
+2026-11-17T05:30:23.6486660Z $ tsc -b tsconfig.build.json
+2026-11-17T05:30:23.6513950Z ##[endgroup]
+2026-11-17T05:30:25.2572370Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-17T05:30:25.2672450Z cache bypass, force executing ce3e15171f17affb
+2026-11-17T05:30:25.2774960Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T05:30:25.2877690Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-17T05:30:25.2977620Z ##[endgroup]
+2026-11-17T05:30:25.4907780Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-17T05:30:25.4920150Z cache bypass, force executing 271f908524b9dd10
+2026-11-17T05:30:25.4922230Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-17T05:30:25.4923170Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-17T05:30:25.4925230Z Install: codex plugin marketplace add "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-17T05:30:25.4926480Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-17T05:30:25.4927780Z ##[endgroup]
+2026-11-17T05:30:28.7254210Z ##[group]@graphgoblin/web:build
+2026-11-17T05:30:28.7255340Z cache miss, executing 877d949a71d9a3ea
+2026-11-17T05:30:28.7257350Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-17T05:30:28.7261390Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T05:30:28.7262540Z transforming...
+2026-11-17T05:30:28.7263670Z ✓ 779 modules transformed.
+2026-11-17T05:30:28.7264480Z rendering chunks...
+2026-11-17T05:30:28.7265220Z computing gzip size...
+2026-11-17T05:30:28.7266270Z dist/manifest.webmanifest           0.47 kB
+2026-11-17T05:30:28.7267600Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-17T05:30:28.7269270Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-17T05:30:28.7271200Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-17T05:30:28.7271920Z 
+2026-11-17T05:30:28.7273250Z [32m✓ built in 2.65s[39m
+2026-11-17T05:30:28.7273860Z 
+2026-11-17T05:30:28.7274340Z [36mPWA v1.3.0[39m
+2026-11-17T05:30:28.7275540Z mode      [35mgenerateSW[39m
+2026-11-17T05:30:28.7276900Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-17T05:30:28.7277930Z files generated
+2026-11-17T05:30:28.7278850Z   [2mdist/sw.js.map[22m
+2026-11-17T05:30:28.7279540Z   [2mdist/sw.js[22m
+2026-11-17T05:30:28.7280530Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-17T05:30:28.7281430Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-17T05:30:28.7283190Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-17T05:30:28.7284460Z transforming...
+2026-11-17T05:30:28.7285190Z ✓ 284 modules transformed.
+2026-11-17T05:30:28.7286050Z rendering chunks...
+2026-11-17T05:30:28.7286720Z computing gzip size...
+2026-11-17T05:30:28.7287520Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-17T05:30:28.7289230Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-17T05:30:28.7290790Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-17T05:30:28.7293580Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-17T05:30:28.7294370Z 
+2026-11-17T05:30:28.7294860Z [32m✓ built in 412ms[39m
+2026-11-17T05:30:28.7295260Z 
+2026-11-17T05:30:28.7295670Z [36mPWA v1.3.0[39m
+2026-11-17T05:30:28.7296380Z mode      [35mgenerateSW[39m
+2026-11-17T05:30:28.7297590Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-17T05:30:28.7298470Z files generated
+2026-11-17T05:30:28.7299230Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-17T05:30:28.7300200Z   [2m../dist-goblin/sw.js[22m
+2026-11-17T05:30:28.7301400Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-17T05:30:28.7302400Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-17T05:30:28.7303810Z ##[endgroup]
+2026-11-17T05:30:28.7313440Z 
+2026-11-17T05:30:28.7323700Z  Tasks:    12 successful, 12 total
+2026-11-17T05:30:28.7325200Z Cached:    0 cached, 12 total
+2026-11-17T05:30:28.7326020Z   Time:    37.109s 
+2026-11-17T05:30:28.7326410Z 
+2026-11-17T05:30:28.8612590Z ##[group]Run pnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts
+2026-11-17T05:30:28.8618430Z [36;1mpnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts[0m
+2026-11-17T05:30:28.8703430Z shell: /bin/bash -e {0}
+2026-11-17T05:30:28.8703780Z env:
+2026-11-17T05:30:28.8704080Z   LIVE: 0
+2026-11-17T05:30:28.8704500Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:30:28.8705320Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:30:28.8705740Z ##[endgroup]
+2026-11-17T05:30:29.4281660Z 
+2026-11-17T05:30:29.4288710Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/Users/runner/work/GraphGoblin/GraphGoblin/apps/api[39m
+2026-11-17T05:30:30.3516470Z 
+2026-11-17T05:30:30.3519910Z  [32m✓[39m src/windows-log/guard.test.ts [2m([22m[2m16 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 567[2mms[22m[39m
+2026-11-17T05:30:30.5565820Z  [32m✓[39m src/managed-log/gateway-log-writer.test.ts [2m([22m[2m27 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 802[2mms[22m[39m
+2026-11-17T05:30:30.5575480Z    [32m✓[39m gateway log queue, faults and acknowledgment [2m(13)[22m
+2026-11-17T05:30:30.5576540Z      [33m[2m✓[22m[39m acknowledges only the specific completed record and bounds the exit wait at 250 ms[33m 508[2mms[22m[39m
+2026-11-17T05:30:31.2273910Z  [32m✓[39m src/data-dir-lock.test.ts [2m([22m[2m47 tests[22m[2m)[22m[33m 693[2mms[22m[39m
+2026-11-17T05:30:36.6032510Z {"level":30,"time":1794893436601,"pid":5321,"hostname":"iad20-gt1021-374e9fdb-ac46-48ab-ad47-b9761d1b28c5-06DE50A8BBF7.local","msg":"Server listening at http://127.0.0.1:5602"}
+2026-11-17T05:30:36.6132500Z {"level":30,"time":1794893436603,"pid":5321,"hostname":"iad20-gt1021-374e9fdb-ac46-48ab-ad47-b9761d1b28c5-06DE50A8BBF7.local","host":"127.0.0.1","port":5602,"dataDir":"/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/gg-api-process-gMnaz9","requireApiKey":true,"msg":"GraphGoblin API listening"}
+2026-11-17T05:30:36.6240000Z  [32m✓[39m src/serve.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 1701[2mms[22m[39m
+2026-11-17T05:30:36.6338480Z    [32m✓[39m serve with the managed destination [2m(5)[22m
+2026-11-17T05:30:36.6440590Z      [33m[2m✓[22m[39m reports each reached stage and writes engine records only to the bounded destination[33m 377[2mms[22m[39m
+2026-11-17T05:30:36.6543290Z      [33m[2m✓[22m[39m keeps serving while every log write is stalled, within the pending-byte bound[33m 559[2mms[22m[39m
+2026-11-17T05:30:36.6645830Z {"level":30,"time":1794893436622,"pid":5321,"hostname":"iad20-gt1021-374e9fdb-ac46-48ab-ad47-b9761d1b28c5-06DE50A8BBF7.local","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+2026-11-17T05:30:36.6752360Z {"level":30,"time":1794893436625,"pid":5321,"hostname":"iad20-gt1021-374e9fdb-ac46-48ab-ad47-b9761d1b28c5-06DE50A8BBF7.local","reqId":"req-1","res":{"statusCode":200},"responseTime":3.0622910000001866,"msg":"request completed"}
+2026-11-17T05:30:36.8927730Z  [32m✓[39m src/macos-log/guard.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 34[2mms[22m[39m
+2026-11-17T05:30:38.6599300Z  [32m✓[39m src/gateway-logger.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 340[2mms[22m[39m
+2026-11-17T05:30:38.6703420Z    [33m[2m✓[22m[39m keeps the correlated private #381 diagnostic and narrows real access records to method, route and status[33m 320[2mms[22m[39m
+2026-11-17T05:30:39.9880350Z  [32m✓[39m src/macos-local-key.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 188[2mms[22m[39m
+2026-11-17T05:30:42.7569210Z  [32m✓[39m src/database-ownership.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1572[2mms[22m[39m
+2026-11-17T05:30:42.7590840Z    [33m[2m✓[22m[39m rechecks catalog created by a writer before database ownership is acquired[33m 1249[2mms[22m[39m
+2026-11-17T05:30:43.9734870Z  [32m✓[39m src/main-entry.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 15[2mms[22m[39m
+2026-11-17T05:30:50.9470470Z  [32m✓[39m src/main.test.ts [2m([22m[2m15 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 20177[2mms[22m[39m
+2026-11-17T05:30:50.9573930Z    [32m✓[39m built entry and the reserved Windows launcher variable (#438) [2m(4)[22m
+2026-11-17T05:30:50.9648860Z      [33m[2m✓[22m[39m consumes the variable for CLI commands, which keep their ordinary output[33m 1429[2mms[22m[39m
+2026-11-17T05:30:50.9658040Z      [33m[2m✓[22m[39m ignores the Windows-only variable elsewhere and keeps shell logging[33m 2892[2mms[22m[39m
+2026-11-17T05:30:50.9661430Z    [32m✓[39m built API entry and startup failures [2m(6)[22m
+2026-11-17T05:30:50.9710840Z      [33m[2m✓[22m[39m holds ownership while listening and releases it on supported HTTP close[33m 1474[2mms[22m[39m
+2026-11-17T05:30:50.9714080Z      [33m[2m✓[22m[39m serves authenticated requests using a binary-created key and refuses a competing process[33m 3510[2mms[22m[39m
+2026-11-17T05:30:50.9753770Z      [33m[2m✓[22m[39m dispatches the API-key and preflight CLIs with their real exit codes[33m 3671[2mms[22m[39m
+2026-11-17T05:30:50.9757000Z      [33m[2m✓[22m[39m releases ownership on a real corrupt-database startup fault before HTTP setup[33m 1712[2mms[22m[39m
+2026-11-17T05:30:50.9761940Z      [33m[2m✓[22m[39m releases ownership after a real occupied-port listen failure[33m 2162[2mms[22m[39m
+2026-11-17T05:30:50.9766830Z      [33m[2m✓[22m[39m releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)[33m 3231[2mms[22m[39m
+2026-11-17T05:30:50.9769750Z 
+2026-11-17T05:30:50.9771810Z [2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+2026-11-17T05:30:50.9774610Z [2m      Tests [22m [1m[32m203 passed[39m[22m[2m | [22m[33m8 skipped[39m[90m (211)[39m
+2026-11-17T05:30:50.9776530Z [2m   Start at [22m 05:30:29
+2026-11-17T05:30:50.9778290Z [2m   Duration [22m 21.52s[2m (tests 76%, import 17%, transform 7%)[22m
+2026-11-17T05:30:50.9798060Z 
+2026-11-17T05:30:51.0920570Z ##[group]Run pnpm test:macos-coverage
+2026-11-17T05:30:51.0921020Z [36;1mpnpm test:macos-coverage[0m
+2026-11-17T05:30:51.1022870Z shell: /bin/bash -e {0}
+2026-11-17T05:30:51.1023140Z env:
+2026-11-17T05:30:51.1023470Z   LIVE: 0
+2026-11-17T05:30:51.1023960Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:30:51.1024570Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:30:51.1025000Z ##[endgroup]
+2026-11-17T05:30:51.2905100Z $ node tooling/scripts/macos-launcher-coverage.acceptance.mjs .tmp/macos-launcher-coverage
+2026-11-17T05:32:04.7717140Z Test Suite 'All tests' started at 2026-11-17 05:31:57.251.
+2026-11-17T05:32:04.7719110Z Test Suite 'All tests' passed at 2026-11-17 05:31:57.253.
+2026-11-17T05:32:04.7719710Z 	 Executed 0 tests, with 0 failures (0 unexpected) in 0.000 (0.002) seconds
+2026-11-17T05:32:04.7722400Z ◇ Test run started.
+2026-11-17T05:32:04.7722870Z ↳ Swift Version: 6.1.0
+2026-11-17T05:32:04.7723880Z ↳ Testing Library Version: 124.4
+2026-11-17T05:32:04.7724620Z ↳ Target Platform: arm64e-apple-macos14.0
+2026-11-17T05:32:04.7725160Z ↳ OS Version: 15.8.2 (24H232)
+2026-11-17T05:32:04.7726020Z ◇ Suite "Quit: synchronous engine request, suppression, and both completion orders" (aka 'QuitTests') started.
+2026-11-17T05:32:04.7726980Z ◇ Suite "Live AppKit windows (disposable hosted GUI session only)" (aka 'LiveAppKitTests') started.
+2026-11-17T05:32:04.7728190Z ◇ Suite "Composed launcher in a tracked child process (disposable hosted GUI session only)" (aka 'ChildCompositionTests') started.
+2026-11-17T05:32:04.7729390Z ◇ Suite "AppKit windows (needs a GUI login session; nothing is shown)" (aka 'AppKitWindowTests') started.
+2026-11-17T05:32:04.7730300Z ◇ Suite "Show Log: only a reached failure's opaque action, never a fallback" (aka 'ShowLogTests') started.
+2026-11-17T05:32:04.7738540Z ◇ Suite "Outcome mapping and fixed copy" (aka 'OutcomeCopyTests') started.
+2026-11-17T05:32:04.7739630Z ◇ Suite "Browser handoff: one submission, 10 s deadline, first terminal result wins" (aka 'BrowserHandoffTests') started.
+2026-11-17T05:32:04.7740640Z ◇ Suite "Browser completion deadline arbitration" (aka 'HandoffArbiterTests') started.
+2026-11-17T05:32:04.7741760Z ◇ Suite "One attempt, ordered progress, delayed panel, Hide and reopen" (aka 'AttemptLifecycleTests') started.
+2026-11-17T05:32:04.7742500Z ◇ Suite "Hosted GUI session gate" (aka 'HostedSessionGateTests') started.
+2026-11-17T05:32:04.7743280Z ◇ Suite PublisherTests started.
+2026-11-17T05:32:04.7747990Z ◇ Suite "AppKit controls, menu and adapters (no window server needed)" (aka 'AppKitControlTests') started.
+2026-11-17T05:32:04.7749040Z ◇ Suite InstalledEngineTests started.
+2026-11-17T05:32:04.7749710Z ◇ Suite InstallerRecoveryTests started.
+2026-11-17T05:32:04.7750130Z ◇ Suite LaunchInputsTests started.
+2026-11-17T05:32:04.7751770Z ◇ Suite ACLTests started.
+2026-11-17T05:32:04.7752330Z ◇ Suite NativeFilesTests started.
+2026-11-17T05:32:04.7752830Z ◇ Suite EngineContractsTests started.
+2026-11-17T05:32:04.7753280Z ◇ Suite ChildTests started.
+2026-11-17T05:32:04.7753660Z ◇ Suite LoopbackTests started.
+2026-11-17T05:32:04.7754140Z ◇ Suite DiagnosticsTests started.
+2026-11-17T05:32:04.7755010Z ◇ Test "Exits the launcher starts itself are not Quit requests" (aka 'normalExitDoesNotRequestQuit()') started.
+2026-11-17T05:32:04.7756150Z ◇ Test "Quit again before the grace expires: the original 2 s deadline holds and one reply is sent" (aka 'repeatedQuitBeforeGraceExpires()') started.
+2026-11-17T05:32:04.7757340Z ◇ Test "Quit waits at most 2 s for the engine to return" (aka 'quitGrace()') started.
+2026-11-17T05:32:04.7758150Z ◇ Test "Progress after Quit never reaches the screen" (aka 'progressAfterQuit()') started.
+2026-11-17T05:32:04.7834790Z ◇ Test "Quit, then a management outcome: no browser submission and no window" (aka 'quitThenManagementOutcome()') started.
+2026-11-17T05:32:04.7837200Z ◇ Test "Engine completion, then Quit: the submitted request stays and late callbacks are ignored" (aka 'managementThenQuit()') started.
+2026-11-17T05:32:04.7838430Z ◇ Test "Engine completion with a failure, then Quit: the window closes and later choices are ignored" (aka 'failureThenQuit()') started.
+2026-11-17T05:32:04.7840560Z ◇ Test "Quit, then a failure outcome: no window and no Show Log resolution" (aka 'quitThenFailureOutcome()') started.
+2026-11-17T05:32:04.7841600Z ◇ Test "Quit, then the engine's own cancellation: one reply, nothing shown" (aka 'quitThenCancelled()') started.
+2026-11-17T05:32:04.7842700Z ◇ Test "Quit before the attempt starts means the engine never runs, and Quit again is still now" (aka 'quitBeforeStart()') started.
+2026-11-17T05:32:04.7843720Z ◇ Test "Quit again before the engine returns: still later, one request, one reply, then now" (aka 'repeatedQuitBeforeEngineReturns()') started.
+2026-11-17T05:32:04.7844930Z ◇ Test "A cancelled attempt exits quietly through AppKit termination, and a second entry call returns at once" (aka 'quietExitAndSingleEntry()') started.
+2026-11-17T05:32:04.7846060Z ◇ Test "A browser failure's buttons choose dismiss and copyAddress, in AppKit order" (aka 'browserFailureButtons()') started.
+2026-11-17T05:32:04.7846950Z ◇ Test "A lone OK failure panel still dismisses on Esc" (aka 'loneOKDismissesOnEscape()') started.
+2026-11-17T05:32:04.7848020Z ◇ Test "Progress panel: titled, closable, fixed size, stays visible when the app deactivates" (aka 'progressPanelProperties()') started.
+2026-11-17T05:32:04.7849270Z ◇ Test "Failure panel: dialog subrole, default button first responder, every cancel path dismisses" (aka 'failurePanelRouting()') started.
+2026-11-17T05:32:04.7850370Z ◇ Test "Close box, Command-W, Esc, Command-period and Hide all only hide the progress panel" (aka 'progressPanelHidePaths()') started.
+2026-11-17T05:32:04.7851450Z ◇ Test "The delegate routes reopen and Quit without starting another attempt" (aka 'delegateRouting()') started.
+2026-11-17T05:32:04.7852870Z ◇ Test "Typed Esc and Command-period hide the progress panel and dismiss a failure window" (aka 'typedCancelKeys()') started.
+2026-11-17T05:32:04.7853970Z ◇ Test "The resolver is never asked without the Show Log affordance" (aka 'noAffordanceNoResolver()') started.
+2026-11-17T05:32:04.7854880Z ◇ Test "A resolver that settles after Quit cannot bring back any window" (aka 'resolverAfterQuit()') started.
+2026-11-17T05:32:04.7855940Z ◇ Test "An answer handled just before the 3 s deadline is offered and retires the expiry timer" (aka 'resolverJustBeforeDeadline()') started.
+2026-11-17T05:32:04.7856910Z ◇ Test "Quit while Show Log runs exits without finishing again later" (aka 'quitDuringAction()') started.
+2026-11-17T05:32:04.7857940Z ◇ Test "While the offer resolves the panel stays; it closes just before the alert" (aka 'panelStaysUntilAlert()') started.
+2026-11-17T05:32:04.7859790Z ◇ Test "A nil offer shows no Show Log, and choosing it anyway does nothing" (aka 'nilOffer()') started.
+2026-11-17T05:32:04.7863610Z ◇ Test "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs" (aka 'resolverAfterDeadlineBeforeTimer(elapsedMilliseconds:)') started.
+2026-11-17T05:32:04.7867220Z ◇ Test "The offer waits at most 3 s; an action that arrives later is discarded" (aka 'slowResolver()') started.
+2026-11-17T05:32:04.7868970Z ◇ Test "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)') started.
+2026-11-17T05:32:04.7870020Z ◇ Test "A resolved action is offered, invoked once, and then the launcher exits" (aka 'offeredAction()') started.
+2026-11-17T05:32:04.7871160Z ◇ Test "Start failures distinguish no child, a verified exit, a timeout and an unknown result" (aka 'startFailureDistinctions()') started.
+2026-11-17T05:32:04.7872080Z ◇ Test "Cancelled ends quietly" (aka 'cancelledIsQuiet()') started.
+2026-11-17T05:32:04.7872890Z ◇ Test "Show Log runs to completion before the launcher exits" (aka 'actionCompletesBeforeExit()') started.
+2026-11-17T05:32:04.7874490Z ◇ Test "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)') started.
+2026-11-17T05:32:04.7876000Z ◇ Test "The fixtures name all 17 closed outcomes and all 15 failures" (aka 'fixturesCoverEveryOutcome()') started.
+2026-11-17T05:32:04.7876940Z ◇ Test "A port conflict with no usable port uses the generic wording" (aka 'portInUseWithoutPort()') started.
+2026-11-17T05:32:04.7878250Z ◇ Test "Every stage has its own fixed progress line" (aka 'stageCopy()') started.
+2026-11-17T05:32:04.7881980Z ◇ Test "The canary scanner detects the raw details it guards against" (aka 'canaryScannerDetects()') started.
+2026-11-17T05:32:04.7885040Z ◇ Test "Browser failures show the fixed address and offer only Copy Address" (aka 'browserCopy(port:)') started.
+2026-11-17T05:32:04.7887100Z ◇ Test "Failure titles are distinct" (aka 'distinctTitles()') started.
+2026-11-17T05:32:04.7889430Z ◇ Test "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)') started.
+2026-11-17T05:32:04.7891610Z ◇ Test "Port conflicts name only the reported port" (aka 'portInUseCopy(port:)') started.
+2026-11-17T05:32:04.7892710Z ◇ Test "Quit and blocked-data copy promise only what the launcher can know" (aka 'uncertainCopy()') started.
+2026-11-17T05:32:04.7893780Z ◇ Test "A management outcome without a usable port never becomes a browser address" (aka 'zeroPortHandoff()') started.
+2026-11-17T05:32:04.7894830Z ◇ Test "An early timer does not settle; the later callback still can" (aka 'earlyExpiryIgnored()') started.
+2026-11-17T05:32:04.7895760Z ◇ Test "Before the deadline the translated callback stands" (aka 'beforeDeadline(_:)') started.
+2026-11-17T05:32:04.7896930Z ◇ Test "No user-visible text carries paths, process details or implementation vocabulary" (aka 'vocabulary()') started.
+2026-11-17T05:32:04.7897920Z ◇ Test "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)') started.
+2026-11-17T05:32:04.7899660Z ◇ Test "Concurrent callbacks and timers settle exactly once" (aka 'concurrentSettlement()') started.
+2026-11-17T05:32:04.7900580Z ◇ Test "Expiry settles once; later callbacks and timers are ignored" (aka 'expirySettlesOnce()') started.
+2026-11-17T05:32:04.7901670Z ◇ Test "Copy Address after an unconfirmed result copies the same fixed address" (aka 'copyAfterUnconfirmed(port:)') started.
+2026-11-17T05:32:04.7902410Z ◇ Test "OK on a browser failure copies nothing" (aka 'dismissBrowserFailure()') started.
+2026-11-17T05:32:04.7903360Z ◇ Test "The deadline starts at submission, not at attempt entry" (aka 'deadlineStartsAtSubmission()') started.
+2026-11-17T05:32:04.7904150Z ◇ Test "Port 0 in a management outcome never reaches the browser" (aka 'zeroPortNeverSubmits()') started.
+2026-11-17T05:32:04.7904910Z ◇ Test "The first terminal callback wins and later ones are ignored" (aka 'firstCallbackWins()') started.
+2026-11-17T05:32:04.7905810Z ◇ Test "A callback with neither an application nor an error is unconfirmed" (aka 'neitherResult()') started.
+2026-11-17T05:32:04.7907000Z ◇ Test "A callback observed at the deadline cannot count as accepted" (aka 'observedAtDeadline()') started.
+2026-11-17T05:32:04.7908090Z ◇ Test "Deadline expiry is unconfirmed, and a later callback is ignored" (aka 'deadlineExpiry()') started.
+2026-11-17T05:32:04.7909030Z ◇ Test "Hiding during the handoff keeps the submission pending" (aka 'hideDuringHandoff()') started.
+2026-11-17T05:32:04.7909810Z ◇ Test "A callback delivered on a background thread is honored" (aka 'offMainCallback()') started.
+2026-11-17T05:32:04.7910460Z ◇ Test "Accepted is a quiet exit" (aka 'accepted()') started.
+2026-11-17T05:32:04.7911370Z ◇ Test "Reopen during the handoff surfaces it without a second submission" (aka 'reopenDuringHandoff()') started.
+2026-11-17T05:32:04.7912390Z ◇ Test "A visible panel switches to the handoff line" (aka 'visibleHandoffLine()') started.
+2026-11-17T05:32:04.7913100Z ◇ Test "Rejected shows the rejection and offers only Copy Address" (aka 'rejected()') started.
+2026-11-17T05:32:04.7914540Z ◇ Test "A callback observed before the deadline wins even if the timer is delivered first" (aka 'observedBeforeDeadline()') started.
+2026-11-17T05:32:04.7915580Z ◇ Test "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)') started.
+2026-11-17T05:32:04.7916520Z ◇ Test "The panel appears on its own only once 1 s has passed" (aka 'delayedProgress()') started.
+2026-11-17T05:32:04.7917270Z ◇ Test "Stages reach the screen in emission order and repeats are dropped" (aka 'stageOrder()') started.
+2026-11-17T05:32:04.7918200Z ◇ Test "Cancelled ends quietly without asking for anything" (aka 'cancelledQuiet()') started.
+2026-11-17T05:32:04.7919130Z ◇ Test "Reopen while a failure is shown raises that window and never stacks another" (aka 'reopenRaisesExistingAlert()') started.
+2026-11-17T05:32:04.7920220Z ◇ Test "Reopen before the threshold shows the panel at once, and only once" (aka 'reopenBeforeThreshold()') started.
+2026-11-17T05:32:04.7921250Z ◇ Test "Progress arriving after the outcome never changes the screen" (aka 'lateProgress()') started.
+2026-11-17T05:32:04.7923230Z ◇ Test "Presentation timing constants are the reviewed values" (aka 'timingConstants()') started.
+2026-11-17T05:32:04.7927040Z ◇ Test "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)') started.
+2026-11-17T05:32:04.7929870Z ◇ Test "Progress: one live panel, updated in place, reused after hide, replaced only after close" (aka 'progressPanelLifecycle()') started.
+2026-11-17T05:32:04.7932860Z ◇ Test "The engine runs once despite repeated starts, reopens and hides" (aka 'oneRun()') started.
+2026-11-17T05:32:04.7934640Z ◇ Test "Reopen and Hide after the launcher finished change nothing" (aka 'reopenAfterExit()') started.
+2026-11-17T05:32:04.7936880Z ◇ Test "Stages emitted from a background thread keep their order" (aka 'offMainStageOrder()') started.
+2026-11-17T05:32:04.7940050Z ◇ Test "Hiding before the threshold suppresses the automatic panel" (aka 'hideBeforeThreshold()') started.
+2026-11-17T05:32:04.7945790Z ◇ Test "A handoff accepted before the threshold shows no window at all" (aka 'quietFastHandoff()') started.
+2026-11-17T05:32:04.7947470Z ◇ Test "A GitHub-hosted runner is a disposable GUI session" (aka 'hostedRunnerRecognized()') started.
+2026-11-17T05:32:04.7950470Z ◇ Test "Before any stage the delayed panel uses the neutral line" (aka 'delayedProgressWithoutStage()') started.
+2026-11-17T05:32:04.7952630Z ◇ Test "Hide only hides: the attempt continues and stays hidden until reopen" (aka 'hideAndReopen()') started.
+2026-11-17T05:32:04.7953830Z ◇ Test rollbackToVerifiedAbsence() started.
+2026-11-17T05:32:04.7955570Z ◇ Test alternateReceiptSchemasCannotAuthorizeAGenuineBundle() started.
+2026-11-17T05:32:04.7957230Z ◇ Test platformBootstrapAndTerminalUsageAreClosed() started.
+2026-11-17T05:32:04.7958040Z ◇ Test signedWitnessesSurviveActualExchangeAndRollback() started.
+2026-11-17T05:32:04.7958620Z ◇ Test absentDestinationUsesExclusivePublish() started.
+2026-11-17T05:32:04.7959230Z ◇ Test unverifiableDestinationLeavesForeignEntryAndCandidate() started.
+2026-11-17T05:32:04.7960180Z ◇ Test staleReceiptReplacementAndDiscardPreserveExactWitnessAndBytes() started.
+2026-11-17T05:32:04.7960750Z ◇ Test closedArgumentsAndNames() started.
+2026-11-17T05:32:04.7961340Z ◇ Test bundleInspectionRefusesChangedLayoutAndMissingExecutionAuthority() started.
+2026-11-17T05:32:04.7962020Z ◇ Test stagedValidationChecksExactReceiptAndLocalStoreWithoutWriting() started.
+2026-11-17T05:32:04.7963300Z ◇ Test "Progress controls: Hide answers Esc, Quit sends terminate, Return is inert" (aka 'progressControls()') started.
+2026-11-17T05:32:04.7964180Z ◇ Test heldApplicationsLockRefusesInstallWithoutCreatingADestination() started.
+2026-11-17T05:32:04.7964790Z ◇ Test savedConfigurationRejectsRelativeInputsAndZeroPort() started.
+2026-11-17T05:32:04.7965410Z ◇ Test fingerprintIsExactlyOneLowercaseHexRecord() started.
+2026-11-17T05:32:04.7966310Z ◇ Test absentEmptyAndKeyedStoresAreReadOnlyWhileKeylessContentIsRefused() started.
+2026-11-17T05:32:04.7967690Z ◇ Test "A lone OK is still the Return default" (aka 'failureControlsLoneOK()') started.
+2026-11-17T05:32:04.7968610Z ◇ Test launchInputsBindClosedEnvironmentAndExactShellBytes() started.
+2026-11-17T05:32:04.7969300Z ◇ Test existingRegularFileCannotBecomeAStoreAncestor() started.
+2026-11-17T05:32:04.7969880Z ◇ Test cancellationAndDeadlineFollowOperationRules() started.
+2026-11-17T05:32:04.7970770Z ◇ Test storeObservationsAcceptOnlyExactFreeOrAuthorizedLeasePaths() started.
+2026-11-17T05:32:04.7971480Z ◇ Test runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:) started.
+2026-11-17T05:32:04.7972310Z ◇ Test "Failure controls: OK is the Return default; the secondary action has no key" (aka 'failureControlsWithShowLog()') started.
+2026-11-17T05:32:04.7973150Z ◇ Test changedPathAliasesCannotChangeSavedLaunchInputs() started.
+2026-11-17T05:32:04.7973770Z ◇ Test "Esc and Command-period are the only cancel keys" (aka 'cancelKeys()') started.
+2026-11-17T05:32:04.7974450Z ◇ Test missingAndForeignBuiltInputsHaveClosedRefusals() started.
+2026-11-17T05:32:04.7975320Z ◇ Test "Browser failure controls offer OK and Copy Address only" (aka 'failureControlsForBrowser()') started.
+2026-11-17T05:32:04.7976420Z ◇ Test "The main menu maps Command-Q to terminate and Command-W to performClose" (aka 'mainMenu()') started.
+2026-11-17T05:32:04.7977320Z ◇ Test "The production composition types build without opening anything" (aka 'productionComposition()') started.
+2026-11-17T05:32:04.7978410Z ◇ Test "Accessibility identifiers are distinct" (aka 'distinctIdentifiers()') started.
+2026-11-17T05:32:04.7979330Z ◇ Test "The native browser callback translates to the closed outcome" (aka 'browserCallbackTranslation()') started.
+2026-11-17T05:32:04.7980040Z ◇ Test zeroMeansAbsentAndNonzeroMeansPresent() started.
+2026-11-17T05:32:04.7980680Z ◇ Test boundedDenyOnlyAndAllowPolicies() started.
+2026-11-17T05:32:04.7981310Z ◇ Test failuresDoNotBecomeAbsentOrEmpty() started.
+2026-11-17T05:32:04.7982160Z ◇ Test directoryRefusalsLeaveExistingEntriesIntact() started.
+2026-11-17T05:32:04.7982830Z ◇ Test operationFailuresPreserveCommitBoundaryAndClosedOutcome() started.
+2026-11-17T05:32:04.7983290Z ◇ Test exactHeadlessEnvelopes() started.
+2026-11-17T05:32:04.7983800Z ◇ Test swiftAndDarwinUnsignedIdentityVectors() started.
+2026-11-17T05:32:04.7984240Z ◇ Test namedFileCannotFollowAnInodeReplacement() started.
+2026-11-17T05:32:04.7984730Z ◇ Test healthRequiresUniqueCorrectHeadersAndExactBody() started.
+2026-11-17T05:32:04.7985130Z ◇ Test commitAndQuitBothOrders() started.
+2026-11-17T05:32:04.7985560Z ◇ Test runtimeAndClosedConfig() started.
+2026-11-17T05:32:04.7986380Z ◇ Test boundedIOAndDescriptorPermissionsPreserveBytesAndIdentity() started.
+2026-11-17T05:32:04.7987240Z ◇ Test failureClassificationDistinguishesCommittedSpawnAndLocalSetup() started.
+2026-11-17T05:32:04.7988110Z ◇ Test failedIdentityHelperSpawnIsAnObservationFailure() started.
+2026-11-17T05:32:04.7988750Z ◇ Test twoStreamsAndVerifiedExit() started.
+2026-11-17T05:32:04.7989310Z ◇ Test cancelledAndQuittingAttemptsSkipFinalDiagnostics() started.
+2026-11-17T05:32:04.7989860Z ◇ Test expiredGatewayDeadlineStillRecordsTerminalFailure() started.
+2026-11-17T05:32:04.7990460Z ◇ Test nulInArgumentsOrEnvironmentIsRefusedBeforeSpawning() started.
+2026-11-17T05:32:04.7991070Z ◇ Test overflowingHeaderAndHangingHelperAreBounded() started.
+2026-11-17T05:32:04.7991660Z ◇ Test replacedRootAndLockedParentCannotReceiveRecords() started.
+2026-11-17T05:32:04.7992460Z ◇ Test admitsMissingAndPrivateGatewaySlotsWithoutMutatingThem() started.
+2026-11-17T05:32:04.7993200Z ◇ Test recordLimitAndRotationBoundaryPreserveInodesAndBytes() started.
+2026-11-17T05:32:04.7993900Z ◇ Test refusingUnsafeSlotsLeavesThemAndUnrelatedFilesIntact(kind:) started.
+2026-11-17T05:32:04.7994720Z ◇ Test oversizedPriorSlotIsRepairedAndReplacedByExactCappedActiveSlot() started.
+2026-11-17T05:32:04.7995490Z ◇ Test malformedDiagnosticIdentityCannotProduceAnAdmissionRecord() started.
+2026-11-17T05:32:04.7996710Z ◇ Test standardAndAlternateDiagnosticsKeepDistinctPrivatePaths() started.
+2026-11-17T05:32:04.7997480Z ◇ Test repairsInterruptedAndInvalidUTF8TailsBeforeAppending() started.
+2026-11-17T05:32:04.7998760Z ◇ Passing 1 argument expected → installationInvalid (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8000320Z ◇ Passing 1 argument elapsedMilliseconds → 3000 (Swift.Int) to "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs" (aka 'resolverAfterDeadlineBeforeTimer(elapsedMilliseconds:)')
+2026-11-17T05:32:04.8001830Z ◇ Passing 1 argument expected → runtimeUnavailable (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8003370Z ◇ Passing 1 argument expected → assetsUnavailable (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8004870Z ◇ Passing 1 argument expected → keySourceUnavailable (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8006320Z ◇ Passing 1 argument expected → portInUse (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8007870Z ◇ Passing 1 argument expected → cannotVerify (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8009370Z ◇ Passing 1 argument expected → storeBlocked (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8011180Z ◇ Passing 1 argument expected → launchBusy (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8012810Z ◇ Passing 1 argument expected → releaseUnconfirmed (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8014370Z ◇ Passing 1 argument expected → startFailed (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8015770Z ◇ Passing 1 argument expected → childExited (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8017190Z ◇ Passing 1 argument expected → startTimedOut (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8018970Z ◇ Passing 1 argument elapsedMilliseconds → 3500 (Swift.Int) to "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs" (aka 'resolverAfterDeadlineBeforeTimer(elapsedMilliseconds:)')
+2026-11-17T05:32:04.8020840Z ◇ Passing 1 argument expected → startupUnverified (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8022410Z ◇ Passing 1 argument expected → unexpected (LauncherPresentationTests.FailureExpectation) to "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)')
+2026-11-17T05:32:04.8024030Z ◇ Passing 1 argument expected → installationInvalid (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8025840Z ◇ Passing 1 argument expected → runtimeUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8027340Z ◇ Passing 1 argument expected → keySourceUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8028840Z ◇ Passing 1 argument expected → assetsUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8030250Z ◇ Passing 1 argument expected → portInUse (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8031650Z ◇ Passing 1 argument expected → storeBlocked (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8032990Z ◇ Passing 1 argument expected → cannotVerify (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8037250Z ◇ Passing 1 argument expected → launchBusy (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8043000Z ◇ Passing 1 argument expected → releaseUnconfirmed (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8047360Z ◇ Passing 1 argument expected → diagnosticsUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8053030Z ◇ Passing 1 argument expected → startFailed (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8058310Z ◇ Passing 1 argument expected → childExited (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8075190Z ◇ Passing 1 argument expected → startTimedOut (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8078460Z ◇ Passing 1 argument expected → startupUnverified (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8083000Z ◇ Passing 1 argument expected → unexpected (LauncherPresentationTests.FailureExpectation) to "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)')
+2026-11-17T05:32:04.8087430Z ◇ Passing 1 argument port → 1 (Swift.UInt16) to "Browser failures show the fixed address and offer only Copy Address" (aka 'browserCopy(port:)')
+2026-11-17T05:32:04.8089680Z ◇ Passing 1 argument port → 4747 (Swift.UInt16) to "Browser failures show the fixed address and offer only Copy Address" (aka 'browserCopy(port:)')
+2026-11-17T05:32:04.8091340Z ◇ Passing 1 argument port → 65535 (Swift.UInt16) to "Browser failures show the fixed address and offer only Copy Address" (aka 'browserCopy(port:)')
+2026-11-17T05:32:04.8092740Z ◇ Passing 2 arguments port → 1 (Swift.UInt16), mode → .running (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8094320Z ◇ Passing 2 arguments port → 1 (Swift.UInt16), mode → .observingShutdown (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8095770Z ◇ Passing 2 arguments port → 80 (Swift.UInt16), mode → .running (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8097800Z ◇ Passing 2 arguments port → 80 (Swift.UInt16), mode → .observingShutdown (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8099300Z ◇ Passing 2 arguments port → 4747 (Swift.UInt16), mode → .running (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8100790Z ◇ Passing 2 arguments port → 4747 (Swift.UInt16), mode → .observingShutdown (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8102330Z ◇ Passing 2 arguments port → 65535 (Swift.UInt16), mode → .observingShutdown (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8103830Z ◇ Passing 2 arguments port → 65535 (Swift.UInt16), mode → .running (LaunchContract.ManagementMode) to "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)')
+2026-11-17T05:32:04.8105010Z ◇ Passing 1 argument port → 1 (Swift.UInt16) to "Port conflicts name only the reported port" (aka 'portInUseCopy(port:)')
+2026-11-17T05:32:04.8105910Z ◇ Passing 1 argument port → 80 (Swift.UInt16) to "Port conflicts name only the reported port" (aka 'portInUseCopy(port:)')
+2026-11-17T05:32:04.8106790Z ◇ Passing 1 argument port → 65535 (Swift.UInt16) to "Port conflicts name only the reported port" (aka 'portInUseCopy(port:)')
+2026-11-17T05:32:04.8108080Z ◇ Passing 2 arguments outcome → .accepted (LaunchContract.BrowserOutcome), offset → 11.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8109620Z ◇ Passing 2 arguments outcome → .accepted (LaunchContract.BrowserOutcome), offset → 600.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8112120Z ◇ Passing 2 arguments outcome → .rejected (LaunchContract.BrowserOutcome), offset → 10.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8114350Z ◇ Passing 2 arguments outcome → .rejected (LaunchContract.BrowserOutcome), offset → 11.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8116360Z ◇ Passing 2 arguments outcome → .rejected (LaunchContract.BrowserOutcome), offset → 600.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8119640Z ◇ Passing 2 arguments outcome → .unconfirmed (LaunchContract.BrowserOutcome), offset → 10.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8121880Z ◇ Passing 2 arguments outcome → .unconfirmed (LaunchContract.BrowserOutcome), offset → 11.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8123480Z ◇ Passing 2 arguments outcome → .unconfirmed (LaunchContract.BrowserOutcome), offset → 600.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8124760Z ◇ Passing 1 argument outcome → .accepted (LaunchContract.BrowserOutcome) to "Before the deadline the translated callback stands" (aka 'beforeDeadline(_:)')
+2026-11-17T05:32:04.8125600Z ◇ Test releasingPeerSkipsShellsAndFinalReleaseCancelsHandoff(phase:) started.
+2026-11-17T05:32:04.8126580Z ◇ Passing 1 argument outcome → .rejected (LaunchContract.BrowserOutcome) to "Before the deadline the translated callback stands" (aka 'beforeDeadline(_:)')
+2026-11-17T05:32:04.8127370Z ◇ Test rejectsAmbiguousHTTPFramingBeforeIdentityParsing() started.
+2026-11-17T05:32:04.8128780Z ◇ Passing 1 argument outcome → .unconfirmed (LaunchContract.BrowserOutcome) to "Before the deadline the translated callback stands" (aka 'beforeDeadline(_:)')
+2026-11-17T05:32:04.8130000Z ◇ Passing 1 argument port → 1 (Swift.UInt16) to "Copy Address after an unconfirmed result copies the same fixed address" (aka 'copyAfterUnconfirmed(port:)')
+2026-11-17T05:32:04.8131160Z ◇ Passing 1 argument port → 65535 (Swift.UInt16) to "Copy Address after an unconfirmed result copies the same fixed address" (aka 'copyAfterUnconfirmed(port:)')
+2026-11-17T05:32:04.8132020Z ◇ Test closedPortDiffersFromMalformedOversizeResetAndStalledPeers() started.
+2026-11-17T05:32:04.8132610Z ◇ Test changedHealthAfterShellsCannotAuthorizeManagement() started.
+2026-11-17T05:32:04.8133150Z ◇ Test independentlyRejectsMissingWrongAndUnframedShells() started.
+2026-11-17T05:32:04.8133700Z ◇ Test invalidShellTransportMakesAnAuthenticatedPeerAmbiguous() started.
+2026-11-17T05:32:04.8134390Z ◇ Test managementRequiresBothShellsAndFinalIdentity(finalPhase:) started.
+2026-11-17T05:32:04.8134970Z ◇ Test foreignAndWrongChildPeersNeverReceiveShellRequests() started.
+2026-11-17T05:32:04.8136050Z ◇ Passing 2 arguments port → 1 (Swift.UInt16), mode → .running (LaunchContract.ManagementMode) to "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)')
+2026-11-17T05:32:04.8137490Z ◇ Passing 2 arguments port → 1 (Swift.UInt16), mode → .observingShutdown (LaunchContract.ManagementMode) to "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)')
+2026-11-17T05:32:04.8139090Z ◇ Passing 2 arguments port → 4747 (Swift.UInt16), mode → .running (LaunchContract.ManagementMode) to "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)')
+2026-11-17T05:32:04.8140590Z ◇ Passing 2 arguments port → 4747 (Swift.UInt16), mode → .observingShutdown (LaunchContract.ManagementMode) to "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)')
+2026-11-17T05:32:04.8142230Z ◇ Passing 2 arguments port → 65535 (Swift.UInt16), mode → .running (LaunchContract.ManagementMode) to "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)')
+2026-11-17T05:32:04.8143710Z ◇ Passing 2 arguments port → 65535 (Swift.UInt16), mode → .observingShutdown (LaunchContract.ManagementMode) to "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)')
+2026-11-17T05:32:04.8145160Z ◇ Passing 1 argument expected → installationInvalid (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8146930Z ◇ Passing 1 argument expected → runtimeUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8149260Z ◇ Passing 1 argument expected → assetsUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8150960Z ◇ Passing 1 argument expected → keySourceUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8152400Z ◇ Passing 1 argument expected → portInUse (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8153790Z ◇ Passing 1 argument expected → storeBlocked (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8155300Z ◇ Passing 1 argument expected → cannotVerify (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8157070Z ◇ Passing 1 argument expected → launchBusy (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8158600Z ◇ Passing 2 arguments outcome → .accepted (LaunchContract.BrowserOutcome), offset → 10.0 seconds (Swift.Duration) to "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)')
+2026-11-17T05:32:04.8160240Z ◇ Passing 1 argument expected → releaseUnconfirmed (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8161780Z ◇ Passing 1 argument expected → diagnosticsUnavailable (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8163360Z ◇ Passing 1 argument expected → startFailed (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8164790Z ◇ Passing 1 argument expected → childExited (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8166180Z ◇ Passing 1 argument expected → startTimedOut (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8167690Z ◇ Passing 1 argument expected → startupUnverified (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8169080Z ◇ Passing 1 argument expected → unexpected (LauncherPresentationTests.FailureExpectation) to "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)')
+2026-11-17T05:32:04.8170350Z ◇ Passing 1 argument script → "printf '%s\n' 'darwin,arm64,22.22.1'" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8171710Z ◇ Passing 1 argument script → "printf '%s' 'darwin,arm64,22.22.2'" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8172750Z ◇ Passing 1 argument script → "printf 'darwin,arm64,22.22.2\r\n'" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8182050Z ◇ Passing 1 argument script → "printf 'darwin,arm64,22.22.2\nsecond\n'" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8183160Z ◇ Passing 1 argument script → "printf '\377\n'" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8184120Z ◇ Passing 1 argument script → "printf '\n'" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8185290Z ◇ Passing 1 argument script → "printf '%s\n' 'darwin,arm64,22.22.2'; printf '%s' diagnostic >&2" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8186530Z ◇ Passing 1 argument script → "printf '%s\n' 'darwin,arm64,22.22.2'; exit 7" (Swift.String) to runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:)
+2026-11-17T05:32:04.8187800Z ◇ Passing 1 argument kind → .symlink (LauncherEngineTests.DiagnosticsTests.UnsafeSlot) to refusingUnsafeSlotsLeavesThemAndUnrelatedFilesIntact(kind:)
+2026-11-17T05:32:04.8188980Z ◇ Passing 1 argument kind → .hardlink (LauncherEngineTests.DiagnosticsTests.UnsafeSlot) to refusingUnsafeSlotsLeavesThemAndUnrelatedFilesIntact(kind:)
+2026-11-17T05:32:04.8190190Z ◇ Passing 1 argument kind → .permissive (LauncherEngineTests.DiagnosticsTests.UnsafeSlot) to refusingUnsafeSlotsLeavesThemAndUnrelatedFilesIntact(kind:)
+2026-11-17T05:32:04.8191040Z ✔ Test "Cancelled ends quietly" (aka 'cancelledIsQuiet()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8192400Z ✔ Test "Start failures distinguish no child, a verified exit, a timeout and an unknown result" (aka 'startFailureDistinctions()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8193370Z ✔ Test "Each failure outcome maps to its own fixed alert" (aka 'failureCopy(_:)') passed after 0.954 seconds.
+2026-11-17T05:32:04.8194250Z ✔ Test "The fixtures name all 17 closed outcomes and all 15 failures" (aka 'fixturesCoverEveryOutcome()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8195040Z ✔ Test "Every stage has its own fixed progress line" (aka 'stageCopy()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8195870Z ✔ Test "The canary scanner detects the raw details it guards against" (aka 'canaryScannerDetects()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8196760Z ✔ Test "A port conflict with no usable port uses the generic wording" (aka 'portInUseWithoutPort()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8197660Z ✔ Test "Browser failures show the fixed address and offer only Copy Address" (aka 'browserCopy(port:)') passed after 0.954 seconds.
+2026-11-17T05:32:04.8198740Z ✔ Test "Failure titles are distinct" (aka 'distinctTitles()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8199590Z ✔ Test "Management outcomes hand off the literal loopback address" (aka 'managementHandoff(port:mode:)') passed after 0.954 seconds.
+2026-11-17T05:32:04.8200560Z ✔ Test "A management outcome without a usable port never becomes a browser address" (aka 'zeroPortHandoff()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8201420Z ✔ Test "Port conflicts name only the reported port" (aka 'portInUseCopy(port:)') passed after 0.954 seconds.
+2026-11-17T05:32:04.8202360Z ✔ Test "An early timer does not settle; the later callback still can" (aka 'earlyExpiryIgnored()') passed after 0.954 seconds.
+2026-11-17T05:32:04.8203340Z ✔ Test "Quit and blocked-data copy promise only what the launcher can know" (aka 'uncertainCopy()') passed after 0.955 seconds.
+2026-11-17T05:32:04.8204280Z ✔ Test "At or after the deadline every callback is unconfirmed" (aka 'atOrAfterDeadline(_:observedAt:)') passed after 0.955 seconds.
+2026-11-17T05:32:04.8207240Z ✔ Test "Before the deadline the translated callback stands" (aka 'beforeDeadline(_:)') passed after 0.956 seconds.
+2026-11-17T05:32:04.8208210Z ◇ Passing 1 argument phase → "ready" (Swift.String) to releasingPeerSkipsShellsAndFinalReleaseCancelsHandoff(phase:)
+2026-11-17T05:32:04.8209100Z ◇ Passing 1 argument phase → "exiting" (Swift.String) to releasingPeerSkipsShellsAndFinalReleaseCancelsHandoff(phase:)
+2026-11-17T05:32:04.8211010Z ◇ Passing 1 argument phase → "stopped" (Swift.String) to releasingPeerSkipsShellsAndFinalReleaseCancelsHandoff(phase:)
+2026-11-17T05:32:04.8212000Z ✔ Test "Expiry settles once; later callbacks and timers are ignored" (aka 'expirySettlesOnce()') passed after 0.973 seconds.
+2026-11-17T05:32:04.8212880Z ◇ Passing 1 argument finalPhase → "running" (Swift.String) to managementRequiresBothShellsAndFinalIdentity(finalPhase:)
+2026-11-17T05:32:04.8213780Z ◇ Passing 1 argument finalPhase → "draining" (Swift.String) to managementRequiresBothShellsAndFinalIdentity(finalPhase:)
+2026-11-17T05:32:04.8215000Z ◇ Passing 1 argument finalPhase → "awaiting-choice" (Swift.String) to managementRequiresBothShellsAndFinalIdentity(finalPhase:)
+2026-11-17T05:32:04.8216240Z ◇ Passing 1 argument finalPhase → "forcing" (Swift.String) to managementRequiresBothShellsAndFinalIdentity(finalPhase:)
+2026-11-17T05:32:04.8217230Z ◇ Passing 1 argument finalPhase → "drain-failed" (Swift.String) to managementRequiresBothShellsAndFinalIdentity(finalPhase:)
+2026-11-17T05:32:04.8218240Z ◇ Passing 1 argument finalPhase → "force-failed" (Swift.String) to managementRequiresBothShellsAndFinalIdentity(finalPhase:)
+2026-11-17T05:32:04.8221170Z ✔ Test "A GitHub-hosted runner is a disposable GUI session" (aka 'hostedRunnerRecognized()') passed after 1.013 seconds.
+2026-11-17T05:32:04.8222410Z ✔ Test platformBootstrapAndTerminalUsageAreClosed() passed after 1.013 seconds.
+2026-11-17T05:32:04.8223320Z ✔ Test "No user-visible text carries paths, process details or implementation vocabulary" (aka 'vocabulary()') passed after 1.015 seconds.
+2026-11-17T05:32:04.8224870Z ✔ Test unverifiableDestinationLeavesForeignEntryAndCandidate() passed after 1.014 seconds.
+2026-11-17T05:32:04.8225540Z ✔ Test rollbackToVerifiedAbsence() passed after 1.014 seconds.
+2026-11-17T05:32:04.8226290Z ✔ Test staleReceiptReplacementAndDiscardPreserveExactWitnessAndBytes() passed after 1.014 seconds.
+2026-11-17T05:32:04.8226890Z ✔ Test closedArgumentsAndNames() passed after 1.014 seconds.
+2026-11-17T05:32:04.8227490Z ✔ Test alternateReceiptSchemasCannotAuthorizeAGenuineBundle() passed after 1.014 seconds.
+2026-11-17T05:32:04.8228270Z ✔ Test signedWitnessesSurviveActualExchangeAndRollback() passed after 1.014 seconds.
+2026-11-17T05:32:04.8228910Z ✔ Test absentDestinationUsesExclusivePublish() passed after 1.014 seconds.
+2026-11-17T05:32:04.8229620Z ✔ Test heldApplicationsLockRefusesInstallWithoutCreatingADestination() passed after 1.014 seconds.
+2026-11-17T05:32:04.8230410Z ✔ Test bundleInspectionRefusesChangedLayoutAndMissingExecutionAuthority() passed after 1.015 seconds.
+2026-11-17T05:32:04.8231260Z ✔ Test stagedValidationChecksExactReceiptAndLocalStoreWithoutWriting() passed after 1.015 seconds.
+2026-11-17T05:32:04.8232150Z ✔ Test absentEmptyAndKeyedStoresAreReadOnlyWhileKeylessContentIsRefused() passed after 1.015 seconds.
+2026-11-17T05:32:04.8233020Z ✔ Test savedConfigurationRejectsRelativeInputsAndZeroPort() passed after 1.015 seconds.
+2026-11-17T05:32:04.8233740Z ✔ Test existingRegularFileCannotBecomeAStoreAncestor() passed after 1.015 seconds.
+2026-11-17T05:32:04.8235030Z ✔ Test launchInputsBindClosedEnvironmentAndExactShellBytes() passed after 1.015 seconds.
+2026-11-17T05:32:04.8235720Z ✔ Test cancellationAndDeadlineFollowOperationRules() passed after 1.015 seconds.
+2026-11-17T05:32:04.8236570Z ✔ Test runtimeRefusesPartialMalformedNoisyAndFailedHelpers(script:) passed after 1.015 seconds.
+2026-11-17T05:32:04.8237330Z ✔ Test fingerprintIsExactlyOneLowercaseHexRecord() passed after 1.015 seconds.
+2026-11-17T05:32:04.8238330Z ✔ Test changedPathAliasesCannotChangeSavedLaunchInputs() passed after 1.015 seconds.
+2026-11-17T05:32:04.8239490Z ✔ Test missingAndForeignBuiltInputsHaveClosedRefusals() passed after 1.015 seconds.
+2026-11-17T05:32:04.8240270Z ✔ Test zeroMeansAbsentAndNonzeroMeansPresent() passed after 1.015 seconds.
+2026-11-17T05:32:04.8240860Z ✔ Test failuresDoNotBecomeAbsentOrEmpty() passed after 1.015 seconds.
+2026-11-17T05:32:04.8241530Z ✔ Test directoryRefusalsLeaveExistingEntriesIntact() passed after 1.015 seconds.
+2026-11-17T05:32:04.8242220Z ✔ Test boundedDenyOnlyAndAllowPolicies() passed after 1.016 seconds.
+2026-11-17T05:32:04.8242870Z ✔ Test operationFailuresPreserveCommitBoundaryAndClosedOutcome() passed after 1.016 seconds.
+2026-11-17T05:32:04.8243440Z ✔ Test exactHeadlessEnvelopes() passed after 1.016 seconds.
+2026-11-17T05:32:04.8243950Z ✔ Test swiftAndDarwinUnsignedIdentityVectors() passed after 1.016 seconds.
+2026-11-17T05:32:04.8244700Z ✔ Test healthRequiresUniqueCorrectHeadersAndExactBody() passed after 1.016 seconds.
+2026-11-17T05:32:04.8245350Z ✔ Test commitAndQuitBothOrders() passed after 1.017 seconds.
+2026-11-17T05:32:04.8245960Z ✔ Test namedFileCannotFollowAnInodeReplacement() passed after 1.017 seconds.
+2026-11-17T05:32:04.8246480Z ✔ Test runtimeAndClosedConfig() passed after 1.017 seconds.
+2026-11-17T05:32:04.8247130Z ✔ Test failureClassificationDistinguishesCommittedSpawnAndLocalSetup() passed after 1.017 seconds.
+2026-11-17T05:32:04.8249250Z ✔ Test boundedIOAndDescriptorPermissionsPreserveBytesAndIdentity() passed after 1.017 seconds.
+2026-11-17T05:32:04.8249980Z ✔ Test failedIdentityHelperSpawnIsAnObservationFailure() passed after 1.017 seconds.
+2026-11-17T05:32:04.8250750Z ✔ Test expiredGatewayDeadlineStillRecordsTerminalFailure() passed after 1.017 seconds.
+2026-11-17T05:32:04.8251510Z ✔ Test cancelledAndQuittingAttemptsSkipFinalDiagnostics() passed after 1.017 seconds.
+2026-11-17T05:32:04.8252080Z ✔ Test twoStreamsAndVerifiedExit() passed after 1.018 seconds.
+2026-11-17T05:32:04.8252680Z ✔ Test nulInArgumentsOrEnvironmentIsRefusedBeforeSpawning() passed after 1.018 seconds.
+2026-11-17T05:32:04.8253720Z ✔ Test replacedRootAndLockedParentCannotReceiveRecords() passed after 1.017 seconds.
+2026-11-17T05:32:04.8254480Z ✔ Test admitsMissingAndPrivateGatewaySlotsWithoutMutatingThem() passed after 1.017 seconds.
+2026-11-17T05:32:04.8255220Z ✔ Test storeObservationsAcceptOnlyExactFreeOrAuthorizedLeasePaths() passed after 1.019 seconds.
+2026-11-17T05:32:04.8255960Z ✔ Test refusingUnsafeSlotsLeavesThemAndUnrelatedFilesIntact(kind:) passed after 1.018 seconds.
+2026-11-17T05:32:04.8256700Z ✔ Test malformedDiagnosticIdentityCannotProduceAnAdmissionRecord() passed after 1.018 seconds.
+2026-11-17T05:32:04.8257410Z ✔ Test recordLimitAndRotationBoundaryPreserveInodesAndBytes() passed after 1.018 seconds.
+2026-11-17T05:32:04.8258110Z ✔ Test standardAndAlternateDiagnosticsKeepDistinctPrivatePaths() passed after 1.018 seconds.
+2026-11-17T05:32:04.8258820Z ✔ Test repairsInterruptedAndInvalidUTF8TailsBeforeAppending() passed after 1.019 seconds.
+2026-11-17T05:32:04.8259560Z ✔ Test releasingPeerSkipsShellsAndFinalReleaseCancelsHandoff(phase:) passed after 1.004 seconds.
+2026-11-17T05:32:04.8260370Z ✔ Test rejectsAmbiguousHTTPFramingBeforeIdentityParsing() passed after 1.003 seconds.
+2026-11-17T05:32:04.8261120Z ✔ Test changedHealthAfterShellsCannotAuthorizeManagement() passed after 1.004 seconds.
+2026-11-17T05:32:04.8261790Z ✔ Test independentlyRejectsMissingWrongAndUnframedShells() passed after 1.004 seconds.
+2026-11-17T05:32:04.8262480Z ✔ Test invalidShellTransportMakesAnAuthenticatedPeerAmbiguous() passed after 1.004 seconds.
+2026-11-17T05:32:04.8263250Z ✔ Test oversizedPriorSlotIsRepairedAndReplacedByExactCappedActiveSlot() passed after 1.021 seconds.
+2026-11-17T05:32:04.8263990Z ✔ Test managementRequiresBothShellsAndFinalIdentity(finalPhase:) passed after 1.004 seconds.
+2026-11-17T05:32:04.8264700Z ✔ Suite "Outcome mapping and fixed copy" (aka 'OutcomeCopyTests') passed after 1.029 seconds.
+2026-11-17T05:32:04.8265690Z ✔ Test "Concurrent callbacks and timers settle exactly once" (aka 'concurrentSettlement()') passed after 1.027 seconds.
+2026-11-17T05:32:04.8266450Z ✔ Suite "Hosted GUI session gate" (aka 'HostedSessionGateTests') passed after 1.030 seconds.
+2026-11-17T05:32:04.8266940Z ✔ Suite PublisherTests passed after 1.030 seconds.
+2026-11-17T05:32:04.8267360Z ✔ Suite LaunchInputsTests passed after 1.030 seconds.
+2026-11-17T05:32:04.8267760Z ✔ Suite ACLTests passed after 1.030 seconds.
+2026-11-17T05:32:04.8268150Z ✔ Suite NativeFilesTests passed after 1.031 seconds.
+2026-11-17T05:32:04.8268570Z ✔ Suite EngineContractsTests passed after 1.031 seconds.
+2026-11-17T05:32:04.8269130Z ✔ Test foreignAndWrongChildPeersNeverReceiveShellRequests() passed after 1.007 seconds.
+2026-11-17T05:32:04.8269690Z ✔ Suite DiagnosticsTests passed after 1.031 seconds.
+2026-11-17T05:32:04.8270480Z ✔ Suite "Browser completion deadline arbitration" (aka 'HandoffArbiterTests') passed after 1.032 seconds.
+2026-11-17T05:32:04.8271260Z ◇ Test foreignHealthPreventsSpawnAndRecordsOnlyTheClosedRefusal() started.
+2026-11-17T05:32:04.8271820Z ◇ Test interruptionRetryRequiresTheExactRemainingBundle(_:) started.
+2026-11-17T05:32:04.8272840Z ◇ Passing 1 argument interruption → .beforeExchange (LauncherInstallerTests.InstallerRecoveryTests.Interruption) to interruptionRetryRequiresTheExactRemainingBundle(_:)
+2026-11-17T05:32:04.8274110Z ✔ Test "A cancelled attempt exits quietly through AppKit termination, and a second entry call returns at once" (aka 'quietExitAndSingleEntry()') passed after 1.256 seconds.
+2026-11-17T05:32:04.8275220Z ◇ Test "Hide, reopen, then the main menu's Quit: Quit waits for the engine's return, then AppKit terminates" (aka 'hideReopenMenuQuit()') started.
+2026-11-17T05:32:04.8275980Z ✔ Test overflowingHeaderAndHangingHelperAreBounded() passed after 1.289 seconds.
+2026-11-17T05:32:04.8276460Z ✔ Suite ChildTests passed after 1.297 seconds.
+2026-11-17T05:32:04.8277030Z ✔ Test foreignHealthPreventsSpawnAndRecordsOnlyTheClosedRefusal() passed after 0.464 seconds.
+2026-11-17T05:32:04.8277920Z ◇ Test warmShutdownModeUsesBoundShellsWithoutStartingAChild() started.
+2026-11-17T05:32:04.8278690Z ✔ Test "Presentation timing constants are the reviewed values" (aka 'timingConstants()') passed after 1.715 seconds.
+2026-11-17T05:32:04.8279740Z ✔ Test "Progress controls: Hide answers Esc, Quit sends terminate, Return is inert" (aka 'progressControls()') passed after 1.757 seconds.
+2026-11-17T05:32:04.8280750Z ✔ Test "A lone OK is still the Return default" (aka 'failureControlsLoneOK()') passed after 1.765 seconds.
+2026-11-17T05:32:04.8282830Z ✔ Test "Failure controls: OK is the Return default; the secondary action has no key" (aka 'failureControlsWithShowLog()') passed after 1.765 seconds.
+2026-11-17T05:32:04.8283800Z ✔ Test "Esc and Command-period are the only cancel keys" (aka 'cancelKeys()') passed after 1.765 seconds.
+2026-11-17T05:32:04.8284680Z ✔ Test "The main menu maps Command-Q to terminate and Command-W to performClose" (aka 'mainMenu()') passed after 1.765 seconds.
+2026-11-17T05:32:04.8285730Z ✔ Test "Browser failure controls offer OK and Copy Address only" (aka 'failureControlsForBrowser()') passed after 1.765 seconds.
+2026-11-17T05:32:04.8286530Z ✔ Test "Accessibility identifiers are distinct" (aka 'distinctIdentifiers()') passed after 1.765 seconds.
+2026-11-17T05:32:04.8287450Z ✔ Test "The native browser callback translates to the closed outcome" (aka 'browserCallbackTranslation()') passed after 1.765 seconds.
+2026-11-17T05:32:04.8288430Z ✔ Test "A lone OK failure panel still dismisses on Esc" (aka 'loneOKDismissesOnEscape()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8289530Z ✔ Test "Failure panel: dialog subrole, default button first responder, every cancel path dismisses" (aka 'failurePanelRouting()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8290740Z ✔ Test "Progress panel: titled, closable, fixed size, stays visible when the app deactivates" (aka 'progressPanelProperties()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8291990Z ✔ Test "Close box, Command-W, Esc, Command-period and Hide all only hide the progress panel" (aka 'progressPanelHidePaths()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8293150Z ✔ Test "A browser failure's buttons choose dismiss and copyAddress, in AppKit order" (aka 'browserFailureButtons()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8294310Z ✔ Test "Typed Esc and Command-period hide the progress panel and dismiss a failure window" (aka 'typedCancelKeys()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8295280Z ✔ Test "The delegate routes reopen and Quit without starting another attempt" (aka 'delegateRouting()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8296480Z ✔ Test "Progress: one live panel, updated in place, reused after hide, replaced only after close" (aka 'progressPanelLifecycle()') passed after 1.774 seconds.
+2026-11-17T05:32:04.8297660Z ✔ Test "The production composition types build without opening anything" (aka 'productionComposition()') passed after 1.773 seconds.
+2026-11-17T05:32:04.8298920Z ✔ Test "Engine completion with a failure, then Quit: the window closes and later choices are ignored" (aka 'failureThenQuit()') passed after 1.778 seconds.
+2026-11-17T05:32:04.8299910Z ✔ Test "Port 0 in a management outcome never reaches the browser" (aka 'zeroPortNeverSubmits()') passed after 1.776 seconds.
+2026-11-17T05:32:04.8300910Z ✔ Suite "AppKit windows (needs a GUI login session; nothing is shown)" (aka 'AppKitWindowTests') passed after 1.779 seconds.
+2026-11-17T05:32:04.8302000Z ✔ Test "Cancelled ends quietly without asking for anything" (aka 'cancelledQuiet()') passed after 1.775 seconds.
+2026-11-17T05:32:04.8303160Z ✔ Test "Reopen while a failure is shown raises that window and never stacks another" (aka 'reopenRaisesExistingAlert()') passed after 1.775 seconds.
+2026-11-17T05:32:04.8304190Z ✔ Test "Before any stage the delayed panel uses the neutral line" (aka 'delayedProgressWithoutStage()') passed after 1.775 seconds.
+2026-11-17T05:32:04.8305510Z ✔ Suite "AppKit controls, menu and adapters (no window server needed)" (aka 'AppKitControlTests') passed after 1.779 seconds.
+2026-11-17T05:32:04.8306630Z ◇ Test "Failure windows: one at a time, raised in place, gone once closed" (aka 'failureWindowLifecycle()') started.
+2026-11-17T05:32:04.8307560Z ✔ Test "A callback delivered on a background thread is honored" (aka 'offMainCallback()') passed after 1.777 seconds.
+2026-11-17T05:32:04.8308500Z ✔ Test "Stages emitted from a background thread keep their order" (aka 'offMainStageOrder()') passed after 1.777 seconds.
+2026-11-17T05:32:04.8309470Z ✔ Test "Exits the launcher starts itself are not Quit requests" (aka 'normalExitDoesNotRequestQuit()') passed after 1.781 seconds.
+2026-11-17T05:32:04.8310570Z ✔ Test "Copy Address after an unconfirmed result copies the same fixed address" (aka 'copyAfterUnconfirmed(port:)') passed after 1.812 seconds.
+2026-11-17T05:32:04.8311530Z ✔ Test "OK on a browser failure copies nothing" (aka 'dismissBrowserFailure()') passed after 1.812 seconds.
+2026-11-17T05:32:04.8312690Z ✔ Test "A callback with neither an application nor an error is unconfirmed" (aka 'neitherResult()') passed after 1.812 seconds.
+2026-11-17T05:32:04.8313700Z ✔ Test "A callback observed at the deadline cannot count as accepted" (aka 'observedAtDeadline()') passed after 1.812 seconds.
+2026-11-17T05:32:04.8314690Z ✔ Test "Hiding during the handoff keeps the submission pending" (aka 'hideDuringHandoff()') passed after 1.812 seconds.
+2026-11-17T05:32:04.8315560Z ✔ Test "Accepted is a quiet exit" (aka 'accepted()') passed after 1.812 seconds.
+2026-11-17T05:32:04.8316370Z ✔ Test "Rejected shows the rejection and offers only Copy Address" (aka 'rejected()') passed after 1.812 seconds.
+2026-11-17T05:32:04.8317440Z ✔ Test "A callback observed before the deadline wins even if the timer is delivered first" (aka 'observedBeforeDeadline()') passed after 1.812 seconds.
+2026-11-17T05:32:04.8318500Z ✔ Test "Reopen and Hide after the launcher finished change nothing" (aka 'reopenAfterExit()') passed after 1.811 seconds.
+2026-11-17T05:32:04.8319520Z ✔ Test "Failure windows: one at a time, raised in place, gone once closed" (aka 'failureWindowLifecycle()') passed after 0.035 seconds.
+2026-11-17T05:32:04.8320540Z ◇ Test "On live windows Return answers the failure window's OK, and other keys choose nothing" (aka 'liveKeys()') started.
+2026-11-17T05:32:04.8321560Z ✔ Test "While the offer resolves the panel stays; it closes just before the alert" (aka 'panelStaysUntilAlert()') passed after 1.817 seconds.
+2026-11-17T05:32:04.8323230Z ✔ Test "A resolved action is offered, invoked once, and then the launcher exits" (aka 'offeredAction()') passed after 1.818 seconds.
+2026-11-17T05:32:04.8324180Z ✔ Test warmShutdownModeUsesBoundShellsWithoutStartingAChild() passed after 0.362 seconds.
+2026-11-17T05:32:04.8325000Z ◇ Test warmPeerNeedsBothExactShellsEvenAfterIdentityRecovers() started.
+2026-11-17T05:32:04.8325710Z ✔ Test closedPortDiffersFromMalformedOversizeResetAndStalledPeers() passed after 1.960 seconds.
+2026-11-17T05:32:04.8326470Z ✔ Suite LoopbackTests passed after 1.983 seconds.
+2026-11-17T05:32:04.8327600Z ✔ Test warmPeerNeedsBothExactShellsEvenAfterIdentityRecovers() passed after 0.386 seconds.
+2026-11-17T05:32:04.8328430Z ◇ Test coldCommitBindsDirectChildAndWarmAttemptKeepsItsPID() started.
+2026-11-17T05:32:04.8329280Z ✔ Test "A visible panel switches to the handoff line" (aka 'visibleHandoffLine()') passed after 2.379 seconds.
+2026-11-17T05:32:04.8330330Z ✔ Test "Each failure outcome closes the panel first, then shows its alert" (aka 'failureFlow(_:)') passed after 2.379 seconds.
+2026-11-17T05:32:04.8331350Z ✔ Test "On live windows Return answers the failure window's OK, and other keys choose nothing" (aka 'liveKeys()') passed after 0.567 seconds.
+2026-11-17T05:32:04.8332330Z ◇ Test "Without a receiver, or once the surface is gone, live window controls change nothing" (aka 'noReceiver()') started.
+2026-11-17T05:32:04.8333390Z ✔ Test "Show Log runs to completion before the launcher exits" (aka 'actionCompletesBeforeExit()') passed after 2.382 seconds.
+2026-11-17T05:32:04.8334470Z ✔ Test "Without a receiver, or once the surface is gone, live window controls change nothing" (aka 'noReceiver()') passed after 0.245 seconds.
+2026-11-17T05:32:04.8335610Z ◇ Test "The delayed panel is one live window: updated in place, hidden by its own controls, reshown by reopen, closed by Quit" (aka 'liveProgressPanel()') started.
+2026-11-17T05:32:04.8336620Z ✔ Test "The resolver is never asked without the Show Log affordance" (aka 'noAffordanceNoResolver()') passed after 2.664 seconds.
+2026-11-17T05:32:04.8337500Z ✔ Test "Hiding before the threshold suppresses the automatic panel" (aka 'hideBeforeThreshold()') passed after 2.683 seconds.
+2026-11-17T05:32:04.8339710Z ✔ Test "Reopen before the threshold shows the panel at once, and only once" (aka 'reopenBeforeThreshold()') passed after 2.684 seconds.
+2026-11-17T05:32:04.8340700Z ✔ Test "Quit before the attempt starts means the engine never runs, and Quit again is still now" (aka 'quitBeforeStart()') passed after 2.687 seconds.
+2026-11-17T05:32:04.8341790Z ✔ Test "The engine runs once despite repeated starts, reopens and hides" (aka 'oneRun()') passed after 2.684 seconds.
+2026-11-17T05:32:04.8342670Z ✔ Test "Quit, then a failure outcome: no window and no Show Log resolution" (aka 'quitThenFailureOutcome()') passed after 2.687 seconds.
+2026-11-17T05:32:04.8343560Z ✔ Test "One submission of the literal address in both management modes" (aka 'oneSubmission(port:mode:)') passed after 2.685 seconds.
+2026-11-17T05:32:04.8344500Z ✔ Test "A nil offer shows no Show Log, and choosing it anyway does nothing" (aka 'nilOffer()') passed after 2.687 seconds.
+2026-11-17T05:32:04.8345350Z ✔ Test "A resolver that settles after Quit cannot bring back any window" (aka 'resolverAfterQuit()') passed after 2.687 seconds.
+2026-11-17T05:32:04.8346240Z ✔ Test "Reopen during the handoff surfaces it without a second submission" (aka 'reopenDuringHandoff()') passed after 2.686 seconds.
+2026-11-17T05:32:04.8347130Z ✔ Test "Progress arriving after the outcome never changes the screen" (aka 'lateProgress()') passed after 2.686 seconds.
+2026-11-17T05:32:04.8348150Z ✔ Test "Engine completion, then Quit: the submitted request stays and late callbacks are ignored" (aka 'managementThenQuit()') passed after 2.689 seconds.
+2026-11-17T05:32:04.8349130Z ✔ Test "Stages reach the screen in emission order and repeats are dropped" (aka 'stageOrder()') passed after 2.686 seconds.
+2026-11-17T05:32:04.8350010Z ✔ Test "Quit while Show Log runs exits without finishing again later" (aka 'quitDuringAction()') passed after 2.688 seconds.
+2026-11-17T05:32:04.8351000Z ✔ Test "Quit, then a management outcome: no browser submission and no window" (aka 'quitThenManagementOutcome()') passed after 2.689 seconds.
+2026-11-17T05:32:04.8351910Z ✔ Test "The first terminal callback wins and later ones are ignored" (aka 'firstCallbackWins()') passed after 2.687 seconds.
+2026-11-17T05:32:04.8352800Z ✔ Test "A handoff accepted before the threshold shows no window at all" (aka 'quietFastHandoff()') passed after 2.686 seconds.
+2026-11-17T05:32:04.8354360Z ✔ Test "Every failure with the affordance asks the resolver exactly once" (aka 'resolverAskedOnce(_:)') passed after 2.689 seconds.
+2026-11-17T05:32:04.8355600Z ✔ Test "Quit, then the engine's own cancellation: one reply, nothing shown" (aka 'quitThenCancelled()') passed after 2.693 seconds.
+2026-11-17T05:32:04.8356580Z ✔ Test "The deadline starts at submission, not at attempt entry" (aka 'deadlineStartsAtSubmission()') passed after 2.692 seconds.
+2026-11-17T05:32:04.8357510Z ✔ Test "Progress after Quit never reaches the screen" (aka 'progressAfterQuit()') passed after 2.719 seconds.
+2026-11-17T05:32:04.8358510Z ✔ Test "Quit waits at most 2 s for the engine to return" (aka 'quitGrace()') passed after 2.766 seconds.
+2026-11-17T05:32:04.8359600Z ✔ Test "Deadline expiry is unconfirmed, and a later callback is ignored" (aka 'deadlineExpiry()') passed after 2.763 seconds.
+2026-11-17T05:32:04.8360730Z ✔ Suite "Browser handoff: one submission, 10 s deadline, first terminal result wins" (aka 'BrowserHandoffTests') passed after 2.767 seconds.
+2026-11-17T05:32:04.8361870Z ✔ Test "An answer handled just before the 3 s deadline is offered and retires the expiry timer" (aka 'resolverJustBeforeDeadline()') passed after 2.767 seconds.
+2026-11-17T05:32:04.8363110Z ✔ Test "The panel appears on its own only once 1 s has passed" (aka 'delayedProgress()') passed after 2.791 seconds.
+2026-11-17T05:32:04.8364200Z ✔ Test "The offer waits at most 3 s; an action that arrives later is discarded" (aka 'slowResolver()') passed after 2.794 seconds.
+2026-11-17T05:32:04.8365520Z ✔ Test "An answer handled at or after the 3 s deadline is discarded even before the expiry timer runs" (aka 'resolverAfterDeadlineBeforeTimer(elapsedMilliseconds:)') passed after 2.795 seconds.
+2026-11-17T05:32:04.8367100Z ✔ Suite "Show Log: only a reached failure's opaque action, never a fallback" (aka 'ShowLogTests') passed after 2.798 seconds.
+2026-11-17T05:32:04.8368460Z ✔ Test "Hide only hides: the attempt continues and stays hidden until reopen" (aka 'hideAndReopen()') passed after 2.797 seconds.
+2026-11-17T05:32:04.8369660Z ✔ Suite "One attempt, ordered progress, delayed panel, Hide and reopen" (aka 'AttemptLifecycleTests') passed after 2.801 seconds.
+2026-11-17T05:32:04.8370860Z ✔ Test "Hide, reopen, then the main menu's Quit: Quit waits for the engine's return, then AppKit terminates" (aka 'hideReopenMenuQuit()') passed after 1.610 seconds.
+2026-11-17T05:32:04.8373170Z ◇ Test "The progress panel's Quit with an engine that never returns ends once the 2 s grace has passed" (aka 'panelQuitAfterGrace()') started.
+2026-11-17T05:32:04.8375300Z ✔ Test "The delayed panel is one live window: updated in place, hidden by its own controls, reshown by reopen, closed by Quit" (aka 'liveProgressPanel()') passed after 0.243 seconds.
+2026-11-17T05:32:04.8376820Z ◇ Test "A reached failure replaces the live panel with one failure window; reopen raises it and OK closes it and exits" (aka 'liveFailureReplacesPanel()') started.
+2026-11-17T05:32:04.8380410Z ✔ Test "Quit again before the engine returns: still later, one request, one reply, then now" (aka 'repeatedQuitBeforeEngineReturns()') passed after 2.946 seconds.
+2026-11-17T05:32:04.8385050Z ✔ Test "A reached failure replaces the live panel with one failure window; reopen raises it and OK closes it and exits" (aka 'liveFailureReplacesPanel()') passed after 0.157 seconds.
+2026-11-17T05:32:04.8387810Z ◇ Test "Show Log on the live failure window closes it, runs the offered action once, then exits" (aka 'liveShowLog()') started.
+2026-11-17T05:32:04.8390500Z ✔ Test "Quit again before the grace expires: the original 2 s deadline holds and one reply is sent" (aka 'repeatedQuitBeforeGraceExpires()') passed after 3.038 seconds.
+2026-11-17T05:32:04.8391930Z ✔ Suite "Quit: synchronous engine request, suppression, and both completion orders" (aka 'QuitTests') passed after 3.039 seconds.
+2026-11-17T05:32:04.8395100Z ✔ Test "Show Log on the live failure window closes it, runs the offered action once, then exits" (aka 'liveShowLog()') passed after 0.054 seconds.
+2026-11-17T05:32:04.8396910Z ◇ Test "Copy Address on the live browser failure puts exactly the management address on the general pasteboard, then exits" (aka 'liveCopyAddress()') started.
+2026-11-17T05:32:04.8398540Z ✔ Test "Copy Address on the live browser failure puts exactly the management address on the general pasteboard, then exits" (aka 'liveCopyAddress()') passed after 0.156 seconds.
+2026-11-17T05:32:04.8402150Z ◇ Test "Return on the live failure window answers its default OK and exits" (aka 'liveReturnChoosesOK()') started.
+2026-11-17T05:32:04.8404000Z ✔ Test "Return on the live failure window answers its default OK and exits" (aka 'liveReturnChoosesOK()') passed after 0.022 seconds.
+2026-11-17T05:32:04.8405230Z ✔ Suite "Live AppKit windows (disposable hosted GUI session only)" (aka 'LiveAppKitTests') passed after 3.265 seconds.
+2026-11-17T05:32:04.8406120Z ✔ Test coldCommitBindsDirectChildAndWarmAttemptKeepsItsPID() passed after 1.030 seconds.
+2026-11-17T05:32:04.8407100Z ◇ Test refusedDiagnosticsPreventChildCommitAndPreserveForeignGatewaySlot() started.
+2026-11-17T05:32:04.8408100Z ✔ Test refusedDiagnosticsPreventChildCommitAndPreserveForeignGatewaySlot() passed after 0.213 seconds.
+2026-11-17T05:32:04.8408940Z ◇ Test outstandingShowLogAuthorizationCannotFollowAReplacementRoot() started.
+2026-11-17T05:32:04.8412180Z ✔ Test outstandingShowLogAuthorizationCannotFollowAReplacementRoot() passed after 0.030 seconds.
+2026-11-17T05:32:04.8414560Z ◇ Test quitDuringCooperatingLockWaitNeverCommitsOrWritesDiagnostics() started.
+2026-11-17T05:32:04.8417020Z ✔ Test quitDuringCooperatingLockWaitNeverCommitsOrWritesDiagnostics() passed after 0.146 seconds.
+2026-11-17T05:32:04.8419640Z ◇ Test quitWhileObservingHeldStoreOrReleasingPeerPreventsCommit() started.
+2026-11-17T05:32:04.8421330Z ◇ Passing 1 argument interruption → .afterExchange (LauncherInstallerTests.InstallerRecoveryTests.Interruption) to interruptionRetryRequiresTheExactRemainingBundle(_:)
+2026-11-17T05:32:04.8423530Z ✔ Test quitWhileObservingHeldStoreOrReleasingPeerPreventsCommit() passed after 0.491 seconds.
+2026-11-17T05:32:04.8424360Z ◇ Test committedChildExitProducesItsBoundedDiagnosticCategory(code:) started.
+2026-11-17T05:32:04.8425140Z ◇ Passing 1 argument code → 70 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8426570Z ◇ Passing 1 argument code → 71 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8427610Z ◇ Passing 1 argument code → 72 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8429600Z ◇ Passing 1 argument interruption → .staleStage (LauncherInstallerTests.InstallerRecoveryTests.Interruption) to interruptionRetryRequiresTheExactRemainingBundle(_:)
+2026-11-17T05:32:04.8432590Z ◇ Passing 1 argument interruption → .staleInstalled (LauncherInstallerTests.InstallerRecoveryTests.Interruption) to interruptionRetryRequiresTheExactRemainingBundle(_:)
+2026-11-17T05:32:04.8434890Z ✔ Test interruptionRetryRequiresTheExactRemainingBundle(_:) passed after 3.840 seconds.
+2026-11-17T05:32:04.8452650Z ✔ Suite InstallerRecoveryTests passed after 4.873 seconds.
+2026-11-17T05:32:04.8454780Z ◇ Passing 1 argument code → 73 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8456590Z ◇ Passing 1 argument code → 74 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8458880Z ◇ Passing 1 argument code → 75 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8459750Z ◇ Passing 1 argument code → 76 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8460710Z ◇ Passing 1 argument code → 143 (Swift.Int) to committedChildExitProducesItsBoundedDiagnosticCategory(code:)
+2026-11-17T05:32:04.8462230Z ✔ Test "The progress panel's Quit with an engine that never returns ends once the 2 s grace has passed" (aka 'panelQuitAfterGrace()') passed after 3.294 seconds.
+2026-11-17T05:32:04.8463540Z ◇ Test "A reached failure replaces the progress panel; OK closes it and AppKit terminates without a Quit request" (aka 'failureThenOK()') started.
+2026-11-17T05:32:04.8464520Z ✔ Test committedChildExitProducesItsBoundedDiagnosticCategory(code:) passed after 2.280 seconds.
+2026-11-17T05:32:04.8465150Z ✔ Suite InstalledEngineTests passed after 6.442 seconds.
+2026-11-17T05:32:04.8466110Z ✔ Test "A reached failure replaces the progress panel; OK closes it and AppKit terminates without a Quit request" (aka 'failureThenOK()') passed after 1.230 seconds.
+2026-11-17T05:32:04.8467540Z ✔ Suite "Composed launcher in a tracked child process (disposable hosted GUI session only)" (aka 'ChildCompositionTests') passed after 7.395 seconds.
+2026-11-17T05:32:04.8468180Z ✔ Test run with 168 tests passed after 7.396 seconds.
+2026-11-17T05:32:04.8468370Z 
+2026-11-17T05:32:06.9634990Z Swift lines: 3492/3627 (96.28%)
+2026-11-17T05:32:06.9635430Z Swift regions: 1868/2056 (90.86%)
+2026-11-17T05:32:06.9904680Z ##[group]Run pnpm test:macos-launcher
+2026-11-17T05:32:06.9905170Z [36;1mpnpm test:macos-launcher[0m
+2026-11-17T05:32:07.0175240Z shell: /bin/bash -e {0}
+2026-11-17T05:32:07.0176530Z env:
+2026-11-17T05:32:07.0176740Z   LIVE: 0
+2026-11-17T05:32:07.0177130Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:32:07.0177610Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:32:07.0177890Z ##[endgroup]
+2026-11-17T05:32:07.1129940Z $ node --test tooling/scripts/macos-launcher.acceptance.mjs
+2026-11-17T05:32:07.1593090Z TAP version 13
+2026-11-17T05:32:07.2209770Z # Subtest: a reset does not prove that the listener released
+2026-11-17T05:32:07.2213420Z ok 1 - a reset does not prove that the listener released
+2026-11-17T05:32:07.2214480Z   ---
+2026-11-17T05:32:07.2215030Z   duration_ms: 13.057875
+2026-11-17T05:32:07.2215690Z   type: 'test'
+2026-11-17T05:32:07.2215870Z   ...
+2026-11-17T05:34:07.8804820Z # Subtest: macOS public launcher, native headless process and actual gateway
+2026-11-17T05:34:07.8806240Z ok 2 - macOS public launcher, native headless process and actual gateway
+2026-11-17T05:34:07.8807160Z   ---
+2026-11-17T05:34:07.8807540Z   duration_ms: 120647.483666
+2026-11-17T05:34:07.8807870Z   type: 'test'
+2026-11-17T05:34:07.8808220Z   ...
+2026-11-17T05:34:07.8808860Z # Public install with a malformed inherited locale validated and published a receipt-bound alternate app.
+2026-11-17T05:34:07.8811790Z # A foreign listener survived the launcher refusal and no store was initialized.
+2026-11-17T05:34:07.8812600Z # An occupied store without its key refused before spawn and preserved its contents.
+2026-11-17T05:34:07.8813640Z # Concurrent cold attempts with malformed locales completed and a single verified gateway served both built shells after both launchers exited.
+2026-11-17T05:34:07.8814510Z # Warm launch kept the serving PID and private managed logs excluded the request query.
+2026-11-17T05:34:07.8815600Z # A second built API entry contended on the actual physical log reservation before touching its store.
+2026-11-17T05:34:07.8816580Z # The actual managed API refused a missing local key at the store stage, preserving database bytes.
+2026-11-17T05:34:07.8817410Z # Same-path replacement kept the alternate identity and logged the held-store deadline refusal.
+2026-11-17T05:34:07.8818190Z # Supported drain released both leases, the verified process birth and the loopback listener.
+2026-11-17T05:34:07.8818960Z # Evidence: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:34:07.8857550Z 1..2
+2026-11-17T05:34:07.8858340Z # tests 2
+2026-11-17T05:34:07.8858930Z # suites 0
+2026-11-17T05:34:07.8859270Z # pass 2
+2026-11-17T05:34:07.8859880Z # fail 0
+2026-11-17T05:34:07.8860420Z # cancelled 0
+2026-11-17T05:34:07.8860960Z # skipped 0
+2026-11-17T05:34:07.8861470Z # todo 0
+2026-11-17T05:34:07.8862020Z # duration_ms 120734.079959
+2026-11-17T05:34:07.9349380Z ##[group]Run actions/upload-artifact@v4
+2026-11-17T05:34:07.9349730Z with:
+2026-11-17T05:34:07.9350050Z   name: macos-launcher
+2026-11-17T05:34:07.9350240Z   include-hidden-files: true
+2026-11-17T05:34:07.9350600Z   path: .tmp/macos-launcher-*/
+.tmp/macos-swift-test/**/codecov/**
+
+2026-11-17T05:34:07.9351090Z   if-no-files-found: error
+2026-11-17T05:34:07.9351360Z   retention-days: 7
+2026-11-17T05:34:07.9351590Z   compression-level: 6
+2026-11-17T05:34:07.9351760Z   overwrite: false
+2026-11-17T05:34:07.9352030Z env:
+2026-11-17T05:34:07.9352230Z   LIVE: 0
+2026-11-17T05:34:07.9352570Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-17T05:34:07.9353160Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-17T05:34:07.9353560Z ##[endgroup]
+2026-11-17T05:34:08.3851130Z (node:10571) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T05:34:08.3853350Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T05:34:08.4261880Z With the provided path, there will be 227 files uploaded
+2026-11-17T05:34:08.4262400Z Artifact name is valid!
+2026-11-17T05:34:08.4262640Z Root directory input is valid!
+2026-11-17T05:34:08.6662520Z Beginning upload of artifact content to blob storage
+2026-11-17T05:34:08.8773800Z (node:10571) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-17T05:34:08.9552000Z Uploaded bytes 354834
+2026-11-17T05:34:08.9705370Z Finished uploading artifact content to blob storage!
+2026-11-17T05:34:08.9807080Z SHA256 digest of uploaded artifact zip is 4b79037a8663254ed22abd871dc31c25450c30ef2893ab7f3533bb05791e6196
+2026-11-17T05:34:08.9906960Z Finalizing artifact upload
+2026-11-17T05:34:09.3128670Z Artifact macos-launcher.zip successfully finalized. Artifact ID 14301859530
+2026-11-17T05:34:09.3146390Z Artifact macos-launcher has been successfully uploaded! Final size is 354834 bytes. Artifact ID is 14301859530
+2026-11-17T05:34:09.3186410Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/44024381922/artifacts/14301859530
+2026-11-17T05:34:09.3388290Z Post job cleanup.
+2026-11-17T05:34:09.4841640Z (node:10631) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-17T05:34:09.4842740Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-17T05:34:09.4843720Z Cache hit occurred on the primary key node-cache-macOS-arm64-pnpm-8c44ce4cb6cb4ab57a6e35efdc81abb0814f38e3ff8259914569cec0bd80af83, not saving cache.
+2026-11-17T05:34:09.4975800Z Post job cleanup.
+2026-11-17T05:34:09.6519390Z Pruning is unnecessary.
+2026-11-17T05:34:09.6644480Z Post job cleanup.
+2026-11-17T05:34:09.7819080Z [command]/opt/homebrew/bin/git version
+2026-11-17T05:34:09.8090340Z git version 2.56.1
+2026-11-17T05:34:09.8111750Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/8598063a-add8-4ac3-a3d4-6582138046b9/.gitconfig'
+2026-11-17T05:34:09.8122900Z Temporarily overriding HOME='/Users/runner/work/_temp/8598063a-add8-4ac3-a3d4-6582138046b9' before making global git config changes
+2026-11-17T05:34:09.8126260Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-17T05:34:09.8128470Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-17T05:34:09.8242310Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-17T05:34:09.8317590Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-17T05:34:09.9470610Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-17T05:34:09.9553930Z http.https://github.com/.extraheader
+2026-11-17T05:34:09.9561480Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-17T05:34:09.9659300Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-17T05:34:10.0971420Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-17T05:34:10.1290480Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-17T05:34:10.3040170Z Cleaning up orphan processes
+2026-11-17T05:34:12.2520170Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

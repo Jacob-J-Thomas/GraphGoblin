@@ -1,0 +1,41 @@
+# R3-F1 final stale-marker unlink
+
+Issue #581 and PR #582. The starting head and last independent review revision was
+`ffdd2c860f2690bb903768ae0216e607c817dd4e`. The implementation dispatch configured GPT-6.2
+Sol with high reasoning as the fallback while the actual Claude subscription quota remained
+unavailable until 10:10 UTC. The worker context identified the GPT-6 family. The parent
+dispatch establishes the configured model and effort.
+
+When a stale-marker unlink reports the marker already gone on the final acquisition attempt,
+the API refuses with the existing ownership error type and names the reclamation guard. The
+reason identifies the lost marker during removal at the attempt limit. Earlier lost unlinks
+still advance to another observation. A successful unlink still credits the caller before
+proceeding. The terminal marker-read and publication diagnostics, the eight-attempt limit,
+release and staging cleanup, and Windows directory-removal classification retain their
+existing code. The numbered documentation specifies both terminal marker disappearance cases.
+
+The added public acquisition test schedules seven native ENOENT reads and a successful eighth
+stale-marker read followed by native ENOENT on unlink. It records eight reads, one attempted
+stale-marker unlink and zero publication attempts. Cleanup leaves the directory empty and the
+read-only state free. The assigned patch uses the existing exported shell formatter and managed
+startup classifier in the regression. The shell names the guard and gives the verification
+reason without live-owner or stop instructions. The managed cause is
+`store-ownership-unverified`.
+
+| Check | Exit | Result |
+| --- | --- | --- |
+| `baseline-focused` | 1 | 1 expected shell diagnostic failure, 87 passes |
+| `focused` | 0 | 88 passes in two files |
+| `api-typecheck` | 0 | API typecheck |
+| `changed-lint` | 0 | ESLint for both changed TypeScript files |
+| `format-diff` | 0 | Prettier and whitespace checks |
+
+The baseline diagnostic assertion fails after its attempt and cleanup checks pass. The existing
+round-one accounting, round-two marker-read uncertainty and publication-exhaustion controls
+passed in the focused suite. The parent owns the independent review harness reruns and final-delta
+assessment, full API and hosted gates, and commit. This implementation receipt verifies the
+specified local delta and leaves the independent review verdict attached to `ffdd2c86`.
+
+Runs used Node v22.22.2 and pnpm 12.8.1. `commands.json` records shell commands and working
+directories, and each execution has a log and exit file. `source-sha256.txt` binds the patch
+source at handoff. The changelog hash is included for continuity with round two.

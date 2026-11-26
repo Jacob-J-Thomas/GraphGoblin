@@ -1,0 +1,38 @@
+# Formal review 1: #523
+
+**READY** for the next delivery gates. No FIX-IN-PR findings and no new follow-up finding.
+
+Independent OpenAI source review of the actual Claude Opus 5.5 implementation. Base and HEAD: `d2df8600c2c8574bec420947de686b936910b245`. Source patch SHA-256: `5e99ea4ff8b8651f09bdcb8c7996b54d475f656088f1e2537d03563d6beea2ef`. The exact six-file source patch, empty index patch, file hashes, gate document hashes and final unchanged-source readback are in `SOURCE.patch`, `INDEX.patch`, `SOURCE-MANIFEST.json` and `FRESHNESS.json`. This is scan 1 of at most 3; it does not consume the reserved final fresh Astra MAX review.
+
+## Source and contract assessment
+
+- `plugins/request-validation.ts:14-15` exports one literal segment encoder. The compiler uses it for each structured path segment and schema-path code. It retains tilde-before-slash order, numeric conversion, root `/`, URI escaping and lone-surrogate replacement for schema fragments. `plugins/errors.ts:129-139` reuses it only on the appended unrecognized member; the already-encoded base is preserved.
+- Product `app.ts:52-53` installs the owned compiler and provider response serializer before every route. A repository-wide source search across apps, packages and tooling found no other production validator compiler, `schemaCompiler`, `schemaErrorFormatter`, `attachValidation` or provider request-validation classifier. The registered webhook scope (`routes/triggers.ts:126`) changes body parsing only; static scope (`plugins/static.ts:46`) does not replace the compiler. Routes inherit the product compiler.
+- At the base, the provider validator is limited to the artificial legacy fixture and the Ollama and thread-disconnect test compositions. The patch migrates those two compositions onto the product compiler and removes the artificial legacy control. Removing the provider request diagnostic branch is therefore supported by the actual caller trace. The active provider serializer and response-error handler remain intact.
+- The public problem status, media type, code, detail, issue order, individual messages, parsed successful value and error locations are retained. The new ordered public route test and existing compiler/handler fixtures exercise the actual changed boundaries. The Ollama route fixture uses a fully fake service; its literal 11434 URL is data and never contacted.
+
+## Independent verification
+
+All commands selected Node **v22.23.4** on PATH and used `pnpm.cmd` from this worktree.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Focused Vitest, 5 files / 38 tests | PASS | `FOCUSED-TESTS.log` |
+| Selected malformed/empty/oversized/media test | PASS, 1 test (9 unrelated skipped) | `MALFORMED-TEST.log` |
+| Independent public route/classification probe | PASS, 21 cases | `PUBLIC-POINTER-PROBE.json` |
+| API typecheck | PASS | `TYPECHECK.log` |
+| API lint | PASS | `LINT.log` |
+| `git diff --check` | PASS | Review execution |
+| Frozen source/index readback | PASS, unchanged | `FRESHNESS.json` |
+
+Focused command: `pnpm.cmd --filter @graphgoblin/api exec vitest run src/plugins/request-validation.test.ts src/loop-definition.test.ts src/validation-paths.test.ts src/routes/ollama.test.ts src/routes/thread-disconnect.test.ts`.
+
+Selected malformed command: `pnpm.cmd --filter @graphgoblin/api exec vitest run src/qa.test.ts -t 'maps malformed, empty, and oversized bodies'`.
+
+The retained `public-pointer-probe.mts` executes production `buildApp` public routes through injection. Its 21 cases assert exact Problem Details fields for ordinary fields, array index, invalid record keys with slash/tilde/empty/numeric/Unicode names, root fallback, unknown root and nested members for the same special names, malformed JSON classification and parsed valid input. A focused provider serializer fixture separately asserts the exact sanitized response 500 and absence of stack/cause/raw response leakage. Literal `~1/~0` cases guard against double escaping. No harness started. The component fixtures retain internal URI-fragment and lone-surrogate coverage.
+
+These are production route-injection and component observations, not a claim of completed independent native HTTP QA. `createTestApp` disables Ollama, the thread-disconnect fixture uses loopback port 0, and the Ollama route tests use fake methods. No owner ports/storage, real provider call, broad API suite or local full coverage run occurred.
+
+## Remaining gates
+
+Separate Claude QA, preserves-current-gate hosted CI including coverage, and the final fresh Astra MAX review remain pending. READY is the review verdict for these frozen bytes; it is not publication or merge approval and waives no gate. Reviewer changed no source, index or GitHub state.

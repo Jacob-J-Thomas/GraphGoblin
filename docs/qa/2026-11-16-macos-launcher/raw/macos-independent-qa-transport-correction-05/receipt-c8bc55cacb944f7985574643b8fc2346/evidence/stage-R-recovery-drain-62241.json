@@ -1,0 +1,215 @@
+{
+  "id": "R-recovery-drain-62241",
+  "cases": [
+    "recovery"
+  ],
+  "startedAt": "2026-11-16T22:15:08.165Z",
+  "checks": [
+    {
+      "id": "recovery-pre:health-shape",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running",
+        "pid": 49530
+      }
+    },
+    {
+      "id": "recovery-pre:instance",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "observed": "e8757d655994517350c2cf1d67dd3ca3a56087fd53c05f9a6df81d8488579a7a",
+        "expected": "e8757d655994517350c2cf1d67dd3ca3a56087fd53c05f9a6df81d8488579a7a"
+      }
+    },
+    {
+      "id": "recovery-pre:process",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "proc": {
+          "pid": 49530,
+          "ppid": 1,
+          "pgid": 49530,
+          "uid": 501,
+          "stat": "Ss",
+          "tty": "??",
+          "birth": "Mon Nov 16 16:14:03 2026",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js"
+        }
+      }
+    },
+    {
+      "id": "recovery-pre:single-loopback-listener",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "sockets": [
+          {
+            "pid": 49530,
+            "command": "node",
+            "address": "127.0.0.1:62241"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recovery-pre:lease-holder",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "lease": {
+          "graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 49530,
+            "sha256": "98ae79d6e62f0276be80f4c8e099584236279b3f61cf9874fe24c9ffe6c50fd9",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179124534"
+          },
+          "graphgoblin.lock.reclaim": null,
+          "graphgoblin.db.graphgoblin.lock": {
+            "kind": "file",
+            "safe": true,
+            "pid": 49530,
+            "sha256": "2c298ac3f34b7537caaaca85675e0b554af6bc33d525e471a6ef8b5923ffe30f",
+            "mode": "600",
+            "device": "16777232",
+            "inode": "179124537"
+          },
+          "graphgoblin.db.graphgoblin.lock.reclaim": null
+        }
+      }
+    },
+    {
+      "id": "recovery-pre:stable-identity",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "pid": 49530,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "recovery:registered-owner",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "fresh": {
+          "port": 62241,
+          "pid": 49530,
+          "birth": "Mon Nov 16 16:14:03 2026",
+          "instance": "e8757d655994517350c2cf1d67dd3ca3a56087fd53c05f9a6df81d8488579a7a",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 49530,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "98ae79d6e62f0276be80f4c8e099584236279b3f61cf9874fe24c9ffe6c50fd9",
+            "graphgoblin.db.graphgoblin.lock": "2c298ac3f34b7537caaaca85675e0b554af6bc33d525e471a6ef8b5923ffe30f"
+          }
+        },
+        "owner": {
+          "port": 62241,
+          "pid": 49530,
+          "birth": "Mon Nov 16 16:14:03 2026",
+          "instance": "e8757d655994517350c2cf1d67dd3ca3a56087fd53c05f9a6df81d8488579a7a",
+          "phase": "running",
+          "ppid": 1,
+          "pgid": 49530,
+          "stat": "Ss",
+          "tty": "??",
+          "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+          "leases": {
+            "graphgoblin.lock": "98ae79d6e62f0276be80f4c8e099584236279b3f61cf9874fe24c9ffe6c50fd9",
+            "graphgoblin.db.graphgoblin.lock": "2c298ac3f34b7537caaaca85675e0b554af6bc33d525e471a6ef8b5923ffe30f"
+          }
+        }
+      }
+    },
+    {
+      "id": "recovery:shutdown-state",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 200,
+        "phase": "running"
+      }
+    },
+    {
+      "id": "recovery:same-incarnation",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "recovery:drain-accepted",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "status": 202,
+        "phase": "draining"
+      }
+    },
+    {
+      "id": "recovery:never-forcing",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "forcing": null
+      }
+    },
+    {
+      "id": "recovery:released",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "series": [
+          {
+            "ms": 0,
+            "state": "error",
+            "code": "ECONNRESET"
+          },
+          {
+            "ms": 253,
+            "state": "refused",
+            "code": "ECONNREFUSED"
+          }
+        ]
+      }
+    },
+    {
+      "id": "recovery:store-free",
+      "ok": true,
+      "hard": true,
+      "detail": {
+        "text": "{\"state\":\"free\"}\n"
+      }
+    }
+  ],
+  "notes": {
+    "owner": {
+      "port": 62241,
+      "pid": 49530,
+      "birth": "Mon Nov 16 16:14:03 2026",
+      "instance": "e8757d655994517350c2cf1d67dd3ca3a56087fd53c05f9a6df81d8488579a7a",
+      "phase": "running",
+      "ppid": 1,
+      "pgid": 49530,
+      "stat": "Ss",
+      "tty": "??",
+      "command": "/opt/homebrew/Cellar/node@22/22.22.2_2/bin/node /Users/jake/Library/Caches/graphgoblin-456-product-build-6389524e51bd4c56b39cb8d8bb8ceae8/repo/apps/api/dist/main.js",
+      "leases": {
+        "graphgoblin.lock": "98ae79d6e62f0276be80f4c8e099584236279b3f61cf9874fe24c9ffe6c50fd9",
+        "graphgoblin.db.graphgoblin.lock": "2c298ac3f34b7537caaaca85675e0b554af6bc33d525e471a6ef8b5923ffe30f"
+      }
+    }
+  },
+  "status": "criteria-met",
+  "elapsedMs": 635,
+  "finishedAt": "2026-11-16T22:15:08.800Z"
+}
