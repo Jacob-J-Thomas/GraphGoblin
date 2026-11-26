@@ -1,0 +1,22 @@
+# Exact-row excerpt for research revision 03. Rows are 1-based physical lines of the named
+# source; text is exact apart from the removed line terminator. Format: <row><TAB><text>.
+
+# Source: G:/ggq/delivery-evidence/2026-11-24-followups/ui-479-515-555/run-515-held-control.ps1
+# SHA-256: 28e490da3d23c79f48a2cfcb411141aeef402a0fc8fe778cbfcc043953970089 (matches the previously recorded value)
+# Bytes: 4023
+7	$observer="$root/OBSERVER-515-WEB-COVERAGE"
+8	if(-not (Test-Path -LiteralPath "$observer/EXIT.json")){throw 'The broad observer has not exited'}
+9	if(-not (Test-Path -LiteralPath "$observer/restore.json")){throw 'The broad observer has not restored its worktree'}
+10	$restoration = Get-Content -Raw -LiteralPath "$observer/restore.json" | ConvertFrom-Json
+11	if(!$restoration.clean){throw 'Observer ownership verification failed'}
+12	if(Test-Path -LiteralPath "$out/started.json"){throw 'The first controlled attempt is already retained'}
+13	Set-Location -LiteralPath $repo
+14	if((git rev-parse HEAD) -ne '154e78d54ee485330816d606032280de44d6e891' -or (git status --porcelain)){throw 'The worktree must be clean at the admitted head'}
+15	$source='apps/web/src/editor/EditorPage.rename-activation.test.tsx'
+16	$heldSource='apps/web/src/editor/EditorPage.rename.test.tsx'
+17	$sourceSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $source).Hash.ToLowerInvariant()
+18	$heldSha = (Get-FileHash -Algorithm SHA256 -LiteralPath $heldSource).Hash.ToLowerInvariant()
+19	$binding = Get-Content -Raw -LiteralPath "$observer/source-binding.json" | ConvertFrom-Json
+20	if($sourceSha -ne $binding.sources.PSObject.Properties[$source].Value.original -or
+21	   $heldSha -ne $binding.sources.PSObject.Properties[$heldSource].Value.original){throw 'Original test bytes changed'}
+22	$scratch='apps/web/src/editor/EditorPage.followup-515-held-gesture.test.tsx'
