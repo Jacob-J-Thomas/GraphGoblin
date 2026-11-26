@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { useApiKeyStore, withApiKey } from './api-key.js';
+import { currentCredential, isCurrentCredential, useApiKeyStore, withApiKey } from './api-key.js';
+import { createAppClient } from './context.js';
+import { bindCredential, CredentialChangedError } from './credential-dispatch.js';
 
 afterEach(() => useApiKeyStore.setState({ key: undefined, rejected: false }));
 
@@ -137,5 +139,52 @@ describe('API key rejection belongs to the request credentials', () => {
       new Request('http://graphgoblin.test/api-keys'),
     );
     expect(useApiKeyStore.getState().rejected).toBe(false);
+  });
+});
+
+describe('a credential-bound request is compared where the key is read (#562)', () => {
+  /** A request a bound client would send under `credential`, through `withApiKey`. */
+  function bound(credential: { generation: number; rejected: boolean }) {
+    let request!: Request;
+    const client = bindCredential(
+      createAppClient('http://graphgoblin.test', (sent) => {
+        request = sent;
+        return Promise.resolve(new Response(null, { status: 204 }));
+      }),
+      credential,
+    );
+    return { client, sent: () => request };
+  }
+
+  it('sends under the accepted credential it was bound to', async () => {
+    useApiKeyStore.getState().save('gg_A');
+    const { client, sent } = bound(currentCredential());
+    expect(isCurrentCredential(currentCredential())).toBe(true);
+    await client.POST('/runs/{id}/pause', { params: { path: { id: 'run-1' } } });
+    expect(sent().headers.get('authorization')).toBe('Bearer gg_A');
+  });
+
+  it.each([
+    ['an earlier generation', -1, false],
+    ['the same generation in another accepted state', 0, true],
+  ])('refuses %s before calling fetch', async (_name, offset, rejected) => {
+    useApiKeyStore.getState().forget();
+    const changed = { generation: useApiKeyStore.getState().generation + offset, rejected };
+    expect(isCurrentCredential(changed)).toBe(false);
+    const { client, sent } = bound(changed);
+    await expect(
+      client.POST('/runs/{id}/pause', { params: { path: { id: 'run-1' } } }),
+    ).rejects.toMatchObject({ cause: expect.any(CredentialChangedError) });
+    expect(sent()).toBeUndefined();
+  });
+
+  it('leaves an unbound request ordinary under any credential', async () => {
+    useApiKeyStore.getState().save('gg_B');
+    let sent: Request | undefined;
+    await withApiKey((request) => {
+      sent = request;
+      return Promise.resolve(new Response(null, { status: 204 }));
+    })(new Request('http://graphgoblin.test/runs/run-1/pause', { method: 'POST' }));
+    expect(sent?.headers.get('authorization')).toBe('Bearer gg_B');
   });
 });

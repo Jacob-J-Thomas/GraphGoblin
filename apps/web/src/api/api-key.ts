@@ -1,4 +1,9 @@
 import { create } from 'zustand';
+import {
+  CredentialChangedError,
+  expectedCredential,
+  type Credential,
+} from './credential-dispatch.js';
 
 /** Where this browser keeps the API key it sends when the server runs with GG_REQUIRE_API_KEY. */
 export const API_KEY_STORAGE = 'graphgoblin-api-key';
@@ -69,10 +74,30 @@ export function syncApiKeyAcrossTabs(): () => void {
   return () => window.removeEventListener('storage', onStorage);
 }
 
-/** Wrap a fetch so it sends the stored key and reports a 401 to the key store. */
+/** The accepted credential state now (#562): opaque, never the key. */
+export function currentCredential(): Credential {
+  const { generation, rejected } = useApiKeyStore.getState();
+  return { generation, rejected };
+}
+
+/** Whether `credential` is still the accepted credential state, checked live (#562). */
+export function isCurrentCredential(credential: Credential): boolean {
+  const { generation, rejected } = useApiKeyStore.getState();
+  return credential.generation === generation && credential.rejected === rejected;
+}
+
+/**
+ * Wrap a fetch so it sends the stored key and reports a 401 to the key store. A request a
+ * credential-bound client sends (`credential-dispatch.ts`) is refused here, in the same step that
+ * reads the key, unless its credential is still the accepted one: a write chosen under another
+ * credential is never sent under this one (#562).
+ */
 export function withApiKey(fetch: (request: Request) => Promise<Response>) {
   return async (request: Request): Promise<Response> => {
-    const { key, generation } = useApiKeyStore.getState();
+    const { key, generation, rejected } = useApiKeyStore.getState();
+    const bound = expectedCredential(request);
+    if (bound && (bound.generation !== generation || bound.rejected !== rejected))
+      throw new CredentialChangedError();
     if (key && !request.headers.has('authorization')) {
       request.headers.set('authorization', `Bearer ${key}`);
     }

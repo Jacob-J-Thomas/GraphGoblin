@@ -792,6 +792,30 @@ describe('JsonSchemaForm', () => {
   });
 });
 
+describe('JsonSchemaForm submit (#563)', () => {
+  it.each([
+    ['with an input schema', { type: 'object', properties: { reason: { type: 'string' } } }],
+    ['without an input schema', undefined],
+  ] as const)(
+    'keeps one named submit button last in the form, whose label may wrap rather than widen the form, %s',
+    (_name, schema) => {
+      render(<JsonSchemaForm schema={schema} submitLabel="Submit input" onSubmit={() => {}} />);
+      const form = screen.getByRole('form', { name: 'Submit input' });
+      const submit = within(form).getByRole('button', { name: 'Submit input' });
+      expect(submit).toHaveAttribute('type', 'submit');
+      // The last control in the form's keyboard order, as before.
+      const controls = [...form.querySelectorAll<HTMLElement>('input, textarea, select, button')];
+      expect(controls.at(-1)).toBe(submit);
+      // Its label wraps inside the button, which grows from its usual height, instead of the
+      // one-line label setting the form's (and its card's) minimum width.
+      expect(submit.className).toContain('[&>span]:whitespace-normal');
+      expect(submit.className).toContain('h-auto');
+      expect(submit.className).toContain('min-h-9');
+      expect(submit.className).toContain('pointer-coarse:min-h-11');
+    },
+  );
+});
+
 describe('renderPreview', () => {
   it('renders templates and expressions against the sample thread, and reports errors', async () => {
     expect(await renderPreview('template', 'Topic {{ vars.topic }}')).toEqual({

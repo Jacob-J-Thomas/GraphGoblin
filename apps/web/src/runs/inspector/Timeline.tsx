@@ -1,6 +1,7 @@
 import type { LoopDefinition } from '@graphgoblin/contracts';
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { Alert, Button, Card, Input } from '../../components/ui/index.js';
+import { WRAPPING_LABEL } from './RunControls.js';
 import { cn } from '../../lib/utils.js';
 import { describeEvent, describeParts } from '../projections.js';
 import type { TimelineEvent } from '../event-store.js';
@@ -34,6 +35,7 @@ function PagingButton({
     <Button
       size="sm"
       type={type}
+      className={WRAPPING_LABEL.sm}
       aria-disabled={off ? true : undefined}
       onClick={(event) => {
         if (off) event.preventDefault();

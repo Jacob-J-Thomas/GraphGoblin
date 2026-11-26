@@ -1,0 +1,258 @@
+# B8 author report: #562 / #563 inspector continuation
+
+Author: Claude Opus 5.5 (xhigh), Claude-only window, 2026-11-25/26. Evidence folder:
+`G:/ggq/delivery-evidence/2026-11-24-followups/inspector-561-562-563-556/claude-window-author-03/`.
+
+**Outcome: READY for independent review/QA and opposite-family review.** Nothing merged or pushed.
+
+## Branch and commit
+
+- Worktree `G:/ggq/gg-fu-inspector-562-563-20261124/GraphGoblin`, branch
+  `codex/gg-fu-inspector-562-563-20261124`, base `14ea69842` (includes merged #575/#577).
+- One commit: `e7e665237` "fix(web): bind inspector writes to the accepted API key; reflow the
+  inspector at 320px/200% text". 22 files, +3405/−150, all inside the contract's 30 write paths.
+  Repository identity, no assistant attribution. Working tree clean afterwards.
+- The first author's three fixture files were kept and built on. Their contract hashes were
+  verified unchanged before the baseline ran: credentials spec `ed1894a0…`, reflow spec
+  `e6545b45…`, server `d8496710…`.
+
+## Contract mapping (FUP-076 / Claude design)
+
+### #562: credential-generation dispatch boundary
+
+| Requirement | Where |
+| --- | --- |
+| Opaque accepted credential `{generation, rejected}`, never the key | `apps/web/src/api/credential-dispatch.ts` (`Credential`), `api-key.ts` (`currentCredential`, `isCurrentCredential`) |
+| Comparison atomic with outgoing key selection, after all queue and middleware awaits | `withApiKey` (`api-key.ts`) reads the bound request's credential (`expectedCredential`, a `WeakMap<Request, Credential>` filled by `bindCredential`) in the same synchronous step that reads the key, and throws `CredentialChangedError` without calling `fetch` |
+| A refused request is not mistaken for a transport failure | `sendUnder` unwraps openapi-fetch's `GraphGoblinApiError.network(cause)` back to `CredentialChangedError` |
+| Render-time gate identity plus a live open check | `RunInspectorPage.tsx`: the gate memo depends on `generation` and `rejected` from the store; `open()` also calls `isCurrentCredential`; `sessionGate` inherits `credential` |
+| All inspector writes | `RunControls` (pause, resume, cancel, replay), `ScriptRecovery` (resume/replay with consent), `SessionRecoveryControls` (recover-session), `WaitPanel` (input, signal), `HistoryEligibility` (preview via `sendUnder`, confirm via `sendWrite`). Grep confirms no other inspector write call sites. |
+| Expired review: separate copy, polite status, focus to trigger or status, never steal API-key focus, reset on reopen, drafts kept | `useClosedByKey` and `expiredReviewFocus` (`RunControls.tsx`); always-present `role=status` line under the Resume reason (`empty:absolute`, so it takes no space while empty); history uses its existing `aria-live` report span; the API-key panel focuses only after every dialog has closed (unchanged `ApiKeyPanel` behaviour) |
+| Queued, unsent: separate copy in the existing alert slot, no retry or reopen | `assertOpen` throws `CredentialChangedError` for a stale gate; each control maps it to `notSentByKey(<control name>)` |
+| Already sent: one request, pending until settled, never cancelled or resent; old-generation IDs, error and navigation suppressed; cache refresh kept | `crossed(gate)` checked at settlement in each mutation; `requestedBeforeKey(<name>)` shown as a status; ordinary outcomes are shown only while `sameCredential(command.gate, availability)` |
+| Same-key save keeps generation and consent; rejection→A, forget→A and A→B→A expire | Store semantics unchanged (`accept`); covered by tests |
+| #575 boundaries and the event-qualified header preserved | No change to provenance, reread or outage logic; the 575 groups and the Edge #575 spec pass |
+
+Exact copy used (from the root adjudication; trigger and action names are the real control labels):
+
+- `Review closed: this browser's API key changed. Nothing was sent. Open Replay... again to choose with the current key.` (also `Recover script`, `Review delete-ready history`, `Withdraw delete-ready mark`)
+- `Not sent: this browser's API key changed before {action} was sent. Choose it again to send with the current key.` (Pause, Resume, Cancel run, Replay, Start fresh session, Submit input, Send signal, Confirm delete-ready selection, Confirm withdrawal)
+- `{Action} was requested before this browser's API key changed. Its outcome isn't shown under the current key; check Runs before trying again.`
+
+### #563: reflow at 320 px with 200% text
+
+| Change | Where | Evidence that required it |
+| --- | --- | --- |
+| Header is `min-h-14 flex-wrap` (no fixed `h-14`); below 640 px `py-1.5`, Menu `min-h-10`/`pointer-coarse:min-h-11`, panel `top-full`, links `min-h-12`; from 640 px the nav links wrap (`sm:flex-wrap`) | `AppShell.tsx`, `MainNav.tsx` | Baseline: Menu out of the viewport at 320/200; nav links reach 1068 px at 640 and 768 px with 200% text on all 7 routes |
+| Inspector page `grid-cols-[minmax(0,1fr)]` | `RunInspectorPage.tsx` | Baseline document 469 px wide at 320/200 |
+| h1 `min-w-0`, run ID `wrap-anywhere`, replay origin `min-w-0 wrap-anywhere` | `RunInspectorPage.tsx` | ID right edge 468.8 px at 320/200 |
+| Run-header controls column `fit-content(50%)` instead of `auto` | `RunInspectorPage.tsx` | Baseline 1440/200: column 1 squeezed to 128 px; the controls subtree intercepted the double click on the run ID (60 s timeout, trace shows "intercepts pointer events"); status badge cut short; same squeeze at 640/768/200 |
+| Resume reason, Replay review "Source run", existing-replay link `wrap-anywhere` | `RunControls.tsx` | Baseline dialog overflow at 320/200 |
+| Wrapping button labels (`WRAPPING_LABEL.sm/md`: `h-auto min-h-<size> py-1.5 [&>span]:whitespace-normal`, coarse `min-h-11`) | `RunControls.tsx` (exported), `ScriptRecovery.tsx`, `HistoryEligibility.tsx`, `Timeline.tsx` | History buttons and "Create replay run" ellipsized at 320/200 |
+| Inherited `wrap-anywhere` on the selected-event column and around `ExecutionContext` | `RunInspectorPage.tsx` | Dev iteration 1: "Exact recorded event #123456789012345", "Thread at event 123456789012345", "Pinned definition JSON", "Node progress (" overflowed. These components are outside the write paths; `overflow-wrap` is inherited, so the fix stays in scope. |
+
+Timeline input: `cn` is plain `clsx` (no merge), and the built CSS emits `.w-full` (from the shared
+`FIELD` style) at byte 30173, after `.w-24` at byte 29800, so the input renders at the label's full
+width. Left unchanged and documented in docs/09. Longest contract type `delivery.attempt_finished`
+stays whole in its row (spec passes).
+
+## Tests
+
+New or changed unit tests:
+
+- `src/api/credential-dispatch.test.ts` (new, 9): bound send with app headers and key; refusal at
+  the key read after a held `onRequest` middleware await (fetch never called); A→B→A, forget,
+  rejection and rejection→A refused; same-key save sends; a credential captured while rejected;
+  unbound, transport, HTTP and caller errors unchanged.
+- `src/api/api-key-fetch.test.ts` (+4): bound request sent under its credential; earlier
+  generation and different accepted state refused before fetch; unbound request ordinary.
+- `src/runs/RunInspectorPage.credentials.test.tsx` (new, 21, mounted app on FakeApi): other-tab
+  key closes the Replay review, copy and status position, focus to the trigger, reread as B,
+  0 writes, reopen is new, fresh choice sent once as B; same-key save keeps review, node and
+  consent; A→B→A, forget→A and rejection→A expire the review and reset consent; a click on the old
+  review inside the store update, before React re-renders (asserted still shown), sends 0; held
+  `onMutate` Replay across replacement and same-key new generation sends 0, shows the Not-sent
+  alert, focus to the status line, no reopen; Pause and Cancel run queued across a change send 0,
+  then a fresh choice sends once as B; already-sent Replay accepted or refused: one request as A,
+  pending until settled, requested copy, no navigation, no fork ID, detail or named run on the
+  page, reread as B; an earlier key's refusal is hidden after a change; double click under B
+  sends 1; a rejection leaves focus with the API key input; a review stays open through a pending
+  run read with "Status from event #3; the run record is updating." and a same-key save; script
+  review closed and queued Resume not sent; script Replay settled under another key; fresh-session
+  queued and already-sent; typed input draft kept when not sent, a sent answer refused under
+  another key reported as requested; delete-ready review closed, late preview discarded, preview
+  and confirm sent per key, confirmation settled under another key reported as requested.
+- `src/runs/inspector/WaitPanel.test.tsx` (+2): signal not sent under another key; an answer
+  settled under another key reported as requested even once the run has moved on.
+- `src/runs/HistoryEligibility.test.tsx` (+3): withdrawal review closed, trigger named and focused;
+  a saved report hidden after a key change and a withdrawal settled under another key reported as
+  requested; a confirmation refused at dispatch under a gate that stayed open.
+- `src/runs/RunInspectorPage.offline.test.tsx` (5 cases updated): these #416 cases change the
+  accepted key while a write is queued or sent. Per FUP-076 they now expect the key Not-sent copy
+  or the requested copy instead of the earlier outcome. Single send, pending hold, withholding and
+  the fresh choice sending once are all still asserted, and the removed-query variant keeps
+  `NOT_SENT`.
+
+Edge fixtures: `e2e/server.ts` (the first author's two-key credential actors and audit, formatted
+only); `e2e/inspector-credentials.spec.ts` (formatted only); `e2e/inspector-reflow.spec.ts` with
+three intent-label corrections (see Deviations) plus formatting.
+
+## Commands and results (Node v22.23.4; temp on G:; Ollama disabled)
+
+| Check | Result | Log |
+| --- | --- | --- |
+| Edge baseline, both specs, unchanged `dist` (28/28 asset hashes = contract `baselineWebAssets`) | exit 1: 8 passed, 22 failed (expected) | `browser-baseline.log`, `baseline-dist.sha256`, `browser-baseline/` |
+| Focused unit groups (credentials / controls / 575 / layout) | 57 / 57 / 102 / 33 passed | `focused/*.log` |
+| Web build `pnpm build --filter=@graphgoblin/web --force` | 9/9, 0 cached (twice) | `build-01.log`, `build-02.log` |
+| Reflow dev iterations (scratch output vs copied baseline geometry) | d1: 21/26 (320/200 out-of-scope disclosure labels); d2: 26/26 | `dev-d1-reflow.log`, `dev-d2-reflow.log` |
+| **Edge candidate, both specs** (compares with `browser-baseline`) | **30/30 passed**, exit 0 | `browser-candidate.log`, `browser-candidate/`, `candidate-dist.sha256` |
+| **Edge #575 + regression**: inspector-availability, -truthfulness, -large-values, responsive, api-key-current, script-recovery, deletion-eligibility, replay-seed, missing-session, recovery-eligibility, live-follow | **53/53 passed**, exit 0 | `browser-575-regression.log` |
+| **Web coverage** `pnpm --filter @graphgoblin/web test:coverage` | 238 files / **3242 tests passed**; lines 98.71%, branches 94.57%, statements 97.77%, functions 97.35% | `web-coverage.log`, `web-coverage-summary.json` |
+| Web typecheck (final) | exit 0 | `typecheck-final.log` |
+| Web lint (final) | 0 errors, 5 warnings (all pre-existing ref names) | `lint-final.log` |
+| Prettier `--check` on every changed file | clean | `prettier-final.log` |
+
+Every browser run: Edge (`msedge` channel), workers 1, retries 0, ProgramFiles, ProgramFiles(x86)
+and ProgramW6432 restored in the process. Each heavy run took `G:/ggq/tmp/heavy-suite.lock` and
+released it afterwards: 09:37–09:43Z for the baseline, 09:48–10:23Z for the builds, iterations,
+candidate, regression and coverage.
+
+Per-file coverage of changed sources: credential-dispatch 100/100, api-key 97.05/100,
+RunControls 98.85/96.12, SessionRecoveryControls 100/94.52, WaitPanel 100/95.16, HistoryEligibility
+100/93.54, RunInspectorPage 98.73/95.21, AppShell and MainNav 100/100 (lines/branches).
+ScriptRecovery branches are 87.37% and Timeline 87.2/83.51. In ScriptRecovery, 12 of the 13
+uncovered branches are on lines I did not change. The 13th is the existing "reset while pending"
+guard, which the trigger already prevents. Timeline gained only a className. The policy gate is
+per package and passes.
+
+## Browser before/after
+
+Baseline (unchanged build, 22 red), classified:
+
+- #562 (3 red): after the other tab stores key B, the old Replay review stays open
+  (`toBeHidden` fails) in all three flows. Double click under B passed (1 Replay as B).
+- #563 (19 red): 320/200 ×3 (document 469 px, Menu, run ID, history and dialog text out of view or
+  box); 1440/200 ×3 (status badge cut short; run controls intercept the double click on the run
+  ID, so each test timed out at 60 s); 640/200 and 768/200 (nav to 1068 px, run-header squeeze);
+  replay-run, child-run and longest-type cells (same page widening); shared header on all 7 routes
+  (Menu at 320/200, nav links at 640 and 768/200). Passing at baseline: 320/100 ×3, 1440/100 ×3,
+  639/200 and native ID copy.
+
+Candidate (both specs): 30/30. All 69 compared cells keep the same keyboard order and names.
+Every cell intended to be unchanged has 0 box differences beyond 0.5 px: 1440/100 and 320/100
+inspector cells, the 1440/100 replay and child cells, and every route at 1440/100, 1440/200 and
+320/100. Intended reflow cells record their differences in each test's `baseline-comparison.json`.
+The 639/200 cells were already contained at baseline and show 0 differences. Screenshots for
+every cell (full page, header, run header, history, menu open, dialog) and per-route header shots
+are under `browser-candidate/` and `browser-baseline/`.
+
+Evidence tiers: the Edge credentials spec uses a real authenticated instance requiring API keys,
+two real keys of one owner, a real second tab writing localStorage (actual `storage` event), the
+server's per-request key-label audit and the API's own `run.cancel_requested` actor. The mounted
+pre-commit and held-dispatch controls are in the unit tier. "200% text" is computed root
+font-size doubling, not native browser zoom (the spec says so); native zoom was not measured.
+
+## Deviations, decisions and caveats
+
+1. **Header classes from 640 px changed** (the design said they stay unchanged). The baseline shows
+   the nav overflowing at 640 and 768 px with 200% text on every route, so the header wraps at all
+   widths when its content cannot fit. A row that fits is pixel-identical, per the unchanged
+   cells.
+2. **Fixture intent corrections** in `inspector-reflow.spec.ts`. MATRIX 1440/200 and
+   ROUTE_LAYOUTS 640/200 and 768/200 change from `unchanged` to `reflow`, and the inspector route's
+   1440/200 cell is recorded rather than held, because its history buttons sit below the run
+   header that now reflows. On the build before the change these exact cells failed the fixture's
+   own containment checks, so holding them unchanged would contradict its assertions. No assertion
+   or oracle was removed; the same shared header stays held unchanged at 1440/200 on the other six
+   routes. Reviewers should confirm this.
+3. Changes beyond the design's list, each evidenced above: `fit-content(50%)` controls column; label
+   wrapping on run controls, script recovery, review footers and Timeline paging (not only history);
+   inherited `wrap-anywhere` on the selected-event column and around ExecutionContext (instead of
+   only the event type). Header padding below 640 px is `py-1.5` rather than the design's `py-2`,
+   so a 44 px coarse-pointer Menu keeps the 56 px row.
+4. The credential check compares both `generation` and `rejected` for equality, rather than the
+   design's literal `!rejected && generation === captured`. Every acceptance change is a new
+   generation, so this is equivalent for gates issued while accepted. A gate issued while the key
+   is already rejected keeps ordinary behaviour: its write gets the ordinary 401 instead of being
+   silently ignored.
+5. A write whose own 401 rejects the key settles under the new (rejected) generation, so it reports
+   "requested before this browser's API key changed" rather than its 401 text.
+6. If an earlier attempt from a review was refused under key A, and the key then changes, that
+   refusal is hidden and the review closes with "Nothing was sent", which refers to the review's
+   current choice.
+7. `bindCredential` rebuilds a client from the app client's `config` (base URL, headers, fetch).
+   Middleware added to the app client after creation is not carried over; `createAppClient` adds
+   none.
+8. A ScriptRecovery, fresh-session or WaitPanel outcome settled under another key is still reported
+   after the control itself disappears (for example, the run moved on).
+9. `pnpm check:qa` was not run: no `docs/qa` packet was produced, because the brief puts evidence in
+   the delivery-evidence folder.
+
+## Open, for later gates
+
+- Opposite-family (GPT) code review and the fresh Astra MAX final audit (deferred to Saturday),
+  independent Claude QA, hosted CI. Nothing is merged or pushed.
+- Reviewers: confirm the fixture intent corrections (item 2), the ≥640 px header change (item 1)
+  and the 401-self-rejection reporting (item 5).
+- Native browser zoom and a real phone (coarse pointer) were not exercised; the coarse-pointer
+  sizes are by construction only.
+
+## Follow-up 2026-11-26: QA Q1 fix and merge of origin/main
+
+The orchestrator admitted `apps/web/src/forms/JsonSchemaForm.tsx` and its test file to this
+slice's write paths to fix QA Q1. Q1: at 320 px with 200% text, a run waiting for input was 326 px
+wide.
+
+- **Root cause.** This is the cause QA diagnosed. The one-line **Submit input** label
+  (`whitespace-nowrap`) set the form's min-content width to 229 px. The card's implicit `auto`
+  grid column then grew to that width inside 174 px.
+- **Fix, commit `ec5c2bb33`.**
+  - `JsonSchemaForm`'s submit button wraps its label (`WRAPPING_SUBMIT`, the same pattern as
+    `WRAPPING_LABEL.md`, defined locally because `forms/` must not import from `runs/`). Its name,
+    type and last place in the form are kept, and a label that fits is the same one-line 36 px
+    button.
+  - The WaitPanel card body is `grid-cols-[minmax(0,1fr)]` with inherited `wrap-anywhere`.
+- **Tests.**
+  - `JsonSchemaForm.test.tsx` +2: the button's name, its type, its last place in the form's
+    controls and its wrapping, with and without a schema.
+  - `WaitPanel.test.tsx` +1: a shrinkable, wrapping column holds the node line, prompt and form.
+  - `inspector-reflow.spec.ts` gains a waiting-for-input run with and without an input schema.
+    Each runs the four MATRIX layouts, checks every box inside the card and is compared with the
+    pre-change build.
+  - It also gains a New run form check: "Start run" stays one line at 2.25 rem at 100%, and the
+    form stays contained at 320 and 360 px with 200% text.
+- **Baseline for the new tests.** The pre-change production sources from 14ea69842 were restored
+  temporarily and rebuilt. The rebuilt `dist` equals `baseline-dist.sha256` in every file except
+  `sw.js.map`; every served JS, CSS and `sw.js` file is identical (`q1-baseline-dist.sha256`).
+  - Only the two waiting tests were run on that build, into `browser-q1-baseline/`. Both failed at
+    320/200 (document 469 px), as expected.
+  - The original baseline geometry was copied in for every other test (`PROVENANCE.txt`).
+  - Current sources were then restored, and `git status` showed only the spec change.
+- **Candidate.**
+  - Run 1 (`browser-q1-run1-timeline-race*`) had 1 failure: the no-schema waiting test measured
+    320/100 before the Timeline history had arrived (0 rows). That was a race in my new test. The
+    test now waits for the Timeline rows and the selected event; no assertion changed.
+  - Run 2 (`browser-q1-candidate`) passed **33/33**. Both waiting variants are 320 px wide at
+    320/200 with nothing outside the card. They have 0 differences at 320/100 and 1440/100, and the
+    keyboard order is unchanged in every cell.
+- **Regression.** `browser-q1-575-regression` passed 53/53 across the same 11 specs, including
+  `responsive.spec.ts`, which covers New run's Start run at 360/768 px and 200% zoom.
+- **Web coverage.** 238 files, 3245 tests passed. Lines 98.71%, branches 94.56%, statements
+  97.77%, functions 97.35%. `JsonSchemaForm.tsx` is at 100/95.77 and `WaitPanel.tsx` at 100/95.16
+  (lines/branches).
+- **Static checks.** Typecheck and Prettier are clean; lint has 0 errors and the same 5
+  pre-existing warnings.
+- **Heavy-suite lock.** Held 13:27–14:04Z.
+- **Merge, commit `751bd0ba2`.** `git fetch origin`, then `git merge --no-ff origin/main` at
+  `4e1037c9e`.
+  - `CHANGELOG.md` conflicted and was resolved as a union: main's entries first, then #562/#563.
+    0 of main's lines were removed.
+  - `docs/09` merged automatically. The only lines it removes against main are my own #416
+    rewordings.
+  - No lockfile or package change came in; on the web side main changed only `editor/store.ts`.
+- **After the merge** (`post-merge/`).
+  - Web typecheck clean; lint 0 errors.
+  - `pnpm format:check` (the whole repository) clean.
+  - Focused groups: credentials 57, controls plus JsonSchemaForm 80, 575 102, and layout plus the
+    merged editor store, RunInspectorPage and New run tests 79. All passed.
+- **Not done, as instructed:** no QA packet, no push.

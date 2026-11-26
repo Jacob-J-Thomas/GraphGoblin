@@ -156,6 +156,34 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   **Upgrade:** rebuild the API. No schema, stored format or reset change; no stored content is
   converted.
 
+- The run inspector and the shared header reflow at 320 px with 200% text (#563). The header grows
+  and wraps instead of a fixed 56 px row (Menu on its own row below 640 px, wrapping links from
+  640 px, the menu panel under its real bottom edge); the inspector's page is one shrinkable
+  column; the complete run ID, replay origin, Resume reason and the selected event's titles and
+  values wrap anywhere, with the ID still selected and copied exactly; the run controls take at
+  most half the run header from 640 px, so enlarged text no longer covers the run ID at 1440 px;
+  and inspector, review, history and Timeline paging buttons wrap their labels instead of
+  cutting them short. A run waiting for input keeps its prompt and form inside the **Input
+  requested** card (with or without an input schema): `JsonSchemaForm`'s submit button, also
+  **Start run** on New run, wraps its label instead of widening the form. Layouts that fit are
+  unchanged within 0.5 px, and DOM order, names, the
+  keyboard order and the Timeline's single Tab stop are kept. No text is hidden, shortened or
+  made smaller.
+
+- The run inspector sends a write only under the accepted API key it was chosen under (#562).
+  Pause, resume, cancel, replay, script recovery, **Start fresh session**, input and signal answers
+  and the delete-ready preview and confirmation are bound to the key store's opaque credential
+  generation, and the app's API-key fetch compares it in the step that reads the key to send,
+  after every queued and middleware await, so a change in another tab, a rejection, forgetting the
+  key or accepting the same key again after a rejection sends nothing chosen before it. An open
+  review closes and says so ("Review closed: this browser's API key changed. Nothing was sent.
+  …"), returning focus to its trigger or its status line, never taking it from the API key panel;
+  a queued write reports "Not sent: this browser's API key changed before … was sent."; a write
+  already sent stays the one request and, if it settles under another key, shows neither its IDs,
+  its error nor its new run and does not navigate, only that it was requested. Saving the key that
+  is already accepted keeps reviews and consent. Server authorization, the actor model, the
+  event-qualified header and #575's outage boundaries are unchanged.
+
 - `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
   delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
   that ref to the working tree, including staged, unstaged and untracked files, and checks their

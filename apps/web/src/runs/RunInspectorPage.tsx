@@ -44,6 +44,7 @@ import type { HeaderStatus } from './run-header-status.js';
 import { useRunHistory } from './useRunHistory.js';
 import { useLiveRefresh } from './useLiveRefresh.js';
 import { useApi } from '../api/context.js';
+import { isCurrentCredential, useApiKeyStore } from '../api/api-key.js';
 import { describeEvent, exitReturnSummary, lastGateSummary, nodeName } from './projections.js';
 
 const META_LINK = 'touch-target font-medium text-link underline-offset-[3px] hover:underline';
@@ -295,18 +296,30 @@ export function RunInspectorPage() {
     observed?.lifecycle?.type === 'run.failed' ? observed.lifecycle : undefined,
   ]);
 
-  // The view's write gate: replaced when the visit, the outage boundary or availability changes,
-  // so a review or queued command captured earlier cannot act after a reconnect or A→B→A.
+  // The view's write gate: replaced when the visit, the outage boundary, availability or the
+  // accepted credential changes, so a review or queued command captured earlier cannot act after a
+  // reconnect, A→B→A or another API key (#562). The credential is checked live as well: a store
+  // change reaches `open` before React commits the replacement gate, and every write compares it
+  // again where the key to send is read.
   const latestGate = useRef<WriteGate | undefined>(undefined);
   const shownVisit = useRef<object | undefined>(undefined);
   const visit = useMemo(() => ({ runId }), [runId]);
+  const generation = useApiKeyStore((state) => state.generation);
+  const rejected = useApiKeyStore((state) => state.rejected);
   const gate = useMemo<WriteGate>(() => {
     const key = keys.run(runId);
+    const credential = { generation, rejected };
     const self: WriteGate = {
       blocked,
+      credential,
       shown: () => shownVisit.current === visit,
       open: () => {
-        if (blocked !== undefined || latestGate.current !== self || !onlineManager.isOnline())
+        if (
+          blocked !== undefined ||
+          latestGate.current !== self ||
+          !isCurrentCredential(credential) ||
+          !onlineManager.isOnline()
+        )
           return false;
         const read = getInspectorRead(header.registry, key);
         // A newer browser or run-read loss starts another outage: this gate is spent.
@@ -317,7 +330,7 @@ export function RunInspectorPage() {
       },
     };
     return self;
-  }, [blocked, boundary, header.registry, queryClient, runId, visit]);
+  }, [blocked, boundary, generation, header.registry, queryClient, rejected, runId, visit]);
   // Start fresh session also needs the observation that recorded the failure read after the
   // outage; its action matches its run, node, visit and failure sequence. The gate keeps
   // the observation boundary it was issued after: a later loss of the observation read alone
@@ -334,6 +347,7 @@ export function RunInspectorPage() {
       gate.blocked ?? (observationFresh ? undefined : 'Reading the run evidence again.');
     const self: WriteGate = {
       blocked: evidenceBlocked,
+      credential: gate.credential,
       shown: gate.shown,
       open: () => {
         if (evidenceBlocked !== undefined || latestSessionGate.current !== self || !gate.open())
@@ -478,19 +492,24 @@ export function RunInspectorPage() {
   const returnSummary = outage ? undefined : exitReturns;
 
   return (
-    <Page wide>
+    // One column that shrinks with the viewport: one long unbreakable value cannot widen every
+    // section of the page (#563).
+    <Page wide className="grid-cols-[minmax(0,1fr)]">
       {/* One keyed position for the run section, current or last observed, so a draft or an
           open control survives the switch; another run starts a new section. During an outage
           a cold or unproved row is never presented as the run (#416). */}
       {presented ? (
         <Fragment key={run.id}>
           {/* DOM order is title, meta links, then controls (the keyboard order before the
-              cutover); the grid only places the controls at the top right. */}
-          <header className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1">
+              cutover); the grid only places the controls at the top right. The controls take at
+              most half its width, so enlarged text cannot push them over the run ID (#563). */}
+          <header className="grid grid-cols-[minmax(0,1fr)_fit-content(50%)] items-center gap-x-4 gap-y-3 max-sm:grid-cols-1">
             <div className="col-start-1 row-start-1 flex flex-wrap items-center gap-x-4 gap-y-3">
-              <h1 className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading">
+              {/* The complete run ID wraps anywhere at narrow widths and enlarged text; nothing is
+                  inserted, so a double click still selects exactly the ID (#563). */}
+              <h1 className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-0.5 text-xl font-semibold tracking-[-0.01em] text-heading">
                 Run{' '}
-                <span className="font-mono text-md font-medium tracking-normal text-muted">
+                <span className="font-mono text-md font-medium tracking-normal wrap-anywhere text-muted">
                   {run.id}
                 </span>
               </h1>
@@ -508,7 +527,7 @@ export function RunInspectorPage() {
                 loop
               </Link>
               {run.recovery.replayOf ? (
-                <span>
+                <span className="min-w-0 wrap-anywhere">
                   Replay run {run.id} from{' '}
                   <Link to={`/runs/${run.recovery.replayOf.runId}`} className={META_LINK}>
                     {run.recovery.replayOf.runId}
@@ -594,13 +613,16 @@ export function RunInspectorPage() {
           {/* While the run is last observed, execution context names nodes by their recorded IDs,
               says the pinned definition is unavailable rather than loading, and takes a
               cancellation's actor and sequence numbers only from a qualified observation. */}
-          <ExecutionContext
-            run={run}
-            cancellation={cancellation}
-            cancellationUnavailable={observation.isError || (outage && observed === undefined)}
-            definition={sectionDefinition}
-            definitionLoading={!outage && versionQuery.isPending}
-          />
+          {/* Its labels and values wrap anywhere rather than leave a narrow column (#563). */}
+          <div className="min-w-0 wrap-anywhere">
+            <ExecutionContext
+              run={run}
+              cancellation={cancellation}
+              cancellationUnavailable={observation.isError || (outage && observed === undefined)}
+              definition={sectionDefinition}
+              definitionLoading={!outage && versionQuery.isPending}
+            />
+          </div>
           <WaitPanel run={run} definition={sectionDefinition} availability={gate} />
           <DeliveryPanel run={run} />
         </Fragment>
@@ -642,7 +664,9 @@ export function RunInspectorPage() {
           selected={seq}
           onSelect={history.select}
         />
-        <div className="grid min-w-0 gap-section">
+        {/* The selected event's titles, labels and values wrap anywhere rather than leave a narrow
+            column: a sequence number can be 16 digits long (#563). */}
+        <div className="grid min-w-0 gap-section wrap-anywhere">
           {history.payload ? (
             <Card title={`Event ${history.selectedSeq} payload`}>
               <BoundedValue

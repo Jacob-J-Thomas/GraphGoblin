@@ -39,7 +39,7 @@ export function MainNav({ items }: { items: readonly NavItem[] }) {
         onClick={() => setOpen((o) => !o)}
         onKeyDown={closeOnEscape}
         className={cn(
-          'ml-auto inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:h-11',
+          'ml-auto inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border border-inverse px-3 pointer-coarse:min-h-11',
           'font-medium text-inverse focus-visible:outline-2 focus-visible:outline-offset-2',
           'focus-visible:outline-focus sm:hidden',
         )}
@@ -52,8 +52,8 @@ export function MainNav({ items }: { items: readonly NavItem[] }) {
         aria-label="Main"
         onKeyDown={closeOnEscape}
         className={cn(
-          'flex gap-1 sm:static sm:flex sm:flex-row sm:items-stretch sm:self-stretch',
-          'max-sm:absolute max-sm:inset-x-0 max-sm:top-14 max-sm:z-10 max-sm:flex-col',
+          'flex gap-1 sm:static sm:flex sm:flex-row sm:flex-wrap sm:items-stretch sm:self-stretch',
+          'max-sm:absolute max-sm:inset-x-0 max-sm:top-full max-sm:z-10 max-sm:flex-col',
           'max-sm:border-t max-sm:border-inverse max-sm:bg-surface-inverse max-sm:px-3',
           'max-sm:pt-2 max-sm:pb-4 max-sm:shadow-3',
           open ? 'max-sm:flex' : 'max-sm:hidden',
@@ -69,7 +69,7 @@ export function MainNav({ items }: { items: readonly NavItem[] }) {
               'no-underline transition-colors hover:text-inverse',
               'aria-[current=page]:font-semibold aria-[current=page]:text-inverse',
               'focus-visible:rounded-md focus-visible:-outline-offset-[6px]',
-              'max-sm:h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg',
+              'max-sm:min-h-12 max-sm:rounded-md max-sm:pr-4 max-sm:pl-5 max-sm:text-lg',
               'max-sm:aria-[current=page]:bg-surface-inverse-raised',
             )}
           >
