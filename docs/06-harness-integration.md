@@ -554,8 +554,14 @@ offline checks without a gateway, and requires both discovery queries plus exact
 readback because SQLite's affected-row count alone does not prove a quoted member changed. Before
 restart, correct applicable editable rows, resolve invalid-key discovery results and choose a
 deliberate disposition for any actually incompatible snapshots. An omitted harness alone in an
-immutable snapshot is accepted by definition parsing. An explicit version read of that manually
-authored snapshot can still return `500 RESPONSE_INVALID`. Preserve its history.
+immutable snapshot is accepted by definition parsing. Its explicit version read,
+`GET /loops/{id}/versions/{versionId}`, serves an otherwise valid snapshot with that omission
+using the current schema's default, effective `codex`, without changing the stored row (#525).
+That read keeps its owner, matching-version and retired Event checks and still answers the
+sanitized `500 RESPONSE_INVALID` for a record the current schema refuses. The rule is this
+endpoint's: loop detail, version history and export serve their records as before
+([explicit version reads](07-api-and-streaming.md#pinned-definitions-adr-0041)).
+Preserve the snapshot and its history.
 If recovery uses a fresh store, adopt that store's configuration and credentials and use the loop
 ID returned by import. An incompatible snapshot still blocks the original database. After the
 operator starts the chosen store for normal service, authenticated read-only GET verifies

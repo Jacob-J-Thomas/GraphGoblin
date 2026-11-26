@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+
+const worktree = 'G:/ggq/gg-fu-domain-analysis-20261124/GraphGoblin';
+const importSource = (path: string) => import(pathToFileURL(join(worktree, path)).href);
+const {createTestApp} = await importSource('apps/api/src/testing/test-app.ts');
+const {minimalLoop} = await importSource('packages/contracts/src/testing/index.ts');
+const {LoopDefinitionSchema} = await importSource('packages/contracts/src/index.ts');
+const {validateLoop} = await importSource('packages/domain/src/index.ts');
+
+const t = await createTestApp({
+  tempPrefix: 'gg-476-477-independent-inject-',
+  env: {GG_OLLAMA_ENABLED: 'false', GG_JEV_API_KEY: ''},
+});
+const evidence = [];
+try {
+  let adapterConfig = t.container.config;
+  if (adapterConfig) assert.equal(adapterConfig.ollamaEnabled, false);
+  for (const scenario of ['template', 'expression']) {
+    const valid = {...minimalLoop(), name: 'Independent QA ' + scenario};
+    const bad = structuredClone(valid);
+    let wantedCode: string;
+    if (scenario === 'template') {
+      bad.settings = {workingDirectory: {kind: 'template', template: '{% endif %}'}};
+      wantedCode = 'TEMPLATE_INVALID';
+    } else {
+      const exit = bad.nodes.find((node: {kind: string}) => node.kind === 'exit');
+      assert.ok(exit);
+      exit.config = {...exit.config, returns: '1 +'};
+      wantedCode = 'EXPRESSION_INVALID';
+    }
+    const domainIssues = validateLoop(LoopDefinitionSchema.parse(bad));
+    const matching = domainIssues.filter((item: {code: string}) => item.code === wantedCode);
+    assert.equal(matching.length, 1);
+    const [expected] = matching;
+    assert.equal(expected.severity, 'error');
+    assert.equal(expected.path, scenario === 'template' ? 'settings.workingDirectory.template' : 'config.returns');
+    const created = await t.app.inject({method: 'POST', url: '/loops', payload: {definition: valid}});
+    assert.equal(created.statusCode, 201, created.body);
+    const id = created.json().loop.id;
+    const publish = () => t.app.inject({method: 'POST', url: '/loops/' + id + '/publish'});
+    const save = (definition: unknown) =>
+      t.app.inject({method: 'PUT', url: '/loops/' + id + '/draft', payload: {definition}});
+    const first = await publish();
+    assert.equal(first.statusCode, 200, first.body);
+    const saved = await save(bad);
+    assert.equal(saved.statusCode, 200, saved.body);
+    assert.deepEqual(saved.json().issues.filter((item: {code: string}) => item.code === wantedCode), [expected]);
+
+    const validated = await t.app.inject({
+      method: 'POST', url: '/loops/' + id + '/validate', payload: {definition: bad},
+    });
+    assert.equal(validated.statusCode, 200, validated.body);
+    assert.equal(validated.json().publishable, false);
+    assert.deepEqual(validated.json().issues.filter((item: {code: string}) => item.code === wantedCode), [expected]);
+
+    const refused = await publish();
+    assert.equal(refused.statusCode, 422, refused.body);
+    assert.equal(refused.json().code, 'LOOP_INVALID');
+    assert.deepEqual(refused.json().errors.filter((item: {code: string}) => item.code === wantedCode), [expected]);
+    const versions = (await t.app.inject('/loops/' + id + '/versions')).json().items;
+    const published = versions.filter((entry: {status: string}) => entry.status === 'published');
+    assert.deepEqual(published.map((entry: {id: string}) => entry.id), [first.json().version.id]);
+    assert.ok(versions.some((entry: {status: string}) => entry.status === 'draft'));
+
+    assert.equal((await save(valid)).statusCode, 200);
+    const repaired = await publish();
+    assert.equal(repaired.statusCode, 200, repaired.body);
+    assert.equal(repaired.json().version.version, first.json().version.version + 1);
+    evidence.push({
+      scenario, exactDiagnostic: expected, validateStatus: validated.statusCode,
+      publishRefusal: {status: refused.statusCode, code: refused.json().code},
+      originalPublishedVersionPreserved: true, repairedPublishStatus: repaired.statusCode,
+    });
+  }
+} finally {
+  await t.close();
+}
+console.log(JSON.stringify({
+  cases: evidence,
+  boundary: 'Public Fastify request injection in createTestApp; owned in-memory store, fake providers, no listener.',
+}, null, 2));
+

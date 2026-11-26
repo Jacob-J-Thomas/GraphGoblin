@@ -1,0 +1,53 @@
+I ran each wrapper once in the foreground, build first, and all three exited 0. Every receipt shows the bound head, tree, index and source, and reports the source and index unchanged afterward. **Scoped QA result: PASS.** Hosted Windows CI and the final review are still pending.
+
+| Wrapper | Exit | Result | UTC (2026-11-25) |
+|---|---|---|---|
+| build | 0 | 7 of 7 tasks, 0 cached (forced) | 05:17:30–05:17:34 |
+| api | 0 | 2 files: 18 passed, 5 skipped (23 tests) | 05:17:38–05:18:38 |
+| junction | 0 | 1 file: 14 passed, 5 skipped (19 tests) | 05:18:43–05:19:42 |
+
+In the API run, `main.test.ts` had 14 passed and 5 skipped; `provider-isolation.test.ts` had 4 passed and none skipped.
+
+## #565 provider isolation (API run)
+- **Built subprocess: PASS (2/2).** With the fixture default, the test-owned Ollama stand-in got no requests. With `GG_OLLAMA_ENABLED=true` it got exactly one `GET /api/tags` and discovery reached `ready`. With the synthetic `JEV_API_KEY` canary set, stdout never contained `seeded jev-api-key`.
+- **In-process `main()`: PASS (2/2).** Same two cases, and `jevApiKey` stayed undefined even with the canary set.
+- **Windows main entry startup/log/ownership tests (#438): PASS.** 3 passed: the protocol declaration, CLI output, and the private log pair with refusals 71 and 70. 1 skip, which is the non-Windows case.
+- **In-process ownership test with `JEV_API_KEY` cleared (line 133): PASS.**
+
+## #558 canonical paths (reported separately)
+- **Directory lock (`:175`), database lock (`:210–212`), and uncertain directory/database/reclamation-guard labels (`:251`, 3 cases): PASS in both runs.**
+- **Unchanged assertions: PASS.** The tests that check one-line diagnostics and retry text, exact owner-record bytes, the marker inventory, losing-process cleanup and the live-owner `/loops` 200 all passed.
+- **Time limits: PASS.** The longest case took 8.0s, well under the 60s limit.
+- **Raw alias reaches the built API: PASS, but indirect.** The wrapper reported that Node's temp directory was the alias spelling. The fixture code (`api-subprocess.ts:132–154`) passes that spelling unchanged into `GG_DATA_DIR`/`GG_DB_URL`. I did not see the child process's environment directly.
+- **Alias unavailable: not applicable.** The junction was active, so nothing was BLOCKED.
+- **Hosted 8.3 short-name case: not tested here** (out of scope).
+
+**Did the canonical lock/guard assertions pass? Yes, in both runs, and the junction run is the one that proves something.** There, TEMP/TMP pointed to `G:\ggq\gg-565-junction-qa-vh1aqsmg\temporary-alias`, which resolves to `...\canonical-temporary-target`. The raw path and the real path differ in a directory name, not just a suffix. All five assertions expected the real-path spelling and passed, so the product's error messages name the real lock and guard paths. I didn't check whether the ordinary TEMP is aliased, so that run shows no regression but doesn't test alias handling on its own. Evidence that the old raw-path assertions fail under the alias comes from the committed baseline receipt (exit 1), which I did not rerun.
+
+**Junction vs. hosted 8.3:** both make the raw path differ from the real path, but in different ways. A junction is a filesystem link; an 8.3 short name (like `RUNNER~1`) is an older alternate spelling of a long name. The wrapper itself labels this run "Canonical path alias control, not a Windows 8.3 alias." So this run shows the fix handles a real local alias, but not that the hosted 8.3 case passes. That needs the hosted Windows CI run. I only know about the earlier hosted failure from your brief; I haven't seen those logs. These runs also don't bear on #573 (Coverage timing).
+
+**Skips (the same 5 in both runs, all platform-dependent):** the Windows-only-variable-elsewhere case, static route registration (POSIX filename fixture), and the SIGINT, SIGTERM and signal-before-readiness shutdown cases (these run on Linux CI).
+
+## Identity and receipts
+Same in all three receipts, matching the bound values:
+- head `8c936ac14955f052e3dd3a578dedee5d8d6aaeb5`
+- tree `27633451e86892767b51011b20566195646b272c`
+- index `5bf75fca1d2821fc060b8c4814ecffaf98d56cdc4ea43a01e93f605e6ac427c6`
+- source `855bf52c335fb55dd3a07eacef225093206e2e496cbf8751a7b7043f899fec2d`
+
+| Receipt | Bytes | SHA-256 |
+|---|---|---|
+| `build.stdout.log` | 1231 | `26e95e80c52b0077547044ffe48e3293348246f3d1feb7e8182720a1a0be4688` |
+| `build.stderr.log` | 52 | `9ea460d15e6e42ec04ae639dbb66e3e03a9ea36aae5a08a0a514e0b30acff1cd` |
+| `api.stdout.log` | 8155 | `94dcafabe2982502b91da16e8a377dc93e39f31f266a3153b7f138d657f4aa73` |
+| `api.stderr.log` | 88 | `b1d6316b0a00e198937e76cafe5a42784468b4b415872e4be54a991f15f24d6a` |
+| `junction.stdout.log` | 4946 | `f564a698c353e9b722e0e496bf15a9ea76415c8e7baa17092ab8633f2590dfad` |
+| `junction.stderr.log` | 49 | `ad39ca0a725db2c0d13ebb4506ea8d622bd049ea8a81c905e48d29dd8adfebe9` |
+
+The junction run used scratch folder `G:/ggq/gg-565-junction-qa-vh1aqsmg` and ports 62100–62199. Its `junction.stderr.log` hash matches the committed packet's `corrected/stderr.log`.
+
+## Limits of this check
+- I ran only the three commands. I didn't read the stderr logs or the wrapper's source, didn't re-verify the packet manifest or its file hashes, and didn't list where the receipts were written.
+- "Source and index unchanged" is the wrapper's own report; I didn't run `git status` myself.
+- I didn't confirm that the junction scratch folder was removed afterward.
+- I edited nothing: no worktree, environment, index, trackers or publication state.

@@ -22,6 +22,34 @@ validated against the configured IPv4 loopback origin and current `/app/` manife
 closure only stops observation; matching gateways in a drain or failure phase remain available
 for existing shutdown controls. See [ADR-0064](decisions/ADR-0064-windows-desktop-launcher.md).
 
+## macOS Finder and Dock entry point
+
+The optional [macOS Finder and Dock launcher](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+installs a per-user `GraphGoblin.app` under `~/Applications` for Apple Silicon running macOS 15
+or later. It requires a built checkout, native Node 22.22.2 or later within major 22, and Swift 6
+when installing or updating. The installer saves the checkout and Node paths, local data directory,
+port, and supported non-secret options; rerun it if the saved checkout or Node path moves.
+
+A Finder or Dock launch validates the saved installation and built pages, then either observes the
+matching loopback gateway or starts one detached gateway and asks the system default browser to
+open `http://127.0.0.1:<port>/app/`. It does not select a browser profile or create a
+browser-specific PWA window. Hiding or quitting the launcher after a start is committed, and
+closing the browser, do not stop the gateway or its work. Use the existing authenticated API to
+start a shutdown. The browser's Wait and Force choices appear only after an externally initiated
+drain reaches its choice phase. [Gateway shutdown](07-api-and-streaming.md#gateway-shutdown-224)
+
+An unresolved system file-access decision no longer leaves the launch progress waiting for that
+system call indefinitely. After the attempt budget and cleanup tail, an independent watchdog
+delivers the existing conservative failure outcome. A committed gateway may still be running;
+neither the error window nor Quit terminates it. The watchdog does not grant macOS permissions.
+
+Each alternate `GraphGoblin <suffix>.app` has a separate installation ID, receipt, and log
+directory. The launcher takes private per-user coordination locks for the configured data
+directory, database, and port; the API's writer leases remain authoritative, so an alternate app
+does not bypass an occupied store or conflicting listener. See the [install guide](guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher),
+[troubleshooting guide](guide/07-troubleshooting.md#macos-finder-and-dock-launcher), and
+[ADR-0082](decisions/ADR-0082-macos-finder-dock-launcher.md) for setup and recovery details.
+
 ## Shape (Decided)
 
 A React single-page application built with Vite, served by the API process in 1.0, installable as a PWA. The management application lives at `/app/`; the separate Goblin PWA lives at `/goblin/`. Management resources use the generated typed client, and the run inspector follows native run events through SSE. Both Chat surfaces use the same scoped `/chat` API and poll turn state. Validation, routing, and execution semantics live in `contracts`, `domain`, and the backend. The editor can still validate drafts locally by importing `contracts` and `domain`, since both are pure.
@@ -116,8 +144,9 @@ their own value, not the final array's last element (#385).
 
 ### Run inspector during an outage (#416)
 
-When the run read fails to reach the API, pauses because the browser is offline, or the browser
-reports a disconnect, the inspector's run section keeps the last run this view read, under a
+When the run read or its event stream fails to reach the API, the read pauses because the
+browser is offline, or the browser reports a disconnect, the inspector's run section keeps the
+last run this view read, under a
 warning titled **Last observed, may be out of date** that says whether the browser is offline,
 the API cannot be reached, or the run is being read again. The retained section shows the
 record's status, failure, result, wait (with its form) and delivery and finalization state as last
@@ -158,7 +187,17 @@ does not mean an outage is current. The run is current again only when its recei
 the latest boundary this view knows (`committed > max(browser loss, run-read loss)`); a positive
 receipt by itself only permits the last-observed display. Being online again, a successful health
 probe or an open event stream may start the existing rereads but never unlock the view, and a read
-that started before the loss cannot either. The boundary the view remembers for a run, kept even
+that started before the loss cannot either. A stream transport failure records the run's loss
+synchronously, before requesting a reread, so an already queued write is refused before the
+next render. If that reread joins a request started before the loss, its eventual success keeps
+the run stale and the inspector requests a later read when the earlier one settles. A distinct
+stream loss during an unanswered recovery read advances the boundary beyond that read. A stream
+that actually reopened records a new loss when it drops or its next reconnection is refused,
+including after the API ended it gracefully. The confirmed reopen survives ordinary EOF and
+retryable nontransport errors; those endings alone record no loss. This holds even when the
+stream was open for less than a heartbeat interval and delivered no new event. Refused retries
+with no confirmed open since the recorded loss do not
+create further losses or stream-triggered rereads. The boundary the view remembers for a run, kept even
 when a credential or provider change empties the receipt's own loss, belongs to that run: another
 run opened in the same view starts from its own receipts, so an outage of one run's read never
 marks another run last observed. A browser disconnect applies to every run until each is read
@@ -510,9 +549,9 @@ Forms keep their own state. When a rename repaired a source the open node's conf
 
 Held section JSON (unapplied **Edit as JSON** text) is not form state the rename repairs. The rename analyzes and repairs the accepted section only, and the held text keeps its exact bytes, also when the repair makes the accepted section equal to it. It stays held, with **Apply JSON** and **Cancel JSON**, until the author settles it; taking the repair adds no undo step and keeps redo, and the notice gives no diagnostics for that text. A later explicit **Apply JSON** is an ordinary whole-section edit that writes the document as held, including any old id it still names.
 
-A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. While a primary pointer press is under way it keeps showing what it showed when the press began, and appears or changes once the click that press produces has been delivered, or when the press ends without one (the browser cancels it, a drag ends, the window loses focus), so it never moves the button being pressed (`editor/pointer-press.ts`). Focus moved by the keyboard shows it at once. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row opens its node's editor at the field (in place for the open node) only while that node's config is still the value the rename left, which undo and redo restore. After another edit of that node a listed path can name a different row (removing an earlier operation shifts the indices), so its rows then only inform: the notice says the node changed after the rename and that its places show where they were then. Rows for loop settings, for scripts and generated patches, and on a node no longer in the draft only inform too. The summary and the list keep their counts. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
+A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. While a primary pointer press is under way it keeps showing what it showed when the press began, and appears or changes once the click that press produces has been delivered, or when the press ends without one (the browser cancels it, a drag ends, the window loses focus), so it never moves the button being pressed (`editor/pointer-press.ts`). Focus moved by the keyboard shows it at once. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. Both counts are the domain's own, taken as returned, and the editor counts nothing itself: references are `repairedSources`, which never includes connection ends, and connections are `repairedConnections`, one per edge with an end on the node, so a repeat route back to the same node is one connection although the domain's `repairedEndpoints` counts its two repaired ends. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row opens its node's editor at the field (in place for the open node) only while that node's config is still the value the rename left, which undo and redo restore. After another edit of that node a listed path can name a different row (removing an earlier operation shifts the indices), so its rows then only inform: the notice says the node changed after the rename and that its places show where they were then. Rows for loop settings, for scripts and generated patches, and on a node no longer in the draft only inform too. The summary and the list keep their counts. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
 
-The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. A direct presence check of that one reference alone (`$exists(gates."old-id")` in JSONata, `{% if gates["old-id"] %}` in Liquid; `NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. A rename made while the loop's name is refused (see "Loop names" below) stays on this device with the other held edits; the save that follows a new name sends the whole renamed draft once. Regression: `editor/store.rename.test.ts`, `editor/EditorPage.rename.test.tsx` (also a Coerce source repaired under open and collapsed identical operations on Enter, pointer focus into the in-place repaired Source, a review row whose operation moved, and held Input JSON the repair makes equal, through one undo and redo), `forms/json-sections.test.tsx` and Edge `e2e/rename-references.spec.ts` (the Starter's sibling Liquid and Exit through undo, redo, reload, publish and pinned runs; uncertain, optional and missing references with Publish; focus through the in-place node repair and settings remount; held input; a stale tab; protected voice steps).
+The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. A direct presence check of that one reference alone (`$exists(gates."old-id")` in JSONata, `{% if gates["old-id"] %}` in Liquid; `NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. A rename made while the loop's name is refused (see "Loop names" below) stays on this device with the other held edits; the save that follows a new name sends the whole renamed draft once. Regression: `editor/store.rename.test.ts` (also a repeat self-edge: one connection, and only the domain's repaired sources as references, through undo and redo), `editor/EditorPage.rename.test.tsx` (also a Coerce source repaired under open and collapsed identical operations on Enter, pointer focus into the in-place repaired Source, a review row whose operation moved, and held Input JSON the repair makes equal, through one undo and redo), `forms/json-sections.test.tsx` and Edge `e2e/rename-references.spec.ts` (the Starter's sibling Liquid and Exit through undo, redo, reload, publish and pinned runs; uncertain, optional and missing references with Publish; focus through the in-place node repair and settings remount; held input; a stale tab; protected voice steps).
 
 ### Editing decision routes
 

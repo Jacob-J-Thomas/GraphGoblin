@@ -1,0 +1,182 @@
+Original unified-exec output, session 77533, chunk 0cddec, exit 1.
+Command: pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/check-qa-packet.test.mjs
+Runtime: v22.23.4
+Captured output below is transcribed from the first tool result; the tool result in the review chat is the primary original.
+
+ ❯ scripts/check-qa-packet.test.mjs (10 tests | 1 failed) 16095ms
+   × committed, staged, unstaged and untracked changes are selected once and nothing is written 2006ms
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  scripts/check-qa-packet.test.mjs > committed, staged, unstaged and untracked changes are selected once and nothing is written
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  [
+    Buffer(1091) [Uint8Array] [
+      68,
+      73,
+      82,
+...
+      54,
++     250,
++     19,
++     4,
++     143,
++     144,
+-     249,
+-     26,
+-     229,
+-     123,
+-     152,
+      0,
+      0,
+      0,
+      0,
+      0,
+...
+      9,
++     135,
++     85,
++     24,
++     169,
++     207,
++     114,
++     78,
++     81,
++     142,
++     145,
++     10,
++     193,
++     161,
++     23,
++     205,
++     54,
++     176,
++     255,
++     221,
++     111
+-     201,
+-     51,
+-     91,
+-     70,
+-     36,
+-     92,
+-     90,
+-     47,
+-     52,
+-     68,
+-     192,
+-     71,
+-     180,
+-     28,
+-     166,
+-     198,
+-     230,
+-     238,
+-     22,
+-     64
+    ],
+    Buffer(45) [Uint8Array] [
+      35,
+      32,
+      81,
+
+
+- Expected
++ Received
+
+@@ -334,15 +334,15 @@
+        123,
+        152,
+        107,
+        6,
+        54,
+-       249,
+-       26,
+-       229,
+-       123,
+-       152,
++       250,
++       19,
++       4,
++       143,
++       144,
+        0,
+        0,
+        0,
+        0,
+        0,
+@@ -1070,30 +1070,30 @@
+        204,
+        200,
+        216,
+        84,
+        9,
+-       201,
+-       51,
+-       91,
+-       70,
+-       36,
+-       92,
+-       90,
+-       47,
+-       52,
+-       68,
+-       192,
+-       71,
+-       180,
+-       28,
+-       166,
+-       198,
+-       230,
+-       238,
+-       22,
+-       64,
++       135,
++       85,
++       24,
++       169,
++       207,
++       114,
++       78,
++       81,
++       142,
++       145,
++       10,
++       193,
++       161,
++       23,
++       205,
++       54,
++       176,
++       255,
++       221,
++       111,
+      ],
+      "type": "Buffer",
+    },
+    {
+      "data": [
+
+ ❯ scripts/check-qa-packet.test.mjs:330:10
+    328|     /^Selected docs\/qa paths: 6 = checked with Prettier 6 \(Markdown …
+    329|   );
+    330|   assert.deepEqual(
+       |          ^
+    331|     ['.git/index', ...selected].map((path) => read(root, path)),
+    332|     before,
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 9 passed (10)
+   Start at  19:16:30
+   Duration  16.37s (tests 100%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-fu-qa-packets-
+  │ 20261124\GraphGoblin\tooling

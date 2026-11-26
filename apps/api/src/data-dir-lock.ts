@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { constants, type BigIntStats } from 'node:fs';
 import {
   lstat,
   mkdir,
@@ -50,6 +51,20 @@ export interface DataDirLock extends Hold {
   readonly reclaimed: { readonly file: boolean; readonly guard: boolean };
 }
 
+export interface OwnedWriterArtifact {
+  path: string;
+  dev: bigint;
+  ino: bigint;
+}
+
+export interface AttestedDataDirLock extends DataDirLock {
+  verifyOwnedArtifact(): Promise<OwnedWriterArtifact | undefined>;
+}
+
+interface AttestLocalArtifact {
+  attestLocalArtifact: true;
+}
+
 function hasCode(error: unknown, code: string): boolean {
   return error instanceof Error && 'code' in error && error.code === code;
 }
@@ -77,36 +92,24 @@ const held = (path: string, detail?: string): StoreOwnershipRefusedError =>
       ? `${detail}: ${path}; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying`
       : `another GraphGoblin process holds ${path}; check its port/configuration; wait for the owning process to finish or stop it before retrying`,
   );
-type OwnerState = { state: 'absent' | 'stale' } | { state: 'held'; detail: string };
-const unknown = (detail: string): OwnerState => ({
+type HeldOwner = { state: 'held'; detail: string };
+type OwnerState = { state: 'absent' } | { state: 'stale' } | HeldOwner;
+const unknown = (detail: string): HeldOwner => ({
   state: 'held',
   detail: `Store ownership could not be verified (${detail})`,
 });
-const live = (): OwnerState => ({
+const live = (): HeldOwner => ({
   state: 'held',
   detail:
     'another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish',
 });
 
-/**
- * Who owns a lock file, read-only: `absent`, `stale` (its recorded PID is dead, or is this
- * process's own PID without an in-process hold, or a provably reused Windows PID), or `held`. Malformed records and PIDs that cannot
- * be checked count as held: they cannot establish that the owner died.
- */
-async function lockFileState(path: string, token?: string): Promise<OwnerState> {
+function parseOwnerRecord(record: string, token?: string) {
   let owner: unknown;
   try {
-    const existing = await readFile(path, 'utf8');
-    try {
-      owner = JSON.parse(existing);
-    } catch {
-      return unknown('malformed or incomplete owner record');
-    }
-  } catch (error) {
-    if (hasCode(error, 'ENOENT')) return { state: 'absent' };
-    // Only recovery markers have immutable names. A main owner record can be replaced in place.
-    if (token !== undefined && (await removedConcurrently(path, error))) return { state: 'absent' };
-    throw error;
+    owner = JSON.parse(record);
+  } catch {
+    return undefined;
   }
   if (
     typeof owner !== 'object' ||
@@ -117,15 +120,39 @@ async function lockFileState(path: string, token?: string): Promise<OwnerState> 
     owner.pid <= 0 ||
     (token !== undefined && (!('token' in owner) || owner.token !== token))
   )
-    return unknown('malformed or incomplete owner record');
+    return undefined;
+  return {
+    pid: owner.pid,
+    windowsCreationTime: 'windowsCreationTime' in owner ? owner.windowsCreationTime : undefined,
+  };
+}
+
+function validWindowsCreationTime(identity: unknown): identity is string {
+  return typeof identity === 'string' && /^[1-9][0-9]{16,18}$/.test(identity);
+}
+
+/**
+ * Who owns a lock file, read-only: `absent`, `stale` (its recorded PID is dead, or is this
+ * process's own PID without an in-process hold, or a provably reused Windows PID), or `held`.
+ * Malformed records and PIDs that cannot be checked count as held: they cannot establish that
+ * the owner died.
+ */
+async function lockFileState(path: string, token?: string): Promise<OwnerState> {
+  let record: string;
+  try {
+    record = await readFile(path, 'utf8');
+  } catch (error) {
+    if (hasCode(error, 'ENOENT')) return { state: 'absent' };
+    // Only recovery markers have immutable names. A main owner record can be replaced in place.
+    if (token !== undefined && (await removedConcurrently(path, error))) return { state: 'absent' };
+    throw error;
+  }
+  const owner = parseOwnerRecord(record, token);
+  if (!owner) return unknown('malformed or incomplete owner record');
   if (owner.pid === process.pid) return heldPaths.has(path) ? live() : { state: 'stale' };
   const processState = pidState(owner.pid);
   if (processState.state === 'dead') return { state: 'stale' };
-  if (
-    'windowsCreationTime' in owner &&
-    typeof owner.windowsCreationTime === 'string' &&
-    /^[1-9][0-9]{16,18}$/.test(owner.windowsCreationTime)
-  ) {
+  if (validWindowsCreationTime(owner.windowsCreationTime)) {
     const current = await windowsProcessIdentity(owner.pid);
     if (current.identity === undefined) return unknown(current.reason);
     if (current.identity !== owner.windowsCreationTime) return { state: 'stale' };
@@ -198,22 +225,29 @@ async function removeMarker(path: string, operation: CleanupOperation): Promise<
   }
 }
 
-async function recoveryState(path: string): Promise<OwnerState & { marker?: string }> {
+type StaleRecovery = { state: 'stale'; directory: BigIntStats; marker?: string };
+type RecoveryObservation = { state: 'absent' | 'marker-absent' } | HeldOwner | StaleRecovery;
+const recoveryAttempts = 8;
+
+async function observeRecovery(path: string): Promise<RecoveryObservation> {
   if (heldPaths.has(path)) return live();
   try {
-    const info = await lstat(path);
+    const info = await lstat(path, { bigint: true });
     // Old file guards and links are not converted or followed.
     if (!info.isDirectory() || info.isSymbolicLink())
       return unknown('reclamation guard is not a physical directory with one valid owner marker');
     const entries = await readdir(path, { withFileTypes: true });
-    if (entries.length === 0) return { state: 'stale' };
+    if (entries.length === 0) return { state: 'stale', directory: info };
     const entry = entries[0];
     const match = entry && markerPattern.exec(entry.name);
     if (entries.length !== 1 || !entry?.isFile() || !match)
       return unknown('reclamation guard is not a physical directory with one valid owner marker');
-    const marker = join(path, entry.name);
-    const state = await lockFileState(marker, match[1]);
-    return state.state === 'stale' ? { state: 'stale', marker } : state;
+    const state = await lockFileState(join(path, entry.name), match[1]);
+    // The guard can still be present as an empty directory or already hold a new marker.
+    if (state.state === 'absent') return { state: 'marker-absent' };
+    return state.state === 'stale'
+      ? { state: 'stale', directory: info, marker: entry.name }
+      : state;
   } catch (error) {
     if (hasCode(error, 'ENOENT')) return { state: 'absent' };
     if (hasCode(error, 'ENOTDIR'))
@@ -222,17 +256,117 @@ async function recoveryState(path: string): Promise<OwnerState & { marker?: stri
   }
 }
 
+function samePhysicalEntry(a: BigIntStats, b: BigIntStats): boolean {
+  return a.dev === b.dev && a.ino === b.ino && a.birthtimeNs === b.birthtimeNs;
+}
+
+/** Read-only classification of a Windows acquisition failure. Any uncertainty keeps EPERM. */
+async function hasLiveRecoverySuccessor(
+  path: string,
+  directory: BigIntStats,
+  stale: StaleRecovery,
+  ownToken: string,
+): Promise<boolean> {
+  if (
+    !directory.isDirectory() ||
+    directory.isSymbolicLink() ||
+    directory.ino === 0n ||
+    stale.directory.ino === 0n ||
+    samePhysicalEntry(directory, stale.directory)
+  )
+    return false;
+  try {
+    const entries = await readdir(path, { withFileTypes: true });
+    const entry = entries[0];
+    const token = entry && markerPattern.exec(entry.name)?.[1];
+    if (
+      entries.length !== 1 ||
+      !entry?.isFile() ||
+      !token ||
+      token === ownToken ||
+      entry.name === stale.marker
+    )
+      return false;
+
+    const marker = join(path, entry.name);
+    const info = await lstat(marker, { bigint: true });
+    if (!info.isFile() || info.ino === 0n || info.nlink !== 1n) return false;
+    const matchesMarker = (current: BigIntStats) =>
+      current.isFile() &&
+      current.nlink === 1n &&
+      samePhysicalEntry(info, current) &&
+      info.mtimeNs === current.mtimeNs &&
+      info.ctimeNs === current.ctimeNs;
+    const file = await open(
+      marker,
+      constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK,
+    );
+    let owner: ReturnType<typeof parseOwnerRecord>;
+    try {
+      if (!matchesMarker(await file.stat({ bigint: true }))) return false;
+      owner = parseOwnerRecord(await file.readFile('utf8'), token);
+    } finally {
+      await file.close();
+    }
+    if (
+      !owner ||
+      owner.pid === process.pid ||
+      !validWindowsCreationTime(owner.windowsCreationTime) ||
+      pidState(owner.pid).state !== 'alive'
+    )
+      return false;
+    const current = await windowsProcessIdentity(owner.pid);
+    if (current.identity !== owner.windowsCreationTime || pidState(owner.pid).state !== 'alive')
+      return false;
+
+    // The directory, sole marker and record must survive the asynchronous process identity probe.
+    const names = await readdir(path);
+    if (
+      names.length !== 1 ||
+      names[0] !== entry.name ||
+      !matchesMarker(await lstat(marker, { bigint: true }))
+    )
+      return false;
+    const finalDirectory = await lstat(path, { bigint: true });
+    return (
+      finalDirectory.isDirectory() &&
+      !finalDirectory.isSymbolicLink() &&
+      samePhysicalEntry(directory, finalDirectory)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function probeRecoveryDirectory(path: string) {
+  return lstat(path, { bigint: true }).catch((error: unknown) =>
+    hasCode(error, 'ENOENT') ? 'absent' : undefined,
+  );
+}
+
 /** Whether this call removed the empty directory at `path`. */
-async function removeEmptyRecovery(path: string): Promise<boolean> {
+async function removeEmptyRecovery(
+  path: string,
+  acquisition?: { stale: StaleRecovery; token: string },
+): Promise<boolean> {
   try {
     await rmdir(path);
     return true;
   } catch (error) {
     // A newly published owner's marker makes its directory nonempty. Never remove it.
-    if (await removedConcurrently(path, error)) return false;
-    if (!hasCode(error, 'ENOENT') && !hasCode(error, 'ENOTEMPTY') && !hasCode(error, 'EEXIST'))
-      throw filesystemFailure(error, 'recovery-directory-remove', path);
-    return false;
+    if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTEMPTY') || hasCode(error, 'EEXIST'))
+      return false;
+    if (process.platform === 'win32' && hasCode(error, 'EPERM')) {
+      const directory = await probeRecoveryDirectory(path);
+      if (directory === 'absent') return false;
+      if (directory && acquisition) {
+        if (await hasLiveRecoverySuccessor(path, directory, acquisition.stale, acquisition.token))
+          throw held(path);
+        // A short-lived successor can release while its process creation time is being queried.
+        if ((await probeRecoveryDirectory(path)) === 'absent') return false;
+      }
+    }
+    throw filesystemFailure(error, 'recovery-directory-remove', path);
   }
 }
 
@@ -253,14 +387,37 @@ async function acquireRecovery(
   let reclaimed = false;
   try {
     await writeFile(stagedMarker, record, { flag: 'wx', mode: 0o600 });
-    for (let attempt = 0; attempt < 8; attempt++) {
-      const observed = await recoveryState(path);
-      if (observed.state === 'held') throw held(path, observed.detail);
-      if (observed.marker) {
-        // The immutable UUID name belongs only to the observed acquisition, never its successor.
-        if (await removeMarker(observed.marker, 'stale-marker-unlink')) reclaimed = true;
+    for (let attempt = 0; attempt < recoveryAttempts; attempt++) {
+      const observed = await observeRecovery(path);
+      if (observed.state === 'marker-absent') {
+        if (attempt + 1 === recoveryAttempts)
+          throw held(
+            path,
+            unknown(
+              'reclamation guard marker disappeared before verification at the acquisition attempt limit',
+            ).detail,
+          );
+        continue;
       }
-      if (await removeEmptyRecovery(path)) reclaimed = true;
+      if (observed.state === 'held') throw held(path, observed.detail);
+      if (observed.state === 'stale') {
+        if (observed.marker) {
+          // The immutable UUID belongs only to the observed acquisition. If another contender
+          // removed it first, re-observe the guard before making any further changes to it.
+          if (!(await removeMarker(join(path, observed.marker), 'stale-marker-unlink'))) {
+            if (attempt + 1 === recoveryAttempts)
+              throw held(
+                path,
+                unknown(
+                  'reclamation guard marker disappeared during removal at the acquisition attempt limit',
+                ).detail,
+              );
+            continue;
+          }
+          reclaimed = true;
+        }
+        if (await removeEmptyRecovery(path, { stale: observed, token })) reclaimed = true;
+      }
       try {
         // Both contenders publish NONEMPTY directories: rename cannot overwrite an owner.
         await rename(staging, path);
@@ -333,15 +490,68 @@ export async function dataDirLockState(
       path: recovery,
       detail: 'another GraphGoblin process is acquiring this store',
     };
-  const guard = await recoveryState(recovery);
-  if (guard.state === 'held') return { ...guard, path: recovery };
-  const owner = heldPaths.has(path) ? live() : await lockFileState(path);
-  if (owner.state === 'held') return { ...owner, path };
-  return { state: 'free' };
+  for (let attempt = 0; attempt < recoveryAttempts; attempt++) {
+    const guard = await observeRecovery(recovery);
+    if (guard.state === 'marker-absent') continue;
+    if (guard.state === 'held') return { ...guard, path: recovery };
+    const owner = heldPaths.has(path) ? live() : await lockFileState(path);
+    if (owner.state === 'held') return { ...owner, path };
+    return { state: 'free' };
+  }
+  return {
+    ...unknown('reclamation guard marker repeatedly disappeared during the check'),
+    path: recovery,
+  };
 }
 
-/** `reclaimed` says whether this call removed a stale lock file before creating its own. */
-async function acquireFile(path: string, record: string): Promise<Hold & { reclaimed: boolean }> {
+async function verifyWriterArtifact(
+  acquired: OwnedWriterArtifact,
+  record: Buffer,
+): Promise<OwnedWriterArtifact | undefined> {
+  const uid = process.geteuid?.();
+  if (uid === undefined) return undefined;
+  const { path, dev, ino } = acquired;
+  const matches = (stat: BigIntStats) =>
+    stat.isFile() &&
+    stat.dev === dev &&
+    stat.ino === ino &&
+    stat.uid === BigInt(uid) &&
+    (stat.mode & 0o077n) === 0n &&
+    stat.nlink === 1n;
+  try {
+    if (!matches(await lstat(path, { bigint: true }))) return undefined;
+    const file = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+    try {
+      if (!matches(await file.stat({ bigint: true }))) return undefined;
+      const buffer = Buffer.alloc(record.length + 1);
+      const { bytesRead } = await file.read(buffer, 0, buffer.length, 0);
+      if (bytesRead !== record.length || !buffer.subarray(0, bytesRead).equals(record))
+        return undefined;
+      if (
+        !matches(await file.stat({ bigint: true })) ||
+        !matches(await lstat(path, { bigint: true }))
+      )
+        return undefined;
+      return { path, dev, ino };
+    } finally {
+      await file.close();
+    }
+  } catch {
+    return undefined;
+  }
+}
+
+interface FileHold extends Hold {
+  /** Whether this acquisition removed a stale primary file before creating its own. */
+  readonly reclaimed: boolean;
+  readonly verifyOwnedArtifact?: AttestedDataDirLock['verifyOwnedArtifact'];
+}
+
+async function acquireFile(
+  path: string,
+  record: string,
+  attestation?: AttestLocalArtifact,
+): Promise<FileHold> {
   let reclaimed = false;
   const file = await open(path, 'wx', 0o600).catch(async (error: unknown) => {
     if (!hasCode(error, 'EEXIST')) throw error;
@@ -352,8 +562,13 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
     });
   });
   heldPaths.add(path);
+  let acquired: OwnedWriterArtifact | undefined;
   try {
     await file.writeFile(record, 'utf8');
+    if (attestation) {
+      const { dev, ino } = await file.stat({ bigint: true });
+      acquired = { path, dev, ino };
+    }
   } catch (error) {
     heldPaths.delete(path);
     await file.close();
@@ -363,9 +578,11 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
     await file.close();
   }
   let releasing: Promise<ReleaseOutcome> | undefined;
-  return {
+  let releaseStarted = false;
+  const lease: FileHold = {
     reclaimed,
     release() {
+      releaseStarted = true;
       releasing ??= (async (): Promise<ReleaseOutcome> => {
         let outcome: ReleaseOutcome;
         try {
@@ -384,6 +601,17 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
       return releasing;
     },
   };
+  if (!acquired) return lease;
+  const bound = acquired;
+  const expected = Buffer.from(record, 'utf8');
+  return {
+    ...lease,
+    async verifyOwnedArtifact() {
+      if (releaseStarted) return undefined;
+      const verified = await verifyWriterArtifact(bound, expected);
+      return releaseStarted ? undefined : verified;
+    },
+  };
 }
 
 /**
@@ -392,9 +620,16 @@ async function acquireFile(path: string, record: string): Promise<Hold & { recla
  * or have a different, verified Windows creation identity.
  * The short-lived recovery guard follows the same rule after interrupted reclamation.
  */
+export function acquireDataDirLock(
+  dataDir: string,
+  filename: string | undefined,
+  attestation: AttestLocalArtifact,
+): Promise<AttestedDataDirLock>;
+export function acquireDataDirLock(dataDir: string, filename?: string): Promise<DataDirLock>;
 export async function acquireDataDirLock(
   dataDir: string,
   filename = DATA_DIR_LOCK_FILE,
+  attestation?: AttestLocalArtifact,
 ): Promise<DataDirLock> {
   const path = resolve(canonicalPath(dataDir), filename);
   // Reserve pending acquisitions too, before any asynchronous filesystem operation.
@@ -411,7 +646,7 @@ export async function acquireDataDirLock(
     });
     // Take the guard even if the main file is missing after a crash during reclamation.
     const recovery = await acquireRecovery(`${path}${RECLAIM_GUARD_SUFFIX}`, record, token);
-    const file = await acquireFile(path, record).catch(async (error: unknown) => {
+    const file = await acquireFile(path, record, attestation).catch(async (error: unknown) => {
       try {
         await recovery.release();
       } catch (cleanup) {
@@ -435,17 +670,31 @@ export async function acquireDataDirLock(
         cause: cleanup,
       });
     }
-    return {
+    const lock: DataDirLock = {
       reclaimed: { file: file.reclaimed, guard: recovery.reclaimed },
       release: () => file.release(),
     };
+    if (!file.verifyOwnedArtifact) return lock;
+    const attested: AttestedDataDirLock = {
+      ...lock,
+      verifyOwnedArtifact: file.verifyOwnedArtifact,
+    };
+    return attested;
   } finally {
     acquiringPaths.delete(path);
   }
 }
 
 /** A shared external SQLite file has one owner even when data directories differ. */
-export async function acquireDatabaseLock(databaseFile: string): Promise<DataDirLock> {
+export function acquireDatabaseLock(
+  databaseFile: string,
+  attestation: AttestLocalArtifact,
+): Promise<AttestedDataDirLock>;
+export function acquireDatabaseLock(databaseFile: string): Promise<DataDirLock>;
+export async function acquireDatabaseLock(
+  databaseFile: string,
+  attestation?: AttestLocalArtifact,
+): Promise<DataDirLock> {
   const file = canonicalPath(databaseFile);
   const info = await stat(file).catch((error: unknown) => {
     if (hasCode(error, 'ENOENT')) return undefined;
@@ -455,7 +704,10 @@ export async function acquireDatabaseLock(databaseFile: string): Promise<DataDir
     throw new Error(
       `database ${file} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
     );
-  return acquireDataDirLock(dirname(file), databaseLockFileName(basename(file)));
+  const name = databaseLockFileName(basename(file));
+  return attestation
+    ? acquireDataDirLock(dirname(file), name, attestation)
+    : acquireDataDirLock(dirname(file), name);
 }
 
 export function databaseLockState(databaseFile: string): ReturnType<typeof dataDirLockState> {

@@ -30,6 +30,7 @@
     "check:docs": "pnpm --filter @graphgoblin/contracts build && node tooling/scripts/gen-docs.mjs --check",
     "docs:contrast": "node tooling/scripts/design-contrast.mjs",
     "check:contrast": "node tooling/scripts/design-contrast.mjs --check",
+    "check:qa": "node tooling/scripts/check-qa-packet.mjs",
     "check": "pnpm typecheck && pnpm lint && pnpm check:layers && pnpm check:migrations && pnpm check:tokens && pnpm check:deps && pnpm test:coverage && pnpm check:templates && pnpm check:licenses && pnpm check:docs && pnpm check:contrast",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -42,6 +43,8 @@
     "test:webhook-retry": "node apps/api/scripts/webhook-retry.acceptance.mjs",
     "test:upgrade": "node --test tooling/scripts/upgrade.acceptance.mjs",
     "test:windows-launcher": "node --test tooling/scripts/windows-launcher.acceptance.mjs",
+    "test:macos-launcher": "node --test tooling/scripts/macos-launcher.acceptance.mjs",
+    "test:macos-coverage": "node tooling/scripts/macos-launcher-coverage.acceptance.mjs .tmp/macos-launcher-coverage",
     "check:templates": "pnpm --filter @graphgoblin/api exec tsx --conditions=development scripts/check-templates.mjs",
     "check:migrations": "node tooling/scripts/check-migrations.mjs"
   },

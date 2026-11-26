@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { access, mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -42,6 +42,12 @@ describe('built entry and the reserved Windows launcher variable (#438)', () => 
     const head = (await readFile(built)).subarray(0, 4096).toString('latin1');
     expect(head).toContain('export const WINDOWS_LAUNCHER_LOG_PROTOCOL = 1;');
     await access(fileURLToPath(new URL('../dist/windows-log/guard.js', import.meta.url)));
+    expect(head).toContain('export const MACOS_LAUNCHER_LOG_PROTOCOL = 1;');
+    await access(fileURLToPath(new URL('../dist/macos-log/guard.js', import.meta.url)));
+    await access(fileURLToPath(new URL('../dist/managed-log/guard.js', import.meta.url)));
+    await access(
+      fileURLToPath(new URL('../dist/managed-log/gateway-log-writer.js', import.meta.url)),
+    );
   });
 
   it('consumes the variable for CLI commands, which keep their ordinary output', async () => {
@@ -50,6 +56,7 @@ describe('built entry and the reserved Windows launcher variable (#438)', () => 
     await mkdir(logs);
     const command = f.run(['--create-api-key', 'reserved variable'], {
       gg_Windows_Launcher_Log_Dir: logs,
+      gg_Macos_Launcher_Log_Admission: 'not a snapshot',
     });
     expect(await command.waitForExit()).toEqual({ code: 0, signal: null });
     expect(command.stdout).toMatch(/gg_[A-Za-z0-9_-]+/);
@@ -129,18 +136,51 @@ describe('built entry and the reserved Windows launcher variable (#438)', () => 
   );
 });
 
+describe('physical Mac managed entry', () => {
+  it.runIf(process.platform === 'darwin')(
+    'rejects a malformed snapshot before loading the app or creating a store',
+    async () => {
+      const f = await fixture();
+      const child = f.run([], { gg_Macos_Launcher_Log_Admission: 'invalid' });
+      expect(await child.waitForExit()).toEqual({ code: 71, signal: null });
+      expect([child.stdout, child.stderr]).toEqual(['', '']);
+      await noLock(f.lockPath);
+      await noLock(join(f.dataDir, 'master.key'));
+      await noLock(join(f.dataDir, 'graphgoblin.db'));
+    },
+    60_000,
+  );
+
+  it.skipIf(process.platform === 'darwin')(
+    'consumes the Mac variable and preserves ordinary shell startup elsewhere',
+    async () => {
+      const f = await fixture();
+      const token = await f.createKey();
+      const child = f.run([], { GG_MACOS_LAUNCHER_LOG_ADMISSION: 'invalid' });
+      await f.ready(child, token);
+      expect(child.stdout).toContain('GraphGoblin API listening');
+    },
+    60_000,
+  );
+});
+
 describe('built API entry and startup failures', () => {
   it('holds ownership while listening and releases it on supported HTTP close', async () => {
     const f = await fixture();
     // Test fixture fences are not product configuration; preserve them even if this case fails.
-    for (const name of Object.keys(process.env))
-      if (name.toUpperCase().startsWith('GG_') && !name.toUpperCase().startsWith('GG_TEST_'))
+    // Inherited JEV_API_KEY is cleared too, so this in-process start cannot seed it (#565).
+    for (const name of Object.keys(process.env)) {
+      const upper = name.toUpperCase();
+      if ((upper.startsWith('GG_') && !upper.startsWith('GG_TEST_')) || upper === 'JEV_API_KEY')
         vi.stubEnv(name, undefined);
+    }
     for (const [name, value] of Object.entries(f.env))
       if (name.toUpperCase().startsWith('GG_')) vi.stubEnv(name, value);
     let running: Awaited<ReturnType<typeof main>> | undefined;
     try {
       running = await main();
+      expect(running.container.config.ollamaEnabled).toBe(false);
+      expect(running.container.config.jevApiKey).toBeUndefined();
       const lock = await readFile(f.lockPath, 'utf8');
       await expect(main()).rejects.toThrow('another GraphGoblin process holds');
       expect(await readFile(f.lockPath, 'utf8')).toBe(lock);
@@ -166,7 +206,8 @@ describe('built API entry and startup failures', () => {
       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
       expect(contender.stderr).toContain('another GraphGoblin process holds');
       expectOwnershipRefusal(contender.stderr);
-      expect(contender.stderr).toContain(f.lockPath);
+      // Ownership diagnostics use canonical paths, including Windows short-name temp roots.
+      expect(contender.stderr).toContain(await realpath(f.lockPath));
       expect(contender.stderr).toContain(
         'wait for the owning process to finish or stop it before retrying',
       );
@@ -196,12 +237,14 @@ describe('built API entry and startup failures', () => {
     try {
       await f.ready(child, token);
       const directoryRecord = await readFile(f.lockPath, 'utf8');
-      const databaseLock = `${database}.graphgoblin.lock`;
+      const databaseLock = `${await realpath(database)}.graphgoblin.lock`;
       const databaseRecord = await readFile(databaseLock, 'utf8');
       const contender = other.run([], env);
       expect(await contender.waitForExit()).toEqual({ code: 1, signal: null });
       expectOwnershipRefusal(contender.stderr);
-      expect(contender.stderr).toContain(`another GraphGoblin process holds ${databaseLock}`);
+      expect(contender.stderr).toContain(
+        `another GraphGoblin process holds ${await realpath(databaseLock)}`,
+      );
       expect(contender.stdout).toBe('');
       expect(await readFile(f.lockPath, 'utf8')).toBe(directoryRecord);
       expect(await readFile(databaseLock, 'utf8')).toBe(databaseRecord);
@@ -240,7 +283,7 @@ describe('built API entry and startup failures', () => {
       expect(child.stderr).toContain(
         'Store ownership could not be verified (malformed or incomplete owner record)',
       );
-      expect(child.stderr).toContain(kind === 'reclamation' ? guard : path);
+      expect(child.stderr).toContain(await realpath(kind === 'reclamation' ? guard : path));
       expect(child.stderr).toContain('inspect the owner record and running GraphGoblin processes');
       expect(child.stdout).toBe('');
       expect(await readFile(path, 'utf8')).toBe(record);

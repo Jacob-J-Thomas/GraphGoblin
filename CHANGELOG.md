@@ -25,6 +25,143 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   folder (#511). Folders left by earlier runs are not removed automatically. No store, schema,
   API or format change.
 
+- `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
+  `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
+  template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so
+  a self-edge counts one) and `repairedEndpoints` (each edge end moved, so both ends of a self-edge)
+  instead of the combined `repairedReferences`, which is removed with no alias. The editor's rename
+  notice takes its reference count from `repairedSources` and its connection count from
+  `repairedConnections` instead of recounting edges, and still counts a self-edge as one
+  connection. The redundant
+  `syntaxIssues` export is removed: `validateLoop` remains the only producer of
+  `TEMPLATE_INVALID` and `EXPRESSION_INVALID`, with the same paths, messages and order.
+  `findAuthoredSources` stays as a discovery helper. Upgrade note: code that read
+  `repairedReferences` reads the separate counts instead, and code that called `syntaxIssues` filters
+  `validateLoop` by those two codes. No stored, export, device-draft or contract format changes,
+  and no repairs, warnings or notice wording change.
+
+- `GET /loops/{id}/versions/{versionId}` serves a stored record as the current
+  `LoopVersionRecordSchema` reads it (#525). A current-format record that omits a field the schema
+  defaults, such as an inference node's `harness` in a hand-authored draft-run snapshot, is served
+  with that default (effective `codex`), where it could previously answer `500 RESPONSE_INVALID`.
+  The stored row is not rewritten and a snapshot keeps its immutability protection. The owner and
+  matching-version checks (404 `LOOP_NOT_FOUND` or `VERSION_NOT_FOUND`), the retired Event refusal
+  (409 `LOOP_UPGRADE_REQUIRED`) and the sanitized `500 RESPONSE_INVALID` for a record the current
+  schema refuses are unchanged. The rule is this endpoint's: loop detail, version history and
+  export serve their records as before.
+  [Explicit version reads](docs/07-api-and-streaming.md#pinned-definitions-adr-0041)
+  **Upgrade:** rebuild the API. No schema, stored format or reset change; no stored content is
+  converted.
+
+- `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
+  delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
+  that ref to the working tree, including staged, unstaged and untracked files, and checks their
+  Markdown with the repository Prettier configuration even where an archive ignore rule hides it
+  from `pnpm format:check`. Opaque originals are listed with their SHA-256 and left untouched, a
+  newly added Markdown file named as an original is refused, and selected paths a sparse checkout
+  lacks fail as not checked. The check is read-only and local: `pnpm format:check` and CI remain
+  the full gates. Immutable Markdown originals are stored as `*.md.txt`, with their hashes in the
+  packet manifest. Historical QA artifacts, the hosted formatter and coverage thresholds are
+  unchanged.
+
+- The Template image CI job also checks that the built image's installed jsonata carries
+  `patches/jsonata@2.2.2.patch` (#467). A separate step runs the image under the template
+  step's isolation (no network, read-only, no capabilities or new privileges) from
+  `/app/apps/api` and calls the compiled `@graphgoblin/domain` there with finite expressions: an
+  ordinary expression and a flat literal wider than the 200-level depth limit evaluate at the
+  default limits; `1` with `maxDepth: 0` and with `timeoutMs: -1` is refused with reason `depth`
+  or `time` and its exact message; and the same cached source then evaluates normally. It prints
+  one JSON line to the job log. The licence ledger now records what the patch does and what a
+  jsonata upgrade must show before the patch is reapplied, rebased or removed. The template
+  checks, the job's budget, the patch and lockfile, the evaluator's defaults and the product's
+  behaviour are unchanged; no dependency or licence changes.
+
+- API process tests no longer start Ollama model discovery by default (#565). The disposable
+  built-entry fixture drops inherited `GG_*`, `JEV_API_KEY` and `NODE_V8_COVERAGE` and now sets
+  `GG_OLLAMA_ENABLED=false` itself, so its children no longer fall back to the product default
+  (on), which sent discovery to `http://127.0.0.1:11434`. The in-process `main()`
+  case adopts the same values through reversible environment stubs and also clears an inherited
+  `JEV_API_KEY`. A test that owns a provider endpoint still opts in per child. A new regression
+  test starts both the built entry and in-process `main()` against a stand-in Ollama listener it
+  owns: no request with the fixture default, exactly one model-list request with an explicit
+  opt-in. Only discovery is fixed; children keep the host network. Each fixture owns its own
+  temporary store and the children it starts. Its API port is a reservation shared only by
+  cooperating fixtures in the same Vitest run, after point-in-time bind checks, while
+  test-owned listeners bind port 0 and use whatever ephemeral port the OS assigns. The Windows
+  launcher CI job now also runs `main.test.ts` as its last step after a successful build, giving
+  the Windows-only startup and log-folder refusal cases a maintained Windows venue without
+  changing the native or evidence steps' outcomes. Production configuration and defaults are
+  unchanged; existing tests keep their time limits, assertions and retries, and coverage
+  thresholds are unchanged.
+
+- A Windows API startup racing stale lock recovery now reports ordinary store contention when
+  a denied guard-directory removal reveals a verified live successor (#581). Acquisition skips
+  shared removal when the guard is absent and checks it again if another process removed the
+  observed stale marker during a read or deletion. If the empty guard survives and this caller
+  removes it, confirmed reset counts that reclamation. A denial with unverified ownership retains
+  its filesystem diagnostic.
+
+- The run inspector treats its event stream's transport failure as an outage of the run it shows
+  from that moment (#575). Previously a run read already in flight when the API listener
+  stopped could answer successfully afterwards and leave the run current: no **Last observed,
+  may be out of date** warning, and Pause, Cancel, Replay and Submit input still available. Now
+  the run stays on screen as last observed with its typed answer kept, every write, including
+  one already queued or submitted from the keyboard, is refused at once, and only a run read
+  started after the loss makes the run current again. Refused stream reconnection attempts
+  trigger no further rereads. A stream that opens again records a new loss when it drops, or when
+  its reconnection is refused after it ended otherwise, such as the graceful close the API sends
+  when it shuts down. HTTP refusals, graceful closes and other stream errors are not losses
+  themselves. No stored, export or contract change.
+
+- Database inspection preserves literal `%`, `#`, `?`, spaces and Unicode in file names,
+  keeps read-only SQLite mode intact, and refuses missing files without creating a different
+  database. Default database configuration also encodes the data directory as a file URL.
+  No store format change or stored-content rewrite is required.
+  **Upgrade:** with `GG_DB_URL` unset, a data directory path containing a percent escape now
+  selects a different database file: `GG_DATA_DIR='/example/active %41'` used to open
+  `/example/active A/graphgoblin.db` and now opens `/example/active %41/graphgoblin.db`. If that
+  file is absent, startup creates an empty store, so existing data seems missing and new writes go to it. The earlier
+  database is not changed or removed, and `master.key` and artifacts stay in the data directory.
+  Before the first start, identify the earlier database from evidence, stop its gateway and back
+  it up with its `-wal`/`-shm` files, `master.key` and artifacts. A shell start can then keep
+  `GG_DATA_DIR` and set an escaped `GG_DB_URL` for that file; the macOS launcher accepts no
+  external database, so restore the stopped store into an empty data directory instead. This is not
+  a format change: do not reset. See
+  [Same-format upgrade: default database location](docs/guide/08-offline-upgrade.md#same-format-upgrade-default-database-location).
+
+- Optional per-user macOS Finder and Dock launcher for a built checkout on Apple Silicon,
+  macOS 15 or later, with a saved native Node 22.22.2+ path. Install with
+  `bash scripts/install-macos-launcher.sh`; it builds `~/Applications/GraphGoblin.app`, starts
+  or reuses the verified local instance and opens the default browser. Hide keeps the launch
+  going; Quit never stops an already started gateway, and closing the browser leaves work
+  running. Managed replacement preserves the installation identity; alternate app names keep
+  independent identities and logs. Private gateway logs share the existing bounded writer,
+  with a Darwin directory reservation and a local-key check after both writer leases.
+  Installation and cold launch tolerate malformed inherited locale values.
+  Managed replacement applies the same file permission rules to admission and cleanup, checks
+  every managed bundle object for unexpected ACL entries, and refuses case-alias overlaps
+  between the app and its inputs before publication.
+  Graphical and headless launches now deliver a conservative outcome when a system call remains
+  blocked past the attempt budget, and refuse a successful handoff that arrives after the budget
+  or Quit. This does not grant folder permissions or stop a gateway whose start was committed.
+  **Setup:** an existing store needs its owned local `master.key`; external database paths and
+  shell-only master-key overrides are unsupported by this launcher. Keep Node and the checkout
+  at their saved paths or rerun the installer. No format change or migration. Part of #456 and
+  #326; owner acceptance is tracked separately. See ADR-0082.
+
+- Windows launcher evidence records a test that node:test cancels as failed at its cancellation,
+  as node:test reports it (#534). Cancellations include the test's own timeout, a parent or the
+  whole run that finished first, and a subtest started after its parent ended. The end record
+  previously waited for the test body, which node:test no longer awaits, so a cancelled body
+  that later returned could be recorded as passing, and one still running at exit as never ended.
+  A later return or throw of the body adds no second end, and an earlier failure keeps its own
+  failure fields. Cleanup and child records the body writes afterwards stay in its test's scope.
+  Subtests still running when their parent ends count among the parent's failed subtests. A
+  regression test also covers one totals row that keeps its own sum but contradicts its
+  contention trial in any count (#539). Such a row never completes the trial, and the valid
+  observations are still uploaded. The acceptance suite's assertions, timeouts and TAP output
+  are unchanged. No stored, export or contract change.
+
 - MCP `describe_loop` and `start_run` resolve `loopId` as an exact ID of one of the caller's
   loops first, then as a full loop name under the API's name rule: trimmed, whitespace runs
   collapsed to one space and lowercased, without Unicode normalization or locale-dependent case
@@ -34,6 +171,18 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   user guide, docs/09 and the shared run-loop skill used by the Codex and Claude plugins now
   describe this lookup. No store, schema or format change.
 
+- Authored-failure cleanup (#554). Run behaviour for supported definitions is unchanged. The
+  engine's `HandlerServices` no longer offers `render`, which no handler called; authored
+  fields keep rendering through the helpers that report their boundary. Context-mutation
+  operations no longer declare a `schema` authored fact that no supported path produced: a
+  `coerce` schema that does not compile was and remains a validation error that goes through
+  the repair policy. An exception thrown while validating reaches only the operation's ordinary
+  error mapper, so inference transforms let it propagate instead of reporting it as an authored
+  schema failure; only synthetic non-JSON values in direct domain calls have been shown to reach
+  this path. A `coerce` source that is not an RFC 6901 pointer remains refused by the contract.
+  The [execution engine](docs/05-execution-engine.md#authored-boundary-identifiers) document
+  now lists the closed `failure.details.boundary` identifiers for API and MCP clients. No stored
+  data, contract or API change.
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
@@ -355,8 +504,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
   Snapshot rows are immutable: do not update them or disable their triggers. The omission query
   also reports snapshots, but an omitted harness alone is accepted by definition parsing with
-  its effective `codex` default. An explicit version read can still return `500 RESPONSE_INVALID`
-  for that manually authored snapshot. Preserve its history. Use the following options only for
+  its effective `codex` default. `GET /loops/{loop_id}/versions/{version_id}` serves an otherwise
+  valid snapshot with that omission using that default, without changing the stored row (#525).
+  Preserve the snapshot and its history. Use the following options only for
   an actually incompatible snapshot, such as one with an invalid override key. Keep the original
   database backup with its previous build. To preserve authored work in a fresh store, export
   the affected loop from the original gateway using its previous build. If it needs starting,

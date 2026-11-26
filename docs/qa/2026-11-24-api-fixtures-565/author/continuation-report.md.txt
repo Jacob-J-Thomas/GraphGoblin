@@ -1,0 +1,30 @@
+I updated the Windows scheduler test for the new API-entry step, and the focused workflow test now passes 40 of 40 (it was 39 passed, 1 failed). Lint, the scoped formatting check and the diff check are all clean. All seven files are unstaged.
+
+**Failing checkpoint.** The persisted run was 39 passed, 1 failed. Reading the code, the failure comes from the expected step sequence in the Windows scheduler test: it ended at `upload`, but `api-entry` now runs after it. I didn't rerun the failing state, as instructed.
+
+**What changed** (only `tooling/scripts/windows-launcher-evidence.test.mjs`, inside the existing test "the Windows job runs the exact native command…"):
+- **Sequence and command checks:** `api-entry` is now in the expected command list (`pnpm --filter @graphgoblin/api test src/main.test.ts`) and in the normal step sequence. The test also checks that it is the last step and that its condition is exactly `${{ !cancelled() && steps.build.outcome == 'success' }}`.
+- **Evidence preparation fails, build succeeds:** native and API-entry still run with the right command, nothing is finalized or uploaded, the preparation failure is still recorded and the job still fails.
+- **API-entry fails:** a new loop runs with native succeeding and with native failing, each compared against the same run without the API-entry failure. Native, finalize and upload keep their outcomes, finalize receives the same values, and the job fails. Where native succeeded, the job would otherwise have passed, so the API-entry failure alone fails it.
+- **Checkout, Node setup, install or build fails:** API-entry is skipped. The existing checks on finalizing and uploading still hold.
+- **Native fails or is cancelled:** the existing checks are kept. API-entry runs after a native failure and is skipped once the run is cancelled.
+
+I made no changes to step conditions, thresholds, retries, timeouts, the simulator, or other files, and copied nothing from #534/#539 or #501.
+
+**Fresh results:**
+
+| Command | Result |
+|---|---|
+| `pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs` | 1 file, 40 passed (40), 4.79s |
+| `pnpm --filter @graphgoblin/tooling lint` | no findings |
+| scoped `prettier --check` (7 files) | all files formatted; no write used |
+| `git --no-pager diff --check` | no output |
+
+`node --version` reported v22.23.4.
+
+**Remaining gaps and risks:**
+- **Integration gate (open):** #501 adds two other Windows steps and assertions to this same test. When the branches are combined, the checks that `api-entry` is last and the expected step sequences will need reconciling, and the workflow tests must be rerun.
+- **Six-file hashes:** the brief says the hashes are in the contract, but the contract I received has none, and no hashing command was authorised. I didn't edit those six files or run a Prettier write, but I couldn't confirm their bytes against the hashes.
+- **Cancellation is simulated:** the test's simulator treats an earlier step ending as cancelled as making `cancelled()` true. Real GitHub ties `cancelled()` to the run being cancelled. So the not-cancelled check is proven only under the simulator's model; the real behaviour needs a Windows CI run.
+- **Not rerun, as instructed:** the API test (18 passed, 5 skipped), the API-entry step on a real Windows runner, and anything broader. Those are for your review, QA and CI.
+- **Denied command:** `git diff -- .github/workflows/ci.yml` isn't on the allowed list, so I read the workflow file directly instead.

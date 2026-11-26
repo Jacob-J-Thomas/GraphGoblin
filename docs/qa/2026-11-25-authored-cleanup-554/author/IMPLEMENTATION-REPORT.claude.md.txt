@@ -1,0 +1,53 @@
+All four parts of #554 are done and every check in the contract passes. The changes are unstaged and stay within the 12 allowed paths. The evidence shows dead code removed and a boundary documented, not a fixed product bug.
+
+## What changed
+
+**1. Unused `render` service removed**
+- **Who used it:** it was declared in `handler.ts`, implemented in `run-manager.ts`, and stubbed three times in tests (`heartbeat-visit.test.ts` once, `flow.test.ts` twice). No handler, app or package ever called it, and no app uses `HandlerServices` at all.
+- **Edits:** I deleted it from the interface, the implementation (along with `run-manager.ts`'s last use of `renderTemplate`), and the three test stubs. No casts were added and no assertions were relaxed.
+- **Left alone:** the remaining `renderTemplate` use in `inference-context.ts` (re-rendering the canonical system prompt) and the helpers that report which field failed.
+- The `HandlerServices` type is still exported from `@graphgoblin/engine`, so this is a type-level change to a public export with no consumer in the repo.
+
+**2. Unreachable `schema` failure removed** (`mutations.ts`, `authored-failure.ts`)
+- **Why it was dead:** `validateJson` already catches every schema compile error and returns it as a validation error. Nothing it calls throws `MutationError` or `PatchError`, so the `schema` failure could never be produced on a supported path.
+- **Edits:** I removed `'schema'` from `MutationFact`, from the internal `authored` helper, and from the user-facing failure copy. Validation now sits in a narrow try/catch that rethrows without labelling the error as an authored-field failure.
+- **Context mutation nodes:** they still pass any such error to their usual error mapper, so behaviour there is unchanged.
+- **Inference transforms:** they have no usual error mapper, so the original exception now propagates. Previously a same-class error would have been relabelled as an authored schema failure.
+
+**3. `coerce` source pointer — no code change, by design**
+The contract requires the source to be an RFC 6901 pointer (empty, or starting with `/`). The pointer parser only throws for a non-empty string without a leading slash, so that throw needs a malformed operation passed straight into the domain functions. That isn't a supported API or run case, so I didn't add a tolerant parser. The existing `target` wrapping around the source read remains as it was.
+
+**4. Boundary reference added**
+- `docs/05` has a new section, "Authored boundary identifiers", listing all 27 identifiers. They match the `fields` map in `authored-failure.ts`. Each row is tied to its handler, and the location fields actually built at each site are separated from the boundary itself.
+- The section also covers how child failures nest under `childDetails`, and which failures carry no boundary: context mutation nodes, uncompilable `coerce` schemas, and terminal file returns.
+- `docs/07` points API and MCP clients to it. I checked the code: MCP `get_run` returns the full failure, but `list_runs` summaries drop `details`.
+- `docs/05` also no longer lists `render` among the handler services, and the CHANGELOG has an Unreleased entry.
+
+## Tests added
+- **Domain `mutations.test.ts`:**
+  - Two schemas that don't compile both go to repair, and neither error mapper is called.
+  - A `MutationError` thrown during validation reaches the usual mapper and is never labelled as a field failure; with only the field-failure mapper, the original exception propagates.
+  - The contract rejects four bad source pointers, each failing on `source` only.
+  - Seven valid source shapes each copy or repair without error.
+- **Engine `mutation-failures.test.ts`:**
+  - A context-mutation node with an uncompilable schema fails with `OUTPUT_SCHEMA_MISMATCH` (resumable, no `boundary`) after exactly one repair request; same for an inference node's input transforms.
+  - With `continue-raw`, the run succeeds and writes the raw value.
+- **Mutation check:** I temporarily put the old relabelling back. The validation-throw test failed (1 failed / 25 passed), then I restored the fix.
+
+## Checks run
+| Check | Result |
+|---|---|
+| Domain `mutations.test.ts` | 26 passed (18 existing + 8 new) |
+| Engine, 4 targeted files | 140 passed |
+| Domain coverage | 492 tests; lines 98.78%, branches 95.38% |
+| Engine coverage | 2014 tests; lines 97.04%, branches 91.65% |
+| Typecheck and lint (domain, engine) | clean; domain re-run after formatting |
+| Prettier check (12 files), `git diff --check` | clean |
+
+No thresholds or exclusions were changed, and no API, provider or native app runs were made.
+
+## Limits and open items
+- The validation-throw case is only shown with a synthetic non-JSON value (a getter) in a direct domain call. I couldn't reach it through stored run data. A stack overflow from a deeply nested value against a recursive schema might be possible, but I didn't test it.
+- `authored-failure.test.ts` needed no changes.
+- I couldn't show you a final `git diff` because it isn't an allowed command. I confirmed the end state with file reads and searches instead.
+- Independent review, QA, CI and the final audit are still yours to run.

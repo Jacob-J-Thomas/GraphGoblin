@@ -1,0 +1,52 @@
+# Targeted formal review 02: #524 correction
+
+Verdict: **CHANGES REQUIRED**. The original index-mutation finding is resolved by this frozen correction. One P2 selection regression introduced by that correction remains to be fixed. This is a delta review, not another full source scan.
+
+## Frozen correction and review boundary
+
+HEAD remains `04a74c51612c5f82da61844d58a58a6796b5a323`, original comparison base `d2df8600c2c8574bec420947de686b936910b245`, original committed tree `1419c3af0468e2ae919ac0f6cf99b503a15b0c2c`. The correction is three unstaged files: `docs/10-testing-and-quality.md`, `tooling/scripts/check-qa-packet.mjs`, and its test file. Before substantive review, all six candidate source files were freshly hashed and the correction patch was saved in `FROZEN-CORRECTION.json` and `CORRECTION.patch`. The patch's SHA-256 is `dc3cd71b4b2748470a12de1e7b08d9bd7ee05636de049fa11d81e45cf2e35fc7`. Each changed file's hash matched the actual-Claude correction exit record.
+
+This review examines the previous root cause's closure and credible regressions in the new command-local Git setting and unstaged-M filter. It does not introduce an archival-attribute, manifest, or historical-renaming policy. No repository source, index, HEAD, Git configuration, external account, owner data or running product was changed by the reviewer. Only disposable fixtures and evidence artifacts were written.
+
+## Finding
+
+**[P2] Exclude Git-equivalent content when filtering unstaged paths** — `tooling/scripts/check-qa-packet.mjs:127–129`.
+
+The new `ls-files --modified` set does not fully remove the false modifications exposed by disabling `diff.autoRefreshIndex`. In a disposable repository with the project's exact `* text=auto eol=lf` attribute and `core.autocrlf=true`, a previously committed historical Markdown page rewritten from LF to CRLF has the same normalized Git blob as HEAD/index. Ordinary pre-correction `git diff --name-status` selects nothing. The corrected checker nevertheless selects that page as `UNFORMATTED` and exits 1. It therefore checks a historical page with no publishable change and asks the delivery operator to format it, violating the accepted changed-path selection scope.
+
+The executable reproduction `autocrlf-check.mjs` creates that one-page repository and runs the actual corrected CLI from the fixture's working directory with isolated Git configuration/environment. `AUTOCRLF-CONFIRMED.json` records:
+
+- normalized worktree hash and indexed blob both `1a6d5b21ef7f862ce98ec5e42aa38e1ac7f18ef6`;
+- `git diff` with automatic refresh enabled: no changed path;
+- automatic refresh disabled: `M docs/qa/historical/README.md`;
+- `ls-files --modified`: the same historical path, so the new filter retains it;
+- actual corrected CLI: one selected `UNFORMATTED` historical page, exit 1;
+- index SHA-256 unchanged across the corrected CLI: `61c70fe6d7dbf8324bedca84d90d92289aa59ba60f8ad8971df6d7f799a1e7a7`.
+
+This explains the precise limit of the author's content-comparison claim. Git's [`ls-files` implementation](https://raw.githubusercontent.com/git/git/v2.49.0/builtin/ls-files.c) calls `ie_modified`; [`ie_modified`](https://raw.githubusercontent.com/git/git/v2.49.0/read-cache.c) can return immediately for `DATA_CHANGED` with a nonzero cached size, before reaching its filesystem content comparison. That shortcut covers this LF-to-CRLF size change. The timestamp-only control has equal bytes/size and passes, but does not establish full normalized-content equivalence. The implementation comments and docs should describe the eventual behavior accurately.
+
+Disposition: **FIX-IN-PR**. It is introduced by this correction and directly violates the approved selection contract. The required outcome is byte-identical index/source data and exclusion of normalized-equivalent paths under ordinary settings and the repository's EOL attributes with autocrlf, while still selecting real committed, staged, unstaged and untracked changes. The review does not prescribe a filter algorithm. Preserve a meaningful public-command regression for this case; do not weaken the historical scope or byte-preservation assertions.
+
+## Previous finding closure
+
+`qa-diff/auto-refresh-writes-index`: **RESOLVED in this correction**. The helper applies `-c diff.autoRefreshIndex=false` per command without modifying persistent config. The strengthened deterministic stale-stat test passes. Independent normal, alternate-index, split-index and sparse-index fixture assertions passed before a fifth autocrlf assertion exposed the regression above. The standalone autocrlf actual-CLI reproduction also confirms unchanged index bytes even while selection is wrong.
+
+The regression test meaningfully forces 2020 timestamps on two unchanged historical files, including an unformatted ignored original, verifies the stat-only plumbing control sees them, and retains the exact six expected changed paths and byte comparisons. It does not relax the original failing assertion. The author correctly recognized that the flag alone creates false selection; the admitted regression is the incomplete replacement selection behavior.
+
+## Verification and evidence limits
+
+- Independent focused tests, Node v22.23.4 / Git 2.49.0.windows.1: **10/10 passed**, `FOCUSED-TESTS.log`.
+- Independent five-case diagnostic harness: its ordinary, alternate-index, split-index and sparse-index assertions completed; the fifth case failed because normalized-equivalent CRLF content still appears in `ls-files --modified`. The original failing output and executable source are retained as `CORRECTION-CONTROLS.log` and `correction-controls.mjs`. It is not reported as an all-five pass, and the in-memory snapshots from the aborted harness were not persisted.
+- Minimal actual-CLI confirmation: `autocrlf-check.mjs`, `AUTOCRLF-CONFIRMED.json`, `.log`, and the before/after binary index snapshots. This is the admitted regression evidence, not merely an assertion about a Git command.
+- `git diff --check HEAD`: passed. No new broad suite or coverage run was needed for the review; the author's module coverage/lint/format reports remain separately attributed.
+- One follow-up diagnostic CLI invocation mistakenly used the candidate working directory instead of the fixture. It is labelled and discarded in `AUTOCRLF-DIAGNOSTIC-01.json`; no finding depends on it. Final candidate source/head/index bindings are checked against the pre-review freeze.
+- These are bounded Windows fixture/source checks, not a guarantee about every fsmonitor, custom clean filter, Git version or filesystem. Independent actual-Claude QA, exact-head/current-target CI and the reserved fresh Astra MAX final review remain separate.
+
+## Root-cause ledger and remaining pass budget
+
+| Signature | Severity | Disposition | State | Evidence |
+| --- | --- | --- | --- | --- |
+| `qa-diff/auto-refresh-writes-index` | P2 | FIX-IN-PR | Resolved by frozen correction | Strengthened 10/10 public-command tests; actual CLI index snapshots |
+| `qa-diff/normalized-equivalent-size-selected` | P2 | FIX-IN-PR | Unresolved, introduced by correction | One-page actual-CLI CRLF reproduction with equal normalized blob and unchanged index |
+
+Review 2 of maximum 3 is complete. Root has accepted the new finding for the next author correction; the reserved fresh Astra MAX final pass 3 will cover that batch. No further targeted review or external issue write is requested here.

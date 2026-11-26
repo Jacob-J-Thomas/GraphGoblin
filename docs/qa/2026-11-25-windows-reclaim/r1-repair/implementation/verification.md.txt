@@ -1,0 +1,39 @@
+# R1-F1 marker read repair
+
+Issue #581 and PR #582. The starting head was `3f80820ff2982614a750cd6bd8dce488714a3752`.
+Implementation ran in the GPT-6.2 Sol high-effort fallback while the Claude subscription quota
+remained unavailable until 10:10 UTC. The parent dispatch identifies the requested fallback
+configuration. The worker context identifies the GPT-6 family.
+
+An absent marker from an enumerated guard now produces a separate observation. Acquisition
+re-observes it within the existing eight-attempt loop. If the directory survives and is empty,
+the caller removes it explicitly and credits that work. If another contender removed both
+entries, the caller publishes without crediting the guard removal. The same distinction lets
+read-only checks observe a live successor or report ownership uncertainty after eight
+consecutive disappearing-marker observations.
+
+The read-only Windows EPERM successor classifier, published guard release, primary rollback and
+private staging cleanup retain their prior behavior. The native test and recorder scripts
+remain unchanged.
+
+The two marker-read schedules use native filesystem calls to obtain ENOENT. The existing injected
+Windows EPERM read case now verifies reclamation accounting as well. Additional read-only cases
+check a live successor and exhaustion of the bounded observations. The baseline with these tests
+reported four expected failures and 81 passes. The both-entries-removed schedule passed at
+baseline and after the repair.
+
+| Run | Exit | Result |
+| --- | --- | --- |
+| `baseline-focused-02` | 1 | 4 expected failures, 81 passes |
+| `focused` | 0 | 85 passes in two files |
+| `api-typecheck` | 0 | API typecheck |
+| `changed-lint` | 0 | ESLint for the two TypeScript files |
+| `format-diff-final` | 0 | Prettier and whitespace checks |
+
+The initial baseline run also failed four checks. The second baseline allowed the mock to pass
+through any main owner read, so that the bounded observation test exposes the former free
+result directly. The final formatting check followed a prose-only edit.
+
+`commands.json` records commands and working directories. The runs used Node v22.22.2 and
+pnpm 12.8.1. Raw logs and exit files use the run names above. `source-sha256.txt` binds the
+four source files given to the parent for commit, unchanged reviewer diagnostics and review.

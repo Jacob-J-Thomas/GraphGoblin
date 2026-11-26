@@ -1,0 +1,29 @@
+# PR #571 hosted CI evidence
+
+[CI 45542221565, attempt 1](https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/45542221565) completed with all six jobs successful. The November 25, 2026 capture at 04:27 UTC shows [PR #571](https://github.com/Jacob-J-Thomas/GraphGoblin/pull/571) open, in draft and unmerged. Its head was `d312119ccbb8be2690fe719d460f31ee0a804221`, and its base matched live `main` at `631d16e39b8e9932f4763390a4166fa67eea8df3`.
+
+All five jobs that checked out source logged `ad2bab47f4d9d70a63737bb10e8b6083cb905cff` as the checked-out commit. GitHub reports that its signature is valid. The ordered parents are the captured base followed by the PR head. Both the synthetic checkout and the PR head have tree `806813008973429e85c18f343f2cbffaef9d91f9`. Gates read the successful Repository checks and Coverage outcomes.
+
+| Job | Hosted ID | Raw log |
+| --- | --- | --- |
+| Template image | 138963218351 | [template-image.raw.log](template-image.raw.log) |
+| Repository checks | 138963218641 | [repository-checks.raw.log](repository-checks.raw.log) |
+| Browser | 138963218717 | [browser.raw.log](browser.raw.log) |
+| Windows launcher | 138963218758 | [windows-launcher.raw.log](windows-launcher.raw.log) |
+| Coverage | 138963218811 | [coverage.raw.log](coverage.raw.log) |
+| Gates | 138969938874 | [gates.raw.log](gates.raw.log) |
+
+- **Template image.** The 45,990-byte log is byte-for-byte identical to the frozen QA02 image receipt and has SHA-256 `bbe322326e76e2517562354c6792751af8d7f6a4711e016f432ff7380897977e`. The checkout, Docker build and finite hosted container probe are visible in order. The probe returned ordinary value `3`, checked 250 siblings, recorded distinct depth and time refusals, and returned fresh value `1` after those refusals. The installed template load also succeeded.
+- **Coverage.** The hosted log records 10,578 tests passed and 63 skipped. All 13 workspace summaries met 90% for lines, branches, functions and statements. The lowest line coverage was 95.00% in `apps/plugin-claude`. The lowest branch coverage was 90.97% in `apps/api`. The `packages/domain` summary reported 98.77% lines and 95.38% branches. [Coverage archive](coverage.raw.zip)
+- **Browser.** The hosted Ubuntu job configured Edge with one worker, zero retries and `LIVE=0`. Playwright selected 495 cases, passed 494 and skipped the declared LIVE Codex provider case `apps/web/e2e/live.spec.ts`. The log contains no failed, flaky or retried result. The failure-only artifact upload step was skipped.
+- **Windows launcher.** The hosted Windows job reported 27 native tests passed, zero failed and zero skipped. The evidence manifest binds the run, attempt, PR head/base and synthetic checkout. The result records successful install, build and native steps. The archive contains the expected manifest, result and NDJSON. Its 338 observations match the reported count and types, including recorder open and close. The result reports valid evidence with zero rejected or omitted observations. This inspection checked receipt fields and record structure. [Windows launcher archive](windows-launcher-1.raw.zip)
+
+| Artifact | Hosted ID | SHA-256 confirmed against API and uploader log |
+| --- | --- | --- |
+| Coverage | `14990671444` | `a122c5a0aa0de48b2b0306eed3831dfe3be47f26dc57504748b8c00d0278c2af` |
+| Windows launcher | `14989069449` | `0faa387f265284e2ecbd82042c88dbd8bd9e2abe2595a0ffd7f99fe9a48127e9` |
+
+[Capture manifest](CAPTURE.json) records the precise GET route, time, byte count and SHA-256 of each of 16 raw files. [Verification record](VERIFICATION.json) contains the job and checkout bindings, per-package coverage, image probe and Windows receipt details. The first local verification incorrectly expected the recorder identifier in the closing Windows record. The maintained schema places it in the opening record. The corrected inspection verified the opening identifier and closing counts against the original downloaded bytes.
+
+Fresh independent Claude QA remains queued for the reported reset at 05:10 UTC. The fresh Astra final review remains reserved after QA. Hosted evidence was collected read-only, and no product tests were rerun.
+

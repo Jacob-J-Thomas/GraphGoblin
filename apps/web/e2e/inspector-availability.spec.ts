@@ -4,8 +4,9 @@ import { approvalLoop, control, expect, publishLoop, test, uniqueLoopName } from
 
 const STALE = 'Last observed, may be out of date';
 
-async function runStatus(request: APIRequestContext, runId: string): Promise<string> {
-  return ((await (await request.get(`/runs/${runId}`)).json()) as { status: string }).status;
+async function runStatus(request: APIRequestContext, runId: string, base = ''): Promise<string> {
+  const response = await request.get(`${base}/runs/${runId}`);
+  return ((await response.json()) as { status: string }).status;
 }
 
 test('a waiting run stays last observed through a refused API listener, sends nothing, then recovers (#416)', async ({
@@ -74,6 +75,139 @@ test('a waiting run stays last observed through a refused API listener, sends no
   await submit.click();
   await expect.poll(() => writes).toEqual([`POST /runs/${run.id}/input`]);
   await expect.poll(() => runStatus(request, run.id), { timeout: 30_000 }).toBe('succeeded');
+});
+
+test('a run read begun before the stream loses the listener cannot make the run current (#575)', async ({
+  page,
+  request,
+}) => {
+  test.setTimeout(120_000);
+  // An isolated API, so only this test's page loses its listener.
+  const instance = await control(request, '/apps');
+  const url = String(instance['url']);
+  const instanceId = String(instance['instanceId']);
+  const loopId = await publishLoop(request, approvalLoop(uniqueLoopName('Outage race')), url);
+  const started = await request.post(`${url}/loops/${loopId}/runs`, {
+    data: { triggerNodeId: 'start', input: {} },
+  });
+  expect(started.ok()).toBe(true);
+  const { run } = (await started.json()) as { run: { id: string } };
+  const status = () => runStatus(request, run.id, url);
+  await expect.poll(status, { timeout: 30_000 }).toBe('waiting');
+  const writes: string[] = [];
+  page.on('request', (sent) => {
+    const path = new URL(sent.url()).pathname;
+    if (sent.method() === 'GET' || !path.startsWith('/runs')) return;
+    writes.push(`${sent.method()} ${path}`);
+  });
+  // Once armed, the next run read is answered by the running listener at once and that answer is
+  // held from the page until released. Every run read is counted.
+  const barrier = { armed: false, answered: false, reads: 0 };
+  let release = () => {};
+  const released = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  await page.route(
+    (target) => target.pathname === `/runs/${run.id}`,
+    async (route) => {
+      if (route.request().method() === 'GET') barrier.reads += 1;
+      if (route.request().method() !== 'GET' || !barrier.armed) {
+        await route.continue();
+        return;
+      }
+      barrier.armed = false;
+      const response = await route.fetch();
+      barrier.answered = true;
+      await released;
+      await route.fulfill({ response });
+    },
+  );
+  try {
+    await page.goto(`${url}/app/runs/${run.id}`);
+    const heading = page.getByRole('heading', { name: `Run ${run.id}` });
+    const answer = page.getByLabel('Input (JSON)');
+    const submit = page.getByRole('button', { name: 'Submit input' });
+    const timeline = (status: string) =>
+      page.getByRole('heading', { name: new RegExp(`^Timeline \\(\\d+ events, ${status}\\)`) });
+    const locked = [
+      submit,
+      page.getByRole('button', { name: /Pause/ }),
+      page.getByRole('button', { name: /Cancel run/ }),
+      page.getByRole('button', { name: 'Replay...' }),
+      page.getByRole('button', { name: 'Review delete-ready history' }),
+    ];
+    // Implicit (keyboard-equivalent) submission of the answer form, then two frames.
+    const submitImplicitly = async () => {
+      await page
+        .getByRole('form', { name: 'Submit input' })
+        .evaluate((form) => (form as HTMLFormElement).requestSubmit());
+      await page.evaluate(
+        () =>
+          new Promise<void>((resolve) =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+          ),
+      );
+    };
+    await expect(heading).toBeVisible();
+    await expect(timeline('live')).toBeVisible();
+    await answer.fill('{"approved":true}');
+    await expect(submit).toBeEnabled();
+
+    // The tab becoming visible again reads the run once it is stale, as returning to it does.
+    barrier.armed = true;
+    await expect
+      .poll(
+        async () => {
+          if (!barrier.answered)
+            await page.evaluate(() => window.dispatchEvent(new Event('visibilitychange')));
+          return barrier.answered;
+        },
+        { timeout: 20_000 },
+      )
+      .toBe(true);
+    const held = barrier.reads;
+
+    await control(request, '/api/listener', { instanceId, listening: false });
+    try {
+      // The stream reports the transport loss while the earlier read is still held.
+      await expect(timeline('connecting…')).toBeVisible({ timeout: 20_000 });
+      await expect(page.getByText(STALE, { exact: true })).toBeVisible();
+      expect(await page.evaluate(() => navigator.onLine)).toBe(true);
+      await expect(heading).toBeVisible();
+      await expect(page.getByText('Input requested')).toBeVisible();
+      await expect(answer).toHaveValue('{"approved":true}');
+      for (const writer of locked) await expect(writer).toBeDisabled();
+      await submitImplicitly();
+      expect(writes).toEqual([]);
+      // The read in flight was joined rather than replaced.
+      expect(barrier.reads).toBe(held);
+
+      // The earlier read now returns its successful answer. Once it settles, the run is read
+      // again, which the stopped listener refuses; the run stays last observed.
+      release();
+      await expect.poll(() => barrier.reads, { timeout: 20_000 }).toBeGreaterThan(held);
+      await expect(page.getByText(STALE, { exact: true })).toBeVisible();
+      for (const writer of locked) await expect(writer).toBeDisabled();
+      await expect(answer).toHaveValue('{"approved":true}');
+      await submitImplicitly();
+      expect(writes).toEqual([]);
+    } finally {
+      release();
+      await control(request, '/api/listener', { instanceId, listening: true });
+    }
+
+    // Only a run read that started after the loss unlocks, keeping the typed answer.
+    await expect(page.getByText(STALE, { exact: true })).toBeHidden({ timeout: 45_000 });
+    await expect(submit).toBeEnabled();
+    await expect(answer).toHaveValue('{"approved":true}');
+    expect(writes).toEqual([]);
+    await submit.click();
+    await expect.poll(() => writes).toEqual([`POST /runs/${run.id}/input`]);
+    await expect.poll(status, { timeout: 30_000 }).toBe('succeeded');
+  } finally {
+    release();
+    await page.unrouteAll({ behavior: 'wait' });
+  }
 });
 
 /** Contract-valid events with five, six, eleven and sixteen digit sequences. */

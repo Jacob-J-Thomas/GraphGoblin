@@ -1,0 +1,11 @@
+{
+  "scope": "First read-only metadata inspection attempt; not a product test or source failure",
+  "command": ["python", "G:/ggq/delivery-evidence/2026-11-17-five-intents/mac-post-564-root-integration-independent-01/inspect.py"],
+  "exitCode": 1,
+  "exception": "FileNotFoundError",
+  "line": 98,
+  "cause": "COPY-PLAN.csv uses coverage.zip!\\member archive locators as well as ordinary filesystem paths; the first metadata reader treated an archive locator as a physical path.",
+  "retainedScript": "inspect.attempt01.py",
+  "sourceOrGitWrites": false,
+  "correction": "Read named ZIP members in memory via zipfile without extraction; preserve all object/byte assertions."
+}
