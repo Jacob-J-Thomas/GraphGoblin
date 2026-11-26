@@ -1,0 +1,427 @@
+{
+  "evidenceOrigin": "QA01 separate actual Claude native execution; source-bound re-use. This is a machine-selected receipt summary from preserved originals.",
+  "source": {
+    "head": "d2df8600c2c8574bec420947de686b936910b245",
+    "branch": "codex/gg-fu-snapshot-validation-20261124",
+    "patchSha256": "3398df229333ac5cc535fc3977afe827656650debbcca022229f9ee60a13afa6",
+    "indexSha256": "7ecb16615ab75e4b6a241afc1ba3055b4884528906943aa96b818759101a3b8e",
+    "files": {
+      "CHANGELOG.md": "c72c5769b9fd6638b8edb0487947c3d9ec2b81dbdc93efbd0685893a2bf44931",
+      "apps/api/src/routes/loops.ts": "c548cea06dfd8196f171b709a51e6a7c63a85d0107662c9f34ce1b729ed96383",
+      "apps/api/src/stored-snapshot-read.test.ts": "7834debe75ef40acf79a09a69104da31385703938aea4238d1be425b0d44a208",
+      "docs/06-harness-integration.md": "d403fd4b3eccf246a4f6c58c11795d6bbd20e556a583612adcf8d8ecfb7e0df8",
+      "docs/07-api-and-streaming.md": "c88145ffef53a488218f033f302332508880c6a3a5267919765185f3e202bdc8"
+    },
+    "correctionReceiptSha256": "505b745c1319e473d234a13ca05bb1961f739d2a7f082b1b1c7d761e81af5f27"
+  },
+  "focused": {
+    "filesPassed": 2,
+    "testsPassed": 9,
+    "testsByFile": {
+      "src/stored-snapshot-read.test.ts": 4,
+      "src/retired-event-destination.test.ts": 5
+    }
+  },
+  "build": {
+    "success": true,
+    "boundArtifacts": {
+      "apps/api/dist/routes/loops.js": "10fdea3632dc05df62c01e405e51947d700464bce6cce20da6781d27c4d1954d",
+      "apps/api/dist/testing/test-app.js": "47169aae970cd84e7b68190d9e177e65960b4c84e09125ff050358eea7810cd4",
+      "apps/web/dist/index.html": "73410a6f758f9db331febdcb49a421a55d50a99938318230d7a4537c47fec603"
+    }
+  },
+  "wireControls": {
+    "omitted": {
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "requestId": "4f4dbef6-a0bf-4d1f-8c93-279f648eef5d",
+      "body": {
+        "id": "01M3Y7RKG045PJFXC8SKP5P07N",
+        "loopId": "01M3Y7RKG045PJFXC8SKP5P07H",
+        "version": 1,
+        "status": "snapshot",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "525 immutable pinned fixture",
+          "description": "Synthetic terminal history; no provider ran.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Pinned 525 Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Pinned 525 Work",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Retain \u201csnapshot\u201d text and unicode \u96ea.  "
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never",
+                  "configOverrides": {
+                    "features.plugins": false
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Pinned 525 Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "a",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "b",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-24T09:30:00.000Z"
+      }
+    },
+    "materialized": {
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "requestId": "45eafaaf-1bbf-4e28-8c77-ce76ea20f66e",
+      "body": {
+        "id": "01M3Y7RKG045PJFXC8SKP5P07P",
+        "loopId": "01M3Y7RKG045PJFXC8SKP5P07H",
+        "version": 1,
+        "status": "snapshot",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "525 immutable pinned fixture",
+          "description": "Synthetic terminal history; no provider ran.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Pinned 525 Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Pinned 525 Work",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Retain \u201csnapshot\u201d text and unicode \u96ea.  "
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never",
+                  "configOverrides": {
+                    "features.plugins": false
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Pinned 525 Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "a",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "b",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-24T09:30:00.000Z"
+      }
+    },
+    "wrongLoop": {
+      "status": 404,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "14fc0b70-d1f8-4e44-a450-40ce0ea6d5c3",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/version-not-found",
+        "title": "version not found",
+        "status": 404,
+        "code": "VERSION_NOT_FOUND",
+        "detail": "version 01M3Y7RKG045PJFXC8SKP5P07V not found"
+      }
+    },
+    "anonymous": {
+      "status": 401,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "1cff72b5-d976-4147-8ab2-2786415cd552",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/unauthorized",
+        "title": "unauthorized",
+        "status": 401,
+        "code": "UNAUTHORIZED",
+        "detail": "an API key is required"
+      }
+    },
+    "foreign": {
+      "status": 404,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "07e4f0d3-dd32-4c61-abb3-1c1daf3f7209",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-not-found",
+        "title": "loop not found",
+        "status": 404,
+        "code": "LOOP_NOT_FOUND",
+        "detail": "loop 01M3Y7RKG045PJFXC8SKP5P07H not found"
+      }
+    },
+    "invalid": {
+      "status": 500,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "5e8867af-ed95-4c27-b5f7-506cf0a897e7",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/response-invalid",
+        "title": "response invalid",
+        "status": 500,
+        "code": "RESPONSE_INVALID",
+        "detail": "the server produced a response that does not match its schema"
+      }
+    }
+  },
+  "settingsChange": {
+    "status": 200,
+    "versionResponseUnchanged": true,
+    "omittedModelAndEffortRemainAbsent": true
+  },
+  "nativeRunReadStatus": 200,
+  "nativeFixture": {
+    "ollamaEnabled": false,
+    "providerTurns": 0,
+    "syntheticRunSeededWithoutExecution": true,
+    "final": {
+      "evidenceTier": "independent Claude QA",
+      "allHistoryRowsUnchanged": true,
+      "beforeSha256": "85fa47ecfe67454f924975298d10a4a65bc8ef03369bfdcaf52ae11314059e6d",
+      "afterSha256": "85fa47ecfe67454f924975298d10a4a65bc8ef03369bfdcaf52ae11314059e6d",
+      "immutableDefinitionBeforeSha256": "cd7b884bc30f037224791201c1e95334735d060f27018dad57284dafc8cd48b1",
+      "immutableDefinitionAfterSha256": "cd7b884bc30f037224791201c1e95334735d060f27018dad57284dafc8cd48b1",
+      "snapshotUpdateRefused": true,
+      "providerTurns": 0,
+      "requestLog": [
+        {
+          "observerRequestId": "fc2a9f4b-933f-4b83-92f7-a56d47c4b772",
+          "method": "POST",
+          "url": "/loops",
+          "status": 201
+        },
+        {
+          "observerRequestId": "23ede12d-eb73-42f2-b590-d3ebfcb93db8",
+          "method": "POST",
+          "url": "/loops",
+          "status": 201
+        },
+        {
+          "observerRequestId": "4f4dbef6-a0bf-4d1f-8c93-279f648eef5d",
+          "method": "GET",
+          "url": "/loops/01M3Y7RKG045PJFXC8SKP5P07H/versions/01M3Y7RKG045PJFXC8SKP5P07N",
+          "status": 200
+        },
+        {
+          "observerRequestId": "45eafaaf-1bbf-4e28-8c77-ce76ea20f66e",
+          "method": "GET",
+          "url": "/loops/01M3Y7RKG045PJFXC8SKP5P07H/versions/01M3Y7RKG045PJFXC8SKP5P07P",
+          "status": 200
+        },
+        {
+          "observerRequestId": "14fc0b70-d1f8-4e44-a450-40ce0ea6d5c3",
+          "method": "GET",
+          "url": "/loops/01M3Y7RKG045PJFXC8SKP5P07K/versions/01M3Y7RKG045PJFXC8SKP5P07V",
+          "status": 404
+        },
+        {
+          "observerRequestId": "1cff72b5-d976-4147-8ab2-2786415cd552",
+          "method": "GET",
+          "url": "/loops/01M3Y7RKG045PJFXC8SKP5P07H/versions/01M3Y7RKG045PJFXC8SKP5P07N",
+          "status": 401
+        },
+        {
+          "observerRequestId": "07e4f0d3-dd32-4c61-abb3-1c1daf3f7209",
+          "method": "GET",
+          "url": "/loops/01M3Y7RKG045PJFXC8SKP5P07H/versions/01M3Y7RKG045PJFXC8SKP5P07V",
+          "status": 404
+        },
+        {
+          "observerRequestId": "5e8867af-ed95-4c27-b5f7-506cf0a897e7",
+          "method": "GET",
+          "url": "/loops/01M3Y7RKG045PJFXC8SKP5P07H/versions/01M3Y7RKG045PJFXC8SKP5P07V",
+          "status": 500
+        },
+        {
+          "observerRequestId": "913c7612-b1ee-43b1-8317-e33342474048",
+          "method": "PUT",
+          "url": "/settings",
+          "status": 200
+        },
+        {
+          "observerRequestId": "5f5ed790-ab44-4c5b-bf64-86329337d173",
+          "method": "GET",
+          "url": "/loops/01M3Y7RKG045PJFXC8SKP5P07H/versions/01M3Y7RKG045PJFXC8SKP5P07N",
+          "status": 200
+        },
+        {
+          "observerRequestId": "76ce33f3-7e37-4b63-b430-98e37603bbf8",
+          "method": "GET",
+          "url": "/runs/01M3Y7RKG045PJFXC8SKP5P07Q",
+          "status": 200
+        }
+      ]
+    },
+    "closed": {
+      "finalized": true,
+      "evidenceTier": "independent Claude QA",
+      "closedAt": "2026-11-25T05:51:42.863Z"
+    }
+  },
+  "previousFailures": {
+    "nativeWrapper": "Successful receipt saved before cp1252 UnicodeEncodeError on U+2713 while printing the log tail",
+    "browserWrapper": "Named Edge executable lookup failed before actual browser creation; CLI daemon exited 1. The independently started API fixture closed normally."
+  }
+}

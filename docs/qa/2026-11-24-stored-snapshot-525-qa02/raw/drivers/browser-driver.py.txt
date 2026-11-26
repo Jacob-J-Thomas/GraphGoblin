@@ -1,0 +1,109 @@
+"""Real isolated Playwright CLI browser check over a newly seeded built product fixture."""
+from pathlib import Path
+import json,os,re,shlex,subprocess,sys,time,uuid,hashlib
+ROOT=Path(__file__).resolve().parent
+FIXTURE=ROOT.parent/'independent-qa-preparation'/'fixture.mjs'
+NODE=Path(os.environ['USERPROFILE'])/'.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node.exe'
+BASH='C:/Program Files/Git/bin/bash.exe'
+PW='C:/Users/98jak/.codex/skills/playwright/scripts/playwright_cli.sh'
+
+def main():
+ repo=Path(sys.argv[1]);out=Path(sys.argv[2]);tier=sys.argv[3];edge=Path(sys.argv[4]);assert edge.is_file();out.mkdir(exist_ok=False)
+ browserout=out/'output/playwright';browserout.mkdir(parents=True);session='gg525_'+uuid.uuid4().hex[:10]
+ env=os.environ.copy();env['PATH']=str(NODE.parent)+os.pathsep+env.get('PATH','');env['GIT_OPTIONAL_LOCKS']='0'
+ config=browserout/'cli.config.json';config.write_text(json.dumps({'browser':{'launchOptions':{'headless':True,'executablePath':str(edge)}},'outputDir':str(browserout)})+'\n',encoding='utf-8')
+ counter=0;ready={};opened=False;browser_closed=False;success=False;checks={}
+ def pw(*args,private=False):
+  nonlocal counter
+  counter+=1
+  command=shlex.join([PW,'-s='+session,*map(str,args)])
+  result=subprocess.run([BASH,'--noprofile','--norc','-c',command],cwd=browserout,env=env,capture_output=True,timeout=70,creationflags=subprocess.CREATE_NO_WINDOW)
+  data=result.stdout+result.stderr;name=f'{counter:02d}-{args[0]}'+('.private' if private else '')+'.log';(browserout/name).write_bytes(data)
+  text=data.decode('utf-8',errors='replace')
+  if result.returncode or '### Error' in text:raise RuntimeError(name+': '+text[-1600:])
+  return text
+ def snap():
+  text=pw('snapshot',private=True)
+  if '```yaml\n' in text:return text.split('```yaml\n',1)[1].split('\n```',1)[0]
+  match=re.search(r'\[Snapshot\]\((.*?)\)',text)
+  if not match:raise RuntimeError('Missing snapshot output')
+  return (browserout/match[1]).read_text(encoding='utf-8')
+ def ref(text,label,role='button'):
+  for line in text.splitlines():
+   if role+' '+json.dumps(label,ensure_ascii=False) in line:
+    match=re.search(r'\[ref=([^\]]+)\]',line)
+    if match:return match[1]
+  raise RuntimeError('No fresh ref for '+label)
+ def value(text):
+  raw=text.split('### Result\n',1)[-1].lstrip()
+  return json.JSONDecoder().raw_decode(raw)[0]
+ stdout=(out/'fixture.stdout.log').open('wb');stderr=(out/'fixture.stderr.log').open('wb')
+ worker=subprocess.Popen([str(NODE),str(FIXTURE),str(repo),str(out),'serve',tier],cwd=ROOT,env=env,stdout=stdout,stderr=stderr,creationflags=subprocess.CREATE_NO_WINDOW)
+ try:
+  limit=time.monotonic()+40
+  while not (out/'READY.private.json').exists():
+   if worker.poll() is not None:raise RuntimeError((out/'fixture.stderr.log').read_text(encoding='utf-8'))
+   if time.monotonic()>limit:raise RuntimeError('Fixture readiness deadline')
+   time.sleep(.1)
+  ready=json.loads((out/'READY.private.json').read_bytes())
+  pw('open',ready['inspectorUrl'],'--browser=msedge','--persistent','--profile='+str(out/'browser-profile'),'--config='+str(config));opened=True
+  pw('resize','1440','1100');pw('tracing-start')
+  auth=snap();pw('fill',ref(auth,'API key','textbox'),ready['token'],private=True)
+  auth=snap();pw('click',ref(auth,'Use key'))
+  rendered={};network={}
+  for label,url,version in [('omitted',ready['inspectorUrl'],ready['omittedId']),('materialized',ready['controlInspectorUrl'],ready['materializedId'])]:
+   if label!='omitted':pw('goto',url)
+   text=snap()
+   # Bounded condition observation, no timing-based claim or test retry.
+   for attempt in range(3):
+    if ready['pinnedLabel'] in text and 'Pinned 525 Work' in text:break
+    text=snap()
+   assert ready['pinnedLabel'] in text and version in text and 'Pinned 525 Work' in text,text[-3000:]
+   assert 'Pinned definition unavailable' not in text and 'Could not load run' not in text
+   (browserout/(label+'-loaded.yml')).write_text(text,encoding='utf-8')
+   pw('screenshot','--filename='+str(browserout/(label+'-overview.png')),'--full-page')
+   pw('click',ref(text,'Pinned definition JSON'))
+   expanded=snap();(browserout/(label+'-expanded.yml')).write_text(expanded,encoding='utf-8')
+   definition=value(pw('eval',"() => JSON.parse(document.querySelector('[aria-label=\"Pinned definition JSON\"]').textContent)"))
+   assert definition['nodes'][1]['config']['harness']=='codex'
+   assert 'model' not in definition['nodes'][1]['config'] and 'effort' not in definition['nodes'][1]['config']
+   assert definition['nodes'][1]['label']=='Pinned 525 Work'
+   rendered[label]=definition;(browserout/(label+'-definition.json')).write_text(json.dumps(definition,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+   pw('screenshot','--filename='+str(browserout/(label+'-definition.png')),'--full-page')
+   requests=pw('requests');(browserout/(label+'-requests.log')).write_text(requests,encoding='utf-8')
+   path=f"{ready['address']}/loops/{ready['loopId']}/versions/{version}"
+   matches=re.findall(r'(?m)^(\d+)\. \[GET\] '+re.escape(path)+r' => \[200\]',requests)
+   assert matches,'Pinned GET 200 not in actual browser request list'
+   number=matches[-1];headers=pw('response-headers',number);body=pw('response-body',number)
+   response=json.loads(body);assert response['id']==version and response['definition']==definition
+   requestid=re.search(r'(?im)^x-qa-request-id:\s*(\S+)',headers);assert requestid
+   network[label]={'requestIndex':int(number),'url':path,'status':200,'observerRequestId':requestid[1]}
+   (browserout/(label+'-version-response.json')).write_text(json.dumps(response,indent=2,ensure_ascii=False)+'\n',encoding='utf-8')
+  assert rendered['omitted']==rendered['materialized']
+  console=pw('console','error');(browserout/'console-errors.log').write_text(console,encoding='utf-8')
+  # The fresh profile intentionally exercises authentication; only its pre-auth HTTP401 resource messages are expected.
+  errors=[line for line in console.splitlines() if '[ERROR]' in line]
+  assert all('401' in line and 'Failed to load resource' in line for line in errors),errors
+  pw('tracing-stop');checks={'bothInspectorPagesRendered':True,'pinnedLabel':ready['pinnedLabel'],'threeNodeLabelsRendered':True,'pinnedDefinitionJsonCodex':True,'materializedUiEquivalent':True,'absentModelEffortPreserved':True,'network':network,'returnedConsoleErrorEntries':len(errors),'consoleScope':'current materialized page; prior authentication/navigation logs retained separately','profileOwned':True,'session':session,'browserChannel':'msedge','evidenceTier':tier};success=True
+ finally:
+  if opened:
+   try:pw('close');browser_closed=True
+   except Exception as exc:checks['browserCleanupError']=str(exc);success=False
+  (out/'FINALIZE.request').write_text(tier+' browser wrapper finished\n',encoding='utf-8')
+  try:worker.wait(timeout=18)
+  except subprocess.TimeoutExpired:worker.kill();worker.wait();checks['fixtureForcedCleanup']=True;success=False
+  stdout.close();stderr.close()
+  if worker.returncode!=0:success=False
+  final=json.loads((out/'FINAL.json').read_bytes()) if (out/'FINAL.json').exists() else None
+  closed_path=out/'CLOSED.json'
+  closed=json.loads(closed_path.read_bytes()) if closed_path.exists() else None
+  checks.update(fixtureFinal=final,fixtureClosed=closed,fixtureExitCode=worker.returncode,browserOpened=opened,browserClosed=browser_closed,success=success)
+  if final:
+   assert final['allHistoryRowsUnchanged'] and final['snapshotUpdateRefused'] and final['providerTurns']==0
+   ids={x['observerRequestId'] for x in final['requestLog']}
+   assert all(x['observerRequestId'] in ids for x in checks.get('network',{}).values())
+  else:checks['success']=False
+  (out/'BROWSER-RESULT.json').write_text(json.dumps(checks,indent=2)+'\n',encoding='utf-8')
+ if not checks['success']:raise RuntimeError('Browser/fixture check or cleanup failed; retain receipts')
+ print(json.dumps({k:v for k,v in checks.items() if k!='fixtureFinal'}));return 0
+if __name__=='__main__':sys.exit(main())

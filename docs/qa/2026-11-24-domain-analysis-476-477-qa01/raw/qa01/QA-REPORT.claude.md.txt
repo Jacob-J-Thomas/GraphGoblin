@@ -1,0 +1,58 @@
+I found no product defects: **#476 passes, #477 passes, and both API scenarios pass.** All three commands exited 0 on the frozen patch, and the source was unchanged before and after each run. There are limits on what I could see, listed at the end.
+
+## Command outcomes and integrity
+
+| Check | Time (UTC) | Exit | Result | stderr |
+|---|---|---|---|---|
+| domain | 05:56:13–05:56:16 | 0 | 5 files, 116/116 passed, none skipped | 152 bytes, not read |
+| store | 05:56:21–05:57:01 | 0 | 4 files, 34/34 passed | 184 bytes, not read |
+| api | 05:57:01.6–05:57:05.8 | 0 | 2/2 scenarios, all checks passed | 0 bytes |
+
+- **Patch:** each run reported `dd0f9f6b5df075bbcbc914a1982968e6aeb9677b8c456d21bb7f804841766345` (matches the frozen hash) and `sourceUnchanged: true`. The wrapper only shows the patch hash and that pass/fail flag. I didn't see the separate changed-file or index hashes.
+- **Output log hashes:** domain `1356a12225503a4a99da0434ee4e6fef406ef96f21138173a0722225614361dc`, store `bde5577c36db8eed037a0e88ef82fa58369ec4067e164f78388a2bff4d6d5882`, api `a75af8ec36699ba3c4513a8bdf53cf7e52e6f63b45cf037dbec7ab4551d225d6`.
+- I sent the store and api commands together, but the timestamps show they ran one after the other.
+
+## #476: PASS
+
+These test names appear in the output and passed:
+- **No-op or refused rename:** "returns no counts for a no-op or a refused rename", "returns refusal without mutating invalid identity…", and in the store, "refuses ids the domain refuses, changing nothing".
+- **Sources only and connections only:** "counts sources, connections and edge ends separately for" each of: no source or connection, connections only, sources only. "Connections only" is the endpoint-only case.
+- **Self-edge:** "…for a self-edge only" and "counts a repeat self-edge as one connection with two ends, and each rewritten span once".
+- **Mixed repairs:** "…for sources, connections and a self-edge".
+- **Store #476 test:** "reports the repaired sources and each connection once, a repeat self-edge included (#476)". Per the supplied excerpt, the notice shows 4 connections and 2 references. The domain counts are sources 2, connections 4, endpoints 5, and the notice uses connections, not endpoints.
+- **Notices:** both RenameNotice tests, plus the editor tests "says nothing more than before for a rename that only moves connections" and "…reports it above the canvas".
+- **Warnings:** "reports only the expected dynamic warning" and "reports scripts and generated patches it cannot read without a location".
+- **Undo/redo:** "undoes and redoes every repaired source, edge end, held text and the selection", "keeps the report through later edits and their undo…" and "saves the whole rename once with If-Match, mirrors it, and saves its undo and redo".
+
+**Where these ran:** `store.rename.test.ts` tests the store logic alone. The RenameNotice and EditorPage tests render components in Vitest's simulated page, and their pointer presses are simulated events. Nothing ran in a real browser.
+
+## #477: PASS
+
+**Syntax tests:** `syntax.test.ts` was part of the domain run, which passed every test with none skipped, so every test in that file passed. However, the displayed output listed only `node-references.test.ts` test names. I therefore didn't see the names of the tests for chosen and invalid discriminants, nested paths, invalid siblings and cache reuse. Their content comes from the supplied excerpt, which I didn't check against the frozen file. The raw `domain.stdout.log` should list them.
+
+**API scenarios:**
+
+| Scenario | Status | Diagnostic from the actual run |
+|---|---|---|
+| template | **PASS** | `TEMPLATE_INVALID`, error, no nodeId, path `settings.workingDirectory.template`, message `template at loop settings workingDirectory.template: tag "endif" not found, line:1, col:1` |
+| expression | **PASS** | `EXPRESSION_INVALID`, error, nodeId `done`, path `config.returns`, message `expression at node "done" returns: expression failed to compile: Unexpected end of expression` |
+
+In both scenarios, these checks passed:
+1. Create returned 201 and the first publish returned 200.
+2. Saving the invalid draft returned 200.
+3. Validate returned 200 with `publishable: false`.
+4. Publish was refused with 422 `LOOP_INVALID`.
+5. The only published version was still the first one, and a draft existed.
+6. After saving the corrected draft, publish returned 200 with the next version number.
+
+**Where the diagnostic comes from:** the printed diagnostic is what the production `validateLoop` returned when the driver called it directly. The driver then required that exact object to appear once in the save issues, the validate issues and the 422 errors. So the API's code, path and message match the domain's exactly. The API response bodies weren't printed; the match was checked, not shown.
+
+**Test setup:** requests went through `app.inject` against `createTestApp`, with an in-memory database, fake providers, timers off and no listening server. No inference ran.
+
+## Limits
+- **Ollama check:** the driver's Ollama-disabled check only runs if `container.config` exists. A pass means either Ollama was off or the check was skipped; I can't tell which. `createTestApp` sets `GG_OLLAMA_ENABLED=false` either way.
+- **Old published version:** "intact" was checked by version id and status only. The stored definition wasn't compared.
+- **Driver file:** the wrapper doesn't hash `publish-diagnostics.mts`. The output matches the supplied driver, but I couldn't read the file to confirm it's the same.
+- **stderr:** I couldn't read the domain and store stderr logs (152 and 184 bytes). Both runs still exited 0.
+- **Undo/redo design point:** the #476 test expects the rename notice to stay cleared after redo. The test intends this, so it isn't a finding, but a reviewer may want to confirm it's the desired behaviour.
+- **Not covered here:** full coverage, typecheck, lint, CI, the wider API suites, a real browser run and the final Astra MAX review.

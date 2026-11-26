@@ -1,0 +1,47 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90mG:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/apps/api[39m
+
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mreads the connection and delegates exactly one explicit refresh[32m 255[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mreturns a saved connection even when its immediate discovery failed[32m 7[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {} before the service[32m 5[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":true} before the service[32m 4[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":"true","baseUrl":"http://localhost:11434"} before the service[32m 3[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":true,"baseUrl":"http://user:secret@localhost:11434"} before the service[32m 3[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":true,"baseUrl":"http://localhost:11434/api"} before the service[32m 6[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":true,"baseUrl":"http://localhost:11434?token=secret"} before the service[32m 5[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":true,"baseUrl":"http://localhost:11434#token"} before the service[32m 5[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":true,"baseUrl":"file:///tmp/model"} before the service[32m 3[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses invalid connection {"enabled":true,"baseUrl":"http://localhost:11434","ownerId":"other"} before the service[32m 3[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses a refresh outside the configured Ollama connection: {}[32m 3[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses a refresh outside the configured Ollama connection: {"harness":"codex"}[32m 2[2mms[22m[39m
+ [32m✓[39m src/routes/ollama.test.ts[2m > [22mOllama connection and discovery routes[2m > [22mrefuses a refresh outside the configured Ollama connection: {"harness":"ollama","baseUrl":"https://other.test"}[32m 2[2mms[22m[39m
+ [32m✓[39m src/plugins/request-validation.test.ts[2m > [22mencodes literal containing keys, array indexes and unknown members from structured paths[32m 231[2mms[22m[39m
+ [32m✓[39m src/plugins/request-validation.test.ts[2m > [22mkeeps ordinary and root diagnostics and the parsed success value without duplicate validation[32m 8[2mms[22m[39m
+ [32m✓[39m src/plugins/request-validation.test.ts[2m > [22mdoes not classify unrelated or empty errors as owned request-schema errors[32m 0[2mms[22m[39m
+ [32m✓[39m src/plugins/request-validation.test.ts[2m > [22mbuilds instance and schema paths from the same literal segments[32m 1[2mms[22m[39m
+ [32m✓[39m src/plugins/request-validation.test.ts[2m > [22mkeeps response serialization failures separate from request validation[32m 6[2mms[22m[39m
+ [32m✓[39m src/loop-definition.test.ts[2m > [22mcanonical loop definition inputs[2m > [22mreports each unknown root key with its own escaped pointer and message[33m 1500[2mms[22m[39m
+ [32m✓[39m src/validation-paths.test.ts[2m > [22mliteral authored member paths (#429 F1)[2m > [22mencodes slash in create, save and validate errors[33m 1582[2mms[22m[39m
+ [32m✓[39m src/loop-definition.test.ts[2m > [22mcanonical loop definition inputs[2m > [22mreports each unknown nested key with its own escaped pointer and message[32m 186[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mstops at an abandoned before handler boundary[32m 12[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mstops at an abandoned ownership boundary[32m 7[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mstops at an abandoned initial boundary[32m 6[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mstops at an abandoned checkpoint boundary[32m 6[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mstops at an abandoned boundary boundary[32m 6[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mstops after an abandoned page while unrelated health and current reads complete[32m 23[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mhandles the same connected read rejection[32m 5[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mhandles the same abandoned read rejection[32m 5[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mcompletes bodyless requests and reuses the connection after a full historical response[32m 24[2mms[22m[39m
+ [32m✓[39m src/routes/thread-disconnect.test.ts[2m > [22mhistorical thread response lifetime[2m > [22mpreserves missing-thread, validation and authorization errors[32m 17[2mms[22m[39m
+ [32m✓[39m src/validation-paths.test.ts[2m > [22mliteral authored member paths (#429 F1)[2m > [22mencodes literal tilde escape text in create, save and validate errors[32m 175[2mms[22m[39m
+ [32m✓[39m src/validation-paths.test.ts[2m > [22mliteral authored member paths (#429 F1)[2m > [22mencodes nested array member in create, save and validate errors[32m 158[2mms[22m[39m
+ [32m✓[39m src/loop-definition.test.ts[2m > [22mcanonical loop definition inputs[2m > [22mreturns ordered literal pointers in the validation problem and accepts valid input[32m 165[2mms[22m[39m
+ [32m✓[39m src/loop-definition.test.ts[2m > [22mcanonical loop definition inputs[2m > [22mrejects an unsupported inference harness with its node path[32m 171[2mms[22m[39m
+ [32m✓[39m src/loop-definition.test.ts[2m > [22mcanonical loop definition inputs[2m > [22mrejects a removed loop-default field valued codex everywhere[32m 130[2mms[22m[39m
+ [32m✓[39m src/loop-definition.test.ts[2m > [22mcanonical loop definition inputs[2m > [22mrejects a removed loop-default field valued wrong everywhere[32m 139[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[32m38 passed[39m[22m[90m (38)[39m
+[2m   Start at [22m 00:13:12
+[2m   Duration [22m 7.43s[2m (import 51%, tests 26%, transform 22%, setup 1%)[22m
+

@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict';
+import {createHash,randomUUID} from 'node:crypto';
+import {mkdir,readFile,writeFile,access} from 'node:fs/promises';
+import {join,resolve} from 'node:path';
+import {pathToFileURL} from 'node:url';
+const [repoArg,outArg,mode='native',evidenceTier='preparation']=process.argv.slice(2);
+const repo=resolve(repoArg),out=resolve(outArg);await mkdir(out,{recursive:true});
+const load=p=>import(pathToFileURL(join(repo,p)).href);
+const {createTestApp}=await load('apps/api/dist/testing/test-app.js');
+const {LoopDefinitionSchema,RunRecordSchema,InvocationSchema}=await load('packages/contracts/dist/index.js');
+const {createInitialThread}=await load('packages/engine/dist/index.js');
+const {guardCurrentStore}=await load('packages/infrastructure/dist/sqlite/index.js');
+const sha=value=>createHash('sha256').update(typeof value==='string'?value:JSON.stringify(value)).digest('hex');
+const save=(name,value)=>writeFile(join(out,name),JSON.stringify(value,null,2)+'\n');
+assert.equal(await access(join(out,'fixture.db')).then(()=>true,()=>false),false,'Fixture database must be fresh');
+const t=await createTestApp({requireApiKey:true,env:{GG_DB_URL:'file:'+join(out,'fixture.db').replaceAll('\\','/'),GG_WEB_DIST:join(repo,'apps/web/dist'),GG_GOBLIN_DIST:'',GG_OLLAMA_ENABLED:'false',GG_DEFAULTS:JSON.stringify({byHarness:{codex:{model:'gpt-6-luna',effort:'low'}}})}});
+let finalized=false;const requestLog=[];
+try{
+ assert.equal(t.container.config.ollamaEnabled,false);
+ t.app.server.prependListener('request',(request,response)=>{const id=randomUUID();response.setHeader('X-QA-Request-Id',id);response.once('finish',()=>requestLog.push({observerRequestId:id,method:request.method,url:request.url,status:response.statusCode}));});
+ const address=await t.app.listen({host:'127.0.0.1',port:0});const port=Number(new URL(address).port);assert(![4747,4748,7443,11434].includes(port));
+ const owner=(await t.container.repos.apiKeys.create('local','synthetic525',['*'])).token;
+ const foreign=(await t.container.repos.apiKeys.create('foreign525','synthetic525foreign',['*'])).token;
+ const request=async(path,options={})=>{const token=options.token===undefined?owner:options.token;const response=await fetch(address+path,{method:options.method??'GET',headers:{...(token?{authorization:'Bearer '+token}:{}),...(options.body===undefined?{}:{'content-type':'application/json'})},...(options.body===undefined?{}:{body:JSON.stringify(options.body)})});return {status:response.status,contentType:response.headers.get('content-type'),requestId:response.headers.get('x-qa-request-id'),body:await response.json()};};
+ const input={schemaVersion:4,name:'525 immutable pinned fixture',description:'Synthetic terminal history; no provider ran.',nodes:[{id:'start',kind:'trigger',label:'Pinned 525 Start',config:{type:'manual'}},{id:'work',kind:'inference',label:'Pinned 525 Work',config:{prompt:{template:'Retain “snapshot” text and unicode 雪.  '},harnessOptions:{configOverrides:{'features.plugins':false}},timeoutSeconds:120}},{id:'done',kind:'exit',label:'Pinned 525 Done',config:{returns:'none'}}],edges:[{id:'a',from:{node:'start',port:'out'},to:{node:'work'}},{id:'b',from:{node:'work',port:'out'},to:{node:'done'}}]};
+ const created=await request('/loops',{method:'POST',body:{definition:input}});assert.equal(created.status,201,JSON.stringify(created));
+ const {loop,draft}=created.body;const materialized=draft.definition;
+ const other=await request('/loops',{method:'POST',body:{definition:{...input,name:'525 other loop'}}});assert.equal(other.status,201);
+ const client=t.container.handle.client;
+ async function insert(definition){const id=t.container.ports.ids.next();await client.execute({sql:'INSERT INTO loop_versions (id,loop_id,version,status,definition,created_at) VALUES (?,?,?,\'snapshot\',?,?)',args:[id,loop.id,draft.version,definition,'2026-11-24T09:30:00.000Z']});return id;}
+ const omitted=structuredClone(materialized);delete omitted.nodes[1].config.harness;
+ const omittedText=JSON.stringify(omitted,null,2)+'\n';const materializedText=JSON.stringify(materialized,null,2)+'\n';
+ assert.equal(LoopDefinitionSchema.safeParse(omitted).success,true);
+ const omittedId=await insert(omittedText),materializedId=await insert(materializedText);
+ async function seedRun(versionId){const id=t.container.ports.ids.next(),invocationId=t.container.ports.ids.next(),at='2026-11-24T10:00:00.000Z';const invocation=InvocationSchema.parse({id:invocationId,source:'manual.api',trigger:{nodeId:'start',kind:'manual',payload:null,receivedAt:at},returnDefaults:[{kind:'caller'}]});const initial=createInitialThread({runId:id,loopId:loop.id,versionId,invocation});const pinned={source:'draft',version:draft.version,name:materialized.name,label:materialized.name+' draft v'+draft.version,defaults:{owner:{byHarness:{}},process:{byHarness:{}}},limits:materialized.settings,classifiers:{}};pinned.limits={maxNodeVisits:10,runDeadlineSeconds:null,structuredTimeoutMs:null};const run=RunRecordSchema.parse({id,ownerId:'local',loopId:loop.id,versionId,pinned,invocationId,status:'succeeded',currentNodeId:'done',iteration:1,outcome:'success',result:null,createdAt:at,startedAt:at,finishedAt:at,finalizedAt:at,lastEventSeq:9});await t.container.repos.runs.create(run,initial);const events=[{type:'run.queued',versionId,pinned,initialThread:initial},{type:'run.started',attempt:1}];for(const node of materialized.nodes)events.push({type:'node.started',nodeId:node.id,kind:node.kind,attempt:1,configHash:'synthetic525'},{type:'node.finished',nodeId:node.id,patch:[],durationMs:1});events.push({type:'run.finished',status:'succeeded',outcome:'success',result:null});await t.container.repos.events.append(id,events);await client.execute({sql:'UPDATE runs SET finalized_at=?,last_event_seq=? WHERE id=?',args:[at,events.length,id]});return id;}
+ const omittedRunId=await seedRun(omittedId),materializedRunId=await seedRun(materializedId);
+ assert.equal(await guardCurrentStore(client),'current');
+ const invalid=structuredClone(materialized);invalid.nodes[1].config.harnessOptions.configOverrides={'recovery.bad key':true};assert.equal(LoopDefinitionSchema.safeParse(invalid).success,false);const invalidId=await insert(JSON.stringify(invalid));
+ const rows=async(table)=>(await client.execute('SELECT * FROM '+table+' ORDER BY rowid')).rows.map(r=>Object.fromEntries(Object.keys(r).filter(k=>!/^\d+$/.test(k)).map(k=>[k,r[k]])));
+ const state=async()=>Object.fromEntries(await Promise.all(['loops','loop_versions','runs','run_events','schedules','webhook_endpoints','inbound_events','webhook_receipts','event_receipts'].map(async x=>[x,await rows(x)])));
+ const before=await state();await save('STORE-BEFORE.json',before);
+ const controls={omitted:await request(`/loops/${loop.id}/versions/${omittedId}`),materialized:await request(`/loops/${loop.id}/versions/${materializedId}`),wrongLoop:await request(`/loops/${other.body.loop.id}/versions/${invalidId}`),anonymous:await request(`/loops/${loop.id}/versions/${omittedId}`,{token:null}),foreign:await request(`/loops/${loop.id}/versions/${invalidId}`,{token:foreign}),invalid:await request(`/loops/${loop.id}/versions/${invalidId}`)};
+ assert.equal(controls.omitted.status,200);assert.deepEqual(controls.omitted.body,{id:omittedId,loopId:loop.id,version:draft.version,status:'snapshot',definition:materialized,createdAt:'2026-11-24T09:30:00.000Z'});assert.deepEqual(controls.materialized.body,{id:materializedId,loopId:loop.id,version:draft.version,status:'snapshot',definition:materialized,createdAt:'2026-11-24T09:30:00.000Z'});assert.equal(controls.materialized.status,200);assert.deepEqual(controls.omitted.body.definition,materialized);assert.deepEqual(controls.omitted.body.definition,controls.materialized.body.definition);assert.equal(controls.wrongLoop.status,404);assert.equal(controls.wrongLoop.body.code,'VERSION_NOT_FOUND');assert.equal(controls.anonymous.status,401);assert.equal(controls.foreign.status,404);assert.equal(controls.foreign.body.code,'LOOP_NOT_FOUND');assert.equal(controls.invalid.status,500);assert.deepEqual(controls.invalid.body,{type:'https://graphgoblin.dev/problems/response-invalid',title:'response invalid',status:500,code:'RESPONSE_INVALID',detail:'the server produced a response that does not match its schema'});assert(!JSON.stringify(controls.invalid).includes('recovery.bad key'));
+ const settings=await request('/settings',{method:'PUT',body:{defaults:{byHarness:{codex:{model:'gpt-6-sol',effort:'high'}}}}});assert.equal(settings.status,200,JSON.stringify(settings));
+ const afterSettings=await request(`/loops/${loop.id}/versions/${omittedId}`);assert.deepEqual(afterSettings.body,controls.omitted.body);assert.equal(afterSettings.body.definition.nodes[1].config.harness,'codex');assert.equal(afterSettings.body.definition.nodes[1].config.model,undefined);assert.equal(afterSettings.body.definition.nodes[1].config.effort,undefined);
+ await save('HTTP-CONTROLS.json',{evidenceTier,syntheticRunSeededWithoutExecution:true,controls,settingsChange:{status:settings.status,versionResponseUnchanged:true,omittedModelAndEffortRemainAbsent:true},run:await request(`/runs/${omittedRunId}`),ollamaEnabled:t.container.config.ollamaEnabled,providerTurns:t.harness.started.length});
+ assert.equal(t.harness.started.length,0);
+ const ready={evidenceTier,address,port,token:owner,loopId:loop.id,omittedId,materializedId,invalidId,omittedRunId,materializedRunId,inspectorUrl:address+'/app/runs/'+omittedRunId,controlInspectorUrl:address+'/app/runs/'+materializedRunId,pinnedLabel:materialized.name+' draft v'+draft.version};await save('READY.private.json',ready);
+ if(mode==='serve'){
+  const deadline=Date.now()+12*60*1000;
+  while(Date.now()<deadline){if(await access(join(out,'FINALIZE.request')).then(()=>true,()=>false))break;await new Promise(r=>setTimeout(r,100));}
+  assert(Date.now()<deadline,'Fixture lifetime exhausted before finalize request');
+ }
+ const after=await state();assert.deepEqual(after,before);await save('STORE-AFTER.json',after);
+ const raw=(await client.execute({sql:'SELECT definition FROM loop_versions WHERE id=?',args:[omittedId]})).rows[0].definition;assert.equal(raw,omittedText);
+ let immutable=false;try{await client.execute({sql:'UPDATE loop_versions SET definition=? WHERE id=?',args:[omittedText,omittedId]});}catch(error){immutable=String(error).includes('LOOP_VERSION_SNAPSHOT_IMMUTABLE');}assert(immutable);
+ await save('FINAL.json',{evidenceTier,allHistoryRowsUnchanged:true,beforeSha256:sha(before),afterSha256:sha(after),immutableDefinitionBeforeSha256:sha(omittedText),immutableDefinitionAfterSha256:sha(raw),snapshotUpdateRefused:immutable,providerTurns:t.harness.started.length,requestLog});finalized=true;
+ console.log(JSON.stringify({ok:true,evidenceTier,mode,port,omittedRunId,materializedRunId,historyUnchanged:true,providerTurns:0}));
+}finally{await t.close();await save('CLOSED.json',{finalized,evidenceTier,closedAt:new Date().toISOString()});}

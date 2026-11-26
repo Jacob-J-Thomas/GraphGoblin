@@ -1,0 +1,56 @@
+# PASS
+
+The prior native evidence and this browser run both pass for #525 QA02. I made no edits, ran only the one wrapper command once, and read only the native receipt and the four PNGs.
+
+## Prior native evidence (from the earlier independent QA01 run, not re-run here)
+Taken from `RETAINED-NATIVE.json`. Its hash was checked against the contract before and after my run, and it is bound to head `d2df860…` with the matching patch, index and file hashes.
+- **Focused tests:** 9/9 passed across 2 files (`stored-snapshot-read` 4, `retired-event-destination` 5). The build succeeded with three bound artifacts.
+- **Equivalent snapshots:** the omitted and materialized version GETs both returned 200 with identical definitions. Each shows `harness: "codex"`, no `model` or `effort`, and empty `settings.defaults.byHarness`.
+- **Error checks:**
+  - Wrong loop: 404 `VERSION_NOT_FOUND`
+  - No key: 401 `UNAUTHORIZED`
+  - Foreign owner: 404 `LOOP_NOT_FOUND`
+  - Invalid stored row: 500 `RESPONSE_INVALID` with a generic message that does not leak the bad key
+- **Settings invariance:** `PUT /settings` returned 200. The version response was unchanged afterwards and `model`/`effort` stayed absent.
+- **History preservation:** the stored-history hash was identical before and after (`85fa47ec…`). The stored definition hash was also identical (`cd7b884b…`), and the attempt to update it was refused as immutable.
+- **Fixture:** Ollama was disabled, no provider ran, the request log had 11 entries, and the fixture closed cleanly.
+
+## New browser run (this session)
+The wrapper printed `success: true` and `sourceAndIndexUnchanged: true`. Its success check means all of the following passed:
+- The candidate, build hashes and installed Edge hash were the same before and after.
+- A browser opened and then closed.
+- The fixture exited 0 and closed cleanly.
+- The driver's own result file reported success.
+- All four PNGs were valid.
+
+The driver code only reports success if these hold:
+- Each page's actual browser request list contains `GET …/versions/{id} => [200]`.
+- That response body's `id` matches, and its `definition` equals the JSON read from the page.
+- The response has an `X-QA-Request-Id`, and that ID appears in the fixture's request log.
+- The fresh fixture's history is unchanged, the immutable update was refused, and no provider ran.
+- The two pages show the same definition.
+- The only console errors on the last page are expected 401s from before sign-in.
+
+I did not open `BROWSER-RESULT.json`, so I can't quote the specific request numbers or IDs. That binding is inferred from the success result plus the driver code. The fresh fixture also re-ran the same HTTP checks during setup, but I didn't read that output.
+
+## What the four screenshots show
+- **Overviews:** both runs show "succeeded", "Fully finalized", Resume unavailable and "History retained".
+  - Both are labelled "525 immutable pinned fixture draft v1".
+  - The omitted run is `…J9K4F4` with version `…J9K4F2`; the materialized run is `…J9K4F6` with version `…J9K4F3`.
+  - Both show a complete 9-event timeline from `run.queued` to `run.finished`, with Pinned 525 Start/Work/Done labels. Apart from the IDs, the pages look identical.
+- **Definition views:** the expanded JSON is readable and visually identical on both. The work node shows `"harness": "codex"` with no `model` or `effort`, and the defaults are `{}`.
+
+## Limits
+- The run histories were seeded without running a provider.
+- `X-QA-Request-Id` is a header added by the test fixture, not a product feature.
+- This was one fresh local fixture, using a new headless Edge profile at a pinned, hash-checked path.
+- The definition screenshots were shrunk to about 55% for viewing. The 雪 character isn't legible at that size; exact text equality comes from the driver's comparison, not the images.
+- The console check covered only the last page. I did not inspect leftover processes beyond the reported closures.
+- Both pages show "Withdraw delete-ready mark / 1 selected" even though nothing marked the runs. The store was unchanged, and this UI is outside #525, so I didn't assess it.
+
+## The two earlier QA01 failures
+1. **Native run:** the receipt was saved, then printing a ✓ (U+2713) failed with a cp1252 Unicode error.
+2. **Browser run:** Playwright's Edge lookup failed before any browser started, and its helper process exited 1. The fixture closed normally.
+
+## Still open
+Current-target CI, the reserved final review and any applicable owner gates. There was no publication, issue action or delegation.

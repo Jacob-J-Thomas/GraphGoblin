@@ -1,0 +1,41 @@
+{
+  "at": "2026-11-25T06:46:40.985195+00:00",
+  "decision": "FUP-048",
+  "scope": "Accept the actual executed #523 scoped QA with explicit limits; no new test, source change or formal review.",
+  "candidate": {
+    "head": "d2df8600c2c8574bec420947de686b936910b245",
+    "branch": "codex/gg-fu-validation-pointers-20261124",
+    "indexSha256": "dad35a38e59bc5f44afcc143faedc81f9df1eec96d6d6247b218d2887a55a0b9",
+    "patchSha256": "5e99ea4ff8b8651f09bdcb8c7996b54d475f656088f1e2537d03563d6beea2ef",
+    "workingTreeDiffSha256": "73510b82fbfb85bbcd779f874965d9d7fb88e8b6bc6e3b60dbd97d22e6b5a842",
+    "stagedPaths": [],
+    "untrackedPaths": [],
+    "changedFilesSha256": {
+      "apps/api/src/loop-definition.test.ts": "aa716d8f8e9b57184b2363cc6dcb5735893a5987db27a46d8fc0804b7bc6d443",
+      "apps/api/src/plugins/errors.ts": "4314905e620414dabe90d8bdce949429bf7a175d9c66d375f4ca309727f9451a",
+      "apps/api/src/plugins/request-validation.test.ts": "8547c83b80d01e4d4b02d6677a80a0c93dd2939e5b06da899d267c8cc0c3516e",
+      "apps/api/src/plugins/request-validation.ts": "8b7a02a206ad43c67fb77b82583acd6029e697f4d1c9a7d0dfbbb76f999eaec9",
+      "apps/api/src/routes/ollama.test.ts": "4a0d89fffee7d58b5575f612ad346883b61d2010ddff9fdee25aa232298dc6e9",
+      "apps/api/src/routes/thread-disconnect.test.ts": "f42a461983e38b95d64dd8abcfd15db10b04432a5c04e7f20ff3e3c8ed4b11bf"
+    },
+    "driverSha256": "ccd80e4d55b5d71c72c26cafd8556e41c9927b750fcb61d2603cb0e10677049f"
+  },
+  "providerSessionId": "c700e0ae-b06e-4b62-a6ee-f846ca3eacfa",
+  "twoReceiptsAndFourRawStreamsRecomputed": {
+    "FOCUSED-RESULT.json": "c4d0ad00c458d44850f0231db8d0a4048693549e04c0e935259dc57ab57ba7f3",
+    "focused.stdout.log": "36acc19040bab8aa8c815739d4c6f27545ffe7154bffa2d94627689962f5bfbe",
+    "focused.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "HTTP-RESULT.json": "f21dfa876ba8d4e8394abb4f20c3ce4c280400c228e1958de13b904b61cfe9b1",
+    "http.stdout.log": "3dab6755985a1fb21fe139e4f0c4b78eae9e695858ad3964f6aa3649dffba915",
+    "http.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "sourceDriverAndBeforeAfterIndexVerified": true,
+  "rawPublicHttpResultSha256": "af9b649287b69840ac21e2307dca95844cf1df086b43aaa4479721e890cf3380",
+  "observations": {
+    "rootSlashConvention": "Present in unchanged base validator and preserved by this patch; root and empty-named root member share slash. Existing API convention is not universally RFC6901 document-root semantics.",
+    "hypotheticalNestedEmptyRoot": "Source-level limitation is plausible but no exposed production route was established. The two directly declared root-record bodies inspected accept unknown or generic JSON values, not strict object values. This is a bounded reachability inspection, not an exhaustive schema proof. Do not claim the hypothetical route fixed or reproduced.",
+    "malformedBody": "Root read the recorded exact body: no private malformed sentinel was echoed. This supplements the executed driver assertions; no test rerun.",
+    "scopeLimits": "HTTP24 cases, 38 focused tests. Multi-error order only in-process; serializer rejection on a separate controlled app. No hosted CI, coverage or final audit inference."
+  },
+  "next": "Curate raw evidence plus original actual Claude report and this qualification. Keep root-path convention visible in owner/API consistency review; no additional product change admitted absent a supported requirement or route."
+}
