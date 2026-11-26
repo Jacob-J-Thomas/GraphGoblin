@@ -217,9 +217,11 @@ const PROBE_LEFT = 'Codex readiness check could not remove its temporary folder.
 
 /**
  * Version/help/login only: no prompt, session, or provider model request. Each check has settled
- * before the next starts, so the probe directory's one removal follows the last check's close, or
- * its spent cleanup allowance. A failed cleanup adds its own problem after the check's own, which
- * keeps its state; a check that passed becomes `unknown`. The removal is not retried.
+ * before the next starts, so the probe directory's one removal follows the last check's close; it
+ * is not retried. A check that did not confirm that it stopped may still be running with the probe
+ * directory as its working directory, so the directory is left in place and no removal is
+ * attempted. Either cleanup failure adds its own problem after the check's own, which keeps its
+ * state; a check that passed becomes `unknown`.
  */
 export async function preflightCli(
   cli: CliCommand | undefined,
@@ -240,17 +242,22 @@ export async function preflightCli(
   } catch {
     result = readinessFailure('codex', 'unknown');
   }
-  const cleanup = notStopped ? [CHECK_NOT_STOPPED] : [];
-  try {
-    await rm(cwd, { recursive: true, force: true });
-  } catch {
-    // Leave the disposable directory; another attempt cannot outwait a process still holding it.
-    cleanup.push(PROBE_LEFT);
-  }
+  const cleanup = notStopped ? [CHECK_NOT_STOPPED] : await removeProbe(cwd);
   if (!cleanup.length) return result;
   const problems = cleanup.map((detail) => readinessMessage('codex', 'unknown', detail));
   if (result.state === 'ready') return { state: 'unknown', ok: false, problems };
   return { ...result, problems: [...result.problems, ...problems] };
+}
+
+/** The probe directory's one removal, after its checks have closed: its cleanup problem, if any. */
+async function removeProbe(directory: string): Promise<string[]> {
+  try {
+    await rm(directory, { recursive: true, force: true });
+    return [];
+  } catch {
+    // Leave the disposable directory; another attempt cannot outwait a process still holding it.
+    return [PROBE_LEFT];
+  }
 }
 
 async function inspectCli(
