@@ -348,6 +348,11 @@ remains the named, focusable exact JSON view.
 - **Selected event and execution context.** Their titles, disclosure labels and values wrap
   anywhere, so a 16-digit sequence ("Exact recorded event #123456789012345", "Thread at event
   123456789012345") or a narrow disclosure stays inside its column.
+- **Waiting for input.** The **Input requested** card lays its node, prompt and form out in one
+  shrinkable column whose text breaks anywhere, and `JsonSchemaForm`'s submit button (**Submit
+  input** here, **Start run** on New run) wraps its label instead of setting the form's minimum
+  width, so the prompt, the JSON or schema fields and the button stay inside the card, with or
+  without an input schema. At 100% the button is the same one-line 36 px button.
 
 The Timeline keeps its number column, type, description, one Tab stop and keys; its input renders
 the full row width because `cn` joins classes without merging, and the stylesheet emits `.w-full`
@@ -355,8 +360,10 @@ the full row width because `cn` joins classes without merging, and the styleshee
 `delivery.attempt_finished` (25 characters), stays whole inside its row. DOM order, accessible
 names, the keyboard order and wide layouts are unchanged. Edge `e2e/inspector-reflow.spec.ts`
 checks 12 cells (320 and 1440 px, 100 and 200% text, each with its own selected event of sequence
-10593, 123456 or 123456789012345), 639, 640 and 768 px, a replay run, a child run, the longest
-type, native copy of the ID, the menu, the Replay review, the Tab order and Timeline keys, and the
+10593, 123456 or 123456789012345), 639, 640 and 768 px, a replay run, a child run, a run waiting
+for input with and without an input schema (every box inside its card), the New run form, the
+longest type, native copy of the ID, the menu, the Replay review, the Tab order and Timeline keys,
+and the
 shared header on Chat, Loops, the editor, Runs, Events, Settings and the inspector, comparing each
 layout intended to be unchanged with the build before the change within 0.5 px.
 

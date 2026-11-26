@@ -104,7 +104,10 @@ export function WaitPanel({
         </>
       }
     >
-      <div className="grid gap-5">
+      {/* One column that shrinks with the card, whose text breaks anywhere when a word cannot
+          fit: the prompt, the form and its labels stay inside the card at 320 px with 200%
+          text (#563). */}
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-5 wrap-anywhere">
         <p className="min-w-0 text-sm wrap-anywhere text-muted">
           At {nodeName(definition, waiting.nodeId)}
         </p>

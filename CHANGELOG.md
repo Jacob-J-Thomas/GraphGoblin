@@ -11,7 +11,10 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   values wrap anywhere, with the ID still selected and copied exactly; the run controls take at
   most half the run header from 640 px, so enlarged text no longer covers the run ID at 1440 px;
   and inspector, review, history and Timeline paging buttons wrap their labels instead of
-  cutting them short. Layouts that fit are unchanged within 0.5 px, and DOM order, names, the
+  cutting them short. A run waiting for input keeps its prompt and form inside the **Input
+  requested** card (with or without an input schema): `JsonSchemaForm`'s submit button, also
+  **Start run** on New run, wraps its label instead of widening the form. Layouts that fit are
+  unchanged within 0.5 px, and DOM order, names, the
   keyboard order and the Timeline's single Tab stop are kept. No text is hidden, shortened or
   made smaller.
 

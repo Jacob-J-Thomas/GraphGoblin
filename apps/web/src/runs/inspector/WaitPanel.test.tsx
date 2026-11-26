@@ -336,3 +336,14 @@ describe('answers follow the accepted API key they were chosen under (#562)', ()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
+
+it('lays its prompt and form out in one shrinkable column whose text breaks anywhere (#563)', () => {
+  renderWith(<WaitPanel run={waiting(3)} />, '/', new FakeApi());
+  const form = screen.getByRole('form', { name: 'Submit input' });
+  const column = form.parentElement!;
+  // One minmax(0, 1fr) track: no single long label, word or button can widen the card.
+  expect(column.className).toContain('grid-cols-[minmax(0,1fr)]');
+  expect(column.className).toContain('wrap-anywhere');
+  expect(within(column).getAllByText('Why?').length).toBeGreaterThan(0);
+  expect(within(column).getByText('At ask')).toBeInTheDocument();
+});

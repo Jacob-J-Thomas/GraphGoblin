@@ -4,7 +4,7 @@ import { join, relative } from 'node:path';
 import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import type { APIRequestContext, ElementHandle, Page, TestInfo } from '@playwright/test';
-import { expect, publishLoop, test, uniqueLoopName } from './fixtures.js';
+import { approvalLoop, expect, publishLoop, test, uniqueLoopName } from './fixtures.js';
 
 /**
  * #563: the run inspector and the shared header reflow at narrow widths and enlarged text without
@@ -817,6 +817,152 @@ test('the longest contract event type stays whole in its row at 320 px with 200%
   } finally {
     await page.unrouteAll({ behavior: 'ignoreErrors' });
   }
+});
+
+/** A run of `approvalLoop` waiting for input at `approve`, with an input schema or without one. */
+async function waitingRun(request: APIRequestContext, schema: boolean) {
+  const base = approvalLoop(uniqueLoopName(schema ? 'Reflow waiting schema' : 'Reflow waiting'));
+  const definition = schema
+    ? {
+        ...base,
+        nodes: base.nodes.map((node) =>
+          node.id === 'approve'
+            ? {
+                ...node,
+                config: {
+                  ...node.config,
+                  inputSchema: {
+                    type: 'object',
+                    properties: { reason: { type: 'string', title: 'Reason' } },
+                    required: ['reason'],
+                  },
+                },
+              }
+            : node,
+        ),
+      }
+    : base;
+  const loopId = await publishLoop(request, definition);
+  const started = await request.post(`/loops/${loopId}/runs`, {
+    data: { triggerNodeId: 'start', input: {} },
+  });
+  expect(started.status()).toBe(202);
+  const { run } = (await started.json()) as { run: { id: string } };
+  await expect.poll(async () => (await runStatus(request, run.id)).status).toBe('waiting');
+  return run.id;
+}
+
+/** Every box inside the card stays inside the card's own box, sideways. */
+const outsideCard = (page: Page, title: RegExp) =>
+  page
+    .getByRole('heading', { name: title })
+    .locator('xpath=ancestor::section[1]')
+    .evaluate((card) => {
+      const bound = card.getBoundingClientRect();
+      return (
+        [...card.querySelectorAll('*')]
+          // The named exact-JSON scroller may hold wider content; hidden text takes no room.
+          .filter(
+            (el) =>
+              el.getClientRects().length > 0 &&
+              !el.closest('.sr-only') &&
+              !el.parentElement?.closest('pre[role="region"][tabindex="0"][aria-label]'),
+          )
+          .map((el) => ({ el, box: el.getBoundingClientRect() }))
+          .filter(({ box }) => box.left < bound.left - 0.5 || box.right > bound.right + 0.5)
+          .map(({ el, box }) => ({
+            where: `${el.tagName.toLowerCase()}${el.getAttribute('aria-label') ? `[${el.getAttribute('aria-label')}]` : ''}`,
+            left: box.left,
+            right: box.right,
+            card: { left: bound.left, right: bound.right },
+          }))
+      );
+    });
+
+for (const schema of [false, true]) {
+  test(`a run waiting for input ${schema ? 'with' : 'without'} an input schema keeps its form inside its card at every width and text size (#563)`, async ({
+    page,
+    request,
+  }, info) => {
+    const runId = await waitingRun(request, schema);
+    const cells: Record<string, { layout: Layout; metrics: Metrics }> = {};
+    const strays: Record<string, unknown> = {};
+    const sideways0: Record<string, number> = {};
+    for (const layout of MATRIX) {
+      await page.setViewportSize({ width: layout.width, height: 900 });
+      await page.goto(`/app/runs/${runId}`);
+      await expect(page.getByRole('heading', { name: `Run ${runId}` })).toBeVisible();
+      await expect(page.getByRole('heading', { name: /Input requested/ })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Submit input', exact: true })).toBeVisible();
+      // The Timeline's history and the event it shows have arrived: the page has settled.
+      await expect(page.getByRole('heading', { name: /^Timeline \(\d+ events, / })).toBeVisible();
+      await expect(
+        page.locator('ol[aria-label="Timeline"] button[data-seq]').first(),
+      ).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Exact recorded event #\d+$/ })).toBeVisible();
+      const tag = await setText(page, layout.text, undefined);
+      const name = layoutName(layout);
+      cells[name] = { layout, metrics: await collect(page) };
+      strays[name] = await outsideCard(page, /Input requested/);
+      sideways0[name] = await sideways(page);
+      await capture(page, info, `waiting-${name}`);
+      await page
+        .getByRole('heading', { name: /Input requested/ })
+        .locator('xpath=ancestor::section[1]')
+        .screenshot({ path: info.outputPath(`waiting-${name}-card.png`) });
+      await tag?.evaluate((element) => (element as Element).remove());
+    }
+    await info.attach('outside the input card', {
+      body: JSON.stringify(strays, null, 2),
+      contentType: 'application/json',
+    });
+    await compareWithBaseline(info, cells);
+    for (const [name, { metrics }] of Object.entries(cells)) {
+      expectContained(metrics, `waiting ${name}`);
+      expect.soft(strays[name], `waiting ${name}: boxes outside the input card`).toEqual([]);
+      expect.soft(sideways0[name], `waiting ${name}: scrollTo(999, 0)`).toBe(0);
+    }
+  });
+}
+
+test('the New run form keeps a one-line Start run at 100% text and wraps it inside the viewport with 200% text (#563)', async ({
+  page,
+  request,
+}, info) => {
+  const loopId = await publishLoop(request, {
+    ...minimalLoop(),
+    name: uniqueLoopName('Reflow new run'),
+  });
+  const notes: Record<string, unknown> = {};
+  for (const layout of [...MATRIX, { width: 360, text: 200, intended: 'reflow' } as const]) {
+    await page.setViewportSize({ width: layout.width, height: 900 });
+    await page.goto(`/app/runs/new?loop=${loopId}`);
+    const start = page.getByRole('button', { name: 'Start run', exact: true });
+    await expect(start).toBeVisible();
+    const tag = await setText(page, layout.text, undefined);
+    const name = layoutName(layout);
+    const form = await collect(page, 'form[aria-label="Start run"]');
+    const box = (await start.boundingBox())!;
+    const root = await rootFontSize(page);
+    notes[name] = { button: box, documentWidth: (await collect(page)).scroll.document };
+    await page.screenshot({ path: info.outputPath(`new-run-${name}.png`), fullPage: true });
+    expect.soft(form.overflow, `${name}: form text`).toEqual([]);
+    expect.soft(form.uncontained, `${name}: form control text`).toEqual([]);
+    expect.soft(box.x, `${name}: Start run left`).toBeGreaterThanOrEqual(-0.5);
+    expect
+      .soft(box.x + box.width, `${name}: Start run right`)
+      .toBeLessThanOrEqual(layout.width + 0.5);
+    // At 100% the label fits: the button keeps its usual one-line height (2.25 rem).
+    if (layout.text === 100)
+      expect
+        .soft(Math.abs(box.height - 2.25 * root), `${name}: Start run height`)
+        .toBeLessThanOrEqual(0.5);
+    await tag?.evaluate((element) => (element as Element).remove());
+  }
+  await info.attach('new run form', {
+    body: JSON.stringify(notes, null, 2),
+    contentType: 'application/json',
+  });
 });
 
 test('the complete run ID is copied from a native selection at 320 px with 200% text (#563)', async ({
