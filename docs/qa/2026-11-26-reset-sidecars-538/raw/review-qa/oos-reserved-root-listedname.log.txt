@@ -1,0 +1,24 @@
+OUT-OF-SCOPE observation (pre-existing listedName for reserved roots), built CLI dry run
+fixture: graphgoblin.db, notes.txt, and a regular file 'workspaces' that is a hard link of notes.txt
+readdir order: . .. graphgoblin.db notes.txt workspaces 
+\ggq\tmp\538-qa\oos-reserved-root\data\notes.txt
+\ggq\tmp\538-qa\oos-reserved-root\data\workspaces
+GraphGoblin reset (dry run: nothing is removed)
+
+Data directory: G:\ggq\tmp\538-qa\oos-reserved-root\data
+Database:       G:\ggq\tmp\538-qa\oos-reserved-root\data\graphgoblin.db (unreadable: SQLITE_NOTADB: file is not a database)
+
+Removes:
+  graphgoblin.db                         database                 1 file, 14 B
+  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release
+  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release
+
+Keeps:
+  notes.txt                              a file, not a directory
+  Browser device drafts stay in each browser; discard them from the loop editor.
+
+Total removed: 1 file, 14 B in 1 item.
+
+Nothing was removed. To reset, stop every GraphGoblin process using this data directory and run:
+  node apps/api/dist/main.js --reset --yes --data-dir "G:\ggq\tmp\538-qa\oos-reserved-root\data"
+EXIT 0

@@ -1,0 +1,128 @@
+VERDICT: NO BLOCKING FINDINGS: ready for opposite-family review (0 P1/P2; 3 P3 FIX-IN-PR nits; 3 P3 DEFER-ISSUE; 1 P3 NO-CHANGE)
+
+# #538 interim review (Claude, independent of the author)
+
+- **Slice:** #538, reset selects the intended SQLite sidecar entry when names share a file.
+- **Reviewed:** commit `230640ae579e12c511894a9a586d82ce6d682202` on base `14ea69842025c627f704b436727385d78e08768c`.
+  - Branch `codex/gg-fu-reset-sidecars-538-20261125`, worktree `G:/ggq/gg-fu-538/GraphGoblin`.
+  - Commit identity is the repository's, with no attribution trailer.
+- **Changed paths:**
+  - `apps/api/src/reset/reset.ts`
+  - `apps/api/src/reset/reset-sidecars.test.ts` (new)
+  - `docs/guide/08-offline-upgrade.md` (reset section)
+  - `docs/decisions/ADR-0042-explicit-resets-replace-conversion.md`
+  - `CHANGELOG.md` (Unreleased)
+  - All are inside the contract's write list. No existing test was edited, and the lock module, reader, `tree.ts` and `ownershipName` are untouched.
+- **Contract:**
+  - `author-preparation-02/AUTHOR-PROMPT.md` and `AUTHOR-BRIEF.md`.
+  - FUP083 decisions 1–6 (identical in `author-preparation-01` and `-02`).
+  - `ARCHITECTURE-538.md` and `claude-design-critique-01/DESIGN.claude.md`.
+- **Scope of this review:** it does not replace the opposite-family GPT review, current-target CI or the Astra MAX final audit.
+
+## Contract conformance (read against the diff; behaviour confirmed in QA-REPORT.md)
+
+| Contract point | Result |
+| --- | --- |
+| Exact regular listed sidecar wins whatever other links exist | Met. `sidecarEntry` returns the no-follow `statEntry` when `readdir` lists the exact name. |
+| Non-exact name with one same-parent identity match | Met. The chosen name is re-observed: regular file, same identity, same physical ancestors (`sameRoute`). |
+| Several matches | Met. Only win32 uses `realpathSync.native` directly, never through `canonicalPath`. It requires `dirname(final) === native(parent)` and a listed candidate, and any error or contradiction refuses. Elsewhere it refuses. |
+| Links and special files never resolved | Met. The kind check runs before any matching or native query; the name it shows is diagnostic only. |
+| Case folding is never evidence | Met. Selection uses no folding. |
+| Configured ≠ stored final name | Met. Both spellings are resolved in the same parent before `readStore`, and must give the same listed path or both be absent; two hard links of one file refuse. No libSQL change and no claim of 8.3 support. |
+| Exported guard strict; private pair exception | Met. `assertDisjointManifest` calls `checkManifest(…, [])`. Removed-vs-removed path and identity checks are unconditional. A kept identity may equal a removed one only for the exact `(removed, kept, identity)` tuple the planner built from a separately listed top-level regular file. |
+| Root Keeps by sidecar name; no nested Keeps rows | Met. Sidecar identities are no longer added to `owned`; database, reserved-root and nested-root identity suppression is unchanged. |
+| Sidecar shares an ownership role → refuse; earlier lock refusals preserved | Met for lock files and reserved roots. A guard-name overlap is refused earlier by the lock gate (see R3). Held or unverifiable locks keep their earlier diagnostics. |
+| Locked replan, exact listed path, release on newly seen ambiguity | Met. The same `planReset` runs under both locks. Refusals there go through the existing refused-reset accounting. `removeEntry` unlinks the chosen listed path. |
+| Residual race wording kept | Met. Both ADR-0042 and the guide keep the qualification. |
+
+Would the new tests fail with the fix reverted?
+
+- **They would fail:**
+  - the `00-unrelated` matrix rows (the base removes the earlier link);
+  - root `zz-unrelated` rows (the base hides the link from Keeps);
+  - nested-sidecar root links (the base guard refuses);
+  - ownership overlaps (the base proceeds);
+  - configured/stored rows;
+  - the native refusals.
+- **They would pass on the base too:** the strict-collision and earlier-lock rows. These are regression guards, which is appropriate.
+
+## Findings (root-cause ledger)
+
+| ID | Sev | Disposition | Finding |
+| --- | --- | --- | --- |
+| R1 | P3 | FIX-IN-PR | Kelvin escape is claimed but absent (see below). |
+| R2 | P3 | FIX-IN-PR | The matrix test drops the refusal text when the exit code is wrong (see below). |
+| R3 | P3 | FIX-IN-PR | Guide over-claims "naming both" for guards (see below). |
+| R4 | P3 (provisional) | DEFER-ISSUE only if it recurs | One unexplained intermittent failure in the focused Windows run (see below). |
+| R5 | P3 | DEFER-ISSUE (pre-existing venue gap) | The Windows-only native proof runs in no CI (see below). |
+| R6 | P3 | DEFER-ISSUE (pre-existing, outside #538) | `listedName` keeps the first-identity-match root cause for reserved roots (see below). |
+| R7 | P3 | NO-CHANGE | A `master.key` hard link of a removed sidecar gets the "another name" label (see below). |
+
+**R1. Kelvin escape claimed but absent.**
+
+- `reset-sidecars.test.ts:323-325` says the Kelvin sign is "Escaped, so no editor or formatter can turn it into an ASCII `K`".
+- Line 325 actually holds the literal U+212A (bytes `E2 84 AA`).
+- The author report also says the line is `'\u212A.db-wal'`.
+- Behaviour is correct, because line 326 asserts it differs from ASCII.
+- Fix: write `'\u212A.db-wal'`, or correct the comment.
+
+**R2. The order-matrix test drops the refusal text when the exit code is wrong.**
+
+- `reset-sidecars.test.ts:214-215` and `:234-235` assert `code` before `err`.
+- This lost the diagnostic in the R4 failure.
+- Fix: assert `{ code, err }` together, as the refusal cases already do.
+
+**R3. Guide over-claims "naming both" for guards.**
+
+- The new paragraph in `docs/guide/08-offline-upgrade.md` says the reset "refuses, naming both, when a sidecar is the same file as one of its lock files or guards".
+- For a guard name, the earlier read-only lock gate refuses first: `Store ownership could not be verified (reclamation guard is not a physical directory with one valid owner marker): …graphgoblin.lock.reclaim`. That message does not name the sidecar (QA case `R-wal-as-datadir-guard`).
+- The CHANGELOG and ADR wording is accurate.
+- Fix: drop "or guards", or say a guard name is refused earlier by the lock check.
+
+**R4. One unexplained intermittent failure.**
+
+- In one of two runs of `vitest run src/reset/`, `reset-sidecars.test.ts > root -journal, other hard link: none` got confirmed exit 1. Its stderr was not captured (R2).
+- The record is kept verbatim. Everything after it passed:
+  - the single labelled diagnostic re-run;
+  - the same scenario 6 times through the built CLI (three journal cases);
+  - 320 source replays, 240 of them alongside real private-copy reads in a shared TEMP.
+- Cause not established:
+  - A cross-file `cleanupStaleStoreCopies` race in the shared temp was tested and not reproduced.
+  - A transient Windows sharing error under concurrent machine load (another worker's coverage run) is not excluded.
+- It is not the #489 signature: no tree-fixture rename EPERM occurred.
+- Fix R2 so the next occurrence is diagnosable. Open an issue only if it recurs, using #489's recording rules.
+
+**R5. Windows-only native proof runs in no CI.**
+
+- The `windows-launcher` CI job runs `db.test.ts`, `config.test.ts`, the launcher suite and `main.test.ts`, but not `src/reset/`.
+- So the win32 native final-path cases are proven only on local Windows runs (author's and this QA's), and the ubuntu coverage gate leaves the win32 branch of `nativeChoice` uncovered.
+- API coverage on ubuntu with this change has not been measured here.
+
+**R6. `listedName` keeps #538's root cause for reserved roots.**
+
+- `listedName` (still used for `workspaces`, `artifacts` and `chat-audio`) takes the first listed name with the same identity.
+- Built-CLI dry run: with a regular file `workspaces` hard-linked to `notes.txt`, Keeps shows `notes.txt — a file, not a directory` and omits `workspaces` (`oos-reserved-root-listedname.log`).
+- No wrong removal is possible (only directories are removed, and directories cannot be hard-linked). The manifest label is wrong.
+
+**R7. `master.key` as another name of a removed sidecar.**
+
+- A `master.key` that is a hard link of a removed sidecar is kept, but labelled `another name for <sidecar>` rather than with the secret-store reason (the author's caveat 2).
+- Its bytes survive, and the configuration is pathological.
+
+No correctness bug with a concrete failing scenario was found in `reset.ts`. Specific checks:
+
+- removed-vs-removed strictness;
+- whether the pair tuple can be satisfied by anything other than a separately listed top-level regular file;
+- refusal ordering relative to `readStore` and the held-lock gates;
+- locked-replan release accounting;
+- `realpathSync.native` parent comparison;
+- the case-alias, configured-name, Unicode and short-name paths.
+
+## Evidence reviewed
+
+- **Author native verifier, `verified:false` claim: substantiated.**
+  - The only failing criterion is `privateCopyResidue`. The scratch folder held only `tsx-98jak` (133 files, all `17956-` prefixed, directory mtime 21:44:01.27). Nothing under `temp` is newer than the seed directory (21:44:02.39).
+  - The verifier sets `TEMP=scratch` in the `env` it passes to the tsx seeder, so the seeder's compile cache lands in the residue folder.
+  - Every product criterion in `NATIVE-CANDIDATE-RESULT.json` holds for `ordinary`, `early-hardlink` and `late-hardlink`.
+  - Its source witness (`reset.ts` `581b8eee…`, test `f61918db…`, docs and CHANGELOG) equals the committed blobs, and its dist `reset.js` `55239c78…` equals a fresh compile of the commit (QA-REPORT.md).
+- **Author coverage log:** consistent with the report. API: 147 files passed, 3 skipped; 2353 tests passed, 43 skipped. Package lines 94.56%, branches 90.16%.

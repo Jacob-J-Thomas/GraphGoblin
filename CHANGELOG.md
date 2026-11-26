@@ -46,6 +46,22 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   including unexpected filesystem errors and errors that only repeat this text, keep their stack.
   No store, lock, export or contract change.
 
+- A reset now removes a SQLite sidecar as the directory entry its name opens and keeps every
+  other hard link of that file (#538). Before, when a `-wal`, `-shm` or `-journal` file had another
+  name in the same directory, the reset could list and unlink whichever name the directory listed
+  first. It still reported success and left the surviving name out of Keeps. Now the exact listed
+  name is used. Another spelling counts only when it is the one listed name with that file identity,
+  or on Windows the listed link the filesystem's final path names in the same directory; otherwise
+  the reset refuses. Another top-level name of a removed sidecar is listed under Keeps as
+  `another name for <sidecar>` and keeps its bytes. When `GG_DB_URL` spells the database file
+  differently from the directory listing, both sidecar spellings must name the same entry or none
+  before the store is read. A sidecar that is also one of the reset's lock files or guards, or a
+  reserved top-level name, is refused, and earlier lock refusals keep their diagnostics. An
+  ambiguity first seen under the locks refuses before removal and releases them. The exported
+  manifest check, lock module, store reader and stored formats are unchanged, so no upgrade action
+  is needed. Sidecars under 8.3 short names, macOS, and network or non-NTFS volumes are not
+  qualified by this change.
+
 - `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
   `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
   template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so

@@ -1,0 +1,626 @@
+{
+  "platform": "win32",
+  "osRelease": "10.0.26300",
+  "node": "v22.23.4",
+  "runRoot": "G:\\ggq\\tmp\\538-qa\\controlled-run-01",
+  "summary": [
+    {
+      "id": "C0-native-control",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C1-native-other-directory",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C2-native-unlisted-name",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C3-native-EPERM",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C4-native-ENOENT",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C5-locked-replan-ambiguity",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C6-locked-replan-ambiguity-stale-locks",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C7-short-writer-only",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C8-short-reader-only",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C9-short-two-files",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C10-short-two-hard-links",
+      "pass": true,
+      "failed": []
+    },
+    {
+      "id": "C11-short-agree",
+      "pass": true,
+      "failed": []
+    }
+  ],
+  "results": [
+    {
+      "id": "C0-native-control",
+      "description": "same fixture as C1-C4, real native final path: dry run removes GRAPHGOBLIN.DB-WAL",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 0,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\nDatabase:       G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JRESETRUNAAAAAAAAAAAAAAA  run workspace            1 file, 1 directory, 9 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  GRAPHGOBLIN.DB-WAL                     SQLite write-ahead log   1 file, 563.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  00-unrelated                           another name for GRAPHGOBLIN.DB-WAL; the file stays under this name\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 1 directory, 567.3 KB in 3 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\"\n",
+          "stderr": ""
+        }
+      ],
+      "nativeAnswers": [
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0"
+        ],
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0"
+        ],
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\\graphgoblin.db-wal",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\\GRAPHGOBLIN.DB-WAL"
+        ],
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\\graphgoblin.db",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\\graphgoblin.db"
+        ],
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0"
+        ],
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\\graphgoblin.db",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0\\graphgoblin.db"
+        ],
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0"
+        ],
+        [
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0",
+          "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C0"
+        ]
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry exit 0",
+          "ok": true
+        },
+        {
+          "name": "Removes the listed WAL",
+          "ok": true
+        },
+        {
+          "name": "Keeps 00-unrelated as another name",
+          "ok": true
+        },
+        {
+          "name": "real native answer for graphgoblin.db-wal is GRAPHGOBLIN.DB-WAL",
+          "ok": true
+        },
+        {
+          "name": "dry run changed nothing",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C1-native-other-directory",
+      "description": "native final path answers another directory: refuse, store not read, nothing changed",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem names G:\\ggq\\tmp\\538-qa\\controlled-run-01\\elsewhere\\GRAPHGOBLIN.DB-WAL, which is not one of them; verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C1-native-other-directory"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem names G:\\ggq\\tmp\\538-qa\\controlled-run-01\\elsewhere\\GRAPHGOBLIN.DB-WAL, which is not one of them; verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C2-native-unlisted-name",
+      "description": "native final path answers an unlisted name: refuse, store not read, nothing changed",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem names G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C2-native-unlisted-name\\graphgoblin.db-wal, which is not one of them; verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C2-native-unlisted-name"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem names G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C2-native-unlisted-name\\graphgoblin.db-wal, which is not one of them; verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C3-native-EPERM",
+      "description": "native final path answers EPERM: refuse, store not read, nothing changed",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem could not say which one SQLite opens (EPERM: operation not permitted, realpath); verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C3-native-EPERM"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem could not say which one SQLite opens (EPERM: operation not permitted, realpath); verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C4-native-ENOENT",
+      "description": "native final path answers ENOENT after presence: refuse, store not read, nothing changed",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem could not say which one SQLite opens (ENOENT: no such file or directory, realpath); verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C4-native-ENOENT"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem could not say which one SQLite opens (ENOENT: no such file or directory, realpath); verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C5-locked-replan-ambiguity",
+      "description": "native answer turns unusable after the preview's store read",
+      "calls": [
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C5"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem names G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C5\\graphgoblin.db-wal, which is not one of them; verify that no GraphGoblin process uses this store, then move the other names yourself\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "refusal exact, no Removing marker",
+          "ok": true
+        },
+        {
+          "name": "store read once (preview only)",
+          "ok": true
+        },
+        {
+          "name": "only the stale locks are gone; store bytes, ids and the other link unchanged",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C6-locked-replan-ambiguity-stale-locks",
+      "description": "native answer turns unusable after the preview's store read; stale dead-PID lock files present",
+      "calls": [
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C6"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the data directory lists graphgoblin.db-wal under more than one name (00-unrelated, GRAPHGOBLIN.DB-WAL), and the filesystem names G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C6\\graphgoblin.db-wal, which is not one of them; verify that no GraphGoblin process uses this store, then move the other names yourself\nNo store data was removed. Lock files and guards:\n  reclaimed stale graphgoblin.db.graphgoblin.lock (database lock)\n  reclaimed stale graphgoblin.lock (data-directory lock)\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "refusal exact, no Removing marker",
+          "ok": true
+        },
+        {
+          "name": "store read once (preview only)",
+          "ok": true
+        },
+        {
+          "name": "only the stale locks are gone; store bytes, ids and the other link unchanged",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C7-short-writer-only",
+      "description": "configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names the listed entry GRAPHG~1.DB-wal while graphgoblin.db-wal names no entry; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C7-short-writer-only"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names the listed entry GRAPHG~1.DB-wal while graphgoblin.db-wal names no entry; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C8-short-reader-only",
+      "description": "configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names no entry while graphgoblin.db-wal names the listed entry graphgoblin.db-wal; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C8-short-reader-only"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names no entry while graphgoblin.db-wal names the listed entry graphgoblin.db-wal; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C9-short-two-files",
+      "description": "configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names the listed entry GRAPHG~1.DB-wal while graphgoblin.db-wal names the listed entry graphgoblin.db-wal; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C9-short-two-files"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names the listed entry GRAPHG~1.DB-wal while graphgoblin.db-wal names the listed entry graphgoblin.db-wal; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C10-short-two-hard-links",
+      "description": "configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names the listed entry GRAPHG~1.DB-wal while graphgoblin.db-wal names the listed entry graphgoblin.db-wal; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        },
+        {
+          "argv": [
+            "--reset",
+            "--yes",
+            "--data-dir",
+            "G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C10-short-two-hard-links"
+          ],
+          "code": 1,
+          "stdout": "",
+          "stderr": "reset refused: the database is configured as GRAPHG~1.DB but listed as graphgoblin.db, and GRAPHG~1.DB-wal names the listed entry GRAPHG~1.DB-wal while graphgoblin.db-wal names the listed entry graphgoblin.db-wal; a reset cannot tell which SQLite write-ahead log belongs to this store, so configure GG_DB_URL with the name as the directory lists it\nNothing in the data directory was changed.\n"
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry refusal exact",
+          "ok": true
+        },
+        {
+          "name": "dry changed nothing",
+          "ok": true
+        },
+        {
+          "name": "confirmed refusal exact",
+          "ok": true
+        },
+        {
+          "name": "confirmed changed nothing",
+          "ok": true
+        },
+        {
+          "name": "store never read",
+          "ok": true
+        }
+      ]
+    },
+    {
+      "id": "C11-short-agree",
+      "description": "configured GRAPHG~1.DB-wal and listed graphgoblin.db-wal name one entry: proceeds, reads the stored spelling",
+      "calls": [
+        {
+          "argv": [
+            "--reset"
+          ],
+          "code": 0,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C11-short-agree\nDatabase:       G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C11-short-agree\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 563.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 2 files, 567.3 KB in 2 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"G:\\ggq\\tmp\\538-qa\\controlled-run-01\\C11-short-agree\"\n",
+          "stderr": ""
+        }
+      ],
+      "pass": true,
+      "checks": [
+        {
+          "name": "dry exit 0",
+          "ok": true
+        },
+        {
+          "name": "Removes the listed WAL",
+          "ok": true
+        },
+        {
+          "name": "store read under the stored spelling",
+          "ok": true
+        },
+        {
+          "name": "read format 3",
+          "ok": true
+        },
+        {
+          "name": "dry run changed nothing",
+          "ok": true
+        }
+      ]
+    }
+  ]
+}

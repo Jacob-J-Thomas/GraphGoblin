@@ -1,0 +1,422 @@
+{
+  "head": "14ea69842025c627f704b436727385d78e08768c",
+  "platform": "win32",
+  "osRelease": "10.0.26300",
+  "node": "v22.23.4",
+  "owned": "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe",
+  "verified": false,
+  "sourceUntouched": true,
+  "beforeSources": {
+    "apps/api/src/reset/reset.ts": "581b8eee7b412a5166d61883c2ae4c08bad44248ef98495a73d6f985c047fd42",
+    "apps/api/src/reset/reset-sidecars.test.ts": "f61918db540ed632ac96f9c8dd28e2c49e8e3ab0e96899928849c40b87c3d041",
+    "docs/guide/08-offline-upgrade.md": "908089acfd9f5a77901970eacf879b2c6d991d9c1904bde64147c2599ff4ac9b",
+    "docs/decisions/ADR-0042-explicit-resets-replace-conversion.md": "b71b8b57a9db4f85ec578b566409af58ed4d4ecc220d90b3e7dc88be4cfebe04",
+    "CHANGELOG.md": "e7cb6c15498e6ab78a05b67e1d719016cb5ee6383cf8817e262ad8efa283cf06",
+    "apps/api/dist/reset/reset.js": "55239c789a64fdcf9da06c8640a938c5687b08294adba81a04b7333178565866",
+    "apps/api/dist/main.js": "77340d74ad07bebe5875984fee0c92cbeac57afff13585a9bbe7fb3ab62c219c"
+  },
+  "afterSources": {
+    "apps/api/src/reset/reset.ts": "581b8eee7b412a5166d61883c2ae4c08bad44248ef98495a73d6f985c047fd42",
+    "apps/api/src/reset/reset-sidecars.test.ts": "f61918db540ed632ac96f9c8dd28e2c49e8e3ab0e96899928849c40b87c3d041",
+    "docs/guide/08-offline-upgrade.md": "908089acfd9f5a77901970eacf879b2c6d991d9c1904bde64147c2599ff4ac9b",
+    "docs/decisions/ADR-0042-explicit-resets-replace-conversion.md": "b71b8b57a9db4f85ec578b566409af58ed4d4ecc220d90b3e7dc88be4cfebe04",
+    "CHANGELOG.md": "e7cb6c15498e6ab78a05b67e1d719016cb5ee6383cf8817e262ad8efa283cf06",
+    "apps/api/dist/reset/reset.js": "55239c789a64fdcf9da06c8640a938c5687b08294adba81a04b7333178565866",
+    "apps/api/dist/main.js": "77340d74ad07bebe5875984fee0c92cbeac57afff13585a9bbe7fb3ab62c219c"
+  },
+  "seed": {
+    "stdout": "seeded",
+    "stderr": ""
+  },
+  "cases": [
+    {
+      "label": "ordinary",
+      "relative": "graphgoblin.db",
+      "before": {
+        "graphgoblin.db": {
+          "identity": "810877956:8162774329389763",
+          "nlink": "1",
+          "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+        },
+        "graphgoblin.db-wal": {
+          "identity": "810877956:1125899911623365",
+          "nlink": "1",
+          "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+        },
+        "master.key": {
+          "identity": "810877956:844424934912715",
+          "nlink": "1",
+          "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+        },
+        "notes.txt": {
+          "identity": "810877956:844424934912716",
+          "nlink": "1",
+          "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+        },
+        "workspaces": {
+          "directory": true
+        },
+        "workspaces/01JRESETRUNAAAAAAAAAAAAAAA": {
+          "directory": true
+        },
+        "workspaces/01JRESETRUNAAAAAAAAAAAAAAA/sentinel.txt": {
+          "identity": "810877956:844424934912714",
+          "nlink": "1",
+          "sha256": "50c6540279735da3899812957133e4bb1f3f8492301c53e19d15157d16e7bd8a"
+        }
+      },
+      "calls": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\ordinary\nDatabase:       G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\ordinary\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JRESETRUNAAAAAAAAAAAAAAA  run workspace            1 file, 1 directory, 9 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 563.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 1 directory, 567.3 KB in 3 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\ordinary\"\n",
+          "stderr": "",
+          "after": {
+            "graphgoblin.db": {
+              "identity": "810877956:8162774329389763",
+              "nlink": "1",
+              "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+            },
+            "graphgoblin.db-wal": {
+              "identity": "810877956:1125899911623365",
+              "nlink": "1",
+              "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+            },
+            "master.key": {
+              "identity": "810877956:844424934912715",
+              "nlink": "1",
+              "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+            },
+            "notes.txt": {
+              "identity": "810877956:844424934912716",
+              "nlink": "1",
+              "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+            },
+            "workspaces": {
+              "directory": true
+            },
+            "workspaces/01JRESETRUNAAAAAAAAAAAAAAA": {
+              "directory": true
+            },
+            "workspaces/01JRESETRUNAAAAAAAAAAAAAAA/sentinel.txt": {
+              "identity": "810877956:844424934912714",
+              "nlink": "1",
+              "sha256": "50c6540279735da3899812957133e4bb1f3f8492301c53e19d15157d16e7bd8a"
+            }
+          },
+          "privateCopyResidue": [
+            "tsx-98jak"
+          ]
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "GraphGoblin reset\n\nData directory: G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\ordinary\nDatabase:       G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\ordinary\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JRESETRUNAAAAAAAAAAAAAAA  run workspace            1 file, 1 directory, 9 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 563.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 1 directory, 567.3 KB in 3 items.\n\nRemoving:\n  removed workspaces/01JRESETRUNAAAAAAAAAAAAAAA (1 file, 1 directory, 9 B)\n  removed graphgoblin.db (1 file, 4.0 KB)\n  removed graphgoblin.db-wal (1 file, 563.3 KB)\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\ordinary.\n",
+          "stderr": "",
+          "after": {
+            "master.key": {
+              "identity": "810877956:844424934912715",
+              "nlink": "1",
+              "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+            },
+            "notes.txt": {
+              "identity": "810877956:844424934912716",
+              "nlink": "1",
+              "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+            },
+            "workspaces": {
+              "directory": true
+            }
+          },
+          "privateCopyResidue": [
+            "tsx-98jak"
+          ]
+        }
+      ],
+      "observed": {
+        "kernelLinkWitness": true,
+        "previewUnchanged": true,
+        "previewReadFormat3": true,
+        "confirmedReadFormat3": true,
+        "recordedWorkspaceRemoved": true,
+        "intendedPresentAfter": false,
+        "aliasPresentAfter": null,
+        "keptAliasBytesAndIdentity": null,
+        "keepBytes": true
+      }
+    },
+    {
+      "label": "early-hardlink",
+      "relative": "graphgoblin.db",
+      "relativeAlias": "00-unrelated-wal",
+      "before": {
+        "00-unrelated-wal": {
+          "identity": "810877956:1407374888334021",
+          "nlink": "2",
+          "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+        },
+        "graphgoblin.db": {
+          "identity": "810877956:8444249306100419",
+          "nlink": "1",
+          "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+        },
+        "graphgoblin.db-wal": {
+          "identity": "810877956:1407374888334021",
+          "nlink": "2",
+          "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+        },
+        "master.key": {
+          "identity": "810877956:1970324841755346",
+          "nlink": "1",
+          "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+        },
+        "notes.txt": {
+          "identity": "810877956:1688849865044692",
+          "nlink": "1",
+          "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+        },
+        "workspaces": {
+          "directory": true
+        },
+        "workspaces/01JRESETRUNAAAAAAAAAAAAAAA": {
+          "directory": true
+        },
+        "workspaces/01JRESETRUNAAAAAAAAAAAAAAA/sentinel.txt": {
+          "identity": "810877956:3377699725308621",
+          "nlink": "1",
+          "sha256": "50c6540279735da3899812957133e4bb1f3f8492301c53e19d15157d16e7bd8a"
+        }
+      },
+      "calls": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\early-hardlink\nDatabase:       G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\early-hardlink\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JRESETRUNAAAAAAAAAAAAAAA  run workspace            1 file, 1 directory, 9 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 563.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  00-unrelated-wal                       another name for graphgoblin.db-wal; the file stays under this name\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 1 directory, 567.3 KB in 3 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\early-hardlink\"\n",
+          "stderr": "",
+          "after": {
+            "00-unrelated-wal": {
+              "identity": "810877956:1407374888334021",
+              "nlink": "2",
+              "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+            },
+            "graphgoblin.db": {
+              "identity": "810877956:8444249306100419",
+              "nlink": "1",
+              "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+            },
+            "graphgoblin.db-wal": {
+              "identity": "810877956:1407374888334021",
+              "nlink": "2",
+              "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+            },
+            "master.key": {
+              "identity": "810877956:1970324841755346",
+              "nlink": "1",
+              "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+            },
+            "notes.txt": {
+              "identity": "810877956:1688849865044692",
+              "nlink": "1",
+              "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+            },
+            "workspaces": {
+              "directory": true
+            },
+            "workspaces/01JRESETRUNAAAAAAAAAAAAAAA": {
+              "directory": true
+            },
+            "workspaces/01JRESETRUNAAAAAAAAAAAAAAA/sentinel.txt": {
+              "identity": "810877956:3377699725308621",
+              "nlink": "1",
+              "sha256": "50c6540279735da3899812957133e4bb1f3f8492301c53e19d15157d16e7bd8a"
+            }
+          },
+          "privateCopyResidue": [
+            "tsx-98jak"
+          ]
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "GraphGoblin reset\n\nData directory: G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\early-hardlink\nDatabase:       G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\early-hardlink\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JRESETRUNAAAAAAAAAAAAAAA  run workspace            1 file, 1 directory, 9 B\n  graphgoblin.db                         database                 1 file, 4.0 KB\n  graphgoblin.db-wal                     SQLite write-ahead log   1 file, 563.3 KB\n  graphgoblin.db.graphgoblin.lock        database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  00-unrelated-wal                       another name for graphgoblin.db-wal; the file stays under this name\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 1 directory, 567.3 KB in 3 items.\n\nRemoving:\n  removed workspaces/01JRESETRUNAAAAAAAAAAAAAAA (1 file, 1 directory, 9 B)\n  removed graphgoblin.db (1 file, 4.0 KB)\n  removed graphgoblin.db-wal (1 file, 563.3 KB)\n  removed graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\early-hardlink.\n",
+          "stderr": "",
+          "after": {
+            "00-unrelated-wal": {
+              "identity": "810877956:1407374888334021",
+              "nlink": "1",
+              "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+            },
+            "master.key": {
+              "identity": "810877956:1970324841755346",
+              "nlink": "1",
+              "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+            },
+            "notes.txt": {
+              "identity": "810877956:1688849865044692",
+              "nlink": "1",
+              "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+            },
+            "workspaces": {
+              "directory": true
+            }
+          },
+          "privateCopyResidue": [
+            "tsx-98jak"
+          ]
+        }
+      ],
+      "observed": {
+        "kernelLinkWitness": true,
+        "previewUnchanged": true,
+        "previewReadFormat3": true,
+        "confirmedReadFormat3": true,
+        "recordedWorkspaceRemoved": true,
+        "intendedPresentAfter": false,
+        "aliasPresentAfter": true,
+        "keptAliasBytesAndIdentity": true,
+        "keepBytes": true
+      }
+    },
+    {
+      "label": "late-hardlink",
+      "relative": "nested/graphgoblin.db",
+      "relativeAlias": "nested/zz-unrelated-wal",
+      "before": {
+        "master.key": {
+          "identity": "810877956:5348024562283229",
+          "nlink": "1",
+          "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+        },
+        "nested": {
+          "directory": true
+        },
+        "nested/graphgoblin.db": {
+          "identity": "810877956:3659174702019277",
+          "nlink": "1",
+          "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+        },
+        "nested/graphgoblin.db-wal": {
+          "identity": "810877956:3377699725308630",
+          "nlink": "2",
+          "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+        },
+        "nested/zz-unrelated-wal": {
+          "identity": "810877956:3377699725308630",
+          "nlink": "2",
+          "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+        },
+        "notes.txt": {
+          "identity": "810877956:1125899911623391",
+          "nlink": "1",
+          "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+        },
+        "workspaces": {
+          "directory": true
+        },
+        "workspaces/01JRESETRUNAAAAAAAAAAAAAAA": {
+          "directory": true
+        },
+        "workspaces/01JRESETRUNAAAAAAAAAAAAAAA/sentinel.txt": {
+          "identity": "810877956:4503599632151258",
+          "nlink": "1",
+          "sha256": "50c6540279735da3899812957133e4bb1f3f8492301c53e19d15157d16e7bd8a"
+        }
+      },
+      "calls": [
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "GraphGoblin reset (dry run: nothing is removed)\n\nData directory: G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\late-hardlink\nDatabase:       G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\late-hardlink\\nested\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JRESETRUNAAAAAAAAAAAAAAA  run workspace            1 file, 1 directory, 9 B\n  nested/graphgoblin.db                  database                 1 file, 4.0 KB\n  nested/graphgoblin.db-wal              SQLite write-ahead log   1 file, 563.3 KB\n  nested/graphgoblin.db.graphgoblin.lock database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 1 directory, 567.3 KB in 3 items.\n\nNothing was removed. To reset, stop every GraphGoblin process using this data directory and run:\n  node apps/api/dist/main.js --reset --yes --data-dir \"G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\late-hardlink\"\n",
+          "stderr": "",
+          "after": {
+            "master.key": {
+              "identity": "810877956:5348024562283229",
+              "nlink": "1",
+              "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+            },
+            "nested": {
+              "directory": true
+            },
+            "nested/graphgoblin.db": {
+              "identity": "810877956:3659174702019277",
+              "nlink": "1",
+              "sha256": "e3ba06536f7dbba337dee3c1c5f01b43660ce276abb54c5cee2d5defc5b970aa"
+            },
+            "nested/graphgoblin.db-wal": {
+              "identity": "810877956:3377699725308630",
+              "nlink": "2",
+              "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+            },
+            "nested/zz-unrelated-wal": {
+              "identity": "810877956:3377699725308630",
+              "nlink": "2",
+              "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+            },
+            "notes.txt": {
+              "identity": "810877956:1125899911623391",
+              "nlink": "1",
+              "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+            },
+            "workspaces": {
+              "directory": true
+            },
+            "workspaces/01JRESETRUNAAAAAAAAAAAAAAA": {
+              "directory": true
+            },
+            "workspaces/01JRESETRUNAAAAAAAAAAAAAAA/sentinel.txt": {
+              "identity": "810877956:4503599632151258",
+              "nlink": "1",
+              "sha256": "50c6540279735da3899812957133e4bb1f3f8492301c53e19d15157d16e7bd8a"
+            }
+          },
+          "privateCopyResidue": [
+            "tsx-98jak"
+          ]
+        },
+        {
+          "code": 0,
+          "signal": null,
+          "stdout": "GraphGoblin reset\n\nData directory: G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\late-hardlink\nDatabase:       G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\late-hardlink\\nested\\graphgoblin.db (format 3; this build requires format 4)\n\nRemoves:\n  workspaces/01JRESETRUNAAAAAAAAAAAAAAA  run workspace            1 file, 1 directory, 9 B\n  nested/graphgoblin.db                  database                 1 file, 4.0 KB\n  nested/graphgoblin.db-wal              SQLite write-ahead log   1 file, 563.3 KB\n  nested/graphgoblin.db.graphgoblin.lock database lock            the reset's own; removed on release\n  graphgoblin.lock                       data-directory lock      the reset's own; removed last, on release\n\nKeeps:\n  master.key                             secret-store key; kept so the secrets in a backup of this store stay readable\n  notes.txt                              not part of the store\n  Browser device drafts stay in each browser; discard them from the loop editor.\n\nTotal removed: 3 files, 1 directory, 567.3 KB in 3 items.\n\nRemoving:\n  removed workspaces/01JRESETRUNAAAAAAAAAAAAAAA (1 file, 1 directory, 9 B)\n  removed nested/graphgoblin.db (1 file, 4.0 KB)\n  removed nested/graphgoblin.db-wal (1 file, 563.3 KB)\n  removed nested/graphgoblin.db.graphgoblin.lock (database lock)\n  removed graphgoblin.lock (data-directory lock)\nReset complete. The next start creates a new, empty format-4 store in G:\\ggq\\delivery-evidence\\2026-11-24-followups\\reset-538-489\\claude-window-author-02\\native-author-evidence-01\\native-wal-Lz4rVe\\late-hardlink.\n",
+          "stderr": "",
+          "after": {
+            "master.key": {
+              "identity": "810877956:5348024562283229",
+              "nlink": "1",
+              "sha256": "98cdce3fe20abe0a860f6787a6f37b238a387a42a899b35b5c06ca1bac208a83"
+            },
+            "nested": {
+              "directory": true
+            },
+            "nested/zz-unrelated-wal": {
+              "identity": "810877956:3377699725308630",
+              "nlink": "1",
+              "sha256": "8724a0e8800483b07c20c0f7393b1179ffe6df7838b3d770217e526b9845a403"
+            },
+            "notes.txt": {
+              "identity": "810877956:1125899911623391",
+              "nlink": "1",
+              "sha256": "eb48ef0d6cf0711ad813b7510e00132063dc06d18856e0f4338628a6320451b0"
+            },
+            "workspaces": {
+              "directory": true
+            }
+          },
+          "privateCopyResidue": [
+            "tsx-98jak"
+          ]
+        }
+      ],
+      "observed": {
+        "kernelLinkWitness": true,
+        "previewUnchanged": true,
+        "previewReadFormat3": true,
+        "confirmedReadFormat3": true,
+        "recordedWorkspaceRemoved": true,
+        "intendedPresentAfter": false,
+        "aliasPresentAfter": true,
+        "keptAliasBytesAndIdentity": true,
+        "keepBytes": true
+      }
+    }
+  ]
+}
