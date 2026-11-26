@@ -20,6 +20,34 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   is needed. Sidecars under 8.3 short names, macOS, and network or non-NTFS volumes are not
   qualified by this change.
 
+- `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
+  `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
+  template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so
+  a self-edge counts one) and `repairedEndpoints` (each edge end moved, so both ends of a self-edge)
+  instead of the combined `repairedReferences`, which is removed with no alias. The editor's rename
+  notice takes its reference count from `repairedSources` and its connection count from
+  `repairedConnections` instead of recounting edges, and still counts a self-edge as one
+  connection. The redundant
+  `syntaxIssues` export is removed: `validateLoop` remains the only producer of
+  `TEMPLATE_INVALID` and `EXPRESSION_INVALID`, with the same paths, messages and order.
+  `findAuthoredSources` stays as a discovery helper. Upgrade note: code that read
+  `repairedReferences` reads the separate counts instead, and code that called `syntaxIssues` filters
+  `validateLoop` by those two codes. No stored, export, device-draft or contract format changes,
+  and no repairs, warnings or notice wording change.
+
+- `GET /loops/{id}/versions/{versionId}` serves a stored record as the current
+  `LoopVersionRecordSchema` reads it (#525). A current-format record that omits a field the schema
+  defaults, such as an inference node's `harness` in a hand-authored draft-run snapshot, is served
+  with that default (effective `codex`), where it could previously answer `500 RESPONSE_INVALID`.
+  The stored row is not rewritten and a snapshot keeps its immutability protection. The owner and
+  matching-version checks (404 `LOOP_NOT_FOUND` or `VERSION_NOT_FOUND`), the retired Event refusal
+  (409 `LOOP_UPGRADE_REQUIRED`) and the sanitized `500 RESPONSE_INVALID` for a record the current
+  schema refuses are unchanged. The rule is this endpoint's: loop detail, version history and
+  export serve their records as before.
+  [Explicit version reads](docs/07-api-and-streaming.md#pinned-definitions-adr-0041)
+  **Upgrade:** rebuild the API. No schema, stored format or reset change; no stored content is
+  converted.
+
 - `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
   delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
   that ref to the working tree, including staged, unstaged and untracked files, and checks their
@@ -471,8 +499,9 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
   Snapshot rows are immutable: do not update them or disable their triggers. The omission query
   also reports snapshots, but an omitted harness alone is accepted by definition parsing with
-  its effective `codex` default. An explicit version read can still return `500 RESPONSE_INVALID`
-  for that manually authored snapshot. Preserve its history. Use the following options only for
+  its effective `codex` default. `GET /loops/{loop_id}/versions/{version_id}` serves an otherwise
+  valid snapshot with that omission using that default, without changing the stored row (#525).
+  Preserve the snapshot and its history. Use the following options only for
   an actually incompatible snapshot, such as one with an invalid override key. Keep the original
   database backup with its previous build. To preserve authored work in a fresh store, export
   the affected loop from the original gateway using its previous build. If it needs starting,

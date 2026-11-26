@@ -1,0 +1,23 @@
+{
+  "sharedTools": "G:/ggq/delivery-evidence/2026-11-24-followups/scope-preparation-01",
+  "worktree": "G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin",
+  "head": "d2df8600c2c8574bec420947de686b936910b245",
+  "branch": "codex/gg-fu-validation-pointers-20261124",
+  "patchSha256": "5e99ea4ff8b8651f09bdcb8c7996b54d475f656088f1e2537d03563d6beea2ef",
+  "reviewPatch": "G:/ggq/delivery-evidence/2026-11-24-followups/snapshot-validation-525-523/pointers-523/review-01/SOURCE.patch",
+  "reviewIndexSha256": null,
+  "fileSha256": {
+    "apps/api/src/loop-definition.test.ts": "aa716d8f8e9b57184b2363cc6dcb5735893a5987db27a46d8fc0804b7bc6d443",
+    "apps/api/src/plugins/errors.ts": "4314905e620414dabe90d8bdce949429bf7a175d9c66d375f4ca309727f9451a",
+    "apps/api/src/plugins/request-validation.test.ts": "8547c83b80d01e4d4b02d6677a80a0c93dd2939e5b06da899d267c8cc0c3516e",
+    "apps/api/src/plugins/request-validation.ts": "8b7a02a206ad43c67fb77b82583acd6029e697f4d1c9a7d0dfbbb76f999eaec9",
+    "apps/api/src/routes/ollama.test.ts": "4a0d89fffee7d58b5575f612ad346883b61d2010ddff9fdee25aa232298dc6e9",
+    "apps/api/src/routes/thread-disconnect.test.ts": "f42a461983e38b95d64dd8abcfd15db10b04432a5c04e7f20ff3e3c8ed4b11bf"
+  },
+  "driver": "public-http-probe.mts",
+  "checks": {
+    "focused": "pnpm --filter @graphgoblin/api exec vitest run src/plugins/request-validation.test.ts src/loop-definition.test.ts src/validation-paths.test.ts src/routes/ollama.test.ts src/routes/thread-disconnect.test.ts --reporter=verbose",
+    "http": "pnpm --filter @graphgoblin/api exec tsx --conditions=development G:/ggq/delivery-evidence/2026-11-24-followups/snapshot-validation-525-523/pointers-523/independent-qa-01/public-http-probe.mts G:/ggq/delivery-evidence/2026-11-24-followups/snapshot-validation-525-523/pointers-523/independent-qa-01/PUBLIC-HTTP-CHECK.json"
+  },
+  "driverResult": "PUBLIC-HTTP-CHECK.json"
+}

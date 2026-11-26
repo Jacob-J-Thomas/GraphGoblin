@@ -1,0 +1,172 @@
+{
+  "qualification": "Coordinator read-only curation/reconciliation, not new tests or QA. Actor raw visibility limits remain.",
+  "candidate": {
+    "head": "d2df8600c2c8574bec420947de686b936910b245",
+    "branch": "codex/gg-fu-domain-analysis-20261124",
+    "indexSha256": "68a4937db310819d83d24e28b9c3c63d76b2d3b8b289b71705d71ba15f2c277b",
+    "files": {
+      "CHANGELOG.md": "91ef99679ed2fe25711192cd298ab8213651effd757011859ee8580a680490f4",
+      "apps/web/src/editor/store.rename.test.ts": "7fd31f13d38c11f2e19a482b6071f133c40b0aa8169d07c9eb82d3fefdf54056",
+      "apps/web/src/editor/store.ts": "5bd7b85c36bc7bea196152a1b81d2573e94c8164764b9d4f3e90be829c5dab09",
+      "docs/03-domain-model.md": "4e219c89041249d631a67f53b2a54f637be4b9038494d242e759cbba6ba2b0cc",
+      "docs/09-frontend-and-pwa.md": "02a61c955d7a212f4b5473cd6642872ef7afe6e947336e18ac499ce1f2f072a3",
+      "packages/domain/src/index.ts": "0b38489ddf3cde28d82bbb01d7c9c6e6feed63afe31e2892be55a136b590ee1e",
+      "packages/domain/src/node-references.test.ts": "4fc51b8159a35fce6c5ab61ec49b37dc6af9b1959f8c3648d7a3a49d296f05cf",
+      "packages/domain/src/node-references.ts": "0f32de3394e56d74ae728168825fc8b1fedd3c5561c3bac78d186a35f9accbca",
+      "packages/domain/src/syntax.test.ts": "5c5f8901ad71a614c654ac20992672a4ffd0e1918cefad65e8c04d91a0c1c6d4",
+      "packages/domain/src/syntax.ts": "ab74dfe284810dd14ea4421bd7221a7014786b82178373fec07afdeee1d9df25"
+    },
+    "stagedPaths": [],
+    "completePatchSha256": "dd0f9f6b5df075bbcbc914a1982968e6aeb9677b8c456d21bb7f804841766345"
+  },
+  "actualQaActor": {
+    "journalSha256": "1e8c389634e5fb738103c4b405769dea7fea41592dacc738650fabe4c5ac6e84",
+    "journalBytes": 114064,
+    "privateJournalNotIncluded": true,
+    "model": "claude-opus-5-5",
+    "apiKeySource": "none",
+    "sessionId": "f02355e0-4d54-46d3-871c-63fca5a4cac5",
+    "tools": [
+      "Bash"
+    ],
+    "assistantModels": [
+      "claude-opus-5-5"
+    ],
+    "meteredModels": [
+      "claude-opus-5-5"
+    ],
+    "overageObserved": false,
+    "reportExtractSha256": "71f62057e107fe865e743f9739b01000c90f1fae20fe9fae52829f021f911efa",
+    "toolResults": [
+      {
+        "name": "Bash",
+        "input": {
+          "command": "C:/Users/98jak/AppData/Local/Programs/Python/Python311/python.exe run-check.py domain",
+          "description": "Run focused domain QA check via wrapper",
+          "timeout": 600000
+        },
+        "toolUseId": "toolu_01A3SRsYbgJwaKuioxYGd8XJ",
+        "journalLine": 11,
+        "error": false,
+        "imagePayloads": [],
+        "decodedToolResultSha256": "c8bb92203976ff2d57f1501da03fd0aacb7c3895c91ee7c02ca5c95515bf7961",
+        "decodedToolResultBytes": 11472
+      },
+      {
+        "name": "Bash",
+        "input": {
+          "command": "C:/Users/98jak/AppData/Local/Programs/Python/Python311/python.exe run-check.py store",
+          "description": "Run focused web store QA check via wrapper",
+          "timeout": 600000
+        },
+        "toolUseId": "toolu_01Wp4U3jnfMS6m5gUNmsrRg8",
+        "journalLine": 23,
+        "error": false,
+        "imagePayloads": [],
+        "decodedToolResultSha256": "804aaa00fef10521bd187141caa83594b10146ab8cc203da36516c80ed22cdac",
+        "decodedToolResultBytes": 7019
+      },
+      {
+        "name": "Bash",
+        "input": {
+          "command": "C:/Users/98jak/AppData/Local/Programs/Python/Python311/python.exe run-check.py api",
+          "description": "Run isolated API injection QA driver via wrapper",
+          "timeout": 600000
+        },
+        "toolUseId": "toolu_01SyuK3viK2uoE7P1v1aAmXh",
+        "journalLine": 26,
+        "error": false,
+        "imagePayloads": [],
+        "decodedToolResultSha256": "40dc5cbac031f7aa9ad5b3bac0c27685db47e28a77ce1cef110b2dfce5062007",
+        "decodedToolResultBytes": 2051
+      }
+    ]
+  },
+  "receiptAndSixStreamVerification": [
+    {
+      "mode": "domain",
+      "receiptSha256": "df30ab9312aa87da89b6600e32800fbe428c0b8c04344f439c3112ab213f57f8",
+      "stdout": {
+        "file": "domain.stdout.log",
+        "bytes": 24116,
+        "sha256": "1356a12225503a4a99da0434ee4e6fef406ef96f21138173a0722225614361dc"
+      },
+      "stderr": {
+        "file": "domain.stderr.log",
+        "bytes": 152,
+        "sha256": "dee125d8f549c4c65cb009ac39c17cd06af1fa95e9f413484d156f69877ef248"
+      },
+      "exitCode": 0
+    },
+    {
+      "mode": "store",
+      "receiptSha256": "4c1df022c58c8f46a0d9fc5de33fbcce5627eacd7ec54fc8c826cf06c944902f",
+      "stdout": {
+        "file": "store.stdout.log",
+        "bytes": 7965,
+        "sha256": "bde5577c36db8eed037a0e88ef82fa58369ec4067e164f78388a2bff4d6d5882"
+      },
+      "stderr": {
+        "file": "store.stderr.log",
+        "bytes": 184,
+        "sha256": "5d491be8efc5702cd3c054c1d16afadfab9aa969c9912ca0233699aff72ae27d"
+      },
+      "exitCode": 0
+    },
+    {
+      "mode": "api",
+      "receiptSha256": "db86356058cb69a8206f96498d0921547fddb61ff5924eeaaa5b15f47ba7781b",
+      "stdout": {
+        "file": "api.stdout.log",
+        "bytes": 1180,
+        "sha256": "a75af8ec36699ba3c4513a8bdf53cf7e52e6f63b45cf037dbec7ab4551d225d6"
+      },
+      "stderr": {
+        "file": "api.stderr.log",
+        "bytes": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "exitCode": 0
+    }
+  ],
+  "driverSha256Recomputed": "87991349afd8dd5363f9fb00a8b21503cc4c04f8c2bf9cc0d4eeaea557abe88b",
+  "driverGuardReconciliation": "The actor could not read driver/index hashes and said the wrapper did not hash the driver. The preserved run-check.py snapshot actually hashes publish-diagnostics.mts and compares it through before/after frozen snapshots; curation recomputed87991349... without changing the actor report.",
+  "omittedSyntaxNamesFromFullRaw": [
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > allows empty and whitespace required templates (\"\") 24ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > allows empty and whitespace required templates (\" \") 2ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > rejects a whitespace required expression with an expression-specific message 2ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > rejects blank expressions before execution (\" \"), without changing contracts parsing 2ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > rejects blank expressions before execution (\"\\t\\n\"), without changing contracts parsing 1ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > rejects blank expressions before execution (\"\u00a0\"), without changing contracts parsing 1ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > finds no problems in the kitchen-sink loop 23ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > reports templates and expressions that do not parse, wherever they are nested 16ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > reads the branch each discriminant selects, at its nested path, also beside an invalid sibling 8ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > analyzes an unchanged source once and reports it at each place it appears 4ms",
+    "\u2713 src/syntax.test.ts > authored source diagnostics in graph validation > reports one problem for a source in fields with different reference scopes 3ms",
+    "\u2713 src/syntax.test.ts > the authored field walker that validation and renaming share > selects a branch by its discriminant alone, given an invalid sibling 0ms",
+    "\u2713 src/syntax.test.ts > the authored field walker that validation and renaming share > selects a branch by its discriminant alone, given an invalid sibling in another branch 0ms",
+    "\u2713 src/syntax.test.ts > the authored field walker that validation and renaming share > selects a branch by its discriminant alone, given an unknown discriminant 0ms",
+    "\u2713 src/syntax.test.ts > the authored field walker that validation and renaming share > selects a branch by its discriminant alone, given a discriminant of another type 0ms",
+    "\u2713 src/syntax.test.ts > the authored field walker that validation and renaming share > selects a branch by its discriminant alone, given no discriminant 0ms",
+    "\u2713 src/syntax.test.ts > authored source discovery > skips absent values and union branches that do not match 0ms"
+  ],
+  "stderrReconciliation": {
+    "domain.stderr.log": "$ vitest run src/syntax.test.ts src/node-references.test.ts src/source-analysis.test.ts src/parse-identity.test.ts src/graph.test.ts --reporter=verbose\n",
+    "store.stderr.log": "$ vitest run src/editor/store.rename.test.ts src/editor/RenameNotice.test.tsx src/editor/EditorPage.rename.test.tsx src/editor/EditorPage.rename-activation.test.tsx --reporter=verbose\n",
+    "api.stderr.log": ""
+  },
+  "ollamaQualification": "Driver passes GG_OLLAMA_ENABLED=false and GG_JEV_API_KEY empty to createTestApp; its config assertion is conditional. Raw output does not independently establish whether that branch ran. Fake-provider in-memory app.inject venue, no listener/inference.",
+  "versionPreservationQualification": "API driver checks original published version ID/status only; no full definition/row byte comparison.",
+  "authorCarriedCoverage": "Actual correction report records31files499domain tests with97.82statements/95.6branches/98.33functions/98.77lines, plus24web tests. These are author-carried results read by formal review1, distinct from actual independentQA116domain/34store/2API.",
+  "authorReportSerializationReconciliation": {
+    "qualification": "Original author runner reportSha256 hashes the LF model result before adding a terminal newline and Windows write_text CRLF serialization. Original CRLF report and receipt preserved; raw byte hash differs by this demonstrated serialization only.",
+    "rawFileSha256": "cf08237731c87e1f769bc62fd6b3c5a117c9faf6ee75fb890ef0dcb5369b8753",
+    "rawBytes": 4597,
+    "crlfPairs": 34,
+    "modelResultSha256": "31d6be8009532f3b6acbd0bc205d7d6d78992a8fc5988eafce34000698ca20e1",
+    "recordedReportSha256": "31d6be8009532f3b6acbd0bc205d7d6d78992a8fc5988eafce34000698ca20e1",
+    "logicalTextExactlyMatchesActualModelResultPlusNewline": true,
+    "privateJournalSha256": "664b98f47abe33ac12a3151a097e30103ecba90bef07bb19c3db4b74b376e36f",
+    "privateJournalNotIncluded": true
+  }
+}

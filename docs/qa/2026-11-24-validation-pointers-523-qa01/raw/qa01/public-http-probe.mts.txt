@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import { writeFile } from 'node:fs/promises';
+import { createTestApp } from 'file:///G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/apps/api/src/testing/test-app.ts';
+import { minimalLoop } from 'file:///G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/packages/contracts/src/testing/index.ts';
+import Fastify from 'file:///G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/apps/api/node_modules/fastify/fastify.js';
+import { serializerCompiler } from 'file:///G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/apps/api/node_modules/fastify-type-provider-zod/dist/esm/index.js';
+import { z } from 'file:///G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/apps/api/node_modules/zod/index.js';
+import { requestValidatorCompiler } from 'file:///G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/apps/api/src/plugins/request-validation.ts';
+import { registerErrorHandler } from 'file:///G:/ggq/gg-fu-validation-pointers-20261124/GraphGoblin/apps/api/src/plugins/errors.ts';
+const output = process.argv[2];
+const observations: unknown[]=[];
+const t = await createTestApp({env:{GG_OLLAMA_ENABLED:'false', GG_JEV_API_KEY:''}});
+let productAddress: string;
+async function listenOwned(app: { listen(options: {host: string; port: number}): Promise<string> }) {
+  const address = await app.listen({host: '127.0.0.1', port: 0});
+  const parsed = new URL(address);
+  assert.equal(parsed.hostname, '127.0.0.1');
+  assert(![4747, 4748, 7443, 11434].includes(Number(parsed.port)));
+  return address;
+}
+async function overHttp(address: string, options: {method: string; url: string; payload: unknown; headers?: object}) {
+  const target = new URL(options.url, address);
+  assert.equal(target.origin, address);
+  const response = await fetch(target, {
+    method: options.method, headers: {'content-type':'application/json', ...options.headers},
+    body: typeof options.payload === 'string' ? options.payload : JSON.stringify(options.payload),
+    redirect: 'error',
+  });
+  const body = await response.text();
+  return {statusCode: response.status, body, headers: Object.fromEntries(response.headers), json: () => JSON.parse(body)};
+}
+const escape=(key:string)=>key.replaceAll('~','~0').replaceAll('/','~1');
+async function invalid(label:string, payload:unknown, expected:{path:string,message:string}[], url='/loops', method='POST'){
+ const response=await overHttp(productAddress, {method, url, payload});
+ assert.equal(response.statusCode,400,response.body);
+ assert.match(String(response.headers['content-type']),/^application\/problem\+json\b/);
+ const body=response.json();
+ assert.deepEqual(body,{type:'https://graphgoblin.dev/problems/validation-failed',title:'validation failed',status:400,code:'VALIDATION_FAILED',detail:'the request did not match the schema',errors:expected});
+ observations.push({label,method,url,status:response.statusCode,contentType:response.headers['content-type'],body});
+}
+try {
+ productAddress = await listenOwned(t.app);
+ await invalid('ordinary',{definition:{...minimalLoop(),name:3}},[{path:'/definition/name',message:'Invalid input: expected string, received number'}]);
+ const source=minimalLoop();
+ await invalid('array index',{definition:{...source,nodes:[source.nodes[0],{id:'work',kind:'inference',label:'Work',config:{prompt:{template:3}}},source.nodes[1]]}},[{path:'/definition/nodes/1/config/prompt/template',message:'Invalid input: expected string, received number'}]);
+ for(const key of ['literal/~','~1/~0','','0','雪~/😀','slash//tilde~~']) {
+  await invalid('record key '+JSON.stringify(key),{definition:{...minimalLoop(),variables:{[key]:{type:'string'}}}},[{path:'/definition/variables/'+escape(key),message:'Invalid key in record'}]);
+ }
+ await invalid('root fallback',[],[{path:'/',message:'Invalid input: expected object, received array'}]);
+ for(const key of ['root/~','~1/~0','','0','雪~/😀','slash//tilde~~']) {
+  await invalid('unknown root '+JSON.stringify(key),{enabled:false,[key]:true},[{path:'/'+escape(key),message:'Unrecognized key '+JSON.stringify(key)}],'/model-catalog/codex/gpt-6-luna','PATCH');
+  await invalid('unknown nested '+JSON.stringify(key),{definition:{...minimalLoop(),settings:{defaults:{[key]:true}}}},[{path:'/definition/settings/defaults/'+escape(key),message:'Unrecognized key '+JSON.stringify(key)}]);
+ }
+ const malformed=await overHttp(productAddress, {method:'POST',url:'/loops',headers:{'content-type':'application/json'},payload:'{review-private-malformed'});
+ assert.equal(malformed.statusCode,400); assert.equal(malformed.json().code,'MALFORMED_BODY'); assert.equal(malformed.json().errors,undefined); assert.doesNotMatch(malformed.body,/stack|requestValidationIssue/);
+ observations.push({label:'malformed JSON',status:malformed.statusCode,body:malformed.json()});
+ const good=await overHttp(productAddress, {method:'POST',url:'/loops',payload:{definition:minimalLoop()}});
+ assert.equal(good.statusCode,201,good.body); assert.equal(good.json().draft.definition.settings.workingDirectory.kind,'temp');
+ assert.equal(t.harness.started.length,0);
+ observations.push({label:'parsed valid input',status:good.statusCode,parsedDefault:good.json().draft.definition.settings.workingDirectory,noHarnessStarted:t.harness.started.length===0});
+ const app=Fastify({logger:false}); app.setValidatorCompiler(requestValidatorCompiler); app.setSerializerCompiler(serializerCompiler); registerErrorHandler(app);
+ app.post('/response-control',{schema:{body:z.strictObject({count:z.number()}),response:{200:z.strictObject({count:z.number()})}}},()=>({count:'review-private-response'}));
+ try {
+  const serializerAddress = await listenOwned(app);
+  const response=await overHttp(serializerAddress, {method:'POST',url:'/response-control',payload:{count:1}});
+  assert.equal(response.statusCode,500); assert.match(String(response.headers['content-type']),/^application\/problem\+json\b/);
+  assert.deepEqual(response.json(),{type:'https://graphgoblin.dev/problems/response-invalid',title:'response invalid',status:500,code:'RESPONSE_INVALID',detail:'the server produced a response that does not match its schema'});
+  assert.doesNotMatch(response.body,/stack|cause|review-private-response|schemaPath|instancePath/);
+  observations.push({label:'active provider response serializer control',status:response.statusCode,body:response.json()});
+ } finally {await app.close();}
+ await writeFile(output,JSON.stringify({observedAt:new Date().toISOString(),evidenceTier:'owned native loopback HTTP: production buildApp routes and separate provider serializer fixture',cases:observations.length,isolatedProductAddress:productAddress,ollamaEnabled:t.container.config.ollamaEnabled,observations},null,2)+'\n',{flag:'wx'});
+ console.log(JSON.stringify({ok:true,cases:observations.length,output}));
+} finally {await t.close();}

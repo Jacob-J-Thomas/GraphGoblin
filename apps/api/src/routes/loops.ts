@@ -24,6 +24,7 @@ import {
 import { EngineRequestError, assertCurrentDefinition } from '@graphgoblin/engine';
 import { LoopInUseError } from '@graphgoblin/infrastructure/sqlite';
 import type { FastifyRequest } from 'fastify';
+import { ResponseSerializationError } from 'fastify-type-provider-zod';
 import { z } from 'zod';
 import type { Container } from '../container.js';
 import { loopPublicationIssues } from '../loop-issues.js';
@@ -40,6 +41,22 @@ export const IssueSchema = LoopIssueSchema;
 function served<T extends LoopVersionRecord | undefined>(version: T): T {
   if (version) assertCurrentDefinition(version);
   return version;
+}
+
+/**
+ * The explicit version read (#525) serves a stored record as the current `LoopVersionRecordSchema`
+ * reads it. A current-format record may omit a field that schema defaults, such as an inference
+ * node's `harness` in a hand-authored draft-run snapshot; forward parsing supplies the schema's own
+ * default, so the response model receives the same view that an API write would have stored. The
+ * stored row is never changed. A record the schema refuses raises the serializer's own error, which
+ * the error handler answers with the sanitized 500 `RESPONSE_INVALID`.
+ */
+function currentRecord(version: LoopVersionRecord, request: FastifyRequest): LoopVersionRecord {
+  const parsed = LoopVersionRecordSchema.safeParse(version);
+  if (parsed.success) return parsed.data;
+  throw new ResponseSerializationError(request.method, request.routeOptions.url ?? request.url, {
+    cause: parsed.error,
+  });
 }
 
 const DraftTokenSchema = z.string().meta({
@@ -452,7 +469,7 @@ export function registerLoopRoutes(app: ApiInstance, container: Container): void
           'VERSION_NOT_FOUND',
           `version ${request.params.versionId} not found`,
         );
-      return served(version);
+      return currentRecord(served(version), request);
     },
   );
 
