@@ -136,7 +136,7 @@ function excerpt(text: string): string {
 }
 
 function listingFailure(
-  code: 'HARNESS_NOT_INSTALLED' | 'HARNESS_TURN_FAILED',
+  code: 'HARNESS_NOT_INSTALLED' | 'HARNESS_TURN_FAILED' | 'HARNESS_TERMINATION_UNCONFIRMED',
   reason: string,
 ): Error {
   return Object.assign(
@@ -144,6 +144,27 @@ function listingFailure(
       `Codex could not list the machine's MCP servers, so the turn did not start: ${reason}`,
     ),
     { code, retriable: false, submission: 'definitely-not-submitted' as const },
+  );
+}
+
+/** `runCli`'s first failure for a cancelled call, in the words Node uses for an aborted spawn. */
+const CANCELLED = 'The operation was aborted';
+
+/**
+ * A listing process that did not confirm that it stopped (#506). Its first failure is named only
+ * when it is exactly `runCli`'s own words for this call's deadline or cancellation, rebuilt from
+ * this call's values; any other text, the CLI's output and paths never reach the message.
+ */
+function listingNotStopped(spawnError: string | undefined, timeoutMs: number): Error {
+  const first =
+    spawnError === `timed out after ${timeoutMs} ms`
+      ? `timed out after ${timeoutMs} ms`
+      : spawnError === CANCELLED
+        ? 'was cancelled'
+        : 'failed';
+  return listingFailure(
+    'HARNESS_TERMINATION_UNCONFIRMED',
+    `the listing ${first} and its process did not confirm that it stopped; it may still be running.`,
   );
 }
 
@@ -161,7 +182,9 @@ export const LISTING_ARGS = [
 
 /**
  * The names of the MCP servers the CLI would start in `cwd`, read from the CLI itself so every
- * configuration layer it loads (user, profile, trusted project) is included.
+ * configuration layer it loads (user, profile, trusted project) is included. A listing process
+ * that did not confirm that it stopped fails `HARNESS_TERMINATION_UNCONFIRMED` before any other
+ * outcome is read; the harness keeps that code even when the turn was cancelled.
  */
 export async function configuredServers(
   cli: CliCommand | undefined,
@@ -172,6 +195,7 @@ export async function configuredServers(
 ): Promise<string[]> {
   if (!cli) throw listingFailure('HARNESS_NOT_INSTALLED', 'the Codex CLI was not found.');
   const result = await run({ ...cli, ...(cwd ? { cwd } : {}) }, LISTING_ARGS, timeoutMs, signal);
+  if (result.terminationUnconfirmed) throw listingNotStopped(result.spawnError, timeoutMs);
   if (result.spawnError !== undefined)
     throw listingFailure(
       /enoent/i.test(result.spawnError) ? 'HARNESS_NOT_INSTALLED' : 'HARNESS_TURN_FAILED',

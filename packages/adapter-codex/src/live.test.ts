@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { HarnessEvent, HarnessSession } from '@graphgoblin/engine';
-import { afterAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { createCodexAdapters } from './adapters.js';
 
 /**
@@ -35,9 +35,15 @@ function countProcesses(marker: string): number {
 }
 
 describe.skipIf(!live)('Codex live smoke', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'graphgoblin-live-'));
+  // Vitest runs a skipped suite's body to collect its cases, but not its hooks: the working
+  // directory exists only while the enabled suite runs, and goes when it ends, passed or failed
+  // (#511). live-collection.test.ts checks both.
+  let dir = '';
+  beforeAll(() => {
+    dir = mkdtempSync(join(tmpdir(), 'graphgoblin-live-'));
+    return () => rmSync(dir, { recursive: true, force: true });
+  });
   const { harness, decider } = createCodexAdapters({ model: 'gpt-6-luna', effort: 'low' });
-  afterAll(() => rmSync(dir, { recursive: true, force: true }));
 
   it('passes preflight', async () => {
     const result = await harness.preflight();
