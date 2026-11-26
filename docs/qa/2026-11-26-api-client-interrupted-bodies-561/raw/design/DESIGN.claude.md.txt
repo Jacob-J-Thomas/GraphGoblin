@@ -1,0 +1,96 @@
+# CHANGES REQUIRED
+
+The scoped `parseAs: 'stream'` reader is the right direction. The draft still needs changes for three reasons:
+- It leaves the decision open.
+- It misses a write-method hazard.
+- Its browser evidence cannot support its claims.
+
+**Defects**
+1. **No method gate.** A 2xx header on a write proves the server accepted it. Reporting "cannot be reached" then invites a duplicate start or deletion. The fix must apply to GET only.
+2. **Browser evidence contradicts the claim.** `561-BROWSER.json` records `mid.noAuthority:false`, so "no authority" actually rests on `replayControl:0`. Define the fields, and bind the head, web build, client dist and server-script hashes.
+3. **Cold only.** The material risk is warm. A body failure sets `refused` (RunInspectorPage L263), which hides the last observed run as a definitive refusal. The reread effect also exits because the status is not success (L385). Neither effect is reproduced.
+4. **Missing native controls:**
+   - explicit-reason abort *before* headers
+   - truncated non-2xx body
+   - HEAD, `Content-Length: 0` and empty chunked 200
+   - POST mid-body
+   - synthetic and pass-through-wrapper responses
+   - locked body
+
+**Recommended boundary**
+Add one internal reader (new `packages/api-client/src/body.ts`). Use it only in `runs.get` and `runs.observation`, the two reads that gate #416 through `isOfflineError`. Call `client.GET(..., { parseAs: 'stream', signal })` with the Query signal, and leave the returned native `Response` untouched. Then:
+- **Not ok:** use the existing openapi-fetch error path and `unwrap`. A truncated refusal body stays a raw error, because a status arrived. It is never offline.
+- **204/HEAD/length-0:** return `undefined`, as now.
+- **Witness gate:** GET, `ok`, non-null body, and `response.type` of `basic` or `cors`. Constructed (`default`), `error` or middleware-replaced responses are read without reclassification.
+- **Reader acquisition:** acquire the reader outside the classifying region, so locked or used TypeErrors propagate unchanged.
+- **Read failure:** only a `reader.read()` rejection is a candidate.
+  - If the caller's signal is aborted, rethrow that same rejection (`===`), whether default `AbortError` or the caller's `Error` reason.
+  - Otherwise throw `GraphGoblinApiError.interrupted(cause)` with status 0, so existing outage logic applies unchanged. Give it the distinct code `RESPONSE_INTERRUPTED` and keep the native cause.
+- **After `done`:** decode with a streaming `TextDecoder`, map `''` to `undefined`, then `JSON.parse`. A SyntaxError stays a data failure.
+- **Typing:** keep typed return values and `bodyUsed` parity.
+
+**No class, name, message, `cause.code` or `net::ERR` test.** No retry, probe or second fetch to decide. Correct the `client.ts` and `NETWORK_ERROR_STATUS` comments: raw `.GET` does not map post-header failures.
+
+**Resulting distinctions**
+
+| Case | Outcome |
+|---|---|
+| Native read failure after headers | interrupted |
+| Reader acquisition, body-used, decoder or middleware exceptions | raw |
+| Complete malformed JSON | SyntaxError |
+| Complete 409 | typed refusal |
+| Abort before headers | unchanged passthrough |
+| Abort after headers | identical reason |
+
+**Unacceptable**
+- Error-class, message or cause catch-alls.
+- Routing body errors into `networkErrors.onError`. It maps every non-abort, including SyntaxError, to status 0.
+- A shared `onResponse` returning a new or proxied Response. It loses url/redirected/type, which is the gate's own evidence, and wraps caller streams and SSE.
+- A local openapi-fetch patch now. It splits `json()` for every consumer and covers writes.
+- Touching `parseAs: 'stream'` callers or the SSE helper.
+- Treating an incomplete non-2xx as offline or as success.
+- `navigator.onLine` or a refetch as the diagnosis.
+- App-global catchers.
+
+**Public-client hole**
+Raw `client.GET` and unconverted resources still surface a native error. That is a classification-parity gap, not an authority gap: an unclassified error retires proof conservatively. It matters only where a consumer treats "not offline" as a durable refusal or stops reconnecting, as the inspector does.
+
+A shared alternative is justified only if evidence finds another first-party or documented public consumer with that behavior. Even then it must be GET-gated and must never replace the Response; upstream phase information is preferable to a local patch. Open that follow-up only on such evidence. The same rule applies to the thread, Timeline and other screens: they stay unchanged unless warm evidence shows harm.
+
+**Assumptions to verify**
+- User code cannot construct a `basic` response, but a service worker can synthesise one. Confirm no service worker controls the inspector origin.
+- Dev may be cross-origin, so `cors` must be exercised.
+- `useRun` must pass the Query signal.
+
+**Decisive Node verification**
+Use the built dist, Node 22 and a raw-framing loopback `node:net` server, for example `packages/api-client/test/body-transport.test.ts`. Re-bind `NATIVE-561.json` to the new hashes. Required results:
+- Mid-body length and chunked → `RESPONSE_INTERRUPTED`, with the native read error as the cause.
+- Mid-document malformed JSON with complete framing → SyntaxError.
+- Complete 409 → typed refusal; truncated 409 → unchanged.
+- Default and explicit aborts, before and after headers → the identical object.
+- 204, HEAD, length-0 and empty chunked → `undefined`.
+- Redirect metadata preserved, and `response` identical to the fetch result.
+- BOM, and a multi-byte character split across chunks, decode correctly.
+- Pass-through wrapper → classified.
+- Synthetic Response erroring with `TypeError('terminated', {cause:{code:'UND_ERR_SOCKET'}})` → not classified.
+- `onResponse`-locked body → raw.
+- Raw `.GET`, POST mid-body, `parseAs: 'stream'` and SSE → current behavior.
+- One server request per attempt.
+
+**Decisive Edge verification**
+Use the built web app and dist with bound hashes, writing `output/playwright/561-BROWSER.json`.
+- Run cold and warm (committed run, then failure on refetch) for each of these:
+  - length mismatch
+  - incomplete chunked
+  - post-header reset
+- Assert:
+  - the banner appears
+  - the last observed run stays presented
+  - Replay and actions stay absent until a read started after the loss commits
+  - recovery happens without reload after the server heals
+  - the retry count is unchanged
+- Show parity for malformed JSON, 409 and before-headers failures.
+- Add an exact-signal page harness that proves abort-reason identity, and that navigation cancellation shows no error or banner.
+
+**Confidence**
+High on the source path and Node behavior. Medium on Edge abort-reason propagation and the warm UI. Admit no implementation until both suites pass.

@@ -1,0 +1,31 @@
+# Root architecture disposition after actual Claude design critique
+
+2026-11-25. Decision FUP-076 below records engineering choices under the owner's delegated blocker authority. Owner acceptance remains separate.
+
+## #561
+
+Adopt Claude's narrow GET-only successful-body reader for `runs.get` and `runs.observation`. Preserve the original native Response and its metadata; acquire the reader outside the classifying catch, classify only a rejected read on an eligible native basic/cors successful response, and keep complete malformed JSON, reader misuse, explicit cancellation, non-success responses, writes and caller-owned streams separate. Use a distinct interrupted-response code with native cause. No retry, error-text heuristic, global catcher or dependency fork.
+
+The existing cold-browser evidence establishes presentation and absence of Replay, not the contradictory `noAuthority` field or warm reconnection behavior. Correct the evidence description, bind new source/build/fixture hashes and verify cold and previously observed-run behavior. Pass-through native responses and synthetic-error responses require distinct controls. Check actual Query signal forwarding and service-worker provenance. If the scope cannot preserve these distinctions, return a concrete finding before expanding it.
+
+Claude's instruction to admit no implementation until the new tests pass is interpreted as an acceptance condition. A draft implementation and regression tests are necessary to exercise the proposed behavior. Independent review, separate QA, coverage and current-target CI still precede delivery. The raw client's unconverted body-reading behavior is an explicit documented scope limit, not a claimed global fix.
+
+## #562
+
+Adopt the live opaque credential-generation boundary plus render-time identity, without remounting the inspector or conflating a key change with an outage. Check the generation and accepted state atomically where the outgoing fetch reads the key; the author must prove the path across openapi-fetch middleware/awaits. A render-only gate or header-registry lease is insufficient. Apply it to all existing inspector writes, including input and deletion preview/confirmation.
+
+Use Claude's separate copy for an expired review, an unsent queued action and a request already sent. Preserve drafts and pending state. Never resend or cancel a sent request simply because the key changes; suppress its old-generation outcome text/IDs and navigation under the new credential. Ordinary same-key acceptance keeps the generation and consent; rejected/reaccepted A and A-to-B-to-A expire them. Preserve the API-key prompt's focus, and restore an expired review's focus only to a valid trigger or the named status region.
+
+The new implementation must retain #575's corrected read/outage boundaries. Bind to its reviewed and merged source before editing overlapping inspector code. The two-tab real API-key actor check and mounted pre-commit/delayed-dispatch controls are separate evidence tiers.
+
+## #563
+
+Adopt Claude's complete-ID wrapping, shrinkable inspector grid, wrapping history controls and narrow responsive header/navigation treatment. Preserve DOM order, roving Timeline focus, existing labels, wide-screen presentation and exact copyable data. The only permitted horizontal content scroller is the named, keyboard-accessible exact JSON view. Do not hide overflow or shrink text.
+
+The earlier sequence-axis screenshots did not establish three distinct selected events; the new matrix must verify the actual selection in every cell. Capture the whole header, controls, menu and dialog, not just the Timeline. Report computed 200% text distinctly from native browser zoom. Confirm the longest real event type and input sizing rather than changing them on an assumption.
+
+Reject a universal zero-pixel-difference requirement across deliberately changed narrow layouts. Require bound before/after comparisons on unaffected layouts, unchanged interaction and accessibility behavior, complete text containment at 320px/200%, and checks at the 639/640/768px breakpoints. Review any intentional shared-header change on all affected routes; an unrelated visual regression is still a defect. The full semantic and geometry matrix remains an acceptance gate.
+
+## Rejected alternatives
+
+Broader native-Response interception or a dependency fork would widen the transport contract without evidence. A whole-page remount would discard unrelated user state. Closing only the modal at React commit would leave the pre-commit dispatch race. Keeping an already-sent result visible across credential generations would expose evidence under a different credential. Overflow hiding, truncation and reduced text size would conceal the accessibility defect. Replaying old incomplete investigations as a pass would misstate the evidence.

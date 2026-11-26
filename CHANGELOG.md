@@ -118,6 +118,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   editor or operating-system files such as `.DS_Store`. After adding or removing a skill, move the
   previous output aside or assemble to an unused `--out`.
 
+- `runs.get` and `runs.observation` in `@graphgoblin/api-client` report a successful response whose
+  body the connection cut short as `GraphGoblinApiError` with `status: 0` and the new code
+  `RESPONSE_INTERRUPTED`, keeping the native read error as `cause` (#561). They used to reject
+  with the raw `TypeError`, which offline handling did not recognise. They read the body from the
+  original `Response` and classify only a failed read of a native GET response while the caller's
+  signal is live; an abort keeps its identical reason, and malformed JSON, HTTP refusals
+  (including a refusal with a truncated body), constructed responses and locked or used bodies
+  keep their existing errors. Raw `client.GET`, other wrappers, writes, `parseAs: 'stream'` and
+  SSE are unchanged. No store, schema or format change.
+
 - `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
   `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
   template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so

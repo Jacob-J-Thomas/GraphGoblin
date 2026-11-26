@@ -1,0 +1,36 @@
+{
+  "case": "C1-cold-get-mid",
+  "pass": true,
+  "checks": [
+    {
+      "name": "offline state shown",
+      "expected": true,
+      "actual": true,
+      "pass": true
+    },
+    {
+      "name": "no \"Could not load run\"",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "no raw transport text (network error / Failed to fetch / TypeError)",
+      "expected": false,
+      "actual": false,
+      "pass": true
+    },
+    {
+      "name": "no Replay action offered",
+      "expected": 0,
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "name": "recovers to the run once bodies arrive whole (within 45 s, no reload)",
+      "expected": 1,
+      "actual": 1,
+      "pass": true
+    }
+  ]
+}

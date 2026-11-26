@@ -1,0 +1,59 @@
+# #561 correction-01: runtime-neutral types in the api-client body reader
+
+The orchestrator accepted finding B6 (an MCP typecheck failure caused by DOM-only type names in `packages/api-client/src/body.ts`) as FIX-IN-PR and assigned this worker to apply it. Worktree: `G:/ggq/gg-fu-api-client-561-20261124/GraphGoblin`. Branch: `codex/gg-fu-api-client-561-20261124`. Nothing was pushed.
+
+## Change
+
+- Commit `9673af09e8706864a6115e4065b0d1938a5cab09` (parent: merge `93749e1a`), "Use runtime-neutral types in the api-client body reader". It changes one file, has no attribution and uses the configured identity, Jacob-J-Thomas.
+- `packages/api-client/src/body.ts` (now sha256 `fb4c88a9…`):
+  - `ReadonlySet<ResponseType>` / `new Set<ResponseType>` became `ReadonlySet<Response['type']>` / `new Set<Response['type']>`. Prettier then wrapped the line to 100 columns.
+  - `let chunk: ReadableStreamReadResult<Uint8Array>;` became `let chunk: Awaited<ReturnType<typeof reader.read>>;`.
+- There are no casts, no `any`, and no change in behaviour or tests. The full patch is `CORRECTION.diff` (sha256 `2b574152…`).
+- Before committing, a direct `tsc -p tsconfig.json` exited 0 in both `apps/mcp` and `packages/api-client` (`precommit-sanity/`).
+
+## Re-verification at HEAD `9673af09` (wrapper v2 environment layout, full logs and raw exits)
+
+- Wrapper: `../run-verification-v2.py` (sha256 `ca05f0f1…`), with the owned-Job helper `../owned_process.py` (`73da0fe8…`).
+- Plan: `CORRECTION-PLAN.json`. Driver: `run-correction.sh`.
+- Each stage is its own wrapper invocation, with its own owned profile and TEMP under `G:/ggq/tmp/b6-561/profile-<stage>`.
+- Environment: Node v22.23.4, `GG_OLLAMA_ENABLED=false`, `GG_OLLAMA_URL=http://127.0.0.1:1`, and exactly one each of `ProgramFiles`, `ProgramFiles(x86)` and `ProgramW6432`.
+- Every stage settled to 0 owned processes and left the source unchanged (clean porcelain status, HEAD `9673af09`).
+
+| Stage | Command (`pnpm …`) | Raw exit | Totals | Time / deadline | Raw logs (sha256) | Verdict |
+|---|---|---|---|---|---|---|
+| c-mcp-tsc-p | `--filter @graphgoblin/mcp exec tsc -p tsconfig.json` | 0 | no diagnostics | 16.1 s / 180 s | stdout/stderr empty | PASS |
+| c-client-tsc-p | `--filter @graphgoblin/api-client exec tsc -p tsconfig.json` | 0 | no diagnostics | 17.7 s / 180 s | stdout/stderr empty | PASS |
+| c-typecheck | `typecheck --continue` | 0 | **Tasks 21 successful, 21 total** (14 cached) | 56.9 s / 900 s | stdout `6adf01d1…`, stderr `44b179d2…` | PASS |
+| c-client | `--filter @graphgoblin/api-client exec vitest run` (10 files) | 0 | Files 10/10, Tests 146/146 | 18.9 s / 300 s | stdout `c55449cc…`, stderr empty | PASS |
+| c-web | `--filter @graphgoblin/web exec vitest run src/api/queries.reconnect.test.tsx src/lib/utils.test.ts src/runs/` | 0 | Files 34/34, Tests 419/419 | 166.2 s / 600 s | stdout `33af97e0…`, stderr `5ab6a60b…` (jsdom navigation notice) | PASS |
+| c-lint | `lint --continue` | 0 | Tasks 13/13 (8 cached); 0 errors, 5 warnings | 132.1 s / 900 s | stdout `38ce4178…`, stderr `4ae7b6df…` | PASS |
+| c-format | `format:check` | 0 | "All matched files use Prettier code style!" | 68.9 s / 300 s | stdout `17aa973d…`, stderr `72ecfbf4…` | PASS |
+
+- **Turbo cache.** The cached typecheck and lint tasks are replays of the post-merge runs in this same worktree. Turbo skipped re-running only packages whose inputs are unaffected by `body.ts`; `api-client`, `mcp` and `web` re-ran.
+- **Lint warnings.** The 5 warnings are the same main-side `@eslint-react/naming-convention-ref-name` warnings as before, in `RunInspectorPage.tsx` and `SessionRecoveryControls.tsx`.
+- **Emitter tests.** The 10-file api-client selection again leaves out the emitter tests (`generated.test.ts`, `scripts/generate.test.ts`). `emitOpenApi` builds its own config with Ollama enabled by default, and its container start runs Ollama discovery against `127.0.0.1:11434`. Those two tests run only inside the full-suite coverage stage below, and only after a recorded check that nothing listens on that port.
+
+## Heavy stages (heavy-suite lock)
+
+- **Lock.** Waiting started after the light stages finished (08:04:58 UTC); the wait deadline was 08:45 UTC. The lock was taken at 08:26:47 UTC, after B7-479 released it, with the owner line written to `owner.txt`. It was released at 08:27:43 UTC by the driver's EXIT trap. The lock events are in `WRAPPER-EXITS.txt`.
+- **Ollama port check.** `ollama-port-check.txt` read `FREE`, meaning nothing was listening on TCP 11434, immediately before the coverage stage. The emitter tests' Ollama discovery therefore had no service to reach.
+
+| Stage | Command (`pnpm …`) | Raw exit | Totals | Time / deadline | Raw logs (sha256) | Verdict |
+|---|---|---|---|---|---|---|
+| c-build | `build --force` | 0 | **Tasks 12 successful, 12 total, 0 cached** (every task "cache bypass, force executing") | 22.3 s / 900 s | stdout `5ceb7eb3…`, stderr `27a6b9fa…` | PASS |
+| c-client-coverage | `--filter @graphgoblin/api-client test:coverage` (full suite, including `generated.test.ts` and `scripts/generate.test.ts`) | 0 | Files 12/12, Tests 148/148; **Statements 99.47% (376/378), Branches 97.44% (229/235), Functions 100% (112/112), Lines 100% (333/333)**; `src/body.ts` 100% on all four | 28.9 s / 600 s | stdout `29aa8684…`, stderr `682d7f04…` | PASS (thresholds are 90% each) |
+
+- `c-build/RESULT.json` is sha256 `4ba54147…`; `c-client-coverage/RESULT.json` is `581b8e0f…`. The coverage summary is copied to `c-client-coverage/api-client-coverage-summary.json` (`0c34e5cf…`).
+- **Build caveat.** Turbo's `--force` bypasses only turbo's cache. The `tsc -b` packages still use their own incremental `dist/.tsbuildinfo`, which is the repository's normal build behaviour and explains the short time. Vite built both web bundles (786 and 286 modules), and both plugins assembled.
+- **Deadline deviation.** I used 900 s for the build instead of the contract's 240 s. It finished in 22 s, so the difference did not matter.
+- **Coverage scope.** Only `@graphgoblin/api-client` coverage was run, as instructed. Other packages' coverage was not run in this correction; hosted CI covers it.
+
+## Result
+
+Every requested check passes at HEAD `9673af09e8706864a6115e4065b0d1938a5cab09`. The worktree is clean and nothing was pushed.
+
+Still pending:
+- the Saturday GPT targeted re-review of the correction commit;
+- hosted CI after push;
+- the independent built Node+Edge QA, combined with #562/#563;
+- the Astra MAX final audit.

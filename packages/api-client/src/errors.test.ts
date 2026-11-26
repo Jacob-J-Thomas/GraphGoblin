@@ -1,7 +1,14 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createGraphGoblinClient, GraphGoblinApiError, loops, system, unwrap } from './index.js';
+import {
+  createGraphGoblinClient,
+  GraphGoblinApiError,
+  loops,
+  NETWORK_ERROR_STATUS,
+  system,
+  unwrap,
+} from './index.js';
 
 let server: Server | undefined;
 
@@ -75,6 +82,25 @@ describe('GraphGoblinApiError', () => {
     await expect(system.health(client)).rejects.toMatchObject({
       code: 'NETWORK_ERROR',
       detail: 'socket hang up',
+    });
+  });
+
+  it('builds a distinct status-0 RESPONSE_INTERRUPTED error that keeps the native cause', () => {
+    const native = new TypeError('terminated');
+    const error = GraphGoblinApiError.interrupted(native);
+    expect(error).toBeInstanceOf(GraphGoblinApiError);
+    expect(error).toMatchObject({
+      status: NETWORK_ERROR_STATUS,
+      code: 'RESPONSE_INTERRUPTED',
+      detail: 'terminated',
+      problem: undefined,
+      message: 'RESPONSE_INTERRUPTED: terminated',
+    });
+    expect(error.cause).toBe(native);
+    expect(error.code).not.toBe(GraphGoblinApiError.network(native).code);
+    expect(GraphGoblinApiError.interrupted('socket closed')).toMatchObject({
+      detail: 'socket closed',
+      cause: 'socket closed',
     });
   });
 
