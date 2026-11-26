@@ -137,23 +137,70 @@ export function joinPath(base: string, key: string | number): string {
  */
 export const FieldIssuesContext = createContext<ReadonlyMap<string, string>>(new Map());
 
-/**
- * The path of the record entry whose value is drawn here, when the schema issue at that path is
- * about the entry's key (RecordField decides, and the key shows it). The value's field has the
- * same path, so it takes no message from that issue and is not marked invalid by it.
- */
-export const RecordKeyIssueContext = createContext<string | undefined>(undefined);
+/** One schema issue with its path's raw segments, which a record key may fill with any text. */
+export interface FieldIssue {
+  segments: readonly string[];
+  message: string;
+}
 
 /**
- * The message for the field at `name`: react-hook-form's, else the schema issue at that path;
- * none for a record entry's value when the issue at its path is its key's.
+ * The schema's issues with the whole value in order, each with its path's raw segments (SchemaForm
+ * provides them beside `FieldIssuesContext`). A joined path cannot tell the entry `a.b` from the
+ * member `b` inside the entry `a`; the segments can, so a record decides which of its entries
+ * owns an issue from these (`recordEntryIssues`).
+ */
+export const FieldIssueListContext = createContext<readonly FieldIssue[]>([]);
+
+/**
+ * The schema's issues a record entry owns, by segments: the record at `record` (a joined path, as
+ * fields are named) and the entry's raw `key`. `exact` is the first issue at the entry's own path
+ * (its key's or its value's, as the record decides). `nested` holds every issue inside the entry's
+ * value, in order, with its path from the value and its full joined path (an issue link's path).
+ */
+export function recordEntryIssues(
+  issues: readonly FieldIssue[],
+  record: string,
+  key: string,
+): {
+  exact: string | undefined;
+  nested: { relative: string; path: string; message: string }[];
+} {
+  let exact: string | undefined;
+  const nested: { relative: string; path: string; message: string }[] = [];
+  for (const { segments, message } of issues) {
+    // The record's own segments are those whose joined text is its name: one prefix at most, since
+    // each further segment lengthens the joined text. The next segment is the entry's key.
+    const start = segments.findIndex((_, index) => segments.slice(0, index).join('.') === record);
+    if (start === -1 || segments[start] !== key) continue;
+    const inside = segments.slice(start + 1);
+    if (inside.length === 0) exact ??= message;
+    else nested.push({ relative: inside.join('.'), path: segments.join('.'), message });
+  }
+  return { exact, nested };
+}
+
+/**
+ * The message a record entry's value shows, decided by its record (RecordField) from the issues
+ * the entry owns by segments: its own issue unless that is about the key, else, for a value drawn
+ * as JSON, the first issue inside it with its path from the value. The value's field has the
+ * entry's path, which reads only this, never an issue or react-hook-form error found by the joined
+ * path, which a sibling entry with a dotted key can share.
+ */
+export const RecordValueIssueContext = createContext<
+  { name: string; message: string | undefined } | undefined
+>(undefined);
+
+/**
+ * The message for the field at `name`: react-hook-form's, else the schema issue at that path; for
+ * a record entry's value, the message its record gives it (`RecordValueIssueContext`).
  */
 export function useFieldErrorMessage(name: string) {
   const {
     formState: { errors },
   } = useFormContext();
   const issues = use(FieldIssuesContext);
-  if (use(RecordKeyIssueContext) === name) return undefined;
+  const entry = use(RecordValueIssueContext);
+  if (entry?.name === name) return entry.message;
   const error = get(errors, name) as { message?: string; root?: { message?: string } } | undefined;
   return issues.get(name) ?? error?.message ?? error?.root?.message;
 }

@@ -76,6 +76,12 @@ function validateText(
   return error ? { error } : { value: parsed.value };
 }
 
+/** Whether `text` reads as `value`: the same JSON, apart from whitespace and object-key order. */
+function readsAs(text: string, value: unknown): boolean {
+  const parsed = text.trim() === '' ? { ok: true as const, value: undefined } : parseJson(text);
+  return parsed.ok && sameJson(parsed.value, value);
+}
+
 export function JsonText({
   path,
   label,
@@ -137,9 +143,24 @@ export function JsonText({
   }, [text, schema, validateValue, validationVersion, ownError]);
   // Held text ends only by the author's hand: typing it back to the section's value, Apply, Cancel
   // or a discard. A valid candidate that a change elsewhere made equal to the section (a rename's
-  // repair, a sibling fix, a remount after undo) stays held exactly as written, with no step. A
-  // live editor has no Apply: its held text keeps its last message until the author types again.
+  // repair, a remount after undo) stays held exactly as written, with no step. A live editor has
+  // no Apply: its held text keeps its last message until the author types again.
   const error = candidate ? (candidate.error ?? (explicit ? PENDING_JSON : ownError)) : ownError;
+  // Bumped when Apply's recheck refused the section's own value, so `passive` reads the new answer.
+  const [rechecks, setRechecks] = useState(0);
+  // A section editor holding nothing shows the section's own value (the text it opened with, or
+  // text that reads as that value), checked by the same validator as typed text, parent rules
+  // included, as those change (#522). Its message is passive: nothing is held or reported for it,
+  // it adds no step and offers no discard, and it only keeps Apply from taking that value.
+  const passive = useMemo(() => {
+    void validationVersion;
+    void rechecks;
+    return explicit && ownError === undefined
+      ? validateText(text, schema, validateValue).error
+      : undefined;
+  }, [explicit, ownError, text, schema, validateValue, validationVersion, rechecks]);
+  const shown = error ?? passive;
+  const invalidText = shown !== undefined && shown !== PENDING_JSON;
   const [confirmation, setConfirmation] = useState<{
     text: string;
     connections: readonly RemovedConnection[];
@@ -208,7 +229,9 @@ export function JsonText({
   const apply = (confirmed = false) => {
     const parsed = validateText(text, schema, validateValue, true);
     if (parsed.error) {
-      fail(text, parsed.error);
+      // The section's own value refused: its diagnostic stays passive, with nothing held.
+      if (ownError === undefined && readsAs(text, value)) setRechecks((count) => count + 1);
+      else fail(text, parsed.error);
       return;
     }
     const connections = review(path, parsed.value);
@@ -235,16 +258,22 @@ export function JsonText({
         {...(id ? { id } : {})}
         minLines={2}
         placeholder={placeholder}
-        describedBy={cn(describedBy, error && parseErrorId) || undefined}
-        invalid={invalid || (error !== undefined && error !== PENDING_JSON)}
+        describedBy={cn(describedBy, shown && parseErrorId) || undefined}
+        invalid={invalid || invalidText}
         required={required}
         value={text}
         onChange={(next) => {
           setText(next);
           setConfirmation(undefined);
+          if (explicit && readsAs(next, value)) {
+            // Whitespace or key order alone is no edit: nothing is held, and the section's own
+            // diagnostic, if it has one, stays passive.
+            fail(next, undefined);
+            return;
+          }
           const parsed = validateText(next, schema, validateValue);
           if (parsed.error) fail(next, parsed.error);
-          else if (explicit) fail(next, sameJson(parsed.value, value) ? undefined : PENDING_JSON);
+          else if (explicit) fail(next, PENDING_JSON);
           else {
             fail(next, undefined);
             onChange(parsed.value);
@@ -253,38 +282,41 @@ export function JsonText({
       />
       {/* Polite, so the message is read once typing pauses rather than on every keystroke. */}
       <div aria-live="polite">
-        {error && error !== PENDING_JSON ? (
+        {invalidText ? (
           <HelpText
             id={parseErrorId}
             tone="bad"
             className="mt-1.5 flex flex-wrap items-center gap-2"
           >
-            {error.replace(/^invalid JSON/, 'Invalid JSON')}{' '}
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                // Back to the last valid value; the typed text is dropped (an undo step of its own).
-                setText(prettyJson(value));
-                setConfirmation(undefined);
-                parseErrors.discard(path);
-                setOwnError(undefined);
-                onHeldChange?.(false);
-              }}
-            >
-              Discard the unparsed text
-            </Button>
+            {shown.replace(/^invalid JSON/, 'Invalid JSON')}
+            {error === undefined ? null : (
+              <>
+                {' '}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    // Back to the last valid value; the typed text is dropped (an undo step of its
+                    // own).
+                    setText(prettyJson(value));
+                    setConfirmation(undefined);
+                    parseErrors.discard(path);
+                    setOwnError(undefined);
+                    onHeldChange?.(false);
+                    // This button leaves with the held text; focus stays in the field's editor.
+                    focusEditor();
+                  }}
+                >
+                  Discard the unparsed text
+                </Button>
+              </>
+            )}
           </HelpText>
         ) : null}
       </div>
       {explicit ? (
         <div className="mt-2 flex flex-wrap items-center gap-2">
-          <Button
-            ref={applyRef}
-            size="sm"
-            disabled={error !== undefined && error !== PENDING_JSON}
-            onClick={() => apply()}
-          >
+          <Button ref={applyRef} size="sm" disabled={invalidText} onClick={() => apply()}>
             Apply JSON
           </Button>
           <Button

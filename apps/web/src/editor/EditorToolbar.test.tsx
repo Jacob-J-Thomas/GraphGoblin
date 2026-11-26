@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { ComponentProps } from 'react';
 import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { focusFallback } from '../lib/focus.js';
 import { EditorToolbar } from './EditorToolbar.js';
 import { newLoopDefinition } from './model.js';
 import { useEditorStore } from './store.js';
@@ -57,6 +58,7 @@ const TRANSITIONS: readonly [string, Partial<Props>][] = [
   ['offline save', { saveState: 'offline', device: 'writing' }],
   ['kept in this window only', { saveState: 'offline', device: 'memory' }],
   ['name conflict', { saveState: 'name-conflict' }],
+  ['held field input', { saveState: 'saved', heldInput: true }],
   ['publishing', { publishing: true }],
   ['published v12', { published: true, version: 12 }],
   ['draft only', { published: false, version: undefined }],
@@ -195,6 +197,46 @@ describe('EditorToolbar history slot', () => {
     expect(parts().header.firstElementChild).toBe(parts().slot);
     expect(undo).toHaveAttribute('data-history', 'undo');
     expect(redo).toHaveAttribute('data-history', 'redo');
+  });
+
+  it('shows held field input as a segment of its own beside the draft’s state, in one stable focus target (#526)', () => {
+    const view = render(toolbar({ saveState: 'saved' }));
+    const status = screen.getByTestId('save-state');
+    focusFallback(status);
+    expect(status).toHaveFocus();
+    expect(status).toHaveTextContent('All changes saved');
+    expect(screen.queryByTestId('held-input-state')).toBeNull();
+
+    view.rerender(toolbar({ saveState: 'saved', heldInput: true }));
+    expect(screen.getByTestId('save-state')).toBe(status);
+    expect(status).toHaveFocus();
+    expect(status).toHaveClass('flex-wrap');
+    expect(screen.getByTestId('draft-state')).toHaveTextContent(/^Draft saved$/);
+    expect(screen.getByTestId('held-input-state')).toHaveTextContent(
+      'Field input kept in this window only',
+    );
+    expect(status).not.toHaveTextContent('All changes saved');
+    // Read as two sentences, the draft's first.
+    expect(status.textContent).toBe('Draft saved. Field input kept in this window only');
+
+    // The device copy and other states keep their distinctions beside it.
+    view.rerender(toolbar({ saveState: 'invalid', device: 'memory', heldInput: true }));
+    expect(screen.getByTestId('draft-state')).toHaveTextContent('Draft kept in this window only');
+    view.rerender(toolbar({ saveState: 'offline', device: 'device', heldInput: true }));
+    expect(screen.getByTestId('draft-state')).toHaveTextContent(
+      'Offline: draft saved on this device',
+    );
+    view.rerender(toolbar({ saveState: 'conflict', heldInput: true }));
+    expect(screen.getByTestId('draft-state')).toHaveTextContent('Draft changed elsewhere');
+    // Before any save, only the field input is spoken of.
+    view.rerender(toolbar({ saveState: 'idle', heldInput: true }));
+    expect(screen.queryByTestId('draft-state')).toBeNull();
+    expect(status.textContent).toBe('Field input kept in this window only');
+
+    view.rerender(toolbar({ saveState: 'saved' }));
+    expect(screen.getByTestId('save-state')).toBe(status);
+    expect(status).toHaveFocus();
+    expect(status.textContent).toBe('All changes saved');
   });
 
   it('keeps every other control and its behaviour of the bar', async () => {

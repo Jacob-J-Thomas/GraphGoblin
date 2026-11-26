@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { deviceCopyOf, deviceNotice, saveLabel, saveNotice } from './save-status.js';
+import {
+  deviceCopyOf,
+  deviceNotice,
+  HELD_INPUT_LABEL,
+  hasHeldInput,
+  saveLabel,
+  saveNotice,
+} from './save-status.js';
 
 const blocked = { kind: 'blocked', message: 'Close other GraphGoblin tabs.' } as const;
 const failed = { kind: 'failed', message: 'QuotaExceededError' } as const;
@@ -22,6 +29,51 @@ describe('save status: the server copy, and where the edits are besides', () => 
     // Saved to the server whatever the device storage does.
     expect(saveLabel('saved', 'memory')).toBe('All changes saved');
     expect(saveLabel('conflict', 'memory')).toBe('Draft changed elsewhere');
+  });
+
+  it('finds held field input in any form scope of the editor’s field errors (#526)', () => {
+    expect(hasHeldInput({})).toBe(false);
+    expect(hasHeldInput({ variables: {} })).toBe(false);
+    expect(
+      hasHeldInput({
+        settings: {},
+        'node:infer': { prompt: { message: 'invalid JSON', text: '{', input: 'unparsed text' } },
+      }),
+    ).toBe(true);
+  });
+
+  it('names the complete draft apart from held field input, and never says all changes are saved (#526)', () => {
+    expect(saveLabel('saved', 'device', true)).toBe('Draft saved');
+    expect(saveLabel('saved', 'memory', true)).toBe('Draft saved');
+    expect(saveLabel('invalid', 'device', true)).toBe('Draft saved on this device only');
+    expect(saveLabel('invalid', 'memory', true)).toBe('Draft kept in this window only');
+    expect(saveLabel('invalid', 'writing', true)).toBe('Unsaved changes');
+    expect(saveLabel('offline', 'device', true)).toBe('Offline: draft saved on this device');
+    expect(saveLabel('offline', 'memory', true)).toBe('Offline: draft kept in this window only');
+    expect(saveLabel('offline', 'writing', true)).toBe('Offline');
+    // The other states read as they do without held input; nothing is promoted to saved.
+    expect(saveLabel('idle', 'device', true)).toBe('');
+    expect(saveLabel('pending', 'device', true)).toBe('Unsaved changes');
+    expect(saveLabel('saving', 'device', true)).toBe('Saving…');
+    expect(saveLabel('error', 'device', true)).toBe('Save failed');
+    expect(saveLabel('conflict', 'memory', true)).toBe('Draft changed elsewhere');
+    expect(saveLabel('name-conflict', 'device', true)).toBe('Not saved: name in use');
+    for (const state of [
+      'idle',
+      'pending',
+      'saving',
+      'saved',
+      'invalid',
+      'offline',
+      'error',
+      'conflict',
+      'name-conflict',
+    ] as const)
+      for (const device of ['device', 'writing', 'memory'] as const)
+        expect(saveLabel(state, device, true)).not.toMatch(/All changes/);
+    // Without held input the labels are as before.
+    expect(saveLabel('saved', 'device', false)).toBe('All changes saved');
+    expect(HELD_INPUT_LABEL).toBe('Field input kept in this window only');
   });
 
   it('claims device persistence in a notice only once the device write succeeded', () => {

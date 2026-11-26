@@ -116,20 +116,38 @@ export function focusField(root: ParentNode, path: string): boolean {
 }
 
 /**
+ * Whether a record entry's JSON value owns the issue at `path`: the form lists the paths of the
+ * issues inside it as JSON in `data-value-issues` (#521). The list is data, compared as strings.
+ */
+function ownsValueIssue(element: Element, path: string): boolean {
+  try {
+    const paths: unknown = JSON.parse(element.getAttribute('data-value-issues') ?? '[]');
+    return Array.isArray(paths) && paths.includes(path);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Focus the field an issue path names inside the node editor: `config.<path>` in the config form
  * (scope `config`), anything else (`id`, `label`) among the node's own fields (scope `node`). An
  * issue at a record entry's path that is about the entry's key focuses that key: the form marks it
- * with `data-key-issue="<path>"` while the key holds the issue, before the entry's value field.
+ * with `data-key-issue="<path>"` while the key holds the issue, before the entry's value field. An
+ * issue inside a record entry's JSON value focuses that value, which lists it (`data-value-issues`),
+ * before any field whose path merely reads the same: a sibling entry with a dotted key, say. Only
+ * then are the field and its parents tried (`focusField`).
  */
 export function focusIssuePath(root: ParentNode, path: string): boolean {
   const inConfig = path === 'config' || path.startsWith('config.');
   const scope = root.querySelector(`[data-field-scope="${inConfig ? 'config' : 'node'}"]`);
   if (!scope) return false;
   const relative = inConfig ? path.slice('config'.length + 1) : path;
-  const key = [...scope.querySelectorAll('[data-key-issue]')].find(
-    (el) => el.getAttribute('data-key-issue') === relative,
-  );
-  const control = key ? firstFocusable(key) : undefined;
+  const owner =
+    [...scope.querySelectorAll('[data-key-issue]')].find(
+      (el) => el.getAttribute('data-key-issue') === relative,
+    ) ??
+    [...scope.querySelectorAll('[data-value-issues]')].find((el) => ownsValueIssue(el, relative));
+  const control = owner ? firstFocusable(owner) : undefined;
   if (control) {
     control.focus();
     return true;

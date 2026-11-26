@@ -671,7 +671,11 @@ test('focus stays in the repaired form, and unfinished input elsewhere survives 
   // Before any rename: unfinished input is not a draft change, so the accepted draft on the server
   // is still the loop as created, with its original variable value and node ids, and the page has
   // sent no save. This is the value the last line of the test checks again.
-  await saved(page);
+  await expect(page.getByTestId('draft-state')).toHaveText('Draft saved', { timeout: 30_000 });
+  await expect(page.getByTestId('held-input-state')).toBeVisible();
+  await expect(page.getByTestId('held-input-state')).toContainText(
+    'Field input kept in this window only',
+  );
   const accepted = (await serverDraft(request, loopId)).definition;
   expect(accepted.variables).toEqual({ key: { type: 'string' } });
   expect(accepted.nodes.map((n) => n.id)).toEqual(['start', 'work', 'gate', 'done']);

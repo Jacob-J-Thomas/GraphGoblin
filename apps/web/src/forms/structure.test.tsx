@@ -287,7 +287,7 @@ it('shows a key its record refuses at the Key, and a value its schema refuses at
   });
 });
 
-it('holds a JSON value with a member "__proto__" only when its schema refuses it (#429)', () => {
+it('holds a JSON value with a member "__proto__" as typed: by its schema message (#429), else by the member path (#527)', () => {
   const spy = vi.fn();
   render(
     <StoredForm
@@ -299,33 +299,106 @@ it('holds a JSON value with a member "__proto__" only when its schema refuses it
   const code = (label: string) =>
     screen.getAllByLabelText(label).find((el) => el.classList.contains('cm-content'))!;
   const held = () => useEditorStore.getState().fieldErrors['test'] ?? {};
-  const variables = () =>
-    (spy.mock.calls.at(-1)?.[0] as { variables: Record<string, unknown> }).variables;
-  // The declarations' schema accepts a JSON Schema naming such a member: it is taken as before.
-  setCode('Variables value 1', '{"type":"object","__proto__":{"type":"string"}}');
+  const heldAs = (message: string, text: string) => ({ message, text, input: 'unparsed text' });
+  // An own member "__proto__" that no rule names is held by its path from the Value, and the fix.
+  const unheld = 'This member name cannot be saved. Rename or remove it.';
+  const member = `__proto__: ${unheld}`;
+  // Control: the same document with an ordinary member name is taken whole, with its sibling.
+  const kept = { type: 'object', proto_member: { type: 'string' } };
+  const accepted = { variables: { first: kept, second: { type: 'number' } } };
+  setCode('Variables value 1', '{"type":"object","proto_member":{"type":"string"}}');
   expect(code('Variables value 1')).not.toHaveAttribute('aria-invalid');
   expect(held()).toEqual({});
-  expect(variables()['first']).toMatchObject({ type: 'object' });
-  // A value its schema refuses is held as typed with the schema's message, and nothing is reported.
+  expect(spy.mock.calls.at(-1)?.[0]).toEqual(accepted);
+  // The schema accepts an own "__proto__" too, but the form would lose it (#527): the Value
+  // holds the text as typed and reports nothing, so the last complete value stands.
+  const proto = '{"type":"object","__proto__":{"type":"string"}}';
+  const calls = spy.mock.calls.length;
+  setCode('Variables value 1', proto);
+  expect(getCode('Variables value 1')).toBe(proto);
+  expect(held()).toEqual({ 'variables.first': heldAs(member, proto) });
+  expect(code('Variables value 1')).toHaveAttribute('aria-invalid', 'true');
+  expect(code('Variables value 1')).toHaveAccessibleDescription(expect.stringContaining(member));
+  expect(code('Variables value 1')).toHaveAccessibleDescription(/^__proto__: /);
+  expect(spy.mock.calls).toHaveLength(calls);
+  expect(spy.mock.calls.at(-1)?.[0]).toEqual(accepted);
+  expect(spy).not.toHaveBeenCalledWith({
+    variables: { first: { type: 'object' }, second: { type: 'number' } },
+  });
+  // A value its schema refuses is held by the schema's message first (#429), not the member's.
   const refusal = VariableDeclarationsSchema.safeParse({ first: [{}] }).error!.issues[0]!.message;
   const refused = '[{"__proto__":{"type":"string"}}]';
-  const calls = spy.mock.calls.length;
   setCode('Variables value 1', refused);
   expect(getCode('Variables value 1')).toBe(refused);
+  expect(held()).toEqual({ 'variables.first': heldAs(refusal, refused) });
   expect(code('Variables value 1')).toHaveAttribute('aria-invalid', 'true');
   expect(code('Variables value 1')).toHaveAccessibleDescription(expect.stringContaining(refusal));
-  expect(held()['variables.first']).toMatchObject({ message: refusal, text: refused });
+  expect(code('Variables value 1')).toHaveAccessibleDescription(
+    expect.not.stringContaining(unheld),
+  );
   expect(spy.mock.calls).toHaveLength(calls);
-  // Under a key its key schema refuses, the value is unchecked by the record: its schema decides.
-  fireEvent.change(screen.getByLabelText('Variables key 2'), { target: { value: 'Bad key' } });
+  expect(spy.mock.calls.at(-1)?.[0]).toEqual(accepted);
+  // Under a key its key schema refuses, the record leaves the value unchecked: the value's own
+  // schema decides, apart from the Key's message.
+  const keyRefusal = VariableDeclarationsSchema.safeParse({ 'Bad key': {} }).error!.issues[0]!;
+  const keyError = `Key "Bad key": ${keyRefusal.message}`;
+  const key = screen.getByLabelText('Variables key 2');
+  fireEvent.change(key, { target: { value: 'Bad key' } });
+  expect(key).toHaveAttribute('aria-invalid', 'true');
+  expect(key).toHaveAccessibleDescription(keyError);
+  // The Key's edit reported a draft of its own; the Value's edits below must leave it last.
+  const draft: unknown = spy.mock.calls.at(-1)?.[0];
+  const drafts = spy.mock.calls.length;
   setCode('Variables value 2', refused);
+  expect(getCode('Variables value 2')).toBe(refused);
+  expect(held()).toEqual({
+    'variables.first': heldAs(refusal, refused),
+    'variables.Bad key': heldAs(refusal, refused),
+  });
+  expect(code('Variables value 2')).toHaveAttribute('aria-invalid', 'true');
   expect(code('Variables value 2')).toHaveAccessibleDescription(expect.stringContaining(refusal));
+  expect(code('Variables value 2')).toHaveAccessibleDescription(
+    expect.not.stringContaining(unheld),
+  );
   expect(code('Variables value 2')).toHaveAccessibleDescription(
     expect.not.stringContaining('Key "Bad key"'),
   );
-  setCode('Variables value 2', '{"type":"boolean","__proto__":{"type":"string"}}');
+  expect(key).toHaveAccessibleDescription(keyError);
+  expect(spy.mock.calls).toHaveLength(drafts);
+  expect(spy.mock.calls.at(-1)?.[0]).toEqual(draft);
+  // An own "__proto__" its schema accepts is held there too, named by its path from the Value.
+  const protoBoolean = '{"type":"boolean","__proto__":{"type":"string"}}';
+  setCode('Variables value 2', protoBoolean);
+  expect(getCode('Variables value 2')).toBe(protoBoolean);
+  expect(held()).toEqual({
+    'variables.first': heldAs(refusal, refused),
+    'variables.Bad key': heldAs(member, protoBoolean),
+  });
+  expect(code('Variables value 2')).toHaveAttribute('aria-invalid', 'true');
+  expect(code('Variables value 2')).toHaveAccessibleDescription(expect.stringContaining(member));
+  expect(code('Variables value 2')).toHaveAccessibleDescription(/^__proto__: /);
+  expect(code('Variables value 2')).toHaveAccessibleDescription(
+    expect.not.stringContaining('Key "Bad key"'),
+  );
+  expect(key).toHaveAccessibleDescription(keyError);
+  expect(spy.mock.calls).toHaveLength(drafts);
+  expect(spy.mock.calls.at(-1)?.[0]).toEqual(draft);
+  expect(spy).not.toHaveBeenCalledWith({
+    variables: { first: kept, 'Bad key': { type: 'boolean' } },
+  });
+  // A corrected Key clears its message, not the Value's; an ordinary value commits whole.
+  fireEvent.change(key, { target: { value: 'flag' } });
+  expect(key).not.toHaveAttribute('aria-invalid');
+  expect(key).toHaveAccessibleDescription('');
+  expect(held()['variables.flag']).toEqual(heldAs(member, protoBoolean));
+  setCode('Variables value 2', '{"type":"boolean","proto_member":{"type":"string"}}');
   expect(code('Variables value 2')).not.toHaveAttribute('aria-invalid');
-  expect(variables()['Bad key']).toMatchObject({ type: 'boolean' });
+  expect(code('Variables value 2')).toHaveAccessibleDescription('');
+  expect(held()).toEqual({ 'variables.first': heldAs(refusal, refused) });
+  expect(getCode('Variables value 1')).toBe(refused);
+  expect(spy.mock.calls.at(-1)?.[0]).toEqual({
+    variables: { first: kept, flag: { type: 'boolean', proto_member: { type: 'string' } } },
+  });
 });
 
 it('focuses and announces an added array item', async () => {

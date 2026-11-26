@@ -40,20 +40,40 @@ const LABELS: Record<SaveState, string> = {
 };
 
 /**
- * The save indicator's text. The server's state decides (`saved` is saved to the server, whatever
- * the device storage does); where the server does not hold the edits (`invalid`, `offline`) the
- * device copy says where they are: saved on this device only, kept in this window only, or, while
- * the device write runs, not yet anywhere but here.
+ * Whether a field holds input the draft does not (#526): unparsed or unapplied JSON, an incomplete
+ * number or schedule, kept by the editor's `fieldErrors` for this window's session only. The draft
+ * keeps that field's last valid value, and its saves go on without the input.
  */
-export function saveLabel(state: SaveState, device: DeviceCopy): string {
+export function hasHeldInput(fieldErrors: Readonly<Record<string, Readonly<object>>>): boolean {
+  return Object.values(fieldErrors).some((scope) => Object.keys(scope).length > 0);
+}
+
+/** The save indicator's second segment, and the announcement as held input begins (#526). */
+export const HELD_INPUT_LABEL = 'Field input kept in this window only';
+
+/**
+ * The save indicator's text for the complete draft. The server's state decides (`saved` is saved
+ * to the server, whatever the device storage does); where the server does not hold the edits
+ * (`invalid`, `offline`) the device copy says where they are: saved on this device only, kept in
+ * this window only, or, while the device write runs, not yet anywhere but here. While a field
+ * holds input (`held`), which the indicator shows apart (`HELD_INPUT_LABEL`), not every change is
+ * saved: an acknowledged server copy reads "Draft saved", and a device or window copy names the
+ * draft. Other states read the same, and nothing claims a save before one (`idle`).
+ */
+export function saveLabel(state: SaveState, device: DeviceCopy, held = false): string {
   if (state === 'invalid') {
-    if (device === 'memory') return 'Kept in this window only';
+    if (device === 'memory')
+      return held ? 'Draft kept in this window only' : 'Kept in this window only';
     if (device === 'writing') return LABELS.pending;
+    if (held) return 'Draft saved on this device only';
   }
   if (state === 'offline') {
-    if (device === 'memory') return 'Offline: kept in this window only';
+    if (device === 'memory')
+      return held ? 'Offline: draft kept in this window only' : 'Offline: kept in this window only';
     if (device === 'writing') return 'Offline';
+    if (held) return 'Offline: draft saved on this device';
   }
+  if (state === 'saved' && held) return 'Draft saved';
   return LABELS[state];
 }
 
