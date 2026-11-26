@@ -1,0 +1,39 @@
+{
+  "id": "526-A",
+  "issue": 526,
+  "title": "Held status with device storage available: neighbour save, correction, one announcement",
+  "expected": "Draft saved + window-only segment, neighbour PUT without held text, one polite announcement, correction returns to All changes saved.",
+  "steps": [
+    "Type unfinished JSON {\"type\": into Variables value 1."
+  ],
+  "checks": [
+    {
+      "label": "initial status All changes saved, no held segment",
+      "actual": {
+        "whole": "All changes saved",
+        "draft": "All changes saved",
+        "held": null
+      },
+      "pass": true
+    },
+    {
+      "label": "held segment shows the window-only text",
+      "actual": ". Field input kept in this window only",
+      "pass": true
+    },
+    {
+      "label": "draft segment: Draft saved (not All changes saved)",
+      "actual": "Unsaved changes",
+      "pass": false
+    }
+  ],
+  "screenshots": [
+    "526-A-first-failure.png"
+  ],
+  "verdict": "FAIL",
+  "failure": "Error: CHECK FAILED: draft segment: Draft saved (not All changes saved): \"Unsaved changes\"",
+  "stack": "Error: CHECK FAILED: draft segment: Draft saved (not All changes saved): \"Unsaved changes\"\n    at Object.check (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:219:22)\n    at case526Available (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:712:5)\n    at async file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:904:22",
+  "durationMs": 844,
+  "consoleErrors": [],
+  "trace": "526-A-trace.zip"
+}

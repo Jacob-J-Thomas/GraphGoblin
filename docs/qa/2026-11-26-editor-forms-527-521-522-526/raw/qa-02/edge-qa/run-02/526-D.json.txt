@@ -1,0 +1,175 @@
+{
+  "id": "526-D",
+  "issue": 526,
+  "title": "Offline distinction with held input",
+  "expected": "Offline: draft label + held segment; online again: Draft saved + held.",
+  "steps": [
+    "Hold unfinished JSON, go offline, then make a valid neighbour edit.",
+    "Back online: the neighbour reaches the server; Draft saved + held."
+  ],
+  "checks": [
+    {
+      "label": "offline status",
+      "actual": {
+        "whole": "Offline: draft saved on this device . Field input kept in this window only",
+        "draft": "Offline: draft saved on this device",
+        "held": ". Field input kept in this window only"
+      },
+      "observation": true
+    },
+    {
+      "label": "offline: draft names its device copy and held segment stays",
+      "actual": {
+        "whole": "Offline: draft saved on this device . Field input kept in this window only",
+        "draft": "Offline: draft saved on this device",
+        "held": ". Field input kept in this window only"
+      },
+      "pass": true
+    },
+    {
+      "label": "SQL variables unchanged",
+      "actual": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "online: Draft saved + held",
+      "actual": {
+        "whole": "Draft saved . Field input kept in this window only",
+        "draft": "Draft saved",
+        "held": ". Field input kept in this window only"
+      },
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "526-D-offline.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:28:19.100Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 526 offline 13",
+          "description": "offline neighbour",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "string",
+              "title": "last complete topic"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 1448,
+  "consoleErrors": [
+    "Failed to load resource: net::ERR_INTERNET_DISCONNECTED"
+  ],
+  "trace": "526-D-trace.zip"
+}

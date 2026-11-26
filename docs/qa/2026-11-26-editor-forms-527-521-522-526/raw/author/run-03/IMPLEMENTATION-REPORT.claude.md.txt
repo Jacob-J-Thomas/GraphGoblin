@@ -1,0 +1,19 @@
+I made all four assertion edits, but verification stopped at the first check: the `unit` arm failed, so the other three checks were not run.
+
+**Edits (unstaged; no other files touched)**
+- **`issue-170-qa.spec.ts` line 1127** (tab B's overwrite): now checks that `draft-state` reads exactly `Draft saved`, that `held-input-state` is visible, and that it contains `Field input kept in this window only`. Tab A's `All changes saved` check at line 1122 is unchanged.
+- **`issue-170-qa.spec.ts` line 1156** (I6 optional numeric case): the same three checks. The last-applied value checks for the server copy and device copy, and the blocked-publish check, are unchanged.
+- **`issue-170-qa.spec.ts` line 1379** (both I4 parent-validation cases): `draft-state` must match `/^(?:Draft saved|Draft saved on this device only)$/`, plus the same visibility and text checks. The refusal, persistence and publish checks are unchanged. The anchored pattern is safe because the existing unit test at `EditorToolbar.test.tsx:220` shows the icons add no text.
+- **`rename-references.spec.ts` line 674**: the same three checks, keeping the shared helper's 30-second timeout. The `saved` helper, the earlier `saved(page)` at line 658, and the rename, persistence and focus checks are unchanged.
+
+**Checks run**
+1. `run-verify.py unit` (once, in the foreground): **failed**, exit 1, with `{"mode":"unit","sourceUnchanged":true,"exitCode":1,"failure":"unit exited without clean passing settlement"}`. `sourceUnchanged: true` means the frozen source files were intact. I don't know which unit file or test failed. The wrapper only printed that summary, and reading its evidence folder was blocked because file tools are confined to the worktree.
+
+**Not run**
+- `static` (typecheck, lint, Prettier check), `browser-build` and `browser` were left unrun because an earlier check failed. So my edits have **not** been checked for lint, formatting or types, and have not run in Edge.
+
+**Blocked actions (not retried or worked around)**
+- `git status` (Bash) was denied.
+- Reading `G:/ggq/delivery-evidence/.../continuation-03` was blocked.
+
+My edits only touch e2e Playwright specs, and the unit arm runs 14 web unit files. I couldn't see the output, but the failure seems unlikely to come from these edits. Someone with access to the wrapper's captured output needs to find the cause before `static`, `browser-build` and `browser` are run. Formal review, independent QA and CI are still separate gates.

@@ -1,0 +1,1013 @@
+{
+  "id": "527-A",
+  "issue": 527,
+  "title": "Whole-data save and reload of a rich admitted schema",
+  "expected": "Every entered member reaches PUT, SQL, GET and reload unchanged; neighbours unchanged.",
+  "steps": [
+    "Seed loop with Variables {topic, other} and description; open the built editor; show loop panel.",
+    "Type a rich, admitted JSON Schema (constructor, prototype, __proto, proto__, toString, empty and numeric member names, dotted, unicode, deep arrays, a __proto__ mention in a string) into Variables value 1.",
+    "Reload; read the whole Value text through the editor copy event."
+  ],
+  "checks": [
+    {
+      "label": "Value not marked invalid",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "SQL row variables.topic equals the entered JSON (whole object)",
+      "actual": {
+        "type": "object",
+        "title": "Rich",
+        "description": "ordinary text that mentions __proto__ and constructor",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+          "inner": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b",
+              null,
+              1,
+              true
+            ]
+          }
+        },
+        "properties": {
+          "0": {
+            "type": "string"
+          },
+          "constructor": {
+            "type": "string"
+          },
+          "prototype": {
+            "type": "number"
+          },
+          "__proto": {
+            "type": "boolean"
+          },
+          "proto__": {
+            "type": "null"
+          },
+          "toString": {
+            "type": "string"
+          },
+          "hasOwnProperty": {
+            "type": "integer"
+          },
+          "valueOf": {},
+          "": {
+            "description": "empty member name"
+          },
+          "dotted.key": {
+            "type": "string"
+          },
+          "unicodé ✓": {
+            "type": "string"
+          },
+          "nested": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/inner"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "deep": {
+                      "type": "object",
+                      "properties": {
+                        "deeper": {
+                          "const": {
+                            "x": [
+                              1,
+                              2,
+                              {
+                                "y": null
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "constructor",
+          "prototype"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "default": {
+          "constructor": "c",
+          "prototype": 1
+        },
+        "examples": [
+          [],
+          {},
+          "",
+          0,
+          false,
+          null
+        ],
+        "x-custom": {
+          "nested": {
+            "a": -1.5e-7,
+            "b": 1.7976931348623157e+308,
+            "c": "__proto__"
+          }
+        }
+      },
+      "expected": {
+        "type": "object",
+        "title": "Rich",
+        "description": "ordinary text that mentions __proto__ and constructor",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+          "inner": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b",
+              null,
+              1,
+              true
+            ]
+          }
+        },
+        "properties": {
+          "0": {
+            "type": "string"
+          },
+          "constructor": {
+            "type": "string"
+          },
+          "prototype": {
+            "type": "number"
+          },
+          "__proto": {
+            "type": "boolean"
+          },
+          "proto__": {
+            "type": "null"
+          },
+          "toString": {
+            "type": "string"
+          },
+          "hasOwnProperty": {
+            "type": "integer"
+          },
+          "valueOf": {},
+          "": {
+            "description": "empty member name"
+          },
+          "dotted.key": {
+            "type": "string"
+          },
+          "unicodé ✓": {
+            "type": "string"
+          },
+          "nested": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/inner"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "deep": {
+                      "type": "object",
+                      "properties": {
+                        "deeper": {
+                          "const": {
+                            "x": [
+                              1,
+                              2,
+                              {
+                                "y": null
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "constructor",
+          "prototype"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "default": {
+          "constructor": "c",
+          "prototype": 1
+        },
+        "examples": [
+          [],
+          {},
+          "",
+          0,
+          false,
+          null
+        ],
+        "x-custom": {
+          "nested": {
+            "a": -1.5e-7,
+            "b": 1.7976931348623157e+308,
+            "c": "__proto__"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "neighbouring Variables member unchanged",
+      "actual": {
+        "type": "number",
+        "minimum": 0
+      },
+      "expected": {
+        "type": "number",
+        "minimum": 0
+      },
+      "pass": true
+    },
+    {
+      "label": "description unchanged",
+      "actual": "kept",
+      "pass": true
+    },
+    {
+      "label": "last PUT status 200",
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "label": "PUT payload variables equal the entered JSON plus neighbour",
+      "actual": {
+        "topic": {
+          "type": "object",
+          "title": "Rich",
+          "description": "ordinary text that mentions __proto__ and constructor",
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "definitions": {
+            "inner": {
+              "type": "string",
+              "enum": [
+                "a",
+                "b",
+                null,
+                1,
+                true
+              ]
+            }
+          },
+          "properties": {
+            "0": {
+              "type": "string"
+            },
+            "constructor": {
+              "type": "string"
+            },
+            "prototype": {
+              "type": "number"
+            },
+            "__proto": {
+              "type": "boolean"
+            },
+            "proto__": {
+              "type": "null"
+            },
+            "toString": {
+              "type": "string"
+            },
+            "hasOwnProperty": {
+              "type": "integer"
+            },
+            "valueOf": {},
+            "": {
+              "description": "empty member name"
+            },
+            "dotted.key": {
+              "type": "string"
+            },
+            "unicodé ✓": {
+              "type": "string"
+            },
+            "nested": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/inner"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "deep": {
+                        "type": "object",
+                        "properties": {
+                          "deeper": {
+                            "const": {
+                              "x": [
+                                1,
+                                2,
+                                {
+                                  "y": null
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 3
+            }
+          },
+          "required": [
+            "constructor",
+            "prototype"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {
+            "constructor": "c",
+            "prototype": 1
+          },
+          "examples": [
+            [],
+            {},
+            "",
+            0,
+            false,
+            null
+          ],
+          "x-custom": {
+            "nested": {
+              "a": -1.5e-7,
+              "b": 1.7976931348623157e+308,
+              "c": "__proto__"
+            }
+          }
+        },
+        "other": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "object",
+          "title": "Rich",
+          "description": "ordinary text that mentions __proto__ and constructor",
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "definitions": {
+            "inner": {
+              "type": "string",
+              "enum": [
+                "a",
+                "b",
+                null,
+                1,
+                true
+              ]
+            }
+          },
+          "properties": {
+            "0": {
+              "type": "string"
+            },
+            "constructor": {
+              "type": "string"
+            },
+            "prototype": {
+              "type": "number"
+            },
+            "__proto": {
+              "type": "boolean"
+            },
+            "proto__": {
+              "type": "null"
+            },
+            "toString": {
+              "type": "string"
+            },
+            "hasOwnProperty": {
+              "type": "integer"
+            },
+            "valueOf": {},
+            "": {
+              "description": "empty member name"
+            },
+            "dotted.key": {
+              "type": "string"
+            },
+            "unicodé ✓": {
+              "type": "string"
+            },
+            "nested": {
+              "type": "array",
+              "items": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/inner"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "deep": {
+                        "type": "object",
+                        "properties": {
+                          "deeper": {
+                            "const": {
+                              "x": [
+                                1,
+                                2,
+                                {
+                                  "y": null
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "minItems": 0,
+              "maxItems": 3
+            }
+          },
+          "required": [
+            "constructor",
+            "prototype"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {
+            "constructor": "c",
+            "prototype": 1
+          },
+          "examples": [
+            [],
+            {},
+            "",
+            0,
+            false,
+            null
+          ],
+          "x-custom": {
+            "nested": {
+              "a": -1.5e-7,
+              "b": 1.7976931348623157e+308,
+              "c": "__proto__"
+            }
+          }
+        },
+        "other": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "PUT count",
+      "actual": 1,
+      "observation": true
+    },
+    {
+      "label": "no held-input segment for an accepted value",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "reloaded Value 1 equals the entered JSON",
+      "actual": {
+        "type": "object",
+        "title": "Rich",
+        "description": "ordinary text that mentions __proto__ and constructor",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+          "inner": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b",
+              null,
+              1,
+              true
+            ]
+          }
+        },
+        "properties": {
+          "0": {
+            "type": "string"
+          },
+          "constructor": {
+            "type": "string"
+          },
+          "prototype": {
+            "type": "number"
+          },
+          "__proto": {
+            "type": "boolean"
+          },
+          "proto__": {
+            "type": "null"
+          },
+          "toString": {
+            "type": "string"
+          },
+          "hasOwnProperty": {
+            "type": "integer"
+          },
+          "valueOf": {},
+          "": {
+            "description": "empty member name"
+          },
+          "dotted.key": {
+            "type": "string"
+          },
+          "unicodé ✓": {
+            "type": "string"
+          },
+          "nested": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/inner"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "deep": {
+                      "type": "object",
+                      "properties": {
+                        "deeper": {
+                          "const": {
+                            "x": [
+                              1,
+                              2,
+                              {
+                                "y": null
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "constructor",
+          "prototype"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "default": {
+          "constructor": "c",
+          "prototype": 1
+        },
+        "examples": [
+          [],
+          {},
+          "",
+          0,
+          false,
+          null
+        ],
+        "x-custom": {
+          "nested": {
+            "a": -1.5e-7,
+            "b": 1.7976931348623157e+308,
+            "c": "__proto__"
+          }
+        }
+      },
+      "expected": {
+        "type": "object",
+        "title": "Rich",
+        "description": "ordinary text that mentions __proto__ and constructor",
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {
+          "inner": {
+            "type": "string",
+            "enum": [
+              "a",
+              "b",
+              null,
+              1,
+              true
+            ]
+          }
+        },
+        "properties": {
+          "0": {
+            "type": "string"
+          },
+          "constructor": {
+            "type": "string"
+          },
+          "prototype": {
+            "type": "number"
+          },
+          "__proto": {
+            "type": "boolean"
+          },
+          "proto__": {
+            "type": "null"
+          },
+          "toString": {
+            "type": "string"
+          },
+          "hasOwnProperty": {
+            "type": "integer"
+          },
+          "valueOf": {},
+          "": {
+            "description": "empty member name"
+          },
+          "dotted.key": {
+            "type": "string"
+          },
+          "unicodé ✓": {
+            "type": "string"
+          },
+          "nested": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/inner"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "deep": {
+                      "type": "object",
+                      "properties": {
+                        "deeper": {
+                          "const": {
+                            "x": [
+                              1,
+                              2,
+                              {
+                                "y": null
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "minItems": 0,
+            "maxItems": 3
+          }
+        },
+        "required": [
+          "constructor",
+          "prototype"
+        ],
+        "additionalProperties": {
+          "type": "string"
+        },
+        "default": {
+          "constructor": "c",
+          "prototype": 1
+        },
+        "examples": [
+          [],
+          {},
+          "",
+          0,
+          false,
+          null
+        ],
+        "x-custom": {
+          "nested": {
+            "a": -1.5e-7,
+            "b": 1.7976931348623157e+308,
+            "c": "__proto__"
+          }
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "reloaded Value 2 equals neighbour",
+      "actual": {
+        "type": "number",
+        "minimum": 0
+      },
+      "expected": {
+        "type": "number",
+        "minimum": 0
+      },
+      "pass": true
+    },
+    {
+      "label": "own member names preserved exactly (properties)",
+      "actual": [
+        "",
+        "0",
+        "__proto",
+        "constructor",
+        "dotted.key",
+        "hasOwnProperty",
+        "nested",
+        "proto__",
+        "prototype",
+        "toString",
+        "unicodé ✓",
+        "valueOf"
+      ],
+      "expected": [
+        "",
+        "0",
+        "__proto",
+        "constructor",
+        "dotted.key",
+        "hasOwnProperty",
+        "nested",
+        "proto__",
+        "prototype",
+        "toString",
+        "unicodé ✓",
+        "valueOf"
+      ],
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "527-A-saved.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:25:36.793Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 527 rich schema 1",
+          "description": "kept",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "object",
+              "title": "Rich",
+              "description": "ordinary text that mentions __proto__ and constructor",
+              "$schema": "http://json-schema.org/draft-07/schema#",
+              "definitions": {
+                "inner": {
+                  "type": "string",
+                  "enum": [
+                    "a",
+                    "b",
+                    null,
+                    1,
+                    true
+                  ]
+                }
+              },
+              "properties": {
+                "0": {
+                  "type": "string"
+                },
+                "constructor": {
+                  "type": "string"
+                },
+                "prototype": {
+                  "type": "number"
+                },
+                "__proto": {
+                  "type": "boolean"
+                },
+                "proto__": {
+                  "type": "null"
+                },
+                "toString": {
+                  "type": "string"
+                },
+                "hasOwnProperty": {
+                  "type": "integer"
+                },
+                "valueOf": {},
+                "": {
+                  "description": "empty member name"
+                },
+                "dotted.key": {
+                  "type": "string"
+                },
+                "unicodé ✓": {
+                  "type": "string"
+                },
+                "nested": {
+                  "type": "array",
+                  "items": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/definitions/inner"
+                      },
+                      {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "deep": {
+                            "type": "object",
+                            "properties": {
+                              "deeper": {
+                                "const": {
+                                  "x": [
+                                    1,
+                                    2,
+                                    {
+                                      "y": null
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "minItems": 0,
+                  "maxItems": 3
+                }
+              },
+              "required": [
+                "constructor",
+                "prototype"
+              ],
+              "additionalProperties": {
+                "type": "string"
+              },
+              "default": {
+                "constructor": "c",
+                "prototype": 1
+              },
+              "examples": [
+                [],
+                {},
+                "",
+                0,
+                false,
+                null
+              ],
+              "x-custom": {
+                "nested": {
+                  "a": -1.5e-7,
+                  "b": 1.7976931348623157e+308,
+                  "c": "__proto__"
+                }
+              }
+            },
+            "other": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 2564,
+  "consoleErrors": [],
+  "trace": "527-A-trace.zip"
+}

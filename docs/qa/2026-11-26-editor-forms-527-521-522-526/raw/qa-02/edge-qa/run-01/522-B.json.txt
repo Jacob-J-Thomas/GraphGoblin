@@ -1,0 +1,538 @@
+{
+  "id": "522-B",
+  "issue": 522,
+  "title": "Invalid committed section opens with passive diagnostic; unchanged edit; Cancel; correct + Apply + reload",
+  "expected": "First render invalid + described, Apply disabled, no held/Discard/PUT; Cancel restores diagnostic with focus on Cancel; corrected Apply saves and reloads.",
+  "steps": [
+    "In the structured editor, commit an invalid nested member into Value 1 (a schema-invalid committed draft).",
+    "Open Edit as JSON: Config overrides.",
+    "Semantically unchanged edit (whitespace + key order) stays passive.",
+    "Type a corrected value (pending, Apply enabled), then Cancel JSON.",
+    "Type the corrected value again and Apply JSON; read back the saved draft and reload."
+  ],
+  "checks": [
+    {
+      "label": "status after structured commit",
+      "actual": {
+        "whole": "Unsaved changes",
+        "draft": "Unsaved changes",
+        "held": null
+      },
+      "observation": true
+    },
+    {
+      "label": "first render: editor aria-invalid=true",
+      "actual": "true",
+      "pass": true
+    },
+    {
+      "label": "first render: description carries the relative path + rule",
+      "actual": "Raw Codex configuration. Each dotted key segment must use letters, digits, _ or -, and not __proto__, constructor or prototype. | example.outer.team docs: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+      "pass": true
+    },
+    {
+      "label": "first render: Apply disabled",
+      "actual": false,
+      "pass": true
+    },
+    {
+      "label": "no Discard action for passive diagnostic",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "no held segment from opening",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "structured switch available (not blocked)",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "no PUT from the invalid committed content",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "server+SQL draft unchanged",
+      "actual": {
+        "schemaVersion": 4,
+        "name": "QA 522 invalid open 8",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 80
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "approve",
+            "label": "Check",
+            "ui": {
+              "x": 290,
+              "y": 80
+            },
+            "kind": "inference",
+            "config": {
+              "harness": "codex",
+              "session": {
+                "policy": "fresh"
+              },
+              "prompt": {
+                "template": "Disposable editor QA"
+              },
+              "input": [],
+              "harnessOptions": {
+                "sandbox": "workspace-write",
+                "approval": "never",
+                "configOverrides": {
+                  "example": {
+                    "outer": {
+                      "team_docs": false
+                    }
+                  },
+                  "example.outer": "sibling"
+                }
+              },
+              "output": {
+                "captureTranscript": "artifact",
+                "toMessages": "final",
+                "transforms": []
+              }
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 570,
+              "y": 80
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "approve",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "approve",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": 4,
+        "name": "QA 522 invalid open 8",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {},
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 80
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "approve",
+            "label": "Check",
+            "ui": {
+              "x": 290,
+              "y": 80
+            },
+            "kind": "inference",
+            "config": {
+              "harness": "codex",
+              "session": {
+                "policy": "fresh"
+              },
+              "prompt": {
+                "template": "Disposable editor QA"
+              },
+              "input": [],
+              "harnessOptions": {
+                "sandbox": "workspace-write",
+                "approval": "never",
+                "configOverrides": {
+                  "example": {
+                    "outer": {
+                      "team_docs": false
+                    }
+                  },
+                  "example.outer": "sibling"
+                }
+              },
+              "output": {
+                "captureTranscript": "artifact",
+                "toMessages": "final",
+                "transforms": []
+              }
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 570,
+              "y": 80
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "approve",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "approve",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "label": "still invalid",
+      "actual": "true",
+      "pass": true
+    },
+    {
+      "label": "Apply still disabled",
+      "actual": false,
+      "pass": true
+    },
+    {
+      "label": "still no held segment",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "still no Discard",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "status with pending JSON",
+      "actual": {
+        "whole": "Draft saved on this device only . Field input kept in this window only",
+        "draft": "Draft saved on this device only",
+        "held": ". Field input kept in this window only"
+      },
+      "observation": true
+    },
+    {
+      "label": "focus stays on Cancel JSON",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "after Cancel: committed invalid text back, diagnostic back",
+      "actual": {
+        "invalid": "true",
+        "label": "Config overrides JSON",
+        "description": "Raw Codex configuration. Each dotted key segment must use letters, digits, _ or -, and not __proto__, constructor or prototype. | example.outer.team docs: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+        "focused": false
+      },
+      "pass": true
+    },
+    {
+      "label": "after Cancel: Apply disabled",
+      "actual": false,
+      "pass": true
+    },
+    {
+      "label": "after Cancel: no held segment",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "after Cancel: still no PUT",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "SQL configOverrides after Apply",
+      "actual": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "expected": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "pass": true
+    },
+    {
+      "label": "last PUT carries the corrected section",
+      "actual": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "expected": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "pass": true
+    },
+    {
+      "label": "editor clean after Apply",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "reloaded structured Value 1",
+      "actual": {
+        "outer": {
+          "team_docs": true
+        }
+      },
+      "expected": {
+        "outer": {
+          "team_docs": true
+        }
+      },
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "522-B-invalid-first-render.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:25:55.883Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 522 invalid open 8",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Check",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Disposable editor QA"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "outer": {
+                        "team_docs": true
+                      }
+                    },
+                    "example.outer": "sibling"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 5173,
+  "consoleErrors": [],
+  "trace": "522-B-trace.zip"
+}

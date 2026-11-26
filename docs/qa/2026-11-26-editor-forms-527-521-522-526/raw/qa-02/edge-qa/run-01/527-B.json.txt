@@ -1,0 +1,45 @@
+{
+  "id": "527-B",
+  "issue": 527,
+  "title": "Own __proto__ refused at the Value; lossy save refused; neighbour saves; publish refused; reload",
+  "expected": "Exact text held, member path + remedy described, no PUT/SQL change, neighbour PUT without held text, publish refused, reload shows last complete value.",
+  "steps": [
+    "Type a schema with an own \"__proto__\" member under properties into Variables value 1."
+  ],
+  "checks": [
+    {
+      "label": "Value aria-invalid=true",
+      "actual": "true",
+      "pass": true
+    },
+    {
+      "label": "accessible description names properties.__proto__ and the remedy",
+      "actual": "properties.__proto__: This member name cannot be saved. Rename or remove it. Discard the unparsed text",
+      "pass": true
+    },
+    {
+      "label": "Value keeps the exact typed text",
+      "actual": "{\"type\":\"object\",\"description\":\"held\",\"properties\":{\"__proto__\":{\"type\":\"number\"},\"name\":{\"type\":\"string\"}}}",
+      "pass": true
+    },
+    {
+      "label": "Discard action offered beside the message",
+      "actual": 1,
+      "pass": true
+    },
+    {
+      "label": "no draft PUT for the refused value (1.5 s > 600 ms debounce)",
+      "actual": 1,
+      "pass": false
+    }
+  ],
+  "screenshots": [
+    "527-B-first-failure.png"
+  ],
+  "verdict": "FAIL",
+  "failure": "Error: CHECK FAILED: no draft PUT for the refused value (1.5 s > 600 ms debounce): 1",
+  "stack": "Error: CHECK FAILED: no draft PUT for the refused value (1.5 s > 600 ms debounce): 1\n    at Object.check (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:219:22)\n    at case527Refusal (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:336:5)\n    at async file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:904:22",
+  "durationMs": 2519,
+  "consoleErrors": [],
+  "trace": "527-B-trace.zip"
+}

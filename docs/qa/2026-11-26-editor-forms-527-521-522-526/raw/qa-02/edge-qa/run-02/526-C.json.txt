@@ -1,0 +1,114 @@
+{
+  "id": "526-C",
+  "issue": 526,
+  "title": "Announcement inside the active native modal, AX exposure, no repeat while typing",
+  "expected": "Dialog region exposed+polite, one transition, page region silent, ends on Cancel.",
+  "steps": [
+    "Type unfinished JSON \"{\" in the Config overrides JSON editor inside the native modal.",
+    "Keep typing.",
+    "Cancel JSON: held input ends; the region empties."
+  ],
+  "checks": [
+    {
+      "label": "dialog region pre-mounted, empty",
+      "actual": "",
+      "pass": true
+    },
+    {
+      "label": "AX node of dialog region",
+      "actual": {
+        "found": true,
+        "ignored": false,
+        "ignoredReasons": null,
+        "live": "polite",
+        "atomic": true,
+        "name": "",
+        "role": "generic"
+      },
+      "observation": true
+    },
+    {
+      "label": "dialog region exposed (not ignored) and polite in the AX tree",
+      "actual": {
+        "found": true,
+        "ignored": false,
+        "ignoredReasons": null,
+        "live": "polite",
+        "atomic": true,
+        "name": "",
+        "role": "generic"
+      },
+      "pass": true
+    },
+    {
+      "label": "AX node of page region while modal open",
+      "actual": {
+        "found": true,
+        "ignored": true,
+        "ignoredReasons": [
+          {
+            "name": "activeModalDialog",
+            "value": {
+              "type": "idref",
+              "relatedNodes": [
+                {
+                  "backendDOMNodeId": 54
+                }
+              ]
+            }
+          }
+        ],
+        "live": null,
+        "atomic": null,
+        "name": null,
+        "role": "none"
+      },
+      "observation": true
+    },
+    {
+      "label": "page region stays empty (no duplicate announcement)",
+      "actual": "",
+      "pass": true
+    },
+    {
+      "label": "dialog region transitions: exactly one announcement",
+      "actual": [
+        "Field input kept in this window only"
+      ],
+      "expected": [
+        "Field input kept in this window only"
+      ],
+      "pass": true
+    },
+    {
+      "label": "held segment in toolbar",
+      "actual": ". Field input kept in this window only",
+      "pass": true
+    },
+    {
+      "label": "is a native modal dialog",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "held segment gone after Cancel",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "dialog transitions overall",
+      "actual": [
+        "Field input kept in this window only",
+        ""
+      ],
+      "observation": true
+    }
+  ],
+  "screenshots": [
+    "526-C-modal-announcement.png"
+  ],
+  "verdict": "PASS",
+  "durationMs": 1767,
+  "consoleErrors": [],
+  "trace": "526-C-trace.zip"
+}

@@ -1,0 +1,971 @@
+// Independent Edge QA for the editor forms slice (#527, #521, #522, #526).
+// Usage: node editor-qa.mjs <worktree> <evidenceRunDir> <edgeExe> [caseFilter]
+// Drives real Edge (headless, fresh profile) against the BUILT API (apps/api/dist, composed through
+// its built testing entry with fake harnesses, so no provider turn can occur) serving the BUILT web
+// app (apps/web/dist), over a physical libsql file store. Each case runs once in its own context;
+// the first failed check stops that case and is kept with a screenshot and trace.
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
+
+const [worktreeArg, outArg, edge, filter] = process.argv.slice(2);
+const worktree = resolve(worktreeArg);
+const out = resolve(outArg);
+const web = join(worktree, 'apps/web');
+const requireFromWeb = createRequire(join(web, 'package.json'));
+const requireFromPlaywright = createRequire(requireFromWeb.resolve('@playwright/test'));
+const { chromium } = requireFromPlaywright('playwright');
+const { createTestApp } = await import(
+  pathToFileURL(join(worktree, 'apps/api/dist/testing/test-app.js')).href
+);
+
+const HELD = 'Field input kept in this window only';
+const MEMBER_MSG = 'This member name cannot be saved. Rename or remove it.';
+const CODEX_MSG =
+  'Codex config overrides require every key segment to use letters, digits, "_" or "-", and not __proto__, constructor or prototype.';
+const results = [];
+let fixture;
+let browser;
+let origin;
+
+const save = (file, body) =>
+  writeFile(join(out, file), JSON.stringify(body, null, 2) + '\n', { flag: 'wx' });
+
+async function poll(read, ok, label, timeout = 10000) {
+  const stop = Date.now() + timeout;
+  let value;
+  do {
+    value = await read();
+    if (ok(value)) return value;
+    await delay(100);
+  } while (Date.now() < stop);
+  throw new Error(`${label}: last observation ${JSON.stringify(value)}`);
+}
+
+async function api(path, method = 'GET', body) {
+  const res = await fetch(origin + path, {
+    method,
+    headers: body === undefined ? {} : { 'content-type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+    signal: AbortSignal.timeout(5000),
+  });
+  return { status: res.status, data: await res.json() };
+}
+
+function loopDef(name, { variables, description, inference } = {}) {
+  return {
+    schemaVersion: 4,
+    name,
+    ...(description ? { description } : {}),
+    ...(variables ? { variables } : {}),
+    nodes: [
+      { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' }, ui: { x: 0, y: 80 } },
+      inference
+        ? { id: 'approve', kind: 'inference', label: 'Check', config: inference, ui: { x: 290, y: 80 } }
+        : { id: 'approve', kind: 'wait', label: 'Approve', config: { mode: 'input', prompt: 'Approve?' }, ui: { x: 290, y: 80 } },
+      { id: 'done', kind: 'exit', label: 'Done', config: {}, ui: { x: 570, y: 80 } },
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'approve' } },
+      { id: 'e2', from: { node: 'approve', port: 'out' }, to: { node: 'done' } },
+    ],
+  };
+}
+
+const codexConfig = (overrides) => ({
+  prompt: { template: 'Disposable editor QA' },
+  harness: 'codex',
+  harnessOptions: { configOverrides: overrides },
+});
+
+let seq = 0;
+async function seed(name, options) {
+  seq += 1;
+  const created = await api('/loops', 'POST', { definition: loopDef(`${name} ${seq}`, options) });
+  assert.equal(created.status, 201, JSON.stringify(created.data));
+  return { id: created.data.loop.id, name: `${name} ${seq}` };
+}
+
+/** The draft as the API returns it and as the libsql row holds it; they must agree. */
+async function stored(loop) {
+  const res = await api('/loops/' + loop.id);
+  assert.equal(res.status, 200);
+  assert.ok(res.data.draft, 'a draft exists');
+  const db = await fixture.container.handle.client.execute({
+    sql: 'SELECT definition FROM loop_versions WHERE id = ?',
+    args: [res.data.draft.id],
+  });
+  const sql = JSON.parse(db.rows[0].definition);
+  assert.deepEqual(sql, res.data.draft.definition, 'API GET and SQL row agree');
+  return { api: res.data.draft.definition, sql, current: res.data.current ?? null };
+}
+
+function observePuts(page, loop) {
+  const seen = [];
+  page.on('requestfinished', async (req) => {
+    if (req.method() !== 'PUT' || new URL(req.url()).pathname !== `/loops/${loop.id}/draft`) return;
+    const res = await req.response();
+    seen.push({ at: new Date().toISOString(), status: res?.status(), sent: req.postDataJSON() });
+  });
+  return seen;
+}
+
+async function openEditor(page, loop) {
+  await page.goto(`${origin}/app/loops/${loop.id}/edit`);
+  await page.getByRole('heading', { name: loop.name, exact: true }).waitFor();
+  await page
+    .getByText('The editor is available. Checking the server and this device before saving changes.', { exact: true })
+    .waitFor({ state: 'hidden' });
+}
+
+async function showLoopPanel(page) {
+  const show = page.getByRole('button', { name: 'Show loop settings' });
+  if (await show.isVisible()) await show.click();
+  await page.getByRole('form', { name: 'Variables form' }).waitFor();
+}
+
+const code = (scope, label) => scope.locator('.cm-content').and(scope.getByLabel(label, { exact: true }));
+
+/** Replace the editor's whole text in one input (select all, then insert over the selection). */
+async function typeCode(page, target, text) {
+  await target.click();
+  await page.keyboard.press('ControlOrMeta+A');
+  if (text === '') await page.keyboard.press('Backspace');
+  else await page.keyboard.insertText(text);
+}
+
+/** CodeMirror virtualizes long documents: read the whole text through a synthetic copy event. */
+async function readCode(page, target) {
+  await target.focus();
+  await page.keyboard.press('ControlOrMeta+A');
+  const text = await target.evaluate((el) => {
+    const clipboardData = new DataTransfer();
+    el.dispatchEvent(new ClipboardEvent('copy', { clipboardData, bubbles: true, cancelable: true }));
+    return clipboardData.getData('text/plain');
+  });
+  await page.keyboard.press('ArrowRight');
+  return text;
+}
+
+async function fieldState(target) {
+  return target.evaluate((el) => ({
+    invalid: el.getAttribute('aria-invalid'),
+    label: el.getAttribute('aria-label'),
+    description: (el.getAttribute('aria-describedby') ?? '')
+      .split(/\s+/)
+      .map((id) => document.getElementById(id)?.textContent ?? '')
+      .filter(Boolean)
+      .join(' | '),
+    focused: el === document.activeElement || el.contains(document.activeElement),
+  }));
+}
+
+const activeLabel = (page) =>
+  page.evaluate(() => {
+    const el = document.activeElement;
+    return el ? { tag: el.tagName, label: el.getAttribute('aria-label'), text: el.textContent?.slice(0, 80) } : null;
+  });
+
+async function saveStatus(page) {
+  const draft = page.getByTestId('draft-state');
+  const held = page.getByTestId('held-input-state');
+  return {
+    whole: (await page.getByTestId('save-state').innerText()).replace(/\s+/g, ' ').trim(),
+    draft: (await draft.count()) ? (await draft.innerText()).trim() : null,
+    held: (await held.count()) ? (await held.innerText()).replace(/\s+/g, ' ').trim() : null,
+  };
+}
+
+const nodeDialog = (page) => page.getByRole('dialog', { name: /^Edit / });
+
+async function openSettings(page) {
+  await page.getByTestId('node-approve').locator(':scope > div:has([data-kind])').click();
+  const dialog = nodeDialog(page);
+  await dialog.waitFor();
+  const settings = dialog.getByRole('tab', { name: /^Settings/ });
+  if (await settings.count()) await settings.click();
+  for (const toggle of await dialog.getByRole('button', { name: /^Advanced\b/ }).all()) {
+    if ((await toggle.getAttribute('aria-expanded')) === 'false') await toggle.click();
+  }
+  return dialog;
+}
+
+async function openJson(dialog, label) {
+  await dialog.getByRole('button', { name: `Edit as JSON: ${label}`, exact: true }).click();
+  const editor = dialog.getByRole('textbox', { name: `${label} JSON`, exact: true });
+  await editor.waitFor();
+  const section = dialog.locator('[data-json-section="harnessOptions.configOverrides"]');
+  return {
+    editor,
+    section,
+    apply: section.getByRole('button', { name: 'Apply JSON', exact: true }),
+    cancel: section.getByRole('button', { name: 'Cancel JSON', exact: true }),
+    structured: dialog.getByRole('button', { name: `Use structured editor for ${label}`, exact: true }),
+  };
+}
+
+/** One case: named checks, the first failed check stops it; everything observed is kept. */
+function makeCase(id, issue, title, expected) {
+  const record = { id, issue, title, expected, steps: [], checks: [], screenshots: [], verdict: 'RUNNING' };
+  return {
+    record,
+    step(text) {
+      record.steps.push(text);
+    },
+    check(label, actual, pass) {
+      const ok = typeof pass === 'function' ? Boolean(pass(actual)) : Boolean(pass);
+      record.checks.push({ label, actual, pass: ok });
+      if (!ok) throw new Error(`CHECK FAILED: ${label}: ${JSON.stringify(actual)}`);
+    },
+    equal(label, actual, expectedValue) {
+      let ok = true;
+      try {
+        assert.deepStrictEqual(actual, expectedValue);
+      } catch {
+        ok = false;
+      }
+      record.checks.push({ label, actual, expected: expectedValue, pass: ok });
+      if (!ok) throw new Error(`CHECK FAILED: ${label}`);
+    },
+    note(label, value) {
+      record.checks.push({ label, actual: value, observation: true });
+    },
+    async shot(page, name) {
+      const file = `${id}-${name}.png`;
+      await page.screenshot({ path: join(out, file) });
+      record.screenshots.push(file);
+    },
+  };
+}
+
+// ---------------------------------------------------------------- #527 ---------------------------
+
+const TOPIC = { type: 'string', title: 'last complete topic' };
+const OTHER = { type: 'number', minimum: 0 };
+const RICH = {
+  type: 'object',
+  title: 'Rich',
+  description: 'ordinary text that mentions __proto__ and constructor',
+  $schema: 'http://json-schema.org/draft-07/schema#',
+  definitions: { inner: { type: 'string', enum: ['a', 'b', null, 1, true] } },
+  properties: {
+    constructor: { type: 'string' },
+    prototype: { type: 'number' },
+    __proto: { type: 'boolean' },
+    proto__: { type: 'null' },
+    toString: { type: 'string' },
+    hasOwnProperty: { type: 'integer' },
+    valueOf: {},
+    '': { description: 'empty member name' },
+    '0': { type: 'string' },
+    'dotted.key': { type: 'string' },
+    'unicodé ✓': { type: 'string' },
+    nested: {
+      type: 'array',
+      items: {
+        anyOf: [
+          { $ref: '#/definitions/inner' },
+          {
+            type: 'object',
+            additionalProperties: false,
+            properties: { deep: { type: 'object', properties: { deeper: { const: { x: [1, 2, { y: null }] } } } } },
+          },
+        ],
+      },
+      minItems: 0,
+      maxItems: 3,
+    },
+  },
+  required: ['constructor', 'prototype'],
+  additionalProperties: { type: 'string' },
+  default: { constructor: 'c', prototype: 1 },
+  examples: [[], {}, '', 0, false, null],
+  'x-custom': { nested: { a: -1.5e-7, b: 1.7976931348623157e308, c: '__proto__' } },
+};
+
+async function case527Positive(page, c) {
+  const loop = await seed('QA 527 rich schema', { variables: { topic: TOPIC, other: OTHER }, description: 'kept' });
+  const puts = observePuts(page, loop);
+  c.step('Seed loop with Variables {topic, other} and description; open the built editor; show loop panel.');
+  await openEditor(page, loop);
+  await showLoopPanel(page);
+  const first = code(page, 'Variables value 1');
+  const text = JSON.stringify(RICH, null, 2);
+  c.step('Type a rich, admitted JSON Schema (constructor, prototype, __proto, proto__, toString, empty and numeric member names, dotted, unicode, deep arrays, a __proto__ mention in a string) into Variables value 1.');
+  await typeCode(page, first, text);
+  const state = await fieldState(first);
+  c.check('Value not marked invalid', state.invalid, (v) => v !== 'true');
+  const saved = await poll(() => stored(loop), (row) => row.api.variables.topic.title === 'Rich', 'rich schema saved', 10000);
+  c.equal('SQL row variables.topic equals the entered JSON (whole object)', saved.sql.variables.topic, RICH);
+  c.equal('neighbouring Variables member unchanged', saved.sql.variables.other, OTHER);
+  c.check('description unchanged', saved.sql.description, (v) => v === 'kept');
+  const last = puts.at(-1);
+  c.check('last PUT status 200', last?.status, (v) => v === 200);
+  c.equal('PUT payload variables equal the entered JSON plus neighbour', last.sent.definition.variables, { topic: RICH, other: OTHER });
+  c.note('PUT count', puts.length);
+  c.check('no held-input segment for an accepted value', (await saveStatus(page)).held, (v) => v === null);
+  await c.shot(page, 'saved');
+  c.step('Reload; read the whole Value text through the editor copy event.');
+  await page.reload();
+  await showLoopPanel(page);
+  const reloaded = JSON.parse(await readCode(page, code(page, 'Variables value 1')));
+  c.equal('reloaded Value 1 equals the entered JSON', reloaded, RICH);
+  c.equal('reloaded Value 2 equals neighbour', JSON.parse(await readCode(page, code(page, 'Variables value 2'))), OTHER);
+  c.equal('own member names preserved exactly (properties)', Object.keys(reloaded.properties).sort(), Object.keys(RICH.properties).sort());
+  return { puts };
+}
+
+async function case527Refusal(page, c) {
+  const loop = await seed('QA 527 own proto refusal', { variables: { topic: TOPIC, other: OTHER }, description: 'kept' });
+  const puts = observePuts(page, loop);
+  const before = await stored(loop);
+  await openEditor(page, loop);
+  await showLoopPanel(page);
+  const first = code(page, 'Variables value 1');
+  const heldText = '{"type":"object","description":"held","properties":{"__proto__":{"type":"number"},"name":{"type":"string"}}}';
+  c.step('Type a schema with an own "__proto__" member under properties into Variables value 1.');
+  await typeCode(page, first, heldText);
+  await page.getByText(/This member name cannot be saved/).first().waitFor();
+  const held = await fieldState(first);
+  c.check('Value aria-invalid=true', held.invalid, (v) => v === 'true');
+  c.check('accessible description names properties.__proto__ and the remedy', held.description, (d) => d.includes(`properties.__proto__: ${MEMBER_MSG}`));
+  c.check('Value keeps the exact typed text', await readCode(page, first), (t) => t === heldText);
+  c.check('Discard action offered beside the message', await page.getByRole('button', { name: 'Discard the unparsed text' }).count(), (n) => n === 1);
+  await delay(1500);
+  c.check('no draft PUT for the refused value (1.5 s > 600 ms debounce)', puts.length, (n) => n === 0);
+  c.equal('server+SQL draft unchanged while held', (await stored(loop)).sql, before.sql);
+  const status = await saveStatus(page);
+  c.note('status while held', status);
+  c.check('held segment shown', status.held, (v) => v?.includes(HELD));
+  c.check('draft segment says Draft saved (not All changes saved)', status.draft, (v) => v === 'Draft saved');
+  await c.shot(page, 'held');
+
+  c.step('Variants: own __proto__ at top level, inside an array item, and deep inside items.');
+  const variants = [
+    ['{"__proto__":{"type":"string"},"type":"object"}', '__proto__'],
+    ['{"anyOf":[{"type":"string"},{"__proto__":{}}]}', 'anyOf.1.__proto__'],
+    ['{"properties":{"a":{"items":[{"properties":{"__proto__":{"const":1}}}]}}}', 'properties.a.items.0.properties.__proto__'],
+  ];
+  for (const [text, path] of variants) {
+    await typeCode(page, first, text);
+    const s = await poll(() => fieldState(first), (v) => v.description.includes(`${path}: ${MEMBER_MSG}`), `variant ${path}`, 4000);
+    c.check(`variant ${path}: invalid and named`, s, (v) => v.invalid === 'true');
+  }
+  await delay(1000);
+  c.check('still no PUT after variants', puts.length, (n) => n === 0);
+
+  c.step('Neighbour edit (Variables value 2) while Value 1 is held.');
+  await typeCode(page, first, heldText);
+  const neighbour = { type: 'integer', description: 'neighbour saved independently' };
+  await typeCode(page, code(page, 'Variables value 2'), JSON.stringify(neighbour));
+  const afterNeighbour = await poll(() => stored(loop), (row) => row.api.variables.other.type === 'integer', 'neighbour saved', 10000);
+  c.equal('SQL variables: last complete topic + new neighbour', afterNeighbour.sql.variables, { topic: TOPIC, other: neighbour });
+  const sent = puts.at(-1);
+  c.check('neighbour PUT 200', sent?.status, (v) => v === 200);
+  c.equal('PUT payload variables', sent.sent.definition.variables, { topic: TOPIC, other: neighbour });
+  c.check('PUT payload carries no __proto__ text and no held description', JSON.stringify(sent.sent), (t) => !t.includes('__proto__') && !t.includes('"held"'));
+  c.check('Value 1 still holds the exact text', await readCode(page, first), (t) => t === heldText);
+
+  c.step('Publish while held.');
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  const alert = page.getByRole('alert').filter({ hasText: 'Publish failed' });
+  await alert.waitFor();
+  c.note('publish refusal text', (await alert.innerText()).replace(/\s+/g, ' '));
+  c.check('nothing published', (await stored(loop)).current, (v) => v === null);
+  await c.shot(page, 'publish-refused');
+
+  c.step('Reload: window-only text is gone, the last complete value and the neighbour remain.');
+  await page.reload();
+  await showLoopPanel(page);
+  c.equal('reloaded Value 1 = last complete topic', JSON.parse(await readCode(page, code(page, 'Variables value 1'))), TOPIC);
+  c.equal('reloaded Value 2 = neighbour', JSON.parse(await readCode(page, code(page, 'Variables value 2'))), neighbour);
+  c.check('no held segment after reload', (await saveStatus(page)).held, (v) => v === null);
+  return { puts };
+}
+
+async function case527Correct(page, c) {
+  const loop = await seed('QA 527 correct and discard', { variables: { topic: TOPIC, other: OTHER } });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  await showLoopPanel(page);
+  const first = code(page, 'Variables value 1');
+  const heldText = '{"type":"object","properties":{"__proto__":{"type":"number"},"name":{"type":"string"}}}';
+  c.step('Hold a value with own __proto__, then Discard.');
+  await typeCode(page, first, heldText);
+  await page.getByText(/This member name cannot be saved/).first().waitFor();
+  await page.getByRole('button', { name: 'Discard the unparsed text' }).click();
+  await delay(300);
+  const afterDiscard = await fieldState(first);
+  c.check('focus returns to the Value editor after Discard', afterDiscard.focused, (v) => v === true);
+  c.note('active element after discard', await activeLabel(page));
+  c.check('Value no longer invalid', afterDiscard.invalid, (v) => v !== 'true');
+  c.equal('Value text restored to the last complete value', JSON.parse(await readCode(page, first)), TOPIC);
+  const status = await saveStatus(page);
+  c.check('held segment gone after discard', status.held, (v) => v === null);
+  c.check('draft label back to All changes saved', status.draft, (v) => v === 'All changes saved');
+  await delay(1000);
+  c.check('no PUT from hold+discard', puts.length, (n) => n === 0);
+
+  c.step('Hold again, then correct by renaming the member; the whole corrected object saves.');
+  await typeCode(page, first, heldText);
+  await page.getByText(/This member name cannot be saved/).first().waitFor();
+  const corrected = { type: 'object', properties: { proto_name: { type: 'number' }, name: { type: 'string' } } };
+  await typeCode(page, first, JSON.stringify(corrected));
+  const saved = await poll(() => stored(loop), (row) => row.api.variables.topic.type === 'object', 'corrected saved', 10000);
+  c.equal('SQL variables after correction', saved.sql.variables, { topic: corrected, other: OTHER });
+  c.equal('last PUT payload variables', puts.at(-1)?.sent.definition.variables, { topic: corrected, other: OTHER });
+  await poll(() => saveStatus(page), (s) => s.held === null && s.draft === 'All changes saved', 'status settles after correction', 6000);
+  await page.reload();
+  await showLoopPanel(page);
+  c.equal('reloaded corrected Value', JSON.parse(await readCode(page, code(page, 'Variables value 1'))), corrected);
+  return { puts };
+}
+
+async function case527Sentinel(page, c) {
+  // Adversarial: a string member whose value equals the form's internal "unset" marker.
+  const loop = await seed('QA 527 sentinel', { variables: { topic: TOPIC, other: OTHER } });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  await showLoopPanel(page);
+  const first = code(page, 'Variables value 1');
+  const text = '{"type":"string","title":"sentinel","default":"\\u0000graphgoblin:unset","examples":["\\u0000graphgoblin:unset","kept"]}';
+  const entered = JSON.parse(text);
+  c.step('Type a schema whose default (and an examples item) is the string "\\u0000graphgoblin:unset".');
+  await typeCode(page, first, text);
+  const state = await fieldState(first);
+  c.note('field state', state);
+  const saved = await poll(() => stored(loop), (row) => row.api.variables.topic.title === 'sentinel', 'sentinel saved or not', 6000).catch((e) => ({ error: String(e) }));
+  c.note('stored after entry', saved.error ? saved : saved.sql.variables.topic);
+  c.note('PUT payload topic', puts.at(-1)?.sent.definition.variables.topic ?? null);
+  const refused = state.invalid === 'true';
+  c.check('either a field-associated refusal or the whole entered object stored', { refused, stored: saved.sql?.variables.topic },
+    (v) => v.refused || JSON.stringify(v.stored) === JSON.stringify(entered));
+  return { puts };
+}
+
+// ---------------------------------------------------------------- #521 ---------------------------
+
+async function case521(page, c) {
+  const overrides = { example: { outer: { team_docs: false } }, 'example.outer': 'sibling' };
+  const loop = await seed('QA 521 nested value', { inference: codexConfig(overrides) });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  const dialog = await openSettings(page);
+  const owner = code(dialog, 'Config overrides value 1');
+  const sibling = code(dialog, 'Config overrides value 2');
+  const key1 = dialog.getByLabel('Config overrides key 1', { exact: true });
+  const key2 = dialog.getByLabel('Config overrides key 2', { exact: true });
+  c.step('Type {"outer":{"team docs":true}} into Config overrides value 1 (key "example"); sibling key "example.outer" stays valid.');
+  await typeCode(page, owner, '{"outer":{"team docs":true}}');
+  const marked = await poll(() => fieldState(owner), (s) => s.invalid === 'true', 'owning Value marked', 6000);
+  c.check('owning Value described by relative path + rule', marked.description, (d) => d.includes(`outer.team docs: ${CODEX_MSG}`));
+  const visible = dialog.getByText(`outer.team docs: ${CODEX_MSG}`, { exact: false });
+  c.check('message visible under the Value', await visible.first().isVisible(), (v) => v === true);
+  const others = { sibling: await fieldState(sibling), key1: await fieldState(key1), key2: await fieldState(key2) };
+  c.check('sibling Value and both Keys clean', others, (o) => Object.values(o).every((s) => s.invalid !== 'true' && !s.description.includes('team docs')));
+  c.check('no held-input segment (schema diagnostic, not held text)', (await saveStatus(page)).held, (v) => v === null);
+  c.note('Settings tab text', (await dialog.getByRole('tab', { name: /^Settings/ }).first().innerText()).replace(/\s+/g, ' '));
+  await c.shot(page, 'marked');
+
+  c.step('Move focus to Label, open the dialog issue badge, choose the team docs issue.');
+  await dialog.getByLabel('Label', { exact: true }).focus();
+  await dialog.getByRole('button', { name: /^\d+ issues? on approve$/ }).click();
+  const popover = page.getByRole('dialog', { name: 'Issues on approve' });
+  await popover.waitFor();
+  const row = popover.getByRole('button', { name: /team docs/ });
+  c.note('issue row text', (await row.innerText()).replace(/\s+/g, ' '));
+  await row.click();
+  const focused = await poll(() => fieldState(owner), (s) => s.focused, 'focus lands in owning Value', 4000).catch(async () => ({ focused: false, active: await activeLabel(page) }));
+  c.check('focus in owning Value 1 (not sibling "example.outer")', focused.focused, (v) => v === true);
+  c.check('sibling not focused', (await fieldState(sibling)).focused, (v) => v === false);
+  await c.shot(page, 'focus-dialog-badge');
+
+  c.step('Close the dialog; choose the issue from the canvas node badge.');
+  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+  await nodeDialog(page).waitFor({ state: 'hidden' });
+  const cardBadge = page.locator('.react-flow__node[data-id="approve"]').getByRole('button', { name: /^\d+ issues? on approve$/ });
+  await cardBadge.click();
+  await popover.waitFor();
+  await popover.getByRole('button', { name: /team docs/ }).click();
+  const reopened = nodeDialog(page);
+  await reopened.waitFor();
+  const canvasFocus = await poll(() => fieldState(code(reopened, 'Config overrides value 1')), (s) => s.focused, 'canvas issue focus', 5000).catch(async () => ({ focused: false, active: await activeLabel(page) }));
+  c.check('canvas badge issue opens the node with focus in owning Value 1', canvasFocus.focused, (v) => v === true);
+  await c.shot(page, 'focus-canvas-badge');
+
+  c.step('Correct the member; the Value clears, the draft saves to the server, Publish succeeds.');
+  await typeCode(page, code(reopened, 'Config overrides value 1'), '{"outer":{"team_docs":true}}');
+  const cleared = await poll(() => fieldState(code(reopened, 'Config overrides value 1')), (s) => s.invalid !== 'true', 'cleared', 5000);
+  c.check('Value clean after correction', cleared.description, (d) => !d.includes('team docs'));
+  const saved = await poll(() => stored(loop), (row) => row.api.nodes.find((n) => n.id === 'approve').config.harnessOptions.configOverrides.example.outer.team_docs === true, 'corrected overrides saved', 10000);
+  c.equal('SQL configOverrides after correction (sibling kept)', saved.sql.nodes.find((n) => n.id === 'approve').config.harnessOptions.configOverrides, { example: { outer: { team_docs: true } }, 'example.outer': 'sibling' });
+  c.check('no PUT ever carried the invalid nested key', puts.every((p) => !JSON.stringify(p.sent).includes('team docs')), (v) => v === true);
+  await reopened.getByRole('button', { name: 'Done', exact: true }).click();
+  await page.getByRole('button', { name: 'Publish', exact: true }).click();
+  const published = await poll(async () => (await api('/loops/' + loop.id)).data, (row) => row.current != null, 'published', 10000).catch(async () => ({ current: null, alerts: await page.getByRole('alert').allInnerTexts() }));
+  c.check('ordinary publish succeeds after correction', published, (v) => v.current !== null);
+  c.note('published version', published.current?.version);
+  return { puts };
+}
+
+async function case521Controls(page, c) {
+  const overrides = { example: { outer: { team_docs: false } }, 'example.outer': 'sibling' };
+  const loop = await seed('QA 521 controls', { inference: codexConfig(overrides) });
+  await openEditor(page, loop);
+  const dialog = await openSettings(page);
+  const v1 = code(dialog, 'Config overrides value 1');
+  const v2 = code(dialog, 'Config overrides value 2');
+  const key2 = dialog.getByLabel('Config overrides key 2', { exact: true });
+  c.step('Control A: nested invalid member inside the dotted sibling Value 2; Value 1 valid.');
+  await typeCode(page, v2, '{"x y":1}');
+  const s2 = await poll(() => fieldState(v2), (s) => s.invalid === 'true', 'value 2 marked', 5000);
+  c.check('Value 2 described by x y rule', s2.description, (d) => d.includes(`x y: ${CODEX_MSG}`));
+  c.check('Value 1 clean', await fieldState(v1), (s) => s.invalid !== 'true' && !s.description.includes('x y'));
+  await dialog.getByLabel('Label', { exact: true }).focus();
+  await dialog.getByRole('button', { name: /^\d+ issues? on approve$/ }).click();
+  await page.getByRole('dialog', { name: 'Issues on approve' }).getByRole('button', { name: /x y/ }).click();
+  const f2 = await poll(() => fieldState(v2), (s) => s.focused, 'focus value 2', 4000).catch(async () => ({ focused: false, active: await activeLabel(page) }));
+  c.check('issue link focuses Value 2 (its owner)', f2.focused, (v) => v === true);
+  await typeCode(page, v2, '"sibling"');
+  await poll(() => fieldState(v2), (s) => s.invalid !== 'true', 'value 2 restored', 5000);
+
+  c.step('Control B: top-level refused Key ("bad key") stays the Key\'s issue; its Value is not marked.');
+  await key2.fill('bad key');
+  const k = await poll(() => fieldState(key2), (s) => s.invalid === 'true', 'key 2 marked', 5000);
+  c.check('Key 2 described by Key "bad key": rule', k.description, (d) => d.includes('Key "bad key"'));
+  c.check('Value 2 not marked by the key issue', await fieldState(v2), (s) => s.invalid !== 'true');
+  await dialog.getByLabel('Label', { exact: true }).focus();
+  await dialog.getByRole('button', { name: /^\d+ issues? on approve$/ }).click();
+  const issueRows = page.getByRole('dialog', { name: 'Issues on approve' }).getByRole('button', { name: /bad key/ });
+  c.note('key issue rows', await issueRows.count());
+  await issueRows.first().click();
+  const fk = await poll(() => fieldState(key2), (s) => s.focused, 'focus key 2', 4000).catch(async () => ({ focused: false, active: await activeLabel(page) }));
+  c.check('key issue link focuses Key 2', fk.focused, (v) => v === true);
+  await c.shot(page, 'key-issue');
+  return {};
+}
+
+// ---------------------------------------------------------------- #522 ---------------------------
+
+async function case522Valid(page, c) {
+  const overrides = { example: { outer: { team_docs: false } }, 'example.outer': 'sibling' };
+  const loop = await seed('QA 522 valid open', { inference: codexConfig(overrides) });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  const dialog = await openSettings(page);
+  c.step('Open Config overrides in JSON mode over a valid committed value.');
+  const s = await openJson(dialog, 'Config overrides');
+  const st = await fieldState(s.editor);
+  c.check('editor not invalid', st.invalid, (v) => v !== 'true');
+  c.check('Apply enabled (normal controls)', await s.apply.isEnabled(), (v) => v === true);
+  c.check('no inline error text', await s.section.locator('[id]').filter({ hasText: /Codex config overrides require/ }).count(), (n) => n === 0);
+  c.check('no held segment', (await saveStatus(page)).held, (v) => v === null);
+  c.equal('opened text equals the committed section', JSON.parse(await readCode(page, s.editor)), overrides);
+  await delay(1000);
+  c.check('opening sent no PUT', puts.length, (n) => n === 0);
+  await c.shot(page, 'valid-open');
+  return { puts };
+}
+
+async function case522Invalid(page, c) {
+  const overrides = { example: { outer: { team_docs: false } }, 'example.outer': 'sibling' };
+  const loop = await seed('QA 522 invalid open', { inference: codexConfig(overrides) });
+  const puts = observePuts(page, loop);
+  const start = await stored(loop);
+  await openEditor(page, loop);
+  const dialog = await openSettings(page);
+  c.step('In the structured editor, commit an invalid nested member into Value 1 (a schema-invalid committed draft).');
+  const v1 = code(dialog, 'Config overrides value 1');
+  await typeCode(page, v1, '{"outer":{"team docs":true}}');
+  await poll(() => fieldState(v1), (s) => s.invalid === 'true', 'structured value committed with diagnostic', 5000);
+  c.note('status after structured commit', await saveStatus(page));
+  c.step('Open Edit as JSON: Config overrides.');
+  const s = await openJson(dialog, 'Config overrides');
+  const first = await fieldState(s.editor);
+  c.check('first render: editor aria-invalid=true', first.invalid, (v) => v === 'true');
+  c.check('first render: description carries the relative path + rule', first.description, (d) => d.includes('team docs') && d.includes('Codex config overrides require'));
+  c.check('first render: Apply disabled', await s.apply.isEnabled(), (v) => v === false);
+  c.check('no Discard action for passive diagnostic', await s.section.getByRole('button', { name: /Discard/ }).count(), (n) => n === 0);
+  c.check('no held segment from opening', (await saveStatus(page)).held, (v) => v === null);
+  c.check('structured switch available (not blocked)', await s.structured.isEnabled(), (v) => v === true);
+  await delay(1200);
+  c.check('no PUT from the invalid committed content', puts.length, (n) => n === 0);
+  c.equal('server+SQL draft unchanged', (await stored(loop)).sql, start.sql);
+  await c.shot(page, 'invalid-first-render');
+
+  c.step('Semantically unchanged edit (whitespace + key order) stays passive.');
+  await typeCode(page, s.editor, '{ "example.outer" : "sibling",   "example": { "outer": { "team docs": true } } }');
+  await delay(300);
+  const same = await fieldState(s.editor);
+  c.check('still invalid', same.invalid, (v) => v === 'true');
+  c.check('Apply still disabled', await s.apply.isEnabled(), (v) => v === false);
+  c.check('still no held segment', (await saveStatus(page)).held, (v) => v === null);
+  c.check('still no Discard', await s.section.getByRole('button', { name: /Discard/ }).count(), (n) => n === 0);
+
+  c.step('Type a corrected value (pending, Apply enabled), then Cancel JSON.');
+  const corrected = { example: { outer: { team_docs: true } }, 'example.outer': 'sibling' };
+  await typeCode(page, s.editor, JSON.stringify(corrected));
+  await poll(() => s.apply.isEnabled(), (v) => v === true, 'apply enabled for corrected text', 3000);
+  c.note('status with pending JSON', await saveStatus(page));
+  await s.cancel.click();
+  await delay(300);
+  c.check('focus stays on Cancel JSON', await s.cancel.evaluate((el) => el === document.activeElement), (v) => v === true);
+  const back = await fieldState(s.editor);
+  c.check('after Cancel: committed invalid text back, diagnostic back', back, (v) => v.invalid === 'true' && v.description.includes('team docs'));
+  c.check('after Cancel: Apply disabled', await s.apply.isEnabled(), (v) => v === false);
+  c.check('after Cancel: no held segment', (await saveStatus(page)).held, (v) => v === null);
+  c.check('after Cancel: still no PUT', puts.length, (n) => n === 0);
+
+  c.step('Type the corrected value again and Apply JSON; read back the saved draft and reload.');
+  await typeCode(page, s.editor, JSON.stringify(corrected));
+  await poll(() => s.apply.isEnabled(), (v) => v === true, 'apply enabled', 3000);
+  await s.apply.click();
+  const confirm = s.section.getByRole('button', { name: 'Confirm Apply JSON', exact: true });
+  if (await confirm.isVisible()) await confirm.click();
+  const saved = await poll(() => stored(loop), (row) => row.api.nodes.find((n) => n.id === 'approve').config.harnessOptions.configOverrides.example.outer.team_docs === true, 'applied and saved', 10000);
+  c.equal('SQL configOverrides after Apply', saved.sql.nodes.find((n) => n.id === 'approve').config.harnessOptions.configOverrides, corrected);
+  c.equal('last PUT carries the corrected section', puts.at(-1)?.sent.definition.nodes.find((n) => n.id === 'approve').config.harnessOptions.configOverrides, corrected);
+  c.check('editor clean after Apply', (await fieldState(s.editor)).invalid, (v) => v !== 'true');
+  await page.reload();
+  const again = await openSettings(page);
+  const v1r = code(again, 'Config overrides value 1');
+  c.equal('reloaded structured Value 1', JSON.parse(await readCode(page, v1r)), corrected.example);
+  return { puts };
+}
+
+async function case522KeyAndReload(page, c) {
+  const overrides = { example: { outer: { team_docs: false } } };
+  const loop = await seed('QA 522 key and device reload', { inference: codexConfig(overrides) });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  let dialog = await openSettings(page);
+  c.step('Commit a refused top-level key ("bad key") in the structured editor, then open JSON mode.');
+  await dialog.getByLabel('Config overrides key 1', { exact: true }).fill('bad key');
+  await poll(() => fieldState(dialog.getByLabel('Config overrides key 1', { exact: true })), (s) => s.invalid === 'true', 'key marked', 5000);
+  let s = await openJson(dialog, 'Config overrides');
+  let st = await fieldState(s.editor);
+  c.check('first render shows the key rule, invalid', st, (v) => v.invalid === 'true' && v.description.includes('bad key'));
+  c.check('Apply disabled', await s.apply.isEnabled(), (v) => v === false);
+  c.check('no held segment', (await saveStatus(page)).held, (v) => v === null);
+  await s.structured.click();
+  await dialog.getByRole('button', { name: 'Done', exact: true }).click();
+  const status = await poll(() => saveStatus(page), (v) => /device/i.test(v.whole), 'device-only label for schema-invalid draft', 6000).catch(async () => saveStatus(page));
+  c.note('status with schema-invalid committed draft', status);
+  c.step('Reload: the device copy restores the schema-invalid draft; open JSON mode again.');
+  await page.reload();
+  await page.getByRole('heading', { name: loop.name, exact: true }).waitFor();
+  c.note('restored notice visible', await page.getByText('Restored unsaved changes from this device.').isVisible().catch(() => false));
+  dialog = await openSettings(page);
+  s = await openJson(dialog, 'Config overrides');
+  st = await fieldState(s.editor);
+  c.check('after reload: first render invalid with key rule', st, (v) => v.invalid === 'true' && v.description.includes('bad key'));
+  c.check('after reload: Apply disabled', await s.apply.isEnabled(), (v) => v === false);
+  c.check('after reload: no held segment', (await saveStatus(page)).held, (v) => v === null);
+  c.check('no PUT carried the refused key', puts.every((p) => !JSON.stringify(p.sent).includes('bad key')), (v) => v === true);
+  await c.shot(page, 'device-reload-first-render');
+  return { puts };
+}
+
+// ---------------------------------------------------------------- #526 ---------------------------
+
+async function inspectLive(page, selector) {
+  const session = await page.context().newCDPSession(page);
+  try {
+    const { root } = await session.send('DOM.getDocument', { depth: -1 });
+    const { nodeId } = await session.send('DOM.querySelector', { nodeId: root.nodeId, selector });
+    if (!nodeId) return { found: false };
+    const { node } = await session.send('DOM.describeNode', { nodeId });
+    const { nodes } = await session.send('Accessibility.getPartialAXTree', { nodeId, fetchRelatives: true });
+    const match = nodes.find((entry) => entry.backendDOMNodeId === node.backendNodeId);
+    return {
+      found: true,
+      ignored: match?.ignored ?? null,
+      ignoredReasons: match?.ignoredReasons ?? null,
+      live: match?.properties?.find((p) => p.name === 'live')?.value?.value ?? null,
+      atomic: match?.properties?.find((p) => p.name === 'atomic')?.value?.value ?? null,
+      name: match?.name?.value ?? null,
+      role: match?.role?.value ?? null,
+    };
+  } finally {
+    await session.detach();
+  }
+}
+
+async function case526Available(page, c) {
+  const loop = await seed('QA 526 device available', { variables: { topic: TOPIC }, description: 'before' });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  await showLoopPanel(page);
+  const region = page.getByTestId('held-input-announcement-page');
+  await region.evaluate((el) => {
+    window.__pageTransitions = [];
+    new MutationObserver(() => window.__pageTransitions.push(el.textContent)).observe(el, { characterData: true, childList: true, subtree: true });
+  });
+  c.check('initial status All changes saved, no held segment', await saveStatus(page), (s) => s.draft === 'All changes saved' && s.held === null);
+  const first = code(page, 'Variables value 1');
+  c.step('Type unfinished JSON {"type": into Variables value 1.');
+  await typeCode(page, first, '{"type":');
+  await page.getByTestId('held-input-state').waitFor();
+  let s = await saveStatus(page);
+  c.check('held segment shows the window-only text', s.held, (v) => v?.includes(HELD));
+  c.check('draft segment: Draft saved (not All changes saved)', s.draft, (v) => v === 'Draft saved');
+  c.check('page live region polite and announcing', await region.evaluate((el) => ({ live: el.getAttribute('aria-live'), text: el.textContent })), (v) => v.live === 'polite' && v.text === HELD);
+  c.step('Keep typing; then a valid neighbour edit (Description).');
+  await first.press('End');
+  await page.keyboard.insertText(' "str');
+  await page.getByLabel('Description', { exact: true }).fill('neighbour while held');
+  const saved = await poll(() => stored(loop), (row) => row.api.description === 'neighbour while held', 'neighbour saved', 10000);
+  c.equal('SQL variables unchanged by held text', saved.sql.variables, { topic: TOPIC });
+  c.check('last PUT has new description and no held text', puts.at(-1)?.sent, (p) => p.definition.description === 'neighbour while held' && !JSON.stringify(p).includes('"str'));
+  s = await poll(() => saveStatus(page), (v) => v.draft === 'Draft saved', 'draft saved after neighbour', 6000);
+  c.check('after neighbour save: Draft saved + held segment', s, (v) => v.held?.includes(HELD));
+  c.equal('page region transitions (one announcement despite typing)', await page.evaluate(() => window.__pageTransitions), [HELD]);
+  await c.shot(page, 'held-available');
+  c.step('Correct the Value; held segment ends, All changes saved, region empties.');
+  await typeCode(page, first, '{"type":"string","title":"corrected"}');
+  const done = await poll(() => stored(loop), (row) => row.api.variables.topic.title === 'corrected', 'corrected saved', 10000);
+  c.equal('SQL topic corrected', done.sql.variables.topic, { type: 'string', title: 'corrected' });
+  s = await poll(() => saveStatus(page), (v) => v.held === null && v.draft === 'All changes saved', 'status after correction', 6000);
+  c.check('region empty after end', await region.textContent(), (t) => t === '');
+  c.note('page transitions overall', await page.evaluate(() => window.__pageTransitions));
+  return { puts };
+}
+
+async function case526Blocked(page, c, context) {
+  const old = await context.newPage();
+  await old.goto(origin + '/app/loops');
+  await old.evaluate(() => new Promise((ok, fail) => {
+    const req = indexedDB.open('graphgoblin', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('drafts');
+    req.onsuccess = () => { window.__olderTab = req.result; ok(); };
+    req.onerror = () => fail(req.error);
+  }));
+  c.step('An older-version tab holds a version 1 IndexedDB connection (device storage blocked).');
+  const loop = await seed('QA 526 a long loop name that wraps the toolbar while an older tab blocks device storage', { variables: { topic: TOPIC }, description: 'before' });
+  const puts = observePuts(page, loop);
+  await page.setViewportSize({ width: 900, height: 760 });
+  await page.bringToFront();
+  await openEditor(page, loop);
+  const notice = page.getByText('Changes are not kept on this device');
+  await notice.first().waitFor();
+  c.check('device notice visible', await notice.first().isVisible(), (v) => v === true);
+  await showLoopPanel(page);
+  const statusEl = await page.getByTestId('save-state').elementHandle();
+  const first = code(page, 'Variables value 1');
+  c.step('Type unfinished JSON into Variables value 1, then a valid neighbour edit (Description).');
+  await typeCode(page, first, '{"type":');
+  await page.getByTestId('held-input-state').waitFor();
+  await page.getByLabel('Description', { exact: true }).fill('accepted neighbour while device blocked');
+  const saved = await poll(() => stored(loop), (row) => row.api.description === 'accepted neighbour while device blocked', 'neighbour saved with device blocked', 10000);
+  c.equal('SQL variables unchanged', saved.sql.variables, { topic: TOPIC });
+  c.check('PUT payload: description new, variables last complete, no held text', puts.at(-1)?.sent, (p) => p.definition.description === 'accepted neighbour while device blocked' && JSON.stringify(p.definition.variables) === JSON.stringify({ topic: TOPIC }));
+  const s = await poll(() => saveStatus(page), (v) => v.draft === 'Draft saved', 'Draft saved while blocked', 6000);
+  c.check('status: Draft saved + window-only field input', s, (v) => v.held?.includes(HELD));
+  c.check('status element identity stable (same focus target)', await page.getByTestId('save-state').evaluate((el, prev) => el === prev, statusEl), (v) => v === true);
+  const layout = await page.getByTestId('save-state').evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const parts = [...el.querySelectorAll('[data-testid]')].map((p) => { const b = p.getBoundingClientRect(); return { id: p.dataset.testid, top: Math.round(b.top), left: Math.round(b.left), right: Math.round(b.right) }; });
+    return { viewport: window.innerWidth, docScroll: document.documentElement.scrollWidth, right: Math.round(r.right), clientWidth: el.clientWidth, scrollWidth: el.scrollWidth, parts };
+  });
+  c.note('narrow layout', layout);
+  c.check('status fits the 900 px viewport, no overflow', layout, (v) => v.right <= v.viewport + 1 && v.scrollWidth <= v.clientWidth + 1 && v.docScroll <= v.viewport + 1);
+  await c.shot(page, 'blocked-narrow');
+
+  c.step('Back at 1440 px, make the whole draft schema-invalid too (add a Subloop node without its loop) while blocked.');
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.getByRole('button', { name: 'Add Subloop node' }).click();
+  const memory = await poll(() => saveStatus(page), (v) => v.draft === 'Draft kept in this window only', 'draft kept in window only', 6000).catch(async () => saveStatus(page));
+  c.check('schema-invalid draft while blocked: "Draft kept in this window only" + held segment', memory, (v) => v.draft === 'Draft kept in this window only' && v.held?.includes(HELD));
+  await c.shot(page, 'blocked-window-only-draft');
+
+  c.step('Close the older tab: storage recovers; reload shows the server draft, without the window-only text.');
+  await old.close();
+  await notice.first().waitFor({ state: 'hidden', timeout: 10000 });
+  c.note('status after recovery', await saveStatus(page));
+  await page.reload();
+  await page.getByRole('heading', { name: loop.name, exact: true }).waitFor();
+  await showLoopPanel(page);
+  c.equal('reloaded Value 1 = last complete server value', JSON.parse(await readCode(page, code(page, 'Variables value 1'))), TOPIC);
+  c.check('reloaded description', await page.getByLabel('Description', { exact: true }).inputValue(), (v) => v === 'accepted neighbour while device blocked');
+  const after = await poll(() => saveStatus(page), (v) => v.held === null, 'no held after reload', 5000);
+  c.check('after reload: no held segment', after.held, (v) => v === null);
+  c.note('status after reload', after);
+  return { puts };
+}
+
+async function case526Modal(page, c) {
+  const loop = await seed('QA 526 modal announcement', { inference: codexConfig({ example: { outer: { team_docs: false } } }) });
+  await openEditor(page, loop);
+  const dialog = await openSettings(page);
+  const s = await openJson(dialog, 'Config overrides');
+  const live = dialog.getByTestId('held-input-announcement-dialog');
+  await live.waitFor({ state: 'attached' });
+  await live.evaluate((el) => {
+    window.__dialogTransitions = [];
+    new MutationObserver(() => window.__dialogTransitions.push(el.textContent)).observe(el, { characterData: true, childList: true, subtree: true });
+  });
+  const pageRegion = page.getByTestId('held-input-announcement-page');
+  c.check('dialog region pre-mounted, empty', await live.textContent(), (t) => t === '');
+  c.step('Type unfinished JSON "{" in the Config overrides JSON editor inside the native modal.');
+  await typeCode(page, s.editor, '{');
+  await poll(() => live.textContent(), (t) => t === HELD, 'dialog region announces', 4000);
+  const ax = await inspectLive(page, '[data-testid="held-input-announcement-dialog"]');
+  c.note('AX node of dialog region', ax);
+  c.check('dialog region exposed (not ignored) and polite in the AX tree', ax, (v) => v.found && v.ignored === false && v.live === 'polite');
+  const pageAx = await inspectLive(page, '[data-testid="held-input-announcement-page"]');
+  c.note('AX node of page region while modal open', pageAx);
+  c.step('Keep typing.');
+  await s.editor.press('End');
+  await page.keyboard.insertText('"still": "typing"');
+  await delay(500);
+  c.check('page region stays empty (no duplicate announcement)', await pageRegion.textContent(), (t) => t === '');
+  c.equal('dialog region transitions: exactly one announcement', await page.evaluate(() => window.__dialogTransitions), [HELD]);
+  c.check('held segment in toolbar', (await saveStatus(page)).held, (v) => v?.includes(HELD));
+  c.check('is a native modal dialog', await dialog.evaluate((el) => el.tagName === 'DIALOG' && el.matches(':modal')), (v) => v === true);
+  await c.shot(page, 'modal-announcement');
+  c.step('Cancel JSON: held input ends; the region empties.');
+  await s.cancel.click();
+  await poll(() => live.textContent(), (t) => t === '', 'dialog region empties', 4000);
+  c.check('held segment gone after Cancel', (await saveStatus(page)).held, (v) => v === null);
+  c.note('dialog transitions overall', await page.evaluate(() => window.__dialogTransitions));
+  return {};
+}
+
+async function case526Offline(page, c, context) {
+  const loop = await seed('QA 526 offline', { variables: { topic: TOPIC }, description: 'before' });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  await showLoopPanel(page);
+  c.step('Hold unfinished JSON, go offline, then make a valid neighbour edit.');
+  await typeCode(page, code(page, 'Variables value 1'), '{"type":');
+  await page.getByTestId('held-input-state').waitFor();
+  await context.setOffline(true);
+  await page.getByLabel('Description', { exact: true }).fill('offline neighbour');
+  const off = await poll(() => saveStatus(page), (v) => /^Offline/.test(v.draft ?? ''), 'offline label', 10000).catch(async () => saveStatus(page));
+  c.note('offline status', off);
+  c.check('offline: draft names its device copy and held segment stays', off, (v) => /^Offline: draft (saved on this device|kept in this window only)$/.test(v.draft ?? '') && v.held?.includes(HELD));
+  await c.shot(page, 'offline');
+  c.step('Back online: the neighbour reaches the server; Draft saved + held.');
+  await context.setOffline(false);
+  await page.evaluate(() => window.dispatchEvent(new Event('online')));
+  const saved = await poll(() => stored(loop), (row) => row.api.description === 'offline neighbour', 'online save', 15000);
+  c.equal('SQL variables unchanged', saved.sql.variables, { topic: TOPIC });
+  const on = await poll(() => saveStatus(page), (v) => v.draft === 'Draft saved', 'Draft saved online', 8000);
+  c.check('online: Draft saved + held', on, (v) => v.held?.includes(HELD));
+  return { puts };
+}
+
+// ------------------------------------------------- observation outside the slice -----------------
+
+async function obsClearValue(page, c) {
+  // Not an acceptance case: what clearing a required Variables Value does (seen as a side effect
+  // of run-01's select-all + Backspace typing).
+  const loop = await seed('QA obs clear value', { variables: { topic: TOPIC, other: OTHER } });
+  const puts = observePuts(page, loop);
+  await openEditor(page, loop);
+  await showLoopPanel(page);
+  const first = code(page, 'Variables value 1');
+  c.step('Select all in Variables value 1 (required, marked *) and press Backspace; wait 2 s.');
+  await first.click();
+  await page.keyboard.press('ControlOrMeta+A');
+  await page.keyboard.press('Backspace');
+  await delay(2000);
+  c.note('field state after clearing', await fieldState(first));
+  c.note('status after clearing', await saveStatus(page));
+  c.note('PUTs', puts.map((p) => ({ status: p.status, variables: p.sent.definition.variables })));
+  c.note('stored variables', (await stored(loop)).sql.variables);
+  c.note('header texts', (await page.locator('header').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ')));
+  await c.shot(page, 'cleared');
+  await page.reload();
+  await showLoopPanel(page);
+  c.note('Variables keys after reload', await page.getByRole('form', { name: 'Variables form' }).getByLabel(/^Variables key \d+$/).evaluateAll((els) => els.map((e) => e.value)));
+  await c.shot(page, 'cleared-reloaded');
+  return { puts };
+}
+
+// ---------------------------------------------------------------- runner -------------------------
+
+const CASES = [
+  ['527-A', 527, 'Whole-data save and reload of a rich admitted schema', 'Every entered member reaches PUT, SQL, GET and reload unchanged; neighbours unchanged.', case527Positive],
+  ['527-B', 527, 'Own __proto__ refused at the Value; lossy save refused; neighbour saves; publish refused; reload', 'Exact text held, member path + remedy described, no PUT/SQL change, neighbour PUT without held text, publish refused, reload shows last complete value.', case527Refusal],
+  ['527-C', 527, 'Discard restores and refocuses; correction saves the whole object', 'Discard: text restored, focus in Value, no PUT. Correction: whole renamed object saved and reloaded.', case527Correct],
+  ['527-D', 527, 'Adversarial: string member equal to the form internal unset marker', 'Either a field-associated refusal or the whole entered object stored.', case527Sentinel],
+  ['521-A', 521, 'Nested override key error on owning Value; issue links focus it (dialog and canvas); correct, save, publish', 'Owning Value invalid + described, sibling/keys clean, focus lands in owning Value, correction saves and publish succeeds.', case521],
+  ['521-B', 521, 'Controls: nested issue in dotted sibling; top-level refused Key', 'Dotted sibling owns its own nested issue; key issue stays on Key and focuses Key.', case521Controls],
+  ['522-A', 522, 'Valid committed section opens in JSON mode with normal controls', 'Not invalid, Apply enabled, no error, no PUT.', case522Valid],
+  ['522-B', 522, 'Invalid committed section opens with passive diagnostic; unchanged edit; Cancel; correct + Apply + reload', 'First render invalid + described, Apply disabled, no held/Discard/PUT; Cancel restores diagnostic with focus on Cancel; corrected Apply saves and reloads.', case522Invalid],
+  ['522-C', 522, 'Refused top-level key and device-restored draft open with passive diagnostic', 'First render invalid with key rule, Apply disabled, no held, also after reload from the device copy.', case522KeyAndReload],
+  ['526-A', 526, 'Held status with device storage available: neighbour save, correction, one announcement', 'Draft saved + window-only segment, neighbour PUT without held text, one polite announcement, correction returns to All changes saved.', case526Available],
+  ['526-B', 526, 'Device storage blocked by older tab: held vs saved draft, narrow layout, window-only draft, recovery and reload', 'Draft saved + window-only segment, server PUT, stable status element, no overflow at 900 px, Draft kept in this window only when schema-invalid, recovery and reload show the server draft only.', case526Blocked],
+  ['526-C', 526, 'Announcement inside the active native modal, AX exposure, no repeat while typing', 'Dialog region exposed+polite, one transition, page region silent, ends on Cancel.', case526Modal],
+  ['526-D', 526, 'Offline distinction with held input', 'Offline: draft label + held segment; online again: Draft saved + held.', case526Offline],
+  ['OBS-1', 0, 'Observation outside the slice: clearing a required Variables Value', 'Recorded only.', obsClearValue],
+];
+
+try {
+  await mkdir(out, { recursive: false });
+  fixture = await createTestApp({
+    tempPrefix: 'gg-b4-editor-qa-',
+    env: {
+      GG_WEB_DIST: join(web, 'dist'),
+      GG_OLLAMA_ENABLED: 'false',
+      GG_DB_URL: pathToFileURL(join(process.env.QA_STORE_DIR, 'store-' + Date.now() + '.sqlite')).href,
+    },
+  });
+  origin = await fixture.app.listen({ host: '127.0.0.1', port: 0 });
+  browser = await chromium.launch({ executablePath: edge, headless: true });
+  const meta = { browser: browser.version(), origin, started: new Date().toISOString(), node: process.version };
+  await save('RUN-META.json', meta);
+  for (const [id, issue, title, expected, run] of CASES) {
+    if (filter && !id.startsWith(filter)) continue;
+    const c = makeCase(id, issue, title, expected);
+    const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, serviceWorkers: 'block' });
+    await context.route('**/*', (route) => (new URL(route.request().url()).origin === origin ? route.continue() : route.abort()));
+    await context.tracing.start({ screenshots: true, snapshots: true });
+    const page = await context.newPage();
+    page.setDefaultTimeout(8000);
+    const consoleErrors = [];
+    page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text()); });
+    page.on('pageerror', (e) => consoleErrors.push('pageerror: ' + String(e)));
+    const startedAt = Date.now();
+    try {
+      const detail = await run(page, c, context);
+      c.record.verdict = 'PASS';
+      c.record.puts = detail?.puts;
+    } catch (error) {
+      c.record.verdict = 'FAIL';
+      c.record.failure = String(error);
+      c.record.stack = error.stack;
+      try {
+        await page.screenshot({ path: join(out, `${id}-first-failure.png`), timeout: 5000 });
+        c.record.screenshots.push(`${id}-first-failure.png`);
+      } catch {}
+    } finally {
+      c.record.durationMs = Date.now() - startedAt;
+      c.record.consoleErrors = consoleErrors;
+      try {
+        await context.tracing.stop({ path: join(out, `${id}-trace.zip`) });
+        c.record.trace = `${id}-trace.zip`;
+      } catch (e) {
+        c.record.traceError = String(e);
+      }
+      await context.close().catch(() => {});
+      await save(`${id}.json`, c.record);
+      results.push({ id, issue, verdict: c.record.verdict, failure: c.record.failure });
+      console.log(`${id} ${c.record.verdict}${c.record.failure ? ' :: ' + c.record.failure.slice(0, 300) : ''}`);
+    }
+  }
+  const runs = await fixture.container.handle.client.execute('SELECT count(*) AS count FROM runs');
+  await save('SUMMARY.json', { ...meta, finished: new Date().toISOString(), observedRuns: Number(runs.rows[0].count), results });
+} catch (error) {
+  console.error('HARNESS FAILURE', error);
+  await writeFile(join(out, 'HARNESS-FAILURE.txt'), String(error.stack ?? error)).catch(() => {});
+  process.exitCode = 2;
+} finally {
+  await browser?.close().catch(() => {});
+  await fixture?.close().catch(() => {});
+}
+if (process.exitCode === undefined) process.exitCode = results.every((r) => r.verdict === 'PASS') ? 0 : 1;

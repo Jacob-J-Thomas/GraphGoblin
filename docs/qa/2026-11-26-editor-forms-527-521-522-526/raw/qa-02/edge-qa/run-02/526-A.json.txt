@@ -1,0 +1,173 @@
+{
+  "id": "526-A",
+  "issue": 526,
+  "title": "Held status with device storage available: neighbour save, correction, one announcement",
+  "expected": "Draft saved + window-only segment, neighbour PUT without held text, one polite announcement, correction returns to All changes saved.",
+  "steps": [
+    "Type unfinished JSON {\"type\": into Variables value 1.",
+    "Keep typing; then a valid neighbour edit (Description)."
+  ],
+  "checks": [
+    {
+      "label": "initial status All changes saved, no held segment",
+      "actual": {
+        "whole": "All changes saved",
+        "draft": "All changes saved",
+        "held": null
+      },
+      "pass": true
+    },
+    {
+      "label": "held segment shows the window-only text",
+      "actual": ". Field input kept in this window only",
+      "pass": true
+    },
+    {
+      "label": "draft segment: Draft saved (not All changes saved)",
+      "actual": "Draft saved",
+      "pass": true
+    },
+    {
+      "label": "page live region polite and announcing",
+      "actual": {
+        "live": "polite",
+        "text": "Field input kept in this window only"
+      },
+      "pass": true
+    },
+    {
+      "label": "SQL variables unchanged by held text",
+      "actual": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "last PUT has new description and no held text",
+      "actual": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 526 device available 10",
+          "description": "neighbour while held",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "string",
+              "title": "last complete topic"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "pass": false
+    }
+  ],
+  "screenshots": [
+    "526-A-first-failure.png"
+  ],
+  "verdict": "FAIL",
+  "failure": "Error: CHECK FAILED: last PUT has new description and no held text: {\"definition\":{\"schemaVersion\":4,\"name\":\"QA 526 device available 10\",\"description\":\"neighbour while held\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{\"topic\":{\"type\":\"string\",\"title\":\"last complete topic\"}},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":80},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"approve\",\"label\":\"Approve\",\"ui\":{\"x\":290,\"y\":80},\"kind\":\"wait\",\"config\":{\"mode\":\"input\",\"prompt\":\"Approve?\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"],\"onTimeout\":\"continue\"}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":570,\"y\":80},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"none\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"approve\",\"port\":\"in\"}},{\"id\":\"e2\",\"from\":{\"node\":\"approve\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]}}",
+  "stack": "Error: CHECK FAILED: last PUT has new description and no held text: {\"definition\":{\"schemaVersion\":4,\"name\":\"QA 526 device available 10\",\"description\":\"neighbour while held\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{\"topic\":{\"type\":\"string\",\"title\":\"last complete topic\"}},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":80},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"approve\",\"label\":\"Approve\",\"ui\":{\"x\":290,\"y\":80},\"kind\":\"wait\",\"config\":{\"mode\":\"input\",\"prompt\":\"Approve?\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"],\"onTimeout\":\"continue\"}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":570,\"y\":80},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"none\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"approve\",\"port\":\"in\"}},{\"id\":\"e2\",\"from\":{\"node\":\"approve\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]}}\n    at Object.check (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:221:22)\n    at case526Available (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:722:5)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:935:22",
+  "durationMs": 1475,
+  "consoleErrors": [],
+  "trace": "526-A-trace.zip"
+}
