@@ -1,0 +1,37 @@
+
+ RUN  v5.0.3 G:/ggq/gg-fu-api-fixtures-20261124/GraphGoblin/apps/api
+
+ ✓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > emits the exact protocol declaration within 4 KiB beside the guard module 3ms
+ ✓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > consumes the variable for CLI commands, which keep their ordinary output 1973ms
+ ↓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > ignores the Windows-only variable elsewhere and keeps shell logging
+ ✓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > logs only to the private pair, refuses an unsafe folder (71) and a second owner (70) 6164ms
+{"level":30,"time":1795572606840,"pid":46412,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:62081"}
+{"level":30,"time":1795572606841,"pid":46412,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":62081,"dataDir":"G:\\ggq\\delivery-evidence\\2026-11-24-followups\\api-fixtures-565\\hosted-ci-01\\temporary-alias-baseline\\gg-api-process-uKsd3i","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1795572606861,"pid":46412,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1795572606865,"pid":46412,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":3.7770000000000437,"msg":"request completed"}
+ ✓ src/main.test.ts > built API entry and startup failures > holds ownership while listening and releases it on supported HTTP close 6342ms
+ × src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process 7792ms
+   → expected 'another GraphGoblin process holds G:\…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+ × src/main.test.ts > built API entry and startup failures > refuses a shared database in one line and leaves its existing owner serving 8464ms
+   → expected 'another GraphGoblin process holds G:\…' to contain 'another GraphGoblin process holds G:\…'
+ × src/main.test.ts > built API entry and startup failures > explains uncertain data-directory ownership in one line and preserves the owner record 2247ms
+   → expected 'Store ownership could not be verified…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+ × src/main.test.ts > built API entry and startup failures > explains uncertain database ownership in one line and preserves the owner record 2593ms
+   → expected 'Store ownership could not be verified…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+ × src/main.test.ts > built API entry and startup failures > explains uncertain reclamation ownership in one line and preserves the owner record 2354ms
+   → expected 'Store ownership could not be verified…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+ ✓ src/main.test.ts > built API entry and startup failures > escapes controls in a configured ownership path without changing its record 2351ms
+ ✓ src/main.test.ts > built API entry and startup failures > retains diagnostics for a real data-directory filesystem failure 1754ms
+ ✓ src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes 6744ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership on a real corrupt-database startup fault before HTTP setup 5218ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure 5248ms
+ ↓ src/main.test.ts > built API entry and startup failures > releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGINT
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGTERM
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > handles a real signal before readiness, holds ownership through startup and shuts down once
+
+ Test Files  1 failed (1)
+      Tests  5 failed | 9 passed | 5 skipped (19)
+   Start at  20:09:51
+   Duration  59.71s (tests 100%)
+

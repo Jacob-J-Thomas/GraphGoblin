@@ -3,17 +3,14 @@ import { Agent, get } from 'node:http';
 import type { Socket } from 'node:net';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import Fastify from 'fastify';
-import {
-  serializerCompiler,
-  validatorCompiler,
-  type ZodTypeProvider,
-} from 'fastify-type-provider-zod';
+import { serializerCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
 import { ContextThreadSchema, type RunRecord } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import { reconcileThread } from '@graphgoblin/domain';
 import type { EventDraft } from '@graphgoblin/engine';
 import { registerAuth } from '../plugins/auth.js';
 import { registerErrorHandler } from '../plugins/errors.js';
+import { requestValidatorCompiler } from '../plugins/request-validation.js';
 import { createTestApp } from '../testing/test-app.js';
 import { registerRunRoutes } from './runs.js';
 import { registerSystemRoutes } from './system.js';
@@ -123,7 +120,7 @@ describe('historical thread response lifetime', () => {
     expectedBody = JSON.stringify(ContextThreadSchema.parse(expected));
     currentBody = (await test.app.inject({ url: currentPath, headers })).body;
 
-    app.setValidatorCompiler(validatorCompiler);
+    app.setValidatorCompiler(requestValidatorCompiler);
     app.setSerializerCompiler(serializerCompiler);
     registerErrorHandler(app);
     registerAuth(app, test.container);

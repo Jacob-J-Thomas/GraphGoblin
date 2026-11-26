@@ -1,0 +1,34 @@
+**Verdict for #573: PASS**
+
+I ran all three checks once each, in order. All three exited 0, none timed out, every receipt had `error: null` and every receipt reported `sourceUnchanged: true`. There were no failures, so nothing needed to be preserved. I edited nothing and did not touch GitHub.
+
+**What the checks were run against** (identical before and after each check)
+- Head `154e78d54ee485330816d606032280de44d6e891`, tree `f0667024de27eb8c57aa6a89fadb64e605ab8a2d`, branch `codex/gg-565-chat-coverage-timing-20261124`.
+- Index `bd61ed58…6fa4`. Nothing staged and no untracked files.
+- The only changed file is `apps/web/src/chat/ChatSurface.test.tsx`, hash `b33811fa…c945`.
+- Patch hash `9529cf68…2df5`, 1828 bytes.
+- All 8 protected files have unchanged hashes: `ChatSurface.tsx`, `controller.ts`, the chat fixture, `vitest.config.ts`, `package.json`, both tsconfigs and `pnpm-lock.yaml`. The inspect check reported `noProductionDelta: true`.
+
+**Patch review (inspect)**
+The patch is one change inside the R2 test body (lines 961–980). The test title on line 952 is unchanged, and no other test is touched.
+- **Waits for the real enabled state:** after `findByText(reply)`, the test waits (`waitFor`) until the New chat button is enabled. It uses the default wait time; no timeouts or retries were added.
+- **Targets the exact polite Reply region:** it finds the region with `getByText('Reply: …', { selector: '[role="status"][aria-live="polite"]' })`. It also checks that this region is among the status elements. The broad query is used only for that check, never to pick the target.
+- **Keeps the same region throughout:** the same saved reference is checked with `toBeInTheDocument()` and `toBeEmptyDOMElement()` after New chat and again after selecting the saved conversation. So the region must stay mounted and empty; a remounted node would fail.
+
+**Component check:** `pnpm --filter @graphgoblin/web test src/chat/ChatSurface.test.tsx --reporter=verbose` ran the full test file against the candidate and exited 0, with no timeout.
+
+**Boundary check (separate copy of the code with controlled timing):** exited 0, with empty stderr.
+- **While the send is still in progress:** two status elements were present at once:
+  - `DIV#chat-send-reason` showing "Sending…" (no `aria-live`)
+  - a polite `P` showing "Reply: The exact loop result."
+  
+  At that moment New chat was disabled and the reply text was visible.
+- **The original failure reproduces:** the old single-status query threw "Found multiple elements with the role "status"" while New chat was disabled.
+- **After New chat and selecting the conversation:** the region's text is `""`.
+
+**Limitations**
+- **No per-test results visible:** the component receipt only has output hashes (stdout `854d2e5f…`), so I couldn't count passes or see R2's own line. There was no separate run of R2 alone; it ran as part of the full file.
+- **Some boundary steps are inferred:** the receipt doesn't record "New chat enabled" or "same region" as separate fields after the send finished. I'm relying on the copied test's assertions passing (exit 0); I couldn't see its output (stdout hash `cb976f47…`).
+- **Unread lineage file:** I didn't read `MIRROR-LINEAGE.json`, since I was limited to the three commands. So my claim that the copy matches the current sources byte for byte rests on the check script, not on my own reading.
+- **Not proof of the hosted failure:** the boundary check forces one timing with a fake client. It doesn't show which timing actually happened on the hosted CI run, and it isn't browser evidence.
+- **Still outstanding:** the independent GPT review, hosted coverage and current-target CI, and the final review all remain separate and haven't been done.

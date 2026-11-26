@@ -1,0 +1,159 @@
+{
+  "date": "2026-11-25T08:03:22.745508+00:00",
+  "issue": 581,
+  "pr": 582,
+  "requestComment": 7156368988,
+  "round": 1,
+  "limit": 3,
+  "verdict": "REQUEST_CHANGES",
+  "head": "3f80820ff2982614a750cd6bd8dce488714a3752",
+  "tree": "af7e9fcbb88126fed9651e18f308c122010f23da",
+  "base": "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+  "parent": "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+  "effectiveDiff": {
+    "command": "git diff --binary BASE HEAD",
+    "bytes": 291599,
+    "sha256": "6c9b8d45a800dab5bd5fe73053cc42066300a1a13248927218f778b938b7047f"
+  },
+  "model": {
+    "configured": "gpt-6.2-astra",
+    "configuredReasoning": "xhigh",
+    "configurationSource": "root dispatch and admission record",
+    "observedServingModel": null,
+    "observedServingReasoning": null,
+    "observedContext": "Independent reviewer assignment, generic GPT-6 context; no exact model/effort attestation."
+  },
+  "independentOfImplementation": true,
+  "findings": [
+    {
+      "id": "R1-F1",
+      "disposition": "FIX-IN-PR",
+      "priority": "P2",
+      "confidence": "high",
+      "location": "apps/api/src/data-dir-lock.ts:245-248,389-402",
+      "consumer": "apps/api/src/reset/reset.ts:622-635,804-814",
+      "reproduction": "Native macOS 26.6.2 arm64 Node 22.22.2; three schedules per revision and public resetDataDirectory on two empty private fixtures",
+      "result": "Real rename replaced original empty directory while reporting reclaimed.guard=false; confirmed reset incorrectly reported already gone. Parent reported reclaimed, both controls matched.",
+      "repair": "Distinguish enumerated marker disappearance from parent guard absence; re-observe the former within the bounded loop. Cover both parent-directory outcomes and preserve current fail-closed and cleanup behavior."
+    }
+  ],
+  "hosted": {
+    "snapshot": "hosted-snapshot.json",
+    "run": 45571609471,
+    "attempt": 1,
+    "synthetic": "8af4a224f8688529e75643be9fda00d196b28feb",
+    "tree": "af7e9fcbb88126fed9651e18f308c122010f23da",
+    "parents": [
+      "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+      "3f80820ff2982614a750cd6bd8dce488714a3752"
+    ],
+    "windows": {
+      "job": 139059364434,
+      "artifact": {
+        "id": 15002946460,
+        "name": "windows-launcher-1",
+        "bytes": 9212,
+        "digest": "sha256:3ca47f7dcba623234193b529995d6c861dd3c0bb372cf8173aa2bb0747bcffcc",
+        "run": 45571609471
+      },
+      "nativeTestsPassed": 27,
+      "observations": {
+        "state": "valid",
+        "reason": null,
+        "bytes": 91653,
+        "records": 338,
+        "closed": true,
+        "rejected": 0,
+        "omittedRecords": 0,
+        "omittedBytes": 0,
+        "byType": {
+          "recorder-open": 1,
+          "case-start": 27,
+          "fixture": 9,
+          "child": 219,
+          "cleanup": 15,
+          "case-end": 27,
+          "alias-round": 4,
+          "alias": 2,
+          "ownership-result": 15,
+          "contention": 3,
+          "ownership-check": 3,
+          "ownership-cleanup": 3,
+          "fixture-state": 9,
+          "recorder-closed": 1
+        }
+      },
+      "trials": [
+        {
+          "trial": 1,
+          "ownerPid": 9004,
+          "ownerMatched": true,
+          "liveOwners": 1,
+          "storeHeldRefusals": 4,
+          "releases": 1,
+          "clean": true
+        },
+        {
+          "trial": 2,
+          "ownerPid": 6984,
+          "ownerMatched": true,
+          "liveOwners": 1,
+          "storeHeldRefusals": 4,
+          "releases": 1,
+          "clean": true
+        },
+        {
+          "trial": 3,
+          "ownerPid": 1068,
+          "ownerMatched": true,
+          "liveOwners": 1,
+          "storeHeldRefusals": 4,
+          "releases": 1,
+          "clean": true
+        }
+      ]
+    },
+    "macOS": {
+      "job": 139059364212,
+      "artifact": {
+        "id": 15003295816,
+        "name": "macos-launcher",
+        "bytes": 384658,
+        "digest": "sha256:86728ff1db04d6ae66bdec10e0961d01ee17758fdbc83e81d4335be603b3b090",
+        "run": 45571609471
+      },
+      "cases": 9,
+      "processes": 30,
+      "outcome": "passed",
+      "swiftCoverage": {
+        "lines": {
+          "count": 3782,
+          "covered": 3645
+        },
+        "regions": {
+          "count": 2140,
+          "covered": 1953
+        },
+        "branches": {
+          "count": 0,
+          "covered": 0
+        }
+      }
+    },
+    "allSevenGreen": false
+  },
+  "limitation": "The native Windows trials do not identify the original Win32 schedule or show whether the new EPERM classifier ran. Combined macOS A\u2013E, actual Claude device assessment and owner checks remain separate.",
+  "localEvidenceFiles": {
+    "3f80820ff2982614a750cd6bd8dce488714a3752.ts": "76c04a86848345793a70cb4c80e51c53cb3a6516185ac4a94182e4aff6114710",
+    "candidate-reset.json": "3b4f0200b8bd7fcd0939b062d7071152b55a39b67cfdbc5e9a0597131b28ca4a",
+    "candidate-trials.json": "7c10be034dd82b647ce4684027be8077f2679afefa0ef9d33ec1d33497673436",
+    "da01ebc7575b9b05f87d4b89993e6c46b8de194b.ts": "9ac7ee4116896e18de4db3942bc8798aa354e82f478fe5374289fbb05a11c3cc",
+    "hosted-snapshot.json": "36d9e2d788fa61d2aa94531dbf0289d545342c6354439cf414008b6b9f004bfa",
+    "marker-read-schedule.mjs": "7fe0d02c7a18ac648f173065ece44a65668d747517136359b1ce999d56a130e0",
+    "parent-reset.json": "769e18f3bd121afcc8c9ef881ed239fc3603eba3e90d2ebec47a0d7bf39b2513",
+    "parent-trials.json": "e705b5b8fc591b317459ddfeb59eb0ce2f60dc9b843dda0d5ad4dd83707fcc2a",
+    "reset-manifest-schedule.mjs": "4ae9baeff44f1d2a68fb9992ed0c5dfe6f4a9881ac77e5c8f0162d662a17940d",
+    "review.md": "3d304f62e754641cba67efaabe30cfc04268f7c9c1f3c9f727277f73fbba23bf",
+    "root-assignment.json": "559a1d1e9f44d822599770589407f4a5bb05e7bcbcb4d75e1d866ba902d02841"
+  }
+}

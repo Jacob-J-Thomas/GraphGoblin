@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import { ExpressionError, observeExpression } from '@graphgoblin/domain';
+const ordinary = await observeExpression('a + b', { a: 1, b: 2 });
+assert.deepEqual(ordinary, { ok: true, value: 3 });
+// Wider than the default depth of 200: accepted only when siblings are evaluated in turn.
+const width = Array.from({ length: 250 }, (_, n) => n);
+const wide = JSON.stringify({ array: width,
+  object: Object.fromEntries(width.map((n) => [`k${n}`, n])) });
+const siblings = await observeExpression(wide, {});
+assert.ok(siblings.ok, `wide literal refused (${siblings.reason}): ${siblings.error?.message}`);
+assert.equal(JSON.stringify(siblings.value), wide);
+const refused = async (options, reason, message) => {
+  const result = await observeExpression('1', {}, options);
+  assert.equal(result.ok, false, `${reason} probe was not refused`);
+  assert.equal(result.reason, reason);
+  assert.ok(result.error instanceof ExpressionError);
+  assert.equal(result.error.message, message);
+  return { reason, message };
+};
+const depth = await refused({ maxDepth: 0 }, 'depth', 'expression exceeded max depth 0');
+const time = await refused({ timeoutMs: -1 }, 'time', 'expression exceeded -1ms');
+// The same cached source at the default limits: neither refusal may carry over.
+const fresh = await observeExpression('1', {});
+assert.deepEqual(fresh, { ok: true, value: 1 });
+console.log(JSON.stringify({ check: 'installed-jsonata-patch', ordinary: ordinary.value,
+  wideSiblings: width.length, depth, time, fresh: fresh.value }));

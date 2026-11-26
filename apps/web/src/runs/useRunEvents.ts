@@ -13,6 +13,7 @@ import { useApi } from '../api/context.js';
 import { errorMessage } from '../lib/utils.js';
 import { followRunAttempts } from './follow-run-attempts.js';
 import { useRunEventLog, useRunEventStore, type RunEventLog } from './event-store.js';
+import { markInspectorTransportLoss } from './inspector-read-provenance.js';
 import { useRunHeaderRegistry } from './run-header-store.js';
 
 export type StreamStatus = 'connecting' | 'live' | 'finished' | 'error';
@@ -67,6 +68,8 @@ export function useRunEvents(
     // This run's header evidence under the credentials the stream opened with (#386). Constant:
     // another generation runs this effect again with its own.
     const lease = headers?.lease(runId);
+    // Where the run's own reads keep their receipts (`useRun` chooses the same owner).
+    const receipts = headers?.source.client === client ? headers : undefined;
     // Whether the credentials this stream opened with are still the accepted ones, checked live:
     // a rejection or replacement retires its callbacks before React runs this effect's cleanup.
     const authorized = () => {
@@ -96,6 +99,11 @@ export function useRunEvents(
     let connection = 0;
     let inTransportBackoff = false;
     let reportedOutage = false;
+    // Whether a stream was confirmed open since the last transport loss recorded here (#575).
+    // Unlike one connection's `openedAt`, which times that open for the heartbeat and the reread
+    // budget, a graceful close or another ordinary error keeps it, and so does a restart: the next
+    // transport failure is then a new loss. Only recording a loss consumes it.
+    let reopened = false;
     let lastSeq = known?.lastSeq ?? 0;
     let stopHistory: (() => void) | undefined;
     const followAttempts = () => {
@@ -147,6 +155,7 @@ export function useRunEvents(
         onOpen: () => {
           if (!current()) return;
           openedAt = Date.now();
+          reopened = true;
           inTransportBackoff = false;
           markApiReachable();
           setStatus('live');
@@ -172,9 +181,20 @@ export function useRunEvents(
           openedAt = undefined;
           inTransportBackoff =
             err instanceof TypeError || (err instanceof GraphGoblinApiError && err.status === 0);
-          // Clean EOF and HTTP errors keep the SSE helper's existing backoff.
+          // Clean EOF and HTTP errors keep the SSE helper's existing backoff, and record no loss.
           if (!inTransportBackoff) return;
           setStatus('connecting');
+          // A retry refused again with no stream confirmed open since the recorded loss records
+          // nothing, so it never overtakes a recovery read, and requests none.
+          if (reportedOutage && !reopened) return;
+          // The first loss, or a later one after a stream opened again (#575) however that stream
+          // then ended, a graceful close included: a run read since recovered cannot leave the view
+          // current. First, with the run's read receipts: a write queued before React renders again
+          // already finds the view lost, and a run read begun before now, even one the read below
+          // joins, cannot end the outage.
+          reopened = false;
+          markInspectorTransportLoss(receipts, keys.run(runId));
+          // A later loss within this outage's one reread requests no other read.
           if (reportedOutage) return;
           reportedOutage = true;
           markApiUnreachable();

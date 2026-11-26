@@ -1,0 +1,46 @@
+Verdict for #467: PASS
+
+This verdict covers the integrated head only. All three checks ran once, in order, and each exited with code 0.
+
+- **Head:** `d312119ccbb8be2690fe719d460f31ee0a804221`, tree `806813008973429e85c18f343f2cbffaef9d91f9`, branch `codex/gg-fu-jsonata-package-20261124`
+- **Target:** `631d16e39b8e9932f4763390a4166fa67eea8df3`. Live main is still exactly this commit, so it hasn't moved past the target.
+- **Image checkout:** `ad2bab47f4d9d70a63737bb10e8b6083cb905cff`, with parents `[631d16e…, d312119…]` and the candidate tree. GitHub's current merge commit for PR 571 is the same commit.
+- **Local parents:** prior integration `7064dab…` first, then target `631d16e…`.
+
+## 1. Identity and documentation
+- **PR and head:** PR 571's live head matches the candidate.
+- **Source and index unchanged:** Before and after each of the three checks the worktree was clean and these all matched: head, tree, parents, the four source-file hashes, the index hash `d60a3341…` and the patch hash `98df17ae…`.
+- **QA packet:** All 12 recorded raw receipts match by committed blobs (original, prior and current) and the current index. The packet is still left out of the sparse checkout, so I make no claim about the files on disk.
+- **Dependency inputs:** These were verified at four revisions: original publication `87dcfec…`, prior integration `7064dab…`, the head and the target.
+- **`docs/research/licenses.md`:**
+  - It pins jsonata 2.2.2 with `patches/jsonata@2.2.2.patch`, applied through pnpm `patchedDependencies` and recorded in the lockfile hash. jsonata stays MIT and no dependency is added.
+  - It describes symbol-keyed hooks bound in each call's own frame, with nothing assigned to the shared compiled environment.
+  - It says sibling items and values are evaluated one after another.
+  - The `createFrame` wording is corrected: the flag is "only copied… no evaluation logic acts on it". The upgrade steps are spelled out.
+- **CHANGELOG and docs/10:** Both match the frozen hashes. The output showed matching hashes, not a diff. So "original CHANGELOG insertion preserved" and "docs10 patch applied to the new target" rest on those hashes.
+- **Timestamp behaviour:** This gets source unit-test credit only (`expression.test.ts` lines 82 and 85). The licenses doc itself says there is no image probe for it.
+
+## 2. Hosted image
+- **Run 45542221565, attempt 1:** completed with conclusion `success`. Its head is `d312119…` and the PR readback shows base `631d16e…`.
+- **Template image job 138963218351:** `success`. All four named steps succeeded: checkout, "Build the distributed image", "Load installed templates without network or writable storage" and "Evaluate expressions with the installed JSONata patch".
+- **Raw log:** `template-image.raw.log`, SHA-256 `bbe32232…`, 45,990 bytes, which matches the recorded value. The log names checkout `ad2bab4…`.
+- **Commands and probe:** The build command is `docker build --tag graphgoblin-template-check .` and the run command is the exact `--network none --read-only --cap-drop ALL …` command. The echoed JavaScript has SHA-256 `062bb6e3…`, which matches the recorded probe.
+- **Image digests:** manifest `sha256:67c1f35f…` and config `sha256:b18af31b…`.
+- **Container output** (finite): ordinary value `3`, 250 siblings, depth refusal with reason `depth` and message "expression exceeded max depth 0", time refusal with reason `time` and message "expression exceeded -1ms", then fresh value `1`.
+- **Historical runs:** Runs 45530276243 and 45533399432 returned the same result. They are history only and were not used as evidence for this head.
+
+## 3. Compiled-host check (Windows)
+Node v22.23.4, resolving from `apps/api`, loaded `packages/domain/dist/index.js` (SHA-256 `a391fc41…`). It ran the same probe (`062bb6e3…`) and got the same result as the image. This used the existing compiled package only: no Docker and no build. It supports the image result but does not show that this `dist` was built from the head.
+
+## Limits
+- **What the summary shows:** The summarised output shows a single `wideSiblings: 250` field and does not name the `ExpressionError` class. Credit for "array and object each" and the `ExpressionError` type depends on the probe matching its recorded hash and on the probe step succeeding. I did not read the probe text myself.
+- **Run-level success:** The run concluded `success`, but I don't count that as the full-CI gate.
+
+## Evidence types kept apart
+- **Source unit tests:** timestamp behaviour only.
+- **Compiled host:** corroboration only.
+- **Hosted image:** the actual shipped image probe for this head.
+- **Operator preparation:** the frozen candidate record was used only as the expected values to check against.
+
+## Remaining gates
+Full CI and required checks, the final Astra review, merge and owner acceptance are outside this verdict. I did not touch QA01, and I did not write to GitHub, commit, push or use Docker locally.
