@@ -211,8 +211,8 @@ describe('a sidecar is the entry its name opens, never another hard link of its 
       const before = await snapshotTree(base);
 
       const dry = await reset(dataDir, DRY, { env });
-      expect(dry.code).toBe(0);
-      expect(dry.err).toBe('');
+      // Together, so an unexpected refusal shows its text.
+      expect({ code: dry.code, err: dry.err }).toEqual({ code: 0, err: '' });
       expect(section(dry.out, 'Removes:')).toEqual(removes(database, sidecar));
       expect(dry.out).toContain(removeRow(sidecar, what, `1 file, ${String(bytes.length)} B`));
       const keeps =
@@ -231,8 +231,7 @@ describe('a sidecar is the entry its name opens, never another hard link of its 
       }
 
       const confirmed = await reset(dataDir, CONFIRM, { env });
-      expect(confirmed.code).toBe(0);
-      expect(confirmed.err).toBe('');
+      expect({ code: confirmed.code, err: confirmed.err }).toEqual({ code: 0, err: '' });
       expect(section(confirmed.out, 'Removes:')).toEqual(removes(database, sidecar));
       expect(section(confirmed.out, 'Keeps:')).toEqual(keeps);
       expect(confirmed.out).toContain(
@@ -322,7 +321,7 @@ describe('a sidecar is the entry its name opens, never another hard link of its 
     const { dataDir } = await newBase();
     // A Kelvin sign (U+212A): JavaScript lowercases it to `k`; the filesystem keeps it a distinct
     // name. Escaped, so no editor or formatter can turn it into an ASCII `K`.
-    const lookAlike = 'K.db-wal';
+    const lookAlike = '\u212A.db-wal';
     expect(lookAlike).not.toBe('K.db-wal');
     await writeTree(dataDir, {
       'K.db': 'database bytes',
