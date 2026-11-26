@@ -87,12 +87,17 @@ const NOTE_MARGIN = 8;
 const HANDLE_HIT = 12;
 const HANDLE_HIT_COARSE = 22;
 /**
- * A port's target under a coarse pointer, as canvas.css draws it: at most 44 screen px wide, and 44
- * screen px or the 46 flow px output pitch high, whichever is less. Its own box when larger.
+ * A port's target under a coarse pointer, as canvas.css draws it: 44 screen px wide, or less where
+ * the gap to the next card stops it (counted as 44 here, which only overestimates), and 44 screen px
+ * or the 46 flow px output pitch high, whichever is less. Its own box when larger.
  */
 const PORT_TARGET = 44;
 const PORT_PITCH = 46;
-/** A change of the row's measured size smaller than this (screen px) places nothing again. */
+/**
+ * A change of the row's measured size smaller than this (screen px) places nothing again, and a row
+ * no more than this past the pane less its insets still fits: a measured box at a fractional zoom
+ * can exceed its own max-width by a rounding residue (214.00003 px for 214 px).
+ */
 const MEASURE_STEP = 0.5;
 type Transform = readonly [number, number, number];
 const NO_TRANSFORM: Transform = [0, 0, 1];
@@ -244,8 +249,8 @@ export function toolbarPlacement(
     return { ...ABOVE, step: 'unmeasured' };
   if (label.x < 0 || label.x > pane.width || label.y < 0 || label.y > pane.height)
     return { ...ABOVE, step: 'off-pane' };
-  const wide = row.width > pane.width - 2 * NOTE_MARGIN;
-  const tall = row.height > pane.height - 2 * NOTE_MARGIN;
+  const wide = row.width > pane.width - 2 * NOTE_MARGIN + MEASURE_STEP;
+  const tall = row.height > pane.height - 2 * NOTE_MARGIN + MEASURE_STEP;
   const centred = label.x - row.width / 2;
   const left = wide
     ? NOTE_MARGIN

@@ -1600,6 +1600,28 @@ describe('toolbarPlacement (#479)', () => {
       ),
     ).toEqual({ ...above, step: 'clamp', edge: 'top', y: -37, below: false, fits: false });
   });
+
+  it('counts a row measured a rounding residue past the pane less its insets as fitting', () => {
+    // A wrapped row at its 214 px max-width in a 230 px pane, measured at a fractional zoom.
+    const wrapped = { width: 214.00003, height: 72 };
+    const narrow = { width: 230, height: 800 };
+    const placed = toolbarPlacement({ x: 115, y: 400 }, wrapped, narrow, nothing);
+    expect(placed.fits).toBe(true);
+    expect(placed.step).toBe('above');
+    expect(placed.shift).toBeCloseTo(0, 3);
+    // The same residue in height: a 784 px row in an 800 px pane fits; half a pixel more does not.
+    const tallPane = { width: 1000, height: 800 };
+    expect(
+      toolbarPlacement({ x: 500, y: 400 }, { width: 146, height: 784.00003 }, tallPane, nothing)
+        .fits,
+    ).toBe(true);
+    expect(
+      toolbarPlacement({ x: 115, y: 400 }, { width: 214.6, height: 72 }, narrow, nothing).fits,
+    ).toBe(false);
+    expect(
+      toolbarPlacement({ x: 500, y: 400 }, { width: 146, height: 784.6 }, tallPane, nothing).fits,
+    ).toBe(false);
+  });
 });
 
 /**
