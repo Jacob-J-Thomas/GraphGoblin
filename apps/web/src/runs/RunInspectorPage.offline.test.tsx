@@ -19,7 +19,7 @@ import { App } from '../app/App.js';
 import { Providers } from '../app/bootstrap.js';
 import { useReachability } from '../lib/reachability.js';
 import { errorMessage } from '../lib/utils.js';
-import { NOT_SENT } from './inspector/RunControls.js';
+import { NOT_SENT, notSentByKey, requestedBeforeKey } from './inspector/RunControls.js';
 
 const STALE = 'Last observed, may be out of date';
 const UNREACHABLE = /needs the GraphGoblin API, which cannot be reached/;
@@ -795,9 +795,12 @@ describe('run inspector through an outage (#416)', () => {
         expect(screen.queryByText(STALE)).toBeNull();
         expect(recoveries()).toHaveLength(0);
 
-        // The choice queued before the loss the view showed stays spent.
+        // The choice queued before the loss the view showed stays spent. Queued under the first
+        // key, it is not sent under the second either, and says so (#562).
         release();
-        expect(await screen.findByText(NOT_SENT)).toBeVisible();
+        expect(
+          await screen.findByText(anotherKey ? notSentByKey('Start fresh session') : NOT_SENT),
+        ).toBeVisible();
         expect(recoveries()).toHaveLength(0);
 
         // A deliberate choice made now sends once, with the failure's own sequence.
@@ -967,15 +970,18 @@ describe('run inspector through an outage (#416)', () => {
       expect(replacement).not.toBe(originalStart);
       expect(replacement).toBeDisabled();
       expect(screen.queryByText(STALE)).toBeNull();
+      const notSent = notSentByKey('Start fresh session');
+      expect(screen.queryByText(notSent)).toBeNull();
       expect(screen.queryByText(NOT_SENT)).toBeNull();
       expect(recoveries()).toHaveLength(0);
 
-      // Released, the choice queued before the loss is not sent, and the control shown now says so.
+      // Released, the choice queued before the loss is not sent, and the control shown now says so:
+      // it was chosen under the first key, so it is not sent under the second (#562).
       release();
-      expect(await screen.findByText(NOT_SENT)).toBeVisible();
+      expect(await screen.findByText(notSent)).toBeVisible();
       expect(recoveries()).toHaveLength(0);
       await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
-      expect(screen.getByText(NOT_SENT)).toBeVisible();
+      expect(screen.getByText(notSent)).toBeVisible();
       expect(posts(api)).toHaveLength(0);
 
       // A new explicit choice replaces that report and sends once, with the failure's own sequence.
@@ -987,7 +993,7 @@ describe('run inspector through an outage (#416)', () => {
       await waitFor(() => expect(recoveries()).toHaveLength(1));
       expect(recoveries()[0]!.body).toEqual({ nodeId: 'worker', failureSeq: 3 });
       expect(posts(api)).toHaveLength(1);
-      await waitFor(() => expect(screen.queryByText(NOT_SENT)).toBeNull());
+      await waitFor(() => expect(screen.queryByText(notSent)).toBeNull());
     } finally {
       release();
       view.unmount();
@@ -1450,18 +1456,20 @@ describe('run inspector through an outage (#416)', () => {
         expect(screen.queryByRole('dialog')).toBeNull();
         expect(resumes()).toHaveLength(1);
 
+        // Sent under the first key, it settles under the second: the control shown now reports
+        // only that it was requested, never its own outcome (#562).
+        const requested = requestedBeforeKey('Resume');
         if (settle === 'fails in transport') {
           await act(async () => {
             fail(new TypeError('Failed to fetch'));
             await Promise.resolve();
           });
-          // The control shown now reports the retry's own failure, and keeps reporting it.
-          const outcome = await within(header()).findByRole('alert');
-          expect(outcome).toHaveTextContent(/^The GraphGoblin API cannot be reached\.$/);
+          expect(await within(header()).findByText(requested)).toBeVisible();
+          expect(within(header()).queryByRole('alert')).toBeNull();
+          expect(screen.queryByText('The GraphGoblin API cannot be reached.')).toBeNull();
           await act(() => new Promise((resolve) => setTimeout(resolve, 50)));
-          expect(within(header()).getByRole('alert')).toHaveTextContent(
-            /^The GraphGoblin API cannot be reached\.$/,
-          );
+          expect(within(header()).getByText(requested)).toBeVisible();
+          expect(within(header()).queryByRole('alert')).toBeNull();
           // A new explicit choice, made only now, sends once more with the same consent.
           api.override('POST /runs/:id/resume', (call) => api.builtIn(call));
           await waitFor(() => expect(recover()).toBeEnabled());
@@ -1480,6 +1488,7 @@ describe('run inspector through an outage (#416)', () => {
           await waitFor(() =>
             expect(screen.queryByRole('button', { name: 'Recover script' })).toBeNull(),
           );
+          expect(within(header()).getByText(requested)).toBeVisible();
           expect(within(header()).queryByRole('alert')).toBeNull();
           expect(resumes()).toHaveLength(1);
         }
@@ -1512,7 +1521,10 @@ describe('run inspector through an outage (#416)', () => {
       const withdraw = () => button('Withdraw delete-ready mark');
       const previews = () => api.callsTo('POST', '/runs/deletion-eligibility/preview');
       const confirms = () => api.callsTo('POST', '/runs/deletion-eligibility');
-      const outcome = settle === 'succeeds' ? '1 run marked delete-ready.' : UNCERTAIN;
+      // Sent under the first key, it settles under the second: only that it was requested is
+      // reported, never whether it was saved (#562).
+      const outcome = requestedBeforeKey('Confirm delete-ready selection');
+      const shownUnderFirstKey = settle === 'succeeds' ? '1 run marked delete-ready.' : UNCERTAIN;
       try {
         await openRun(run.id);
         await user.click(review());
@@ -1559,8 +1571,9 @@ describe('run inspector through an outage (#416)', () => {
           else confirmations[0]!.fail(new TypeError('Failed to fetch'));
           await Promise.resolve();
         });
-        // The controls shown now report what happened to it: saved, or possibly saved.
+        // The controls shown now report that it was requested, not what happened to it.
         expect(await screen.findByText(outcome)).toBeVisible();
+        expect(screen.queryByText(shownUnderFirstKey)).toBeNull();
         await waitFor(() => expect(review()).toBeEnabled());
         expect(withdraw()).toBeEnabled();
         expect(screen.queryByRole('dialog')).toBeNull();

@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { FakeApi, runRecord } from '../../__fixtures__/fake-api.js';
 import { renderWith } from '../../__fixtures__/render.js';
 import { Button } from '../../components/ui/index.js';
-import { NOT_SENT, type WriteGate } from './RunControls.js';
+import { currentCredential, useApiKeyStore } from '../../api/api-key.js';
+import { NOT_SENT, notSentByKey, requestedBeforeKey, type WriteGate } from './RunControls.js';
 import { WaitPanel } from './WaitPanel.js';
 
 const noteSchema = { type: 'object', properties: { note: { type: 'string' } } };
@@ -27,12 +28,12 @@ const waiting = (startedSeq: number, lastEventSeq = 5): RunRecord =>
   });
 
 /** The run as the inspector refetches it: the same wait again, then the next wait. */
-function Harness({ runs }: { runs: RunRecord[] }) {
+function Harness({ runs, availability }: { runs: RunRecord[]; availability?: WriteGate }) {
   const [index, setIndex] = useState(0);
   return (
     <>
       <Button onClick={() => setIndex(index + 1)}>Refetch</Button>
-      <WaitPanel run={runs[index]!} />
+      <WaitPanel run={runs[index]!} {...(availability ? { availability } : {})} />
     </>
   );
 }
@@ -277,4 +278,61 @@ it('bounds a long prompt and offers the whole text (#259)', async () => {
   expect(screen.getByText('Showing the first 4,096 of 10,000 characters.')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Show all of Prompt' }));
   expect(screen.getByRole('region', { name: 'Prompt' }).textContent).toBe(prompt);
+});
+
+describe('answers follow the accepted API key they were chosen under (#562)', () => {
+  /** The inspector's gate under the credential accepted when it was issued. */
+  function keyedGate(): WriteGate {
+    const credential = currentCredential();
+    return { blocked: undefined, credential, open: () => true, shown: () => true };
+  }
+
+  const signalRun = runRecord({
+    id: '01ARZ3NDEKTSV4RRFFQ69G5FAW',
+    status: 'waiting',
+    lastEventSeq: 5,
+    waiting: { waitId: '4', nodeId: 'hold', kind: 'signal', signalName: 'go', startedSeq: 4 },
+  });
+
+  it('does not send a signal chosen under another key, and names it', async () => {
+    useApiKeyStore.getState().save('gg_A');
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const gate = keyedGate();
+    useApiKeyStore.getState().save('gg_B');
+    renderWith(<WaitPanel run={signalRun} availability={gate} />, '/', api);
+    await user.click(screen.getByRole('button', { name: 'Send signal' }));
+    expect(await screen.findByText(notSentByKey('Send signal'))).toBeInTheDocument();
+    expect(api.callsTo('POST', `/runs/${signalRun.id}/signals/go`)).toHaveLength(0);
+  });
+
+  it('reports an answer accepted after the key changed only as requested, even once the run moved on', async () => {
+    useApiKeyStore.getState().save('gg_A');
+    const user = userEvent.setup();
+    const api = new FakeApi();
+    const run = waiting(3);
+    let answer!: (response: Response) => void;
+    api.override(
+      'POST /runs/:id/input',
+      () =>
+        new Promise<Response>((resolve) => {
+          answer = resolve;
+        }),
+    );
+    const gate = keyedGate();
+    const { waiting: _wait, ...rest } = run;
+    const moved: RunRecord = { ...rest, status: 'running' };
+    renderWith(<Harness runs={[run, moved]} availability={gate} />, '/', api);
+    await user.type(screen.getByLabelText('note'), 'sent as A');
+    await user.click(screen.getByRole('button', { name: 'Submit input' }));
+    await waitFor(() => expect(api.callsTo('POST', `/runs/${run.id}/input`)).toHaveLength(1));
+    useApiKeyStore.getState().save('gg_B');
+    answer(Response.json({ run: { ...run, status: 'running' } }));
+    expect(await screen.findByText(requestedBeforeKey('Submit input'))).toBeInTheDocument();
+    // The run read again no longer waits; the report stays.
+    await user.click(screen.getByRole('button', { name: 'Refetch' }));
+    expect(screen.queryByLabelText('note')).not.toBeInTheDocument();
+    expect(screen.getByText(requestedBeforeKey('Submit input'))).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
 });

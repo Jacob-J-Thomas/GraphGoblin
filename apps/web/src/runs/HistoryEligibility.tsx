@@ -3,9 +3,22 @@ import { useQueryClient } from '@tanstack/react-query';
 import { runs } from '@graphgoblin/api-client';
 import type { DeletionPreview } from '@graphgoblin/contracts';
 import { useApi } from '../api/context.js';
+import { CredentialChangedError, sendUnder } from '../api/credential-dispatch.js';
 import { Alert, Button, Dialog } from '../components/ui/index.js';
 import { errorMessage, isOfflineError } from '../lib/utils.js';
-import { OPEN_GATE, type WriteGate } from './inspector/RunControls.js';
+import {
+  crossed,
+  expiredReviewFocus,
+  notSentByKey,
+  OPEN_GATE,
+  requestedBeforeKey,
+  reviewClosedByKey,
+  sameCredential,
+  sendWrite,
+  useClosedByKey,
+  WRAPPING_LABEL,
+  type WriteGate,
+} from './inspector/RunControls.js';
 
 /** A delete-ready review: the explicit run IDs and action frozen when it opened, under its gate. */
 export interface HistoryReview {
@@ -29,6 +42,8 @@ interface Sent {
   readonly released: boolean;
   /** Absent while it is in flight. */
   readonly result?: HistoryResult;
+  /** It settled after the accepted credential it was sent under changed (#562). */
+  readonly crossed?: boolean;
 }
 
 /** One owner's delete-ready confirmation (#416). */
@@ -39,8 +54,13 @@ export interface HistoryConfirmation {
   readonly pending: boolean;
   /** It still holds the review controls: the browser has not dismissed its review. */
   readonly holding: boolean;
-  /** This owner's latest settled confirmation, until a new review or a dismissal clears it. */
-  readonly settled: { readonly review: HistoryReview; readonly result: HistoryResult } | undefined;
+  /**
+   * This owner's latest settled confirmation, until a new review or a dismissal clears it.
+   * `crossed`: it settled under a later accepted credential than it was sent under (#562).
+   */
+  readonly settled:
+    | { readonly review: HistoryReview; readonly result: HistoryResult; readonly crossed: boolean }
+    | undefined;
   /** Send the confirmation `review` asks for; it must be open, current and previewed. */
   readonly confirm: (review: HistoryReview) => void;
   /** The browser dismissed the review of the pending confirmation. */
@@ -77,7 +97,11 @@ export function useHistoryConfirmation({
     availability,
     pending,
     holding: own !== undefined && own.result === undefined && !own.released,
-    settled: own?.result && { review: own.review, result: own.result },
+    settled: own?.result && {
+      review: own.review,
+      result: own.result,
+      crossed: own.crossed === true,
+    },
     confirm: (review) => {
       const { preview } = review;
       if (!preview || pending || review.gate !== availability || !review.gate.open()) return;
@@ -85,18 +109,26 @@ export function useHistoryConfirmation({
       setSent({ ticket, owner, review, released: false });
       const send = async () => {
         try {
-          await runs.confirmDeletion(client, {
-            runIds: review.ids,
-            action: review.action,
-            token: preview.token,
-            confirmed: true,
-          });
+          await sendWrite(client, review.gate, (client) =>
+            runs.confirmDeletion(client, {
+              runIds: review.ids,
+              action: review.action,
+              token: preview.token,
+              confirmed: true,
+            }),
+          );
         } catch (error) {
-          update(ticket, (current) => ({ ...current, result: { saved: false, error } }));
+          const late = !(error instanceof CredentialChangedError) && crossed(review.gate);
+          update(ticket, (current) => ({
+            ...current,
+            result: { saved: false, error },
+            crossed: late,
+          }));
           return;
         }
-        update(ticket, (current) => ({ ...current, result: { saved: true } }));
-        onConfirmed?.(review.ids);
+        const late = crossed(review.gate);
+        update(ticket, (current) => ({ ...current, result: { saved: true }, crossed: late }));
+        if (!late) onConfirmed?.(review.ids);
         await queryClient.invalidateQueries({ queryKey: ['runs'] });
       };
       void send();
@@ -114,16 +146,30 @@ export function useHistoryConfirmation({
 const UNCERTAIN =
   'The change may or may not have been saved: the GraphGoblin API could not be reached. Review the history again once connected.';
 
+const CONFIRM_NAME = { mark: 'Confirm delete-ready selection', withdraw: 'Confirm withdrawal' };
+const TRIGGER_NAME = {
+  mark: 'Review delete-ready history',
+  withdraw: 'Withdraw delete-ready mark',
+};
+
 /**
  * Where a settled confirmation is reported: its failure in the review it was sent from while that
- * review is open and current, everything else beside the controls, never in a newer review.
+ * review is open and current, everything else beside the controls, never in a newer review. Only
+ * under the accepted credential it was sent under (#562): one that settled under a later one says
+ * only that it was requested, and an earlier credential's outcome is not shown.
  */
 function report(
   settled: HistoryConfirmation['settled'],
   active: HistoryReview | undefined,
+  availability: WriteGate,
 ): { review?: string; controls?: string } {
   if (!settled) return {};
   const { review, result } = settled;
+  const name = CONFIRM_NAME[review.action];
+  if (!result.saved && result.error instanceof CredentialChangedError)
+    return { controls: notSentByKey(name) };
+  if (settled.crossed) return { controls: requestedBeforeKey(name) };
+  if (!sameCredential(review.gate, availability)) return {};
   if (result.saved) {
     const count = review.ids.length;
     const noun = count === 1 ? 'run' : 'runs';
@@ -153,12 +199,19 @@ export function HistoryEligibilityControls({
   const [review, setReview] = useState<HistoryReview>();
   const [error, setError] = useState<string>();
   const selectionRef = useRef<HTMLSpanElement>(null);
+  const reportRef = useRef<HTMLSpanElement>(null);
+  const markRef = useRef<HTMLButtonElement>(null);
+  const withdrawRef = useRef<HTMLButtonElement>(null);
   const generationRef = useRef(0);
-  // A review belongs to the gate it was opened under: an outage, a reconnect or another visit
-  // expires it, together with any preview that arrives late for it. A saved one is finished.
+  // A review belongs to the gate it was opened under: an outage, a reconnect, another visit or
+  // another accepted API key expires it, together with any preview that arrives late for it. A
+  // saved one is finished.
   const done = confirmation.settled?.result.saved && confirmation.settled.review === review;
   const active = review?.gate === availability && !done ? review : undefined;
-  const reported = report(confirmation.settled, active);
+  const expiry = useClosedByKey(availability, active?.gate, confirmation.pending);
+  const reported = report(confirmation.settled, active, availability);
+  const closed =
+    expiry.closed && review ? reviewClosedByKey(TRIGGER_NAME[review.action]) : undefined;
   const shownError = error ?? reported.review;
   const unavailable = availability.blocked !== undefined;
   // A sent confirmation keeps its review, open or expired by an outage, until it settles: no
@@ -180,9 +233,13 @@ export function HistoryEligibilityControls({
     const ids = [...runIds];
     setReview({ ids, action, gate });
     setError(undefined);
+    expiry.clear();
     confirmation.clear();
     try {
-      const preview = await runs.previewDeletion(client, ids);
+      // The preview's token is taken only under the credential the review was opened under.
+      const preview = await sendUnder(client, gate.credential, (client) =>
+        runs.previewDeletion(client, ids),
+      );
       if (generationRef.current === request && gate.open())
         setReview({ ids, action, gate, preview });
     } catch (failure) {
@@ -195,16 +252,20 @@ export function HistoryEligibilityControls({
     <>
       <div className="flex flex-wrap items-center gap-2">
         <Button
+          ref={markRef}
           size="sm"
           variant="outline"
+          className={WRAPPING_LABEL.sm}
           disabled={!runIds.length || runIds.length > 500 || unavailable || held}
           onClick={() => void begin('mark')}
         >
           Review delete-ready history
         </Button>
         <Button
+          ref={withdrawRef}
           size="sm"
           variant="ghost"
+          className={WRAPPING_LABEL.sm}
           disabled={!runIds.length || runIds.length > 500 || unavailable || held}
           onClick={() => void begin('withdraw')}
         >
@@ -219,13 +280,25 @@ export function HistoryEligibilityControls({
         >
           {runIds.length} selected
         </span>
-        <span className="text-sm text-muted" aria-live="polite" aria-atomic="true">
-          {reported.controls}
+        <span
+          ref={reportRef}
+          tabIndex={-1}
+          className="text-sm text-muted"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {reported.controls ?? closed}
         </span>
       </div>
       <Dialog
         open={active !== undefined}
-        returnFocus={() => (reported.controls ? selectionRef.current : undefined)}
+        returnFocus={() =>
+          expiredReviewFocus(
+            expiry.expired,
+            review?.action === 'withdraw' ? withdrawRef.current : markRef.current,
+            reportRef.current,
+          ) ?? (reported.controls ? selectionRef.current : undefined)
+        }
         onClose={(reason) => {
           if (confirmation.pending && reason !== 'dismissed') return;
           // The browser has already closed the review of a pending confirmation: that review no
@@ -240,10 +313,16 @@ export function HistoryEligibilityControls({
         }
         footer={
           <div className="flex gap-2">
-            <Button variant="outline" disabled={confirmation.pending} onClick={dismiss}>
+            <Button
+              variant="outline"
+              className={WRAPPING_LABEL.md}
+              disabled={confirmation.pending}
+              onClick={dismiss}
+            >
               Cancel
             </Button>
             <Button
+              className={WRAPPING_LABEL.md}
               disabled={
                 confirmation.pending ||
                 unavailable ||

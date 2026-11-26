@@ -243,7 +243,8 @@ issued under and, like the view's write gate, is replaced when that boundary or 
 freshness changes; a replaced gate stays spent. Once the view has shown a failure of the
 observation read alone, with the run read and the browser healthy, a choice queued before it
 reports **Not sent** even after the observation is read again with an equal body, including from
-a removed and recreated query or under another accepted API key that the API key panel followed.
+a removed and recreated query or under another accepted API key that the API key panel followed
+(which reports the API-key **Not sent** of #562 below).
 A new choice after the qualifying observation read sends once. The view, not the run section,
 owns a **Start fresh session** choice, a script recovery retry and a delete-ready confirmation,
 with their pending state and outcomes; their reviews belong to the section and close with it. The
@@ -252,8 +253,9 @@ accepted key once this view has recorded a browser loss, until a run read under 
 qualifies. A choice, retry or confirmation queued or sent before that stays pending: the controls
 shown again stay disabled until it settles (once the browser has dismissed a pending
 confirmation's review, as above, a new review may open but not be confirmed), so a fresh read of
-the same run cannot offer a second command or confirmation meanwhile. They then report its actual
-outcome, such as **Not sent**, the
+the same run cannot offer a second command or confirmation meanwhile. Under the accepted API key
+it was chosen under they then report its actual outcome (under another, only that it was requested
+or not sent; see #562 below), such as **Not sent**, the
 retry's own error or, for a confirmation the API could not be reached for, that the change may or
 may not have been saved, until a new explicit choice or review replaces it. For a confirmation, a
 failure classified by the API client as a network error reports uncertainty rather than a server
@@ -267,6 +269,48 @@ when its review opened. The Runs list's delete-ready
 controls share the hold on a sent confirmation, its exception after a browser dismissal and the
 report beside the controls; otherwise they and other pages keep their behaviour.
 
+### Inspector writes follow the accepted API key (#562)
+
+A choice made in the run inspector belongs to the accepted API-key credential it was made under:
+the key store's opaque in-memory generation, which changes when the key is replaced, forgotten,
+rejected or accepted again after a rejection, here or in another tab (#386). Saving the key that
+is already accepted is no new generation. The view's write gate is issued under the generation
+shown at render, so another generation replaces it like an outage boundary does, and its live
+check also compares the current generation, which a store change reaches before React commits the
+replacement gate. Every inspector write (pause, resume, cancel, replay, script recovery,
+**Start fresh session**, input and signal answers, and the delete-ready preview and confirmation)
+is sent through a client bound to that credential (`api/credential-dispatch.ts`). The app's API-key
+fetch compares it with the accepted credential in the same synchronous step that reads the key to
+send, after every queued mutation step and request middleware await, and refuses without calling
+`fetch`. A write chosen under one key is therefore never sent under another, and the server's
+authorization and actor model are unchanged.
+
+- **An open review** (Replay, script recovery, a delete-ready review and its preview) closes when
+  the credential changes. Under the Resume reason a status line (for a delete-ready review, the
+  live report beside its controls) says: "Review closed: this browser's API key changed. Nothing
+  was sent. Open Replay... again to choose with the current key.", naming the review's own
+  trigger. Focus returns to that trigger while it is enabled, otherwise to the status line; the
+  API key panel takes focus only once every dialog has closed, so this never takes focus from it.
+  A preview that arrives for a closed review is discarded. Reopening starts a new review: node,
+  consent and observed sequence are chosen again. A typed input draft is kept.
+- **A write queued before dispatch** under the earlier credential sends nothing and reports, in the
+  control's existing error position: "Not sent: this browser's API key changed before Replay was
+  sent. Choose it again to send with the current key." (naming the control). Nothing is retried
+  or reopened, and the run is read again as after any failed write.
+- **A write already sent** stays the one request: it is neither cancelled nor sent again, and its
+  controls stay pending until it settles. If it settles under another credential, neither its
+  IDs, its error text nor its new run are shown, and a sent Replay does not open its run. A
+  status says instead: "Replay was requested before this browser's API key changed. Its outcome
+  isn't shown under the current key; check Runs before trying again." The cache refresh after it
+  is unchanged. An outcome shown under one credential is hidden once another is accepted.
+
+The event-qualified header and its pending run read are unchanged: with no credential change, an
+open review stays open through a pending read. Outside the inspector, writes keep their ordinary
+behaviour. Regression coverage is in `api/credential-dispatch.test.ts`, `api/api-key-fetch.test.ts`,
+`runs/RunInspectorPage.credentials.test.tsx` and `runs/RunInspectorPage.offline.test.tsx`; Edge
+`e2e/inspector-credentials.spec.ts` uses two real API keys of one owner on an instance that
+requires them, with a real second tab and the API's own record of which key each write used.
+
 ### Timeline sequence column (#420)
 
 Each Timeline row sizes its sequence column to the widest sequence in the rows shown, in
@@ -277,6 +321,44 @@ hold them side by side; the event type's size follows the root text size. The ca
 count, the window summary and the sequence form also wrap. Accessible names, `data-seq`, the one
 row Tab stop, selection, keyboard movement, paging, **Follow live**, the 80-row window, the
 512-event and byte budgets, 128-event pages and the independent live cursor are unchanged.
+
+### Inspector reflow at 320 px and 200% text (#563)
+
+The run inspector and the shared header stay inside the viewport at 320 CSS px with text enlarged
+to 200% (the root size doubled, so every rem length doubles while CSS pixel breakpoints stay), with
+no sideways page scroll, hidden overflow, truncation or smaller text. The only horizontal scroller
+remains the named, focusable exact JSON view.
+
+- **Shared header** (`AppShell`, `MainNav`). At least 56 px instead of a fixed 56 px row: when the
+  logo and navigation cannot sit side by side the navigation wraps under the logo, and from 640 px
+  its links wrap as well (at 640 and 768 px with 200% text they reached 1068 px). Below 640 px Menu
+  moves to a row of its own at the right, at least 40 px (44 px on a coarse pointer), and its panel
+  opens at the header's actual bottom edge with rows of at least 48 px. A row that fits is the same
+  56 px row as before, on every route.
+- **Page and run header.** The inspector's page is one column that shrinks with the viewport
+  (`minmax(0, 1fr)`), so one long value cannot widen every section. The complete run ID wraps
+  anywhere inside the heading, still monospace, with nothing inserted: a double click selects
+  exactly the ID and copying it gives the exact value. The status badge moves to the next line,
+  and the replay origin, the Resume reason, the Replay review's source run and its existing-replay
+  link wrap anywhere. From 640 px the controls column takes at most half the header
+  (`fit-content(50%)`): with enlarged text it used to take its full 36 rem and cover the run ID.
+- **Control labels wrap.** The run controls, script recovery, the Replay and delete-ready review
+  buttons, the history buttons (also on Runs) and the Timeline's paging buttons grow onto further
+  lines instead of ending in an ellipsis; a label that fits is the same one-line button.
+- **Selected event and execution context.** Their titles, disclosure labels and values wrap
+  anywhere, so a 16-digit sequence ("Exact recorded event #123456789012345", "Thread at event
+  123456789012345") or a narrow disclosure stays inside its column.
+
+The Timeline keeps its number column, type, description, one Tab stop and keys; its input renders
+the full row width because `cn` joins classes without merging, and the stylesheet emits `.w-full`
+(from the shared field style) after `.w-24`. The longest contract event type,
+`delivery.attempt_finished` (25 characters), stays whole inside its row. DOM order, accessible
+names, the keyboard order and wide layouts are unchanged. Edge `e2e/inspector-reflow.spec.ts`
+checks 12 cells (320 and 1440 px, 100 and 200% text, each with its own selected event of sequence
+10593, 123456 or 123456789012345), 639, 640 and 768 px, a replay run, a child run, the longest
+type, native copy of the ID, the menu, the Replay review, the Tab order and Timeline keys, and the
+shared header on Chat, Loops, the editor, Runs, Events, Settings and the inspector, comparing each
+layout intended to be unchanged with the build before the change within 0.5 px.
 
 ## Native Chat and the Goblin PWA (#443)
 
@@ -756,7 +838,7 @@ Every screen works from 360 px to wide desktop without sideways page scrolling o
 - **Page.** `Page` is the content column (page padding from `--space-page`, 1240 px wide at most, `wide` for the run inspector); `PageHeader` wraps its actions under the title when they do not fit.
 - **Tables** (`components/ui/table.tsx`, `styles/layout.css`). `Table stack="md"` or `stack="lg"` turns each row into a block below that breakpoint: each cell shows its column's label beside the value; below 640 px, the label sits above the full-width value. The label is given as `Td label` and drawn as decoration (CSS `content` with empty alternative text), while the header row stays in the document, visually hidden, so assistive technology keeps the table and its headers. A cell without a label (the row's name, its actions) takes the whole line, long words break instead of widening the page, and on a coarse pointer each line is 44 px tall, so links in neighbouring lines never overlap. Loops, Runs, and Events stack below `lg`, the model catalog and classifier models below `md`. A flush `Card`'s body still scrolls sideways when a table is wider than it (a 120-character name, say), with a shadow on each edge that has more (`scroll-shadow-x`). On Loops the update time sits under the loop's name rather than in a column of its own, so the name keeps its room at 1024 px.
 - **Forms** (`FieldRow`, or `FIELD_ROW` on a form of its own, in `components/ui/field.tsx`). Fields side by side that wrap; below 640 px one column, every field and note the full width whatever width it asked for, a button at its own width at the start of its line. Used by the Runs filters, Loops create, the model form, Defaults, Secrets, API keys, and the API key panel; the schema-driven config fields are one column already.
-- **Header navigation** (`MainNav`). Below 640 px the links fold into a **Menu** button (`aria-expanded`, `aria-controls`) that opens a full-width panel of 48 px rows; choosing a link or Escape closes it, Escape returning focus to Menu.
+- **Header navigation** (`MainNav`). Below 640 px the links fold into a **Menu** button (`aria-expanded`, `aria-controls`) that opens a full-width panel of rows at least 48 px high under the header's bottom edge; choosing a link or Escape closes it, Escape returning focus to Menu. The header grows instead of overflowing when enlarged text cannot hold its content on one row (#563).
 - **Split panes** (`SidePanel`'s `overlayBelow`). Below its breakpoint an expanded panel floats over the content (absolute, full height, an overlay shadow, at least a rail's width of the content left beside it) instead of taking its own column: the editor's loop settings below `lg` and its palette below `md`, so the canvas keeps its width and no panel pushes the page sideways. Collapsed, both stay rails. The editor's toolbar wraps its content (the breadcrumb, name, badges and save status, Open in Runs, the validation indicator, Publish) onto further lines rather than cutting it off, beside a fixed leading slot that holds Undo and Redo so they never move with it (see "Undo and redo"), and the editor fills the dynamic viewport height (`100dvh`), at least 320 px.
 - **Touch.** Where the primary pointer is coarse (`pointer-coarse:`, `@media (pointer: coarse)`), controls are at least 44 px: buttons (`sm`, `md`, and icon sizes), inputs and selects, segment labels (at least 44 px wide and tall, including short Yes/No choices), disclosure toggles (including the inspector's Full thread JSON and Node progress, through the shared `Disclosure`), checkbox rows (`CHECKBOX_LABEL`, at least 44 px wide and tall), the Menu button, Open in Runs, the validation indicator and its rows, issue rows, timeline rows, palette buttons, the canvas's zoom controls, and the Omit of an edited New run or Wait input (drawn 44 by 44 px in a place its label line holds; see Form controls, "Where"). Controls that keep a small look take the touch with an invisible 44 px box around them (`touch-target`): the switch, the issue badge, and links in tables. Canvas ports counter-scale only their absolutely positioned `::after` hit box through `--gg-canvas-zoom`, clamped to the canvas's 0.1 to 2 range; a 1/32 CSS px allowance covers rounding. On coarse pointers output rows are always **44 CSS px**, with a **2 px gap (46 px pitch)**. Card dimensions, measured handles and the routing cache key never change with viewport zoom. Hit-box height is capped at the row pitch, and width at **half the gap to the next card** within the port's vertical strip, using geometry-only limits and a spatial index. With room horizontally, the on-screen target is about **44 by 44 px at zoom 1 and above**. Below about **0.96 zoom**, height is **46 times zoom**: **36.06 px at 0.784**, **23 px at 0.5** and **4.6 px at the 0.1 floor**, where zooming in is the way to connect, because the node dialog has no connection form (ADR-0076). Neighbouring cards can cap width below 44 px as well: at 260 px spacing (76 px card gap), the 38 CSS px cap gives **29.79 px at 0.784** and **19 px at 0.5**. These caps prevent neighbouring targets from overlapping without changing layout or rerouting edges on zoom. Fine-pointer rows remain 18 px with a 2 px gap. A selected connection's **Remove connection** button is 44 px on a coarse pointer. Nothing needs hover: the issue popovers open on tap, the collapsed palette's tooltips repeat what the expanded palette shows, and the remaining tooltips (a truncated name, Publish's blocking count, Validation unavailable, the disabled Open in Runs link's reason) repeat what the accessible name or description already carries; on touch those few explanations are not shown on screen. Keyboard order and accessible names are unchanged.
 - **Zoom.** At 200% (a 1024 by 768 window lays out in 512 by 384 CSS pixels) Loops, the editor, the run inspector, and Settings reflow without sideways scrolling (WCAG 1.4.10); the editor keeps a usable canvas under its wrapped toolbar.
