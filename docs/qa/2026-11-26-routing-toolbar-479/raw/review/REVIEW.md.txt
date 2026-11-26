@@ -1,0 +1,167 @@
+APPROVE (interim) — no P1/P2 finding; ready for Saturday's opposite-family review; two P3 fix-in-PR candidates and a design-gap decision for the orchestrator
+
+# #479 interim review — claude-window-rq-01
+
+**Reviewer.** Claude Opus 5.5 (xhigh), independent of the author (claude-window-author-03). This does not replace the GPT-6.1 Sol opposite-family review or the fresh Astra MAX final audit.
+
+**What was reviewed (read-only).**
+
+| Item | Value |
+| --- | --- |
+| Commit | `7c893c7795a086e349e87041f0c144442fc6f282` |
+| Tree | `77ef4d8da355b819f801519db585fb6d53302430` |
+| Base | `14ea69842025c627f704b436727385d78e08768c` |
+| Branch | `codex/gg-fu-ui-479-20261124` |
+| Worktree | `G:/ggq/gg-fu-ui-479-20261124/GraphGoblin` |
+
+**Inputs read:**
+
+- Issue #479 (live; it has no comments).
+- COMMON-RULES, RQ-TEMPLATE and the review policy.
+- `author-preparation-02/AUTHOR-BRIEF.md` and `AUTHOR-CONTRACT.json`.
+- `design-canvas-01/DESIGN.claude.md` (FUP-085).
+- `NATIVE-479/BASELINE.json` and `browser-driver-02.js`.
+- `HANDOFF.md` and `claude-window-author-03/AUTHOR-REPORT.md`.
+- `git show 7c893c77`, covering all six changed files.
+- The surrounding `RouteHandles` source.
+- `canvas-routes.css`, `canvas.css` (coarse port targets) and `Button.tsx`.
+- The base unit tests for the #207 hold.
+- `playwright.config.ts`, `e2e/server.ts` and the CI e2e wiring.
+
+Findings marked "(QA)" below were found or confirmed in the browser during phase 2 (QA-REPORT.md).
+
+## Scope and rule checks
+
+| Check | Result |
+| --- | --- |
+| Changed files are the six contract write paths and nothing else | Yes. SHA-256 of each matches AUTHOR-REPORT. |
+| `Canvas.tsx`, `viewport-gesture.ts`, `store.ts`, Fit padding, saved routes and labels, tokens and dependencies are untouched | Yes. |
+| Commit identity and attribution | The repository identity (Jacob-J-Thomas noreply). No Co-Authored-By, no Generated-with line, no model listed as author. |
+| Coverage thresholds, exclusions, skips, `test.only`, `any` | None added. The e2e spec keeps the config timeouts (60 s / 10 s), workers 1 and retries 0. The one new `as unknown as LoopDefinitionInput` in the unit file follows 7 uses of the same pattern already at base. |
+| `.js` relative imports | Yes. |
+| Docs and CHANGELOG updated for the behaviour change | Yes. docs/09 covers Remove, the #481 note, the Reset hold, a new "Toolbar placement (#479)" bullet and Tests; CHANGELOG has an Unreleased entry. |
+| ADR needed | No. This is placement inside the accepted #207/#481 surface. |
+| `pnpm check:qa` | Not applicable: the commit has no `docs/qa` paths. |
+| Gates rerun by me | Focused vitest 150/150 (4 files). Web typecheck passes. Web lint has 0 errors (5 warnings, all in untouched files). Prettier check passes on the six paths. `pnpm build` 12/12. Edge `routing-toolbar` 7/7, `edge-routes` 11/11, `shared-edge-ids` 7/7. |
+
+## Design conformance (FUP-085)
+
+| Design item | Implementation | Verdict |
+| --- | --- | --- |
+| Boundary is xyflow's pane `width×height` with an 8 px inset | `toolbarPlacement(label, row, {state.width, state.height}, …)` | Conforms. See F5: in-pane overlays are not part of the boundary. |
+| Row size comes from its own measured box (layout effect plus `ResizeObserver`) | `createSizeStore`, `useLayoutEffect`, RO, 0.5 px settle step | Conforms. Measuring settles; zero renders on re-measure at the same size (unit test). |
+| Order Above → Below (with handle exclusion) → Clamp, with the sideways shift first | `toolbarPlacement`, `hitAreas`, `overlaps` | Conforms. F2 covers the literal Clamp-after-covered-Below case. |
+| An off-pane label is not clamped | `step: 'off-pane'` | Conforms. Seen in the browser. |
+| 320 wrap with Remove last; coarse 44 px | CSS `fit-content` plus `flex-wrap`, inline `max-width` | Conforms. F6 covers the false `data-overflow` at max-width. |
+| `useStore` selector with equality; handles read lazily | Inline selector, `samePlacement`, a thunk | Conforms. |
+| Reset hold keeps side and offsets plus the view | `ToolbarHold.placed/view`, `sameView` | Conforms. Seen in the browser. |
+| Guards unchanged | Handler bodies unchanged | Conforms. |
+| #481 note goes on the far side of the controls | `notePlacement(…, NoteControls)`, `noteFar` | Conforms. Seen in the browser. |
+| Camera moves never write | No write path added | Conforms. 0 PUTs in the browser. |
+
+## Findings (root-cause ledger)
+
+| # | Signature | Sev | Disposition |
+| --- | --- | --- | --- |
+| F1 | `reset-hold/later-press-focus` (author's open question 1) | — | NO-CHANGE |
+| F2 | `toolbar-placement/clamp-after-covered-below` (author's open question 2) | P3 | DEFER-ISSUE (design decision for the orchestrator) |
+| F3 | `toolbar-placement/coarse-port-width-overestimate` | P3 | NO-CHANGE |
+| F4 | `docs/placement-render-claim-zoom` | P3 | FIX-IN-PR (optional, non-blocking) or NO-CHANGE |
+| F5 | `toolbar-placement/in-pane-controls-overlay` (QA) | P3 | DEFER-ISSUE, plus an optional docs qualifier in the PR |
+| F6 | `toolbar-placement/false-overflow-at-max-width` (QA) | P3 | FIX-IN-PR (cheap, non-blocking; batch with Saturday's fixes) |
+
+### F1. Focus after a later press on the held Reset route
+
+A later trusted press on the held, `aria-disabled` **Reset route** leaves focus on that button. QA saw this after the 2nd and 3rd presses in both themes. This is #207 behaviour already at base:
+
+- The base hold unit test calls `user.dblClick(reset)` and asserts `expect(reset).toHaveFocus()`.
+- docs/09 at base says the held button "keeps its hit target, focus and `nopan`".
+- The design lists "Reset moving focus to the edge" under **Unchanged**.
+- The issue says "Preserve … focus".
+
+Design assertion 6's "Focus stays on the edge" therefore reads as "focus is not taken by a card or node editor, and Remove is not touched". That holds in QA:
+
+- no visible dialog;
+- no node selected;
+- the connection stays selected;
+- Delete on the held button removes nothing;
+- Escape returns focus to the connection.
+
+The author's reading is right. If the owner wants a later press to return focus to the connection (like Remove's `detail > 1`), that is a #207 change and belongs in a separate follow-up.
+
+### F2. Clamp lands where Below was when Below covers a target
+
+When Above does not fit and Below covers a hit area, Clamp picks the side with more room. With the label near the pane's top, that side is below, so Clamp lands where Below was and reports `data-covers-handle="true"`. This is the design taken literally.
+
+QA reached it in the browser in two places:
+
+1. **Coarse 1024×768, zoomed out twice, label within about 70 px of the pane's top.** It happens at every such label height. Here it is harmless: the "work" out port's estimated coarse target overlaps the row by 0.2 px, and the port's centre still hits.
+2. **320×800, opening view, manual lane through a card.** The row wraps (Crosses a card and Reset route on line 1, Remove connection on line 2). Two port centres sit under the controls while the connection is selected:
+   - the Decision's "accept" port centre hits **Reset route**;
+   - the "work" out port centre hits the **Crosses a card** span.
+
+   Escape or any deselection frees both ports. A tap on the covered port would press Reset route, which is undoable. This happens only in the environment where the header wraps; the author's test-server layout had room for Above.
+
+The design said a further fallback "would need native evidence of a visible label where no step fits, or where every step that fits covers a handle". Case 2 is that evidence. Choosing a further fallback (the other side pinned over the label, or a contained strip) is a design decision, not a defect in this candidate.
+
+### F3. Coarse port width is overestimated
+
+`hitAreas` takes a coarse port's width as `max(own, 44)`. `canvas.css` limits the `::after` target to `min(44/zoom, --gg-port-max-width)`, and the source comment says "at most 44 screen px wide". The overestimate is conservative: it can only turn Below into Clamp a little more often, and never lets the row cover a real target. Fix the wording if the comment is touched again.
+
+### F4. The docs overstate the render saving for zoom
+
+docs/09 says "Fit view, the opening Fit, a pan or a zoom renders the toolbar only when its place changes". CHANGELOG says "Fit, pans and zooms only re-place it".
+
+- For a pan this is true and unit-tested.
+- A zoom, or a Fit that changes the zoom, always re-renders `RouteHandles` through the `useStore(zoomOf)` subscription that already existed at base. The handles are counter-scaled, so they need it.
+
+Suggested wording: "a pan renders the toolbar only when its place changes". There is no behaviour impact.
+
+### F5. The row can sit under the canvas's own Controls panel
+
+The boundary is the pane's rect. xyflow's in-pane Controls panel sits bottom-left and draws above the edges; under a coarse pointer its buttons are 44 px wide. On short, narrow, coarse panes the row can sit partly under it:
+
+- **320×568 coarse, after public Fit and after the collapsed Fit.** The step is Clamp. 7 of 63 Remove probes hit the Controls.
+- **320×640 coarse, with Crosses a card + Reset route + Remove connection wrapped.** Probes reach 56–61 of 63 in both Above and Clamp.
+
+The centre of Remove stays hittable in every case seen. Fit at 360×640, 390×844 and 412×915 coarse gives 63/63. Every case in the issue's reproduction and in the design's matrix gives 63/63.
+
+This was not introduced by #479. Before it, the row above the label was clipped at the pane's top or sides in these geometries, and could also be under the Controls. That before-state is reasoned, not run.
+
+Only the CHANGELOG's "stays inside the canvas and wholly hittable after Fit view" is broader than the evidence. Follow-up: treat in-pane overlays (Controls, attribution) as obstacles or as extra inset. Optionally qualify the CHANGELOG sentence in this PR.
+
+### F6. `data-overflow` is reported for a row that fits
+
+`wide = row.width > pane.width - 2*NOTE_MARGIN` compares a measured float with the inline `max-width`. Seen at 320×640 coarse after Fit with the wrapped crossing row:
+
+- the row measures `214.00003` px;
+- its `max-width` is `214px`;
+- the pane is 230 px.
+
+So the row reports `data-overflow="true"` (`fits: false`) although it fits. Placement is unaffected: the row stays at left 8 within 0.00003 px. Two costs:
+
+- The attribute and its docs ("a row that still cannot fit") misreport.
+- The e2e `expectReachable` asserts `overflow === false`. Any environment where the wrapped 320 row is measured at a zoom that is not exactly representable (for example after a Fit, or with other fonts on Linux CI) would fail it. The current spec's 320 crossing stage uses the opening zoom 0.5, which measures exactly 216, and passed here.
+
+Fix: compare with a tolerance, for example `> pane.width - 2*NOTE_MARGIN + MEASURE_STEP`. Do the same for `tall`.
+
+### Summary
+
+There is no P1 or P2 finding. No test claims more than it proves:
+
+- The new e2e spec would fail on revert: the reproduced Fit asserts `below` and 63/63 probes, where the baseline was 27/63.
+- The unit block states that its row measurements are controlled mocks.
+- The docs say Clamp is covered by unit tests only. QA has now reached Clamp in the browser (F2, F5); this is not a defect.
+
+## Observations not admitted as findings
+
+These are pre-existing, or not introduced or worsened by this patch.
+
+- **Reset route has no `detail > 1` guard.** #207 chose the hold instead. With Below placement, a row can now sit over the connection's own vertical segments when its lane is short. A double click on the line there could reach an available Reset route on the second press. The impact is one undoable reset, and the same exposure existed above the label for other topologies.
+- **The #481 note has no handle exclusion, as at base.** At Below placement on the reproduction graph, the note under the controls covers the "work" out port and the Decision's input port while a shared-id connection is selected. Before #479 the note went below the label in the same geometry, which covers the same area.
+- **A protected voice step's natively disabled Remove still takes the hit.** I first suspected `disabled:pointer-events-none` would let a press fall through to the card beneath. QA shows otherwise: `elementFromPoint` returns the button's own label span (the toolbar's `pointer-events: all` rule wins), and a trusted click changes nothing. Nothing falls through to the card.
+- **`hitAreas` runs on every xyflow store update while Above fails.** This is negligible at editor scale and speculative as a problem.
+
+## Verdict
+
+APPROVE for the next gate: the GPT-6.1 Sol opposite-family review, then the Astra MAX final audit. Batch F4 and F6 with any Saturday fixes, or decline them with a reason. The orchestrator should route F2 (design gap, now with native evidence) and F5 as follow-up issue candidates.

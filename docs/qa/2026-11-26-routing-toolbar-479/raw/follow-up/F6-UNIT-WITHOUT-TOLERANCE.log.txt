@@ -1,0 +1,39 @@
+
+ RUN  v5.0.3 G:/ggq/gg-fu-ui-479-20261124/GraphGoblin/apps/web
+
+ ❯ src/editor/OrthogonalEdge.test.tsx (58 tests | 1 failed | 57 skipped) 27ms
+   ❯ toolbarPlacement (#479) (8)
+     × counts a row measured a rounding residue past the pane less its insets as fitting 21ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/editor/OrthogonalEdge.test.tsx > toolbarPlacement (#479) > counts a row measured a rounding residue past the pane less its insets as fitting
+AssertionError: expected false to be true // Object.is equality
+
+- Expected
++ Received
+
+- true
++ false
+
+ ❯ src/editor/OrthogonalEdge.test.tsx:1609:25
+    1607|     const narrow = { width: 230, height: 800 };
+    1608|     const placed = toolbarPlacement({ x: 115, y: 400 }, wrapped, narro…
+    1609|     expect(placed.fits).toBe(true);
+       |                         ^
+    1610|     expect(placed.step).toBe('above');
+    1611|     expect(placed.shift).toBeCloseTo(0, 3);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 57 skipped (58)
+   Start at  03:14:31
+   Duration  18.33s (transform 66%, environment 18%, import 8%, setup 8%)
+
+  Transform  transforming modules took 11.82s · 66% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit 1
