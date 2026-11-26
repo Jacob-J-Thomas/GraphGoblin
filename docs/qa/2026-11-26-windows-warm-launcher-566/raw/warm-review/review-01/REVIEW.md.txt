@@ -1,0 +1,62 @@
+# Windows launcher review for #566 and #544
+
+**BLOCKED.** Formal implementation review 1 of 3 found four P1 and three P2 issues within the approved 18 paths. Each finding is a static source trace. Batch the fixes and run focused regressions before delta review. Independent QA, hosted CI, integration and final review remain open.
+
+The base and checkout HEAD are `d2df8600c2c8574bec420947de686b936910b245` on `codex/gg-followups-20261124`. The [complete binary patch](sourcebinding/candidate.patch) includes all 17 tracked changes and the untracked ADR. Its SHA-256 is `c2f37f719f4b1ee065f7d12830c6f8495a6e55c6d415495a790536607f6eb9fd`. All 18 file hashes match the actual Claude Code 03B receipt. The index SHA-256 before and after review is `91ccc7b725104d4cb029797990cfb44391d7f48e9351369810619500d0d193f9`. [Candidate binding](sourcebinding/candidate.json) · [Post-review binding](sourcebinding/after.json)
+
+## Findings
+
+### R1 · P1 · Prove fixture ownership before sending a drain
+
+`tooling/scripts/windows-launcher.acceptance.mjs:1533`. The quota control fails before it starts an owned gateway, or another listener takes the released scratch port before teardown. Its finally block calls stop(warm.config) anyway. The shared helper accepts any /healthz HTTP 200 and posts a drain to that port without checking its response headers, owned leases or shutdown incarnation. The new manual and alias-retarget cases use the same cleanup. The test can send a shutdown action to another gateway. A free-port observation made earlier cannot authorize that action.
+
+For each new product fixture, retain the owned process or verify its enrolled identity and disposable lease PID, revalidate at cleanup, and use the observed shutdown control token with redirects disabled. On identity mismatch, record cleanup refusal. Cover a colliding replacement listener and assert zero drain requests.
+
+### R2 · P1 · Settle the unlimited control's descendants on cancellation
+
+`tooling/scripts/windows-launcher.acceptance.mjs:317`. Cancellation or timeout of runDetached kills only NativeChecks. The unlimited control sets no kill-on-close limit, and the Process object for its launcher lives inside the terminated witness. If cancellation arrives while the launcher is starting, the single health probe in stop() can report not-running before the gateway binds. A surviving launcher can start a detached gateway after teardown returns, retaining the fixture port and store locks. The witness's own LaunchPhase timeout cannot run after its parent has been terminated.
+
+Give an external fixture owner an enforceable lifetime over the unlimited control's launcher and startup descendants through cancellation, while keeping the successful control gateway alive through the warm observation. Settle the owned PID/handles and verify release. Cover cancellation while starting, before a listener is healthy.
+
+### R3 · P1 · Preserve distinct store targets on case-sensitive Windows directories
+
+`apps/windows-launcher/Launcher.cs:1558`. An enrolled database junction targets a directory named Store and is later redirected to a different sibling named store inside a case-sensitive NTFS directory. Windows permits both siblings. The gateway still serves its original digest. Resolve-time OrdinalIgnoreCase considers their final path strings equal. The launcher reports a verified warm match and opens the old store even though its configured lookup now resolves to the other database. The current case-insensitive unit control explicitly accepts this collapsing comparison.
+
+Keep the canonical-target guard and use the filesystem to establish equivalence when normalized paths differ only in case, for example by comparing the identities of handles opened on the current lookup and enrolled target. Preserve ordinary case-insensitive aliases. Add a different-object case-only regression without changing host privileges. [Platform documentation](https://learn.microsoft.com/en-us/windows/wsl/case-sensitivity)
+
+### R4 · P1 · Use the sanitized Windows environment for every new fixture gateway
+
+`tooling/scripts/windows-launcher.acceptance.mjs:1393`. The new retarget case starts its built gateway through launchNative, whose default env filters only the exact spelling JEV_API_KEY. A host variable spelled Jev_Api_Key survives, and the production launcher forwards non-GG_ names. Windows Node resolves the uppercase key case-insensitively. The manual and quota paths already use the stricter hostEnvironment. An actual host Jev credential can be seeded into the disposable fixture store. The Ollama-disabled assertion does not cover this credential. This is a source-level failure path, with no claim that the recorded runs exposed a credential.
+
+Use one case-insensitive host sanitization for enrollment and launcher-driven fixture startups as well as manual and quota invocations. Use an artificial mixed-case sentinel to prove it is absent from the child environment. [Platform documentation](https://nodejs.org/docs/latest-v22.x/api/process.html#processenv)
+
+### R5 · P2 · Classify a definite missing web shell before taking startup mutexes
+
+`apps/windows-launcher/Launcher.cs:1533`. A matching running gateway returns /healthz 200 and /app/ 404 or 410. HttpWebRequest.GetResponse throws a WebException with a completed HTTP response. The blanket catch turns it into Unknown, bypassing the web-unavailable branch. A definite missing shell can make the click wait minutes behind a startup mutex and ultimately report a busy or ambiguous listener. This contradicts the documented immediate refusal.
+
+Handle and dispose completed HTTP error responses at the relevant probe, including a definitive missing shell, while retaining the locked re-probe for transport ambiguity. Add a held-startup-mutex case with a matching health header and /app/ 404. [Platform documentation](https://learn.microsoft.com/en-us/dotnet/api/system.net.webexceptionstatus?view=netframework-4.8.1)
+
+### R6 · P2 · Apply the shared window deadline before starting Chrome
+
+`apps/windows-launcher/Launcher.cs:2055`. A waiting click obtains the PWA mutex near its deadline, and the required HWND rediscovery uses the remaining time. With no matching window the code still calls Process.Start. The following while loop skips discovery because the budget is already spent. The first discovery also occurs before the clock starts. The click can open a browser and immediately report that the window failed to open. A second click can take the released mutex and issue another launch before the first window appears.
+
+Start timing before discovery, check the remaining time under the mutex before attempting Chrome, and cap polling sleeps to the remainder. Cover a near-expiry acquisition with no window and assert no late spawn. Preserve the existing-window activation path.
+
+### R7 · P2 · Derive both enrollment digests from the same store-path observation
+
+`apps/api/src/instance-identity.ts:190`. launchEnrollment builds its launch digest and lookup metadata from LaunchPaths, then instanceIdentity resolves the data, database and serving paths again. The health route also takes two independent samples. An alias changed between those reads can make the two fingerprints describe different targets. A cold helper can return launch/metadata for store A and a full fingerprint for B. If the alias is back on A at child startup, the launcher refuses its own healthy child as foreign and leaves it running. The single-snapshot property documented for the helper is absent.
+
+Share the observed path values when constructing both digests for enrollment and health, while retaining the exact legacy protocol-2 serialization and non-file raw value inside the full hash. Add a deterministic test in which a supplied snapshot and a later resolution differ.
+
+## Contract and verification
+
+- The exhaustive ApiConfig projection records each current field and excludes both secret fields. The added launch header, protocol-dependent launch hash and legacy protocol-2 serialization have focused coverage.
+- The staged installer obtains the observation through the configured contained helper before publication and binds gateway inputs using ordered, length-prefixed encoding.
+- Ordinary healthy reuse probes before cold prerequisites and startup mutexes. After acquiring both startup mutexes the launcher rechecks file identity and bytes and observes the listener again. A cold launch checks fresh enrollment, store ownership, the full child fingerprint and child PID. Observable and closing phases retain separate paths for deliberate shutdown.
+- The #544 headless witness checks actual job-limit readback, member PIDs, compatible cold control, distinct windows on one observer calibrated by the real cold helper refusal, unchanged warm PID/identity/lease bytes, a final denial probe and a surviving sibling.
+
+The author recorded successful build, 21 typecheck tasks, lint with five existing warnings, formatting, tooling identity 2/2, PowerShell installer selection and two 19/19 native readiness selections. 19/19 passed with the coordinator-authorized focused command. The original malformed command never started the tests. [Corrected API unit record](../implementation-contract-01/readiness-diagnosis-03b/IDENTITY-UNIT-RESULT.json)
+
+The author reported 31 pass and two fail. Truncated output leaves the original failed test identities unresolved. A separate identical-source diagnostic failed at directory-symlink creation with EPERM and failed its parent before any product execution. It establishes this venue limitation and is consistent with the original counts. [Author report](../implementation-contract-01/claude-author-run-03b/IMPLEMENTATION-REPORT.claude.md) · [Isolated alias output](../implementation-contract-01/readiness-diagnosis-03b/alias-diagnostic.stdout.log)
+
+The review used static source and retained verification records. The reviewer ran no new native process or browser tests. The maintained hosted #544 run needs calibrated headless proof. Genuine Chrome/PWA behavior requires separate QA. Broad gates in an admitted venue, target integration and designated post-QA/CI review remain open.

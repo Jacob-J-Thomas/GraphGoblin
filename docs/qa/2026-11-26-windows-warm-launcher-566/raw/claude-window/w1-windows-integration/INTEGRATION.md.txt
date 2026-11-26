@@ -1,0 +1,137 @@
+# W1: final Windows launcher candidate integrated onto current main
+
+Worker: Claude Opus 5.5, brief `BRIEF-W1-windows-integration.md`, rules `COMMON-RULES.md`.
+Worktree `G:/ggq/gg-followups-20261124/GraphGoblin`, branch `codex/gg-followups-20261124`.
+Run window: 2026-11-26 03:49Z to 04:10Z (Nov 25 21:49 to 22:10 Central). Nothing pushed.
+
+**Outcome: READY.** The integrated head is built and statically green, and ready for independent
+native QA and CI. No native acceptance suite was run (brief task 6).
+
+## Merge
+
+| Item | Value |
+|---|---|
+| Branch head before | `9e4462e69044a1bc898d869bcd861761f60096dd` (clean) |
+| origin/main after `git fetch origin` | `4e1037c9e9922ffa27237fe79850403b6b54fc70` (matches the brief) |
+| Merge base | `5063107b48311ae5d9491009ec39f6c4ccfd0dbf` |
+| main since base | 25 commits, 216 files (189 under `docs/qa/`, outside this sparse checkout) |
+| Branch since base | 18 files (+5,444/−298) |
+| Files changed on both sides | `CHANGELOG.md`, `docs/07-api-and-streaming.md` |
+| Merge commit (final HEAD) | `ac007e3889441f9b88d88b0234bc2eaff8ed1805`, parents `9e4462e6` and `4e1037c9` |
+| Message | `Merge main 4e1037c9 into the Windows launcher follow-ups` |
+| Position | 10 commits ahead of origin/main, 0 behind. Working tree clean. |
+
+### Conflicts and resolutions
+
+| File | Kind | Resolution |
+|---|---|---|
+| `CHANGELOG.md` | Content conflict: one hunk at the top of `## Unreleased`. main added #476/#477 and #525; this branch added #499 and #566/#544. | Union. main's two entries stay first, unchanged and in main's order. This branch's two entries follow, unchanged and in their own order (#499, then #566/#544), with one blank-line separator. main's other non-conflicting CHANGELOG hunks (#575 entry, #525 upgrade-note edit) were applied by Git unchanged. |
+| `docs/07-api-and-streaming.md` | Changed on both sides, auto-merged with no conflict. The hunks do not overlap: this branch edits the `/healthz` header paragraph near line 2; main adds the #525 paragraph near line 655. | No manual edit. |
+
+No other file conflicted. No non-conflicted line was changed.
+
+### Union verification
+
+- Merged tree vs origin/main: for each of the branch's 18 files, the `+`/`-` lines are identical to
+  the branch's own diff from the merge base (`9e4462e6` vs `5063107b`). The numstat is identical
+  too (CHANGELOG +42/−0).
+- Merged tree vs the branch tip `9e4462e6`: for each of main's 216 files, the `+`/`-` lines are
+  identical to main's own diff from the merge base.
+- CHANGELOG: the lines added relative to origin/main equal, byte for byte, the lines this branch
+  added. The resolved hunk is recorded in `remerge-diff.txt` (`git show --remerge-diff`).
+- `git diff --cached --check origin/main` was clean before the commit.
+
+### Merge commit message correction
+
+The first commit of the merge used `git commit --no-edit`, which kept Git's commented
+`# Conflicts: CHANGELOG.md` lines in the message (`75c447f5e`). I amended my own unpushed merge
+commit so the message is exactly the brief's text. The tree (`5fa938f4…`) and parents are
+unchanged. The final commit is `ac007e38`. It carries no assistant attribution and uses the
+repository's configured identity (Jacob-J-Thomas).
+
+## Install
+
+`pnpm-lock.yaml` and every `package.json` are unchanged between the merge base and origin/main,
+so `pnpm install --frozen-lockfile` was not needed (brief task 2 is conditional).
+
+## Commands and results
+
+Environment: Git Bash, Node v22.23.4 (project runtime), pnpm 12.8.1,
+`TEMP`/`TMP` = `G:/ggq/tmp/w1-windows-integration`. Logs are in `logs/`.
+
+### Under the heavy-suite lock (held 03:52:41Z to 03:58:38Z, created and released by W1)
+
+| Command | Result |
+|---|---|
+| `pnpm build` (whole repo) | exit 0. 12/12 tasks, 1 cached (contracts). 33 s. No warnings or errors. `logs/build.log` |
+| `pnpm --filter @graphgoblin/api test instance-identity routes/system routes/thread-disconnect --reporter=verbose` | exit 0. 2 files, **32/32 passed**: `src/instance-identity.test.ts` 22/22 (both `/healthz` identity cases are included); `src/routes/thread-disconnect.test.ts` 10/10. `logs/api-test-focused-verbose.log` (non-verbose run: `logs/api-test-focused.log`, same 32/32) |
+| `pnpm --filter @graphgoblin/tooling exec vitest run scripts/launcher-identity.test.mjs --reporter=verbose` | exit 0. **2/2 passed**: "reads the same identity and store state through a checkout link" (11.1 s) and "matches launcher identity to the built gateway with both bundled shells and retains refusal boundaries" (26.4 s). `logs/launcher-identity-test.log` |
+
+**Test-file mapping.** No `routes/system` test file exists. `src/routes/thread-disconnect.test.ts`
+is the only test that calls `registerSystemRoutes` directly and reads `/healthz` from it; main also
+changed this file (#523). So I ran it as the `routes/system` test file. The filter `routes/system`
+matches no file.
+
+**Aborted first attempt.** My first command was
+`pnpm --filter @graphgoblin/api test -- instance-identity routes/system`. pnpm passed the `--`
+through, so vitest dropped the filters and began the whole API suite. I stopped it after about
+3 minutes, before any result, and stopped its leftover process tree (PIDs 57308 → 59744 and its
+workers, all started by that command). Afterwards no process referenced this worktree. The partial
+log is `logs/api-test-literal.log`; it is not a result.
+
+### Without the lock
+
+| Command | Result |
+|---|---|
+| `pnpm typecheck --filter=@graphgoblin/api --filter=@graphgoblin/tooling` | exit 0. 7/7 tasks (6 cached dependency builds; api typecheck executed). `tooling` is JavaScript and has no typecheck task (AGENTS.md). `logs/typecheck.log` |
+| `pnpm lint --filter=@graphgoblin/api --filter=@graphgoblin/tooling` | exit 0. 2/2 tasks, 0 cached, no problems reported. `logs/lint.log` |
+| `pnpm format:check` | exit 0. "All matched files use Prettier code style!" `logs/format-check.log` |
+| `pnpm check:layers` | exit 0. "Layer rules: OK" `logs/check-layers.log` |
+| `pnpm check:deps` | exit 0. 0 errors and 4 `no-orphans` warnings, on `packages/infrastructure/drizzle.config.ts`, `apps/web/public/chat-update-worker.js`, `apps/web/e2e/shutdown.config.ts` and `apps/api/scripts/check-templates.d.mts`. Neither main nor this branch changed any of them since the merge base. `logs/check-deps.log` |
+| `pnpm check:qa --base origin/main` (extra, read-only) | exit 0. 0 `docs/qa` paths selected; this integration adds no QA packet. `logs/check-qa.log` |
+| `pnpm check:docs` (extra, read-only) | exit 0. "Generated docs are up to date". It covers main's regenerated reference docs together with this branch's `/healthz` route change. `logs/check-docs.log` |
+
+### Native launcher compile (brief task 5)
+
+Compiler: `%WINDIR%\Microsoft.NET\Framework64\v4.0.30319\csc.exe`, "Visual C# Compiler version
+14.8.10001.0 for C# 5". Sources at HEAD: `Launcher.cs` sha256 `283b8f2c…c167`, `NativeChecks.cs`
+sha256 `76fde70b…c47b`. Output went only to `G:/ggq/tmp/w1-windows-integration/native-compile/`.
+Nothing was installed, no shortcut was created, and no launcher was run.
+
+| Configuration (copied from) | Arguments | Result |
+|---|---|---|
+| `installer`: `scripts/install-windows-launcher.ps1` | `/nologo /target:winexe /optimize+ /platform:x64 /reference:System.Windows.Forms.dll /reference:System.Web.Extensions.dll /out:…\GraphGoblin.exe Launcher.cs` | exit 0, 0 warnings, 0 errors |
+| `acceptance-launcher`: acceptance `compileLauncher` | same without `/optimize+` | exit 0, 0 warnings, 0 errors |
+| `acceptance-checks`: acceptance `compileChecks` | `/nologo /target:exe /platform:x64 /main:NativeChecks` + same references, `/out:…\NativeChecks.exe Launcher.cs NativeChecks.cs` | exit 0, 0 warnings, 0 errors |
+| The same three with `/warnaserror+` added (strictness check; no script uses it) | | all exit 0, 0 warnings, 0 errors |
+
+csc's default warning level is 4, so no warning at any level was reported. Arguments, logs and
+output hashes are in `native-compile/`. The executables were not copied into evidence. Note: the
+first invocation from Git Bash failed with CS2001 because MSYS path conversion rewrote `/nologo`
+and `/optimize+` into file paths. The script now sets `MSYS2_ARG_CONV_EXCL='*'` so the switches
+reach csc verbatim, as they do from Node `execFile` and PowerShell. The results above come from
+that corrected run.
+
+## Not run (by design or out of scope)
+
+- Native acceptance suites (`pnpm test:windows-launcher`, installer selections, #499 link cases,
+  alias cases): brief task 6. An independent QA agent runs them next.
+- Package-wide coverage, Playwright and GUI/PWA QA: not in this brief.
+- Opposite-family review, CI (needs a push) and the MAX final: deferred to the orchestrator and
+  Saturday.
+
+## Caveats and observations (not fixed)
+
+- The worktree is a sparse checkout (`/*`, `!/docs/qa/`). main's 189 new `docs/qa` files are in
+  the merge commit but are not materialized here. `check:qa` selected none of them because none
+  differs from origin/main.
+- A pre-existing directory literally named `%SystemDrive%` sits at the worktree root (dated
+  Nov 24 20:03, before this run). It holds three Windows shell-cache files under
+  `ProgramData/Microsoft/Windows/Caches/` (`cversions.2.db` and two `{GUID}.2.ver…db`, about
+  1 MB). `.gitignore:13` (`*.db`) hides them, so `git status` is clean. It looks like an earlier
+  native run resolved an unexpanded `%SystemDrive%` relative to the checkout. That cause is
+  suspected, not confirmed. I left it alone.
+- The test runs (including the aborted one) left disposable `gg-*` fixture folders under
+  `G:/ggq/tmp/w1-windows-integration/`. I did not delete them (recursive-delete rule); the
+  orchestrator can clean them up.
+- Earlier `.tmp/windows-launcher-*` folders in the worktree predate this run and are untouched.

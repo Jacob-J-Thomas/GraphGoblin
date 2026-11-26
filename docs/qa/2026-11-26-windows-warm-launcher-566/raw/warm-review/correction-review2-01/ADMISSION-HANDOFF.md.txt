@@ -1,0 +1,44 @@
+# Warm launcher review 2 correction admission adjudication
+
+**Hold source admission for independent QA pending root disposition of three successful commands outside the exact allowlist.** The five authorized wrappers all passed on the admitted source. The original controller exit remains 1, with invocationSucceeded false and WARM_R2_NONEXACT_COMMAND. The tool audit checks commands as requested in event order. Its first nonexact command is the successful Bash call on event line 4, preceding the denied Bash call on line 11. The provider exit remains 0 and the author report remains intact.
+
+## Tool results
+
+I paired all 83 tool requests with their unique results. The three successful extra Bash calls returned actual command output. Each changed directory to the dedicated warm worktree first. The journal records 30 successful Edit calls across the five admitted paths. Successful provider file tools addressed that worktree.
+
+| Outcome | Tool ID | Request → result lines | Action |
+| --- | --- | --- | --- |
+| Succeeded outside allowlist | toolu_01L994bK9EVqNMWLN29yjyJE | 4 → 7 | Git status, five-entry Git log and directory listing |
+| Denied | toolu_01XTw1cMn5DZ33XVB3XFAAqH | 11 → 13 | Combined docs listing, diff statistics and file line counts. Provider returned its dontAsk refusal |
+| Denied | toolu_011XxvZWN8YyxxorLVCLcpVz | 20 → 22 | Glob of the external evidence directory. Restricted file tools refused the path |
+| Succeeded outside allowlist | toolu_01VuBQL7krkUgLvC1KSpoZok | 43 → 44 | Git diff statistics |
+| Succeeded outside allowlist | toolu_01KR98gV7qVJJvog42uEaJgA | 918 → 919 | Git status and cached changed-file names |
+
+Neither denied input was repeated verbatim. The standalone early Git diff statistics call succeeded after the combined Bash denial. It overlaps a subcommand in that denial and is one of the three independently unapproved calls. The final Git status/index query succeeded after the last admitted wrapper. The full paired ledger records exact Bash commands and hashes for tool inputs and results. It contains no private reasoning. [Proof and tool ledger](PROOF.json)
+
+## Source and verification
+
+The current source matches the failed controller's observedSource and the final snapshots of all five wrapper receipts. Exactly five of the 18 candidate files differ from the admitted pre-correction inventory. The other 13 files and all eight protected harness hashes match. HEAD is d2df8600c2c8574bec420947de686b936910b245 and the linked index hash is 91ccc7b725104d4cb029797990cfb44391d7f48e9351369810619500d0d193f9 with no staged paths. The corrected source hash is faa84dcdfd049a737e0ca9f7fe659eb638c9c5708acac13e2143b56f78f19be9. The complete tracked diff against HEAD has SHA-256 ba6fb59c75770908aae9cca131af1a4a9c87fda0020f3052d82ec35aaacd4e0f. The already-admitted untracked ADR is covered by the separately verified raw-file hash in the proof.
+
+Each admitted wrapper was called once, after the last Edit result, in this order. Every tool result matched its on-disk receipt. All seven underlying subprocesses exited zero. Node v22.23.4 and the complete raw child stream sizes and hashes matched the receipts.
+
+| Wrapper | Verified recorded result |
+| --- | --- |
+| format-write | Passed. Only admitted formattable source changed and the output matches the final bytes |
+| static | Lint, formatting and diff check passed |
+| build | 12 of 12 tasks passed |
+| native-focused | 7 passed, zero failures, skips, cancellations or TODOs |
+| native-readiness | 20 passed, zero failures, skips, cancellations or TODOs. The active-process control recorded noAttemptGate witnessed |
+
+The focused author evidence records a real owned gateway handover after proof with zero replacement drains and connection refusal. The full File ID controls refused equal-low/different-high IDs and accepted equal complete IDs. The case-sensitive directory witness was false, so the controlled File ID comparison supplies no native ReFS collision or case-sensitive-directory observation. The R6 budget controls recorded zero slow-preparation spawns and one ordinarily prepared spawn. The handover covers the constructed post-proof ordering. The deadline controls cover preparation at the spawn boundary.
+
+The earlier full native result remains 31 passed and 2 unresolved failures. These five wrappers supply scoped author verification. Independent QA, actual GUI/PWA behavior, current-target CI and the reserved final review remain pending. Root can consider an explicit disposition limited to the three successful read-only extras and the two visible denials, using the preserved author checks as evidence. Source admission remains held until that decision. This adjudication performed only read-only source and receipt inspection.
+
+## Integrity anchors
+
+| Artifact | SHA-256 |
+| --- | --- |
+| Original author contract | 58b0237416bccac85ec64ab62b2fe977e07f4ccd4ec77fa212c4d35b2aa2276a |
+| Original private journal | 330703ce7645ab3e5a8fbbfbcb53f4534689b03f95846efc1967ba6e7422a757 |
+| Original provider result text | f925d50d8c36eda8046645cd3463d820fb8cd14aea57490a87339bf996470520 |
+| Paired ledger and source/receipt proof | bf931a200cea70b17a27efe4ab81fa8a8cef91940c4bffe6d41ef4fbf833352c |

@@ -1,0 +1,105 @@
+# CHANGES REQUIRED
+
+*This critiques the design using only the supplied draft and excerpts. It is not formal approval, and it claims no test result or host state.*
+
+## Findings
+
+**1 (P1). Warm opening still depends on startup-only checks and mutex waits.**
+Locations: Draft Launch §1; `Launcher.cs` 71–82, 179, 194–201, 1205–1208.
+- **Missing startup files.** If Node is removed while the gateway is serving, the next click fails in `Validate` at line 72 before any probe runs. Missing `BuiltFiles` or a missing log marker (77–82) fail the same way.
+- **Mutex waits.** Click A can hold both mutexes through a cold start (up to 300 s) or through Chrome's window wait. That wait happens because `OpenPwa` (201) runs inside the mutex scope. Click B, aimed at a healthy gateway, can wait 360 s and then fail with `launch-busy`.
+- **Draft gap.** The draft probes only after taking both locks, and it never splits `Validate` into warm and cold checks.
+
+**2 (P1). Treating the refresh as authoritative creates the half-committed state it is meant to prevent.**
+Locations: Draft Launch §3–4.
+- **Failure sequence:**
+  1. After runtime or build drift, a cold click publishes R(F2).
+  2. The spawn then fails (held store, child exit or timeout).
+  3. R(F2) now replaces the embedded F1.
+  4. The owner rolls back Node or the build and starts the gateway manually with F1. This is the documented PWA install sequence.
+  5. The launcher refuses that gateway until a stop or reinstall.
+- **Undefined fallback.** "Malformed … cannot authorize a different fingerprint" does not say whether the embedded expectation stays eligible.
+- **Extra machinery.** Refusing before spawn adds a new cold failure mode. The new mutex only protects a single authoritative slot.
+- **When embedded is safe.** Embedded evidence is safe whenever the digest and generation match and its own captured bindings re-verify live. A newer expectation for the same digest can differ only in runtime, protocol or defaults. Any store difference is caught by the live check.
+- **Required outcomes:**
+  - Accept: a matching manual start, an old protocol-2 process, missing startup files, and a same-runtime reinstall while warm.
+  - Use today's contained helper comparison, or refuse if it cannot run: runtime/build replacement, or a newer direct start outside the enrolled set.
+  - Refuse: changed settings, a wrong store, or an unrelated HTTP 200.
+
+**3 (P2). The typed helper could persist a credential, and its snapshots can diverge.**
+Locations: `instance-identity.ts` 30–43; `canonical-path.ts` 5–15; `system.ts` 21.
+- **Credential exposure.** For a non-file database, the "existing opaque contribution" is the raw `config.dbUrl` (line 37). That URL may carry a token, and enrollment would write it into the installed JSON.
+- **Divergent snapshots.**
+  - If the hash and the report each call `canonicalPath` separately, a retarget can land between the two calls.
+  - Enrollment before first run builds the leaf name by name (the ENOENT branch). The launcher instead opens a handle.
+  - Data access without full sharing can collide with SQLite or lock release.
+- **What a match proves:**
+  - The configured names resolved to the same targets when the gateway computed its header (once, at route registration) and still resolve there now.
+  - The listener reports equal non-secret settings and the same runtime.
+- **What it does not prove:**
+  - That the binding held continuously in between.
+  - That the listener currently owns the store, or that the peer is who it claims. Any local process can replay the headers.
+
+This is configuration matching, not authentication.
+
+**4 (P2). The configuration re-read is undefined.**
+Locations: Draft Launch §1 and §4; `acceptance.mjs` 702–716.
+- "Settings changed" names no comparison.
+- Removed or substituted files are not covered.
+- A reinstall during the wait mixes generations.
+- A single refresh file per directory would thrash across the several configs the suite places beside one executable.
+
+**5 (P2). Quota semantics and the #544 evidence need reconciliation.**
+Locations: ADR-0086 "Every click actually starts the identity helper"; #544 acceptance bullet 2; `Launcher.cs` 1639–1646.
+- **Chrome under the quota.** An active-process limit can deny `Process.Start(ChromeProxy)` just as it denies Node.
+  - Native gateway reuse can still succeed.
+  - PWA activation succeeds only when `FindWindow` finds an existing window.
+  - The supplied source shows no closed classification for a denied browser start.
+- **Weak evidence.** Warm success under the quota alone cannot distinguish "helper never attempted" from "attempt failed and was ignored."
+
+## Amendment language
+
+> **Launch §1 (replace).** Read the configuration once, recording its byte digest and file identity. Validate only rooted paths, port, timeouts, override rules and PWA routing. Repo, Node, built files and the log marker are cold-only.
+>
+> Before taking any mutex, probe against the candidates. A match with a positive PID, a recognized phase and `/app/` 200 proceeds to browser handoff. Shutdown phases open for observation.
+>
+> Otherwise, acquire the store and port mutexes and re-read the configuration. Refuse ("configuration changed while waiting; click again") if the file is missing, its digest or identity changed, or its name is a link. Write nothing. Re-probe before any helper, publication or spawn.
+>
+> **Selection and refresh (replace §4).** Candidates are the embedded expectation and at most one refresh record with the same digest and generation. Each candidate's own bindings are re-verified live. A missing, malformed, linked or unreadable refresh is ignored with a closed diagnostic and never removes the embedded candidate.
+>
+> If no candidate matches an occupied port, run the existing contained identity comparison once. If that cannot run, refuse with enrollment guidance.
+>
+> Write a refresh only after verifying this click's own child (fresh fingerprint and child PID), or after a helper-computed match. Recheck the generation first. Publish through a new temporary file and an atomic rename in the admitted directory, named by a hash of the canonical config path and generation. A write failure never blocks spawning or opening. Add no mutex; races degrade only to the helper path.
+>
+> **Typed helper.** Compute canonical store values once, then both hash and report those same values. A non-file database reports only its kind.
+>
+> The launcher opens the reported absolute lookup paths with read-attributes access, full sharing and backup semantics. It mirrors `canonicalPath`'s nearest-existing-ancestor rule, compares ordinally, and refuses on any difference, absence or error.
+>
+> Health headers and `INSTANCE_PROTOCOL` are unchanged. #501's config changes will re-key fingerprints at integration.
+>
+> **Browser.** Hand off only after releasing the startup mutexes, coordinated by a per-app-ID mutex bounded by `WindowTimeoutSeconds`. A denied browser start reports that the gateway is running at `/app/` and that nothing was stopped.
+>
+> **Supersession.** ADR-0086's every-click helper sentence and #544's warm refusal are replaced by warm success without any helper admission attempt.
+
+## Acceptance matrix delta
+
+| Case | Expected | Evidence |
+|---|---|---|
+| Matching gateway; Node, helper entry or log marker absent | Opens; same PID | Headless CI + native GUI |
+| Active-process limit, warm `--ensure-gateway` | Success; identical PID and lock bytes; sibling alive; no helper marker or job-limit notification | Hosted CI (#544) |
+| Same limit, cold | `helper-containment`; no marker, spawn, lock or log change | Hosted CI |
+| Compatible control | Cold success; marker present | Hosted CI |
+| Limit, GUI, PWA window open / closed | Focus / browser-denied text; gateway untouched | Native QA only |
+| Bad refresh with embedded match; failed-spawn refresh followed by F1 manual start | Opens | CI |
+| Drift outside the enrolled set | Helper result; refusal if blocked | CI |
+| DataDir or Repo-relative DB retargeted while running | Refuse; gateway survives | CI |
+| Config changed, removed or linked during the wait | Refuse; no refresh, no spawn | CI |
+| Click B during A's cold start or Chrome wait | B returns without waiting on startup mutexes | CI |
+| Listener replaying the headers | Documented limit, not a pass criterion | — |
+
+For the #544 fixture:
+- Verify both the configured limit and an observed denial.
+- Start the warm gateway outside the job.
+- Stop control gateways deliberately before closing any owned job.
+- Dispose only owned handles.
+- Count a setup failure as a test failure.
