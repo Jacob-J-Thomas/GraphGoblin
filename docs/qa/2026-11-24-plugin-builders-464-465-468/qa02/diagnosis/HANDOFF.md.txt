@@ -1,0 +1,38 @@
+# Plugin native failure diagnosis: #464 / #465 / #468
+
+No product correction is justified by the retained failure. The zero-HTTP native oracle conflicts with an existing supported read-only MCP resource listing. The original native result remains FAIL; the logs do not prove its exact phase. A prepared native-only QA proposal awaits root review and activation. This is evidence reconciliation, not an extra formal scan.
+
+## What is established
+
+The complete6213-byte native stdout matches NATIVE-PLUGIN-RESULTS.json and the NATIVE-RESULT receipt hash. It records exactly GET /runs?limit=20, fixture503, and exit1 at the zero-request assertion. All7 CLI command receipts exit0; Codex0.160.0 installed/enabled the local plugin, loaded3skills, and discovered14MCPtools. The app-server exits0 with empty stderr. Claude2.1.323 strict validation succeeds. Its nonblocking ICON_MISSING finding and marketplace-install advice remain qualifications. Original build/unit nonempty stderrs are only package-command labels.
+
+All five original receipt hashes, their ten raw streams, author-report binding, seven native command stream pairs and app-server stream hashes were recomputed. All50 original QA files remain unchanged. The11-task forced build and60units (11Codex+11Claude+38writer) are retained; no replay is proposed.
+
+## Source cause and phase limit
+
+- apps/mcp/src/resources.ts:8,43-49 sets recent limit20 and calls runs.list for resource enumeration;53 and65 register separate events/thread list callbacks. SHA256 `68da9583c1bd697265acaab7284a8634f90b3303d4dc6f9dbd052f9cd3169096`.
+- packages/api-client/src/resources.ts:140-144 sends GET /runs with that query. SHA256 `292ab549daa4a8bcf3051b90130c05d8d45952645027d90d34b568564d7c3522`.
+- Installed SDK server/mcp.js:388-411 handles resources/list and awaits template list callbacks sequentially. SHA256 `348747d38b81a41de654d0eab963823b69fc8b59efb58ca1ad9735554f27a188`. An HTTP503 thrown by the first read can prevent the second callback. This is source inference explaining a legitimate origin, not a proved historical trace.
+- Original native driver counts unphased requests at line63, returns503 at line64, and asserts zero at line167. It records only the app-server-level RPC replies.
+
+Raw app-server stdout contains5JSON lines: replies1initialize,2plugin/list,3plugin/read,4mcpServerStatus/list plus one remoteControl notification. Reply4 has14tools, resources[], and both resource templates. There is no raw MCP protocol capture, resources/list success/error response, per-HTTP timestamp, or request-to-RPC boundary. Thus the existing logs cannot causally assign this GET to a particular app-server call or distinguish successful empty resources from swallowed enumeration failure. The harness sends no tools/call; a historical MCP-wire count is not directly observable. The fixture log does establish zero mutating HTTP requests.
+
+## Prepared follow-up, not executed
+
+Review native-only-qa-02/QA-BRIEF.md, QA-CONTRACT.json, native-plugin-checks.mjs, mcp-trace-preload.mjs and run-check.py before activation. Original product entry and generated manifests stay unchanged. A tiny passive QA-only Node preload captures actual MCP stdin/stdout/stderr bytes and request/response boundaries, with active requestID/PID snapshots joined by the owned HTTP handler and app-server RPC phases. It adds no input listener and changes no protocol bytes. Its instrumentation is a stated scope limit.
+
+The fixture returns the legitimate empty200 JSON page {items:[],nextCursor:null}, matching apps/api/src/routes/runs.ts:155-156. A successful resources/list invokes both current callbacks, so expect exactly TWO mapped GETs, not the old503's single aborted read. Native Codex discovery must complete resource discovery successfully on its raw wire, alongside14tools and2templates. A separate direct public MCP session proves initialize/tools-list/templates-list issue zero HTTP and resources/list completes with empty resources plus exactly2GETs. The one-attempt new gate requires2sessions, one resources/list each, exactly4GETs overall, each attributed to the matching active requestID/PID, zero other HTTP, zero tools/call/unexpected MCP methods/provider turns, and exact MCP children exiting0. Strict Claude validation is repeated only as part of the native probe. No broader units/build or source changes.
+
+Fresh actualClaudeOpus5.5/xhigh QA uses ordinary includedMax, with no API/overage. Proposed activation, only after root review:
+
+```text
+python G:/ggq/delivery-evidence/2026-11-24-followups/plugin-native-diagnosis-01/native-only-qa-02/launch-independent-qa.py --activate
+```
+
+Native only, one attempt, all actual raw streams retained before diagnostic display. All original per-call45s/15s/7s limits remain; direct oracle has15s calls and the outer capture bound480s. Owned disposable CODEX_HOME/Claude profile, neutral cwd, Unicode/spaced artifacts and ephemeral loopback only; no owner services or ports4747/4748/7443/11434. No model/native/process fixture has been invoked in preparation.
+
+The candidate remains d2df8600c2c8574bec420947de686b936910b245, patchd1e99a060d475bd9de483c46df4e3ddfb95a498e59675ee2b2900c63595a65c9, indexed2daa04358565ba90a4ef53947351c4876374c2e3e2682c25453fc3ce5b8e64. Current116 relevant source/runtime/SDK/native executable files are frozen prospectively. QA01 did not hash dist files at execution, so do not retroactively claim full compiled-byte identity then; its forced build on unchanged source corroborates the current dist. Source/head/index and original QA bytes were read back unchanged. Python AST parsing passed; JS was not executed or syntax-checked.
+
+Contract SHA256 `68717c321d1a441afea9e6d49f98531dd4923b2e08a023c6fecac04ea48574ec`. Preparation-seal SHA256 `8deb1b310a39f8ed324382c8148d66f014da504804b630184dfcc3fbaa1868f6`. Full provenance: DIAGNOSIS-BINDINGS.json and native-only-qa-02/BINDINGS.json. No product/index/originalQA/wrapper/queue/GitHub writes, auth, model, native, tests or builds occurred. Only this external preparation directory was written. Root owns approval/queue, actual freshQA, CI and reserved final3; formal2PASS is unchanged.
+
+Preparation correction: first prepared run-check/native-driver/seal and handoff bytes are preserved under preparation-history-01 as *.txt. The snapshot now retains the flat head/patch fields required by the inherited provider runner. A bounded exact-owned observer exit check keeps the native Codex MCP session settled before starting the direct control. No auth/model/native/check was invoked while correcting preparation. Current seal above supersedes the preserved first seal.

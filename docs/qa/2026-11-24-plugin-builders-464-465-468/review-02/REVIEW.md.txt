@@ -1,0 +1,19 @@
+**Pass — targeted formal review 2 of 3.** R1 (`plugin-output/staged-write-close-masks-primary`, P2 FIX-IN-PR) is fixed. No newly introduced root cause or unresolved blocker was found in the correction delta. This is readiness for the remaining gates, not completion of delivery.
+
+Reviewed base/head `d2df8600c2c8574bec420947de686b936910b245` on `codex/gg-fu-plugin-builders-20261124`. The candidate still contains exactly 11 unstaged source paths; only `tooling/plugin-output.mjs` and `tooling/plugin-output.test.mjs` differ from review 1. The other nine raw SHA-256 hashes are identical. Current patch SHA-256: `d1e99a060d475bd9de483c46df4e3ddfb95a498e59675ee2b2900c63595a65c9`; prior reviewed patch: `d76727d01ed84999bd4302832c8ceeb1f1f6aa627e03589915f17c2486f59c35`. `CANDIDATE-MANIFEST.json` froze every current hash before review. `FINAL-STATE.json` confirms all 11 source hashes, base/head, patch, status and empty index remained unchanged.
+
+**Delta provenance:** the two prior candidate files were reconstructed from the immutable review-1 patch over its recorded base, then matched to the exact raw hashes in the prior manifest. `CORRECTION-DELTA.patch` and `DELTA-PROVENANCE.json` record the comparison. This pass reviewed that correction, without reopening unrelated or inherited findings.
+
+**R1 resolution:** at `tooling/plugin-output.mjs:322-329`, a failed write closes through the existing cleanup accumulator before rethrowing the write error. A close failure after a successful write still propagates as before. The moved accumulator and unchanged outer aggregation preserve the exact write error as `cause`, with `errors` ordered as write, close, then any other cleanup failures; the message exposes every failure. No removal paths, inventory, publication or restore authority changed. Added tests cover both single-failure controls, the combined pair and a third staged-removal failure.
+
+**Independent evidence:** all commands used Node `v22.23.4` and exited 0.
+
+| Evidence | Result |
+| --- | --- |
+| `targeted-correction.log` | 7 selected maintained tests passed; 31 intentionally unselected. Covers the correction and adjacent recovery phases affected by moving the accumulator. |
+| `probe-write-close-control.log` | 8 public-writer native-filesystem cases: review-1 control and corrected code, each with write only, close only, both, and both plus unlink failure. The control reproduces primary loss; corrected code keeps the exact cause and all ordered errors. Prior bytes stay intact and staging retention/removal matches each case. |
+| `probe-byte-equivalence.log` | Baseline assembler **and baseline writer**, review-1 assembler/writer, and corrected assembler/writer all produce identical bytes: 6 Codex files and 7 Claude files, plus both ownership markers. |
+
+The fault probe closes the real file before injecting the close error; it does not claim a genuine OS close failure. The byte probe transpiles public assembler source in memory, uses each revision's writer and common unchanged manifest/metadata modules, and writes only copied disposable fixture outputs. It does not establish native client loading. The author's full 52-case tooling result, coverage, plugin checks and 12-task build remain author evidence; repeating them was unnecessary for this bounded correction.
+
+**Remaining gates:** fresh actual Claude independent native plugin QA; CI and final exact-head checks; reserved fresh independent Astra MAX audit as formal review 3. No installed plugin, owner data/service, source, Git index, commit, external record or provider turn was changed or invoked by this review.

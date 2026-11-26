@@ -1,0 +1,55 @@
+# Independent QA: #464, #465, #468 (frozen candidate)
+
+**The native gate failed (exit 1)**, so I can't sign off the candidate as a whole. The Codex tier made one unexpected call to the test-owned loopback gateway: `GET /runs?limit=20`. The harness requires zero gateway calls during metadata discovery. The build passed, and all 60 tests in the three maintained suites passed. I ran each of the five wrappers once, with the build first and native last. I didn't rerun native because that would overwrite its evidence log.
+
+## Receipts
+All five receipts show patch SHA-256 `d1e99a06…5a65c9`, which matches the frozen hash, and `sourceUnchanged: true`. These hashes are reported by the wrapper; I couldn't recompute them myself.
+
+| Wrapper | Exit | Result | stdout SHA-256 (bytes) | stderr (bytes) |
+|---|---|---|---|---|
+| build | 0 | 11/11 tasks, 0 cached (`--force`) | `f783d7b7…8a52` (2426) | 97 |
+| codex | 0 | 11/11 tests | `432777d4…e45be` (1970) | 51 |
+| claude | 0 | 11/11 tests | `7eaa70a5…fb62` (2259) | 51 |
+| writer | 0 | 38/38 tests | `d2b39870…c63d` (7258) | 55 |
+| native | **1** | Codex tier failed; Claude validated | `cd265513…8a89` (6213) | 0 |
+
+I couldn't read the small non-empty stderr logs. Only the end of the native stdout was shown to me, so I didn't see: the Codex binary hash, the `marketplace add` / `plugin add` command receipts, the owned spaced/Unicode output paths, or proof that the two disposable configs were separate.
+
+## Native tiers reached
+**Codex 0.160.0** (marketplace.json `51174fc5…3cf1`, `.mcp.json` `49ec4a6e…3b5`):
+- **Install:** passed. `installedAndEnabled: true`.
+- **Metadata load:** passed. `plugin/read` returned the skills `design-loop`, `inspect-run` and `run-loop`, and the MCP server `graphgoblin`.
+- **Stdio tool discovery:** passed. The server identified as `graphgoblin` 0.1.0 and listed 14 tools. There was no `tools/call`.
+- **App-server:** exited 0 with empty stderr. The requests it logged were `initialize`, `plugin/list`, `plugin/read` and `mcpServerStatus/list`. `initialized` isn't in that list, probably because it's a notification, but I couldn't confirm that from the visible output.
+- **Gate:** **failed.** The loopback server recorded `[{GET /runs?limit=20}]` where `[]` was expected. The evidence doesn't show whether the call came from `mcpServerStatus/list` or from the stdio discovery step. One guess is that the MCP server lists runs while being queried for metadata, but that isn't confirmed.
+
+**Claude 2.1.323** (binary `5064e6e0…3fd13`, manifest `b784b847…aa38`, `.mcp.json` `2f85612b…a020`):
+- **Strict plugin validation:** passed (`strictValidated: true`). This only checks the plugin's structure; by design, nothing was installed, loaded or run in a session.
+
+## Results by issue
+**#464: met at maintained-test level.** The writer and Codex tests confirm diagnostics for:
+- a changed inventory (extra, missing or renamed files, including through the public `assemblePlugin`)
+- foreign, modified and missing files, and unexpected or missing folders
+- staged trees that couldn't be cleaned up
+- each outcome: restored, not restored with its location named, and published with leftover cleanup reported
+
+**Injected vs real faults:** every write, close, cleanup, publish and restore failure was injected through mocks (`instrumented … failure`). The resulting files and folders were checked on the real filesystem, but no real OS error (EPERM, EBUSY, ENOSPC or a sharing violation) was triggered. Also, the staging and recovery outcomes are tested only through the shared writer, not end-to-end through each builder.
+
+**#465: not closable.** These parts were met:
+- Unsupported entries (extra files, `scripts/`, an extra shared skill, a non-file README, a junction that wasn't followed) are refused before the output changes, in Codex, Claude and the writer.
+- Codex builds work under `source 漢` and `next entry 漢.js`.
+- Claude passed strict validation.
+
+Codex installation and loading were established natively, but the Codex native gate failed.
+
+**#468: criteria met.**
+- Each missing run-loop anchor is refused on its own with its specific message, and the output and staging are left untouched.
+- When both are missing, the error names both anchors.
+- Restoring the shared text rebuilds byte-identical output with the same ownership marker.
+- The expected adapted wording is asserted, and CRLF and LF input produce the same text.
+- Claude strict validation passed natively.
+
+I can confirm the expected wording is asserted, but I can't confirm the author approved it.
+
+## Limits and next step
+This is local Windows evidence only. It doesn't cover hosted CI, full coverage or the final formal audit. Next step: find out whether `mcpServerStatus/list` or the stdio discovery step makes the `GET /runs` call, then decide whether the product or the harness expectation should change. After that, rerun native on a frozen candidate.

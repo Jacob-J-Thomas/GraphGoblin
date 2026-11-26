@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "reviewPass": 2,
+  "formalReviewBudgetTotal": 3,
+  "mode": "targeted-R1-correction-delta",
+  "reviewedAtUtc": "2026-11-25T01:59:47.878423+00:00",
+  "verdict": "PASS",
+  "scopeReady": true,
+  "overallDeliveryComplete": false,
+  "reviewer": "Independent OpenAI-family session agent",
+  "author": "Actual Claude Opus 5.5; correction exitCode 0 and invocationSucceeded true",
+  "baseSha": "d2df8600c2c8574bec420947de686b936910b245",
+  "headSha": "d2df8600c2c8574bec420947de686b936910b245",
+  "candidatePatchSha256": "d1e99a060d475bd9de483c46df4e3ddfb95a498e59675ee2b2900c63595a65c9",
+  "candidateManifestSha256": "a7d440ef19003850e8b57a6f259810d996b49c5befb20023eb6383e5a470a35f",
+  "priorCandidatePatchSha256": "d76727d01ed84999bd4302832c8ceeb1f1f6aa627e03589915f17c2486f59c35",
+  "correctionDeltaSha256": "dc03b0216186ae66692bb6ddc093942a636dfe0fcc54bad86ba050e09fbee00f",
+  "sourceFileCount": 11,
+  "changedSinceReview1": [
+    "tooling/plugin-output.mjs",
+    "tooling/plugin-output.test.mjs"
+  ],
+  "otherNineFilesByteIdentical": true,
+  "comparisonProvenance": "Both prior source files reconstructed from the frozen review-01 patch over its recorded base and verified against their prior raw SHA256 hashes before constructing CORRECTION-DELTA.patch. No general rescan or inherited finding re-review.",
+  "rootCauseResolutions": [
+    {
+      "id": "R1",
+      "signature": "plugin-output/staged-write-close-masks-primary",
+      "originalSeverity": "P2",
+      "disposition": "FIX-IN-PR",
+      "resolution": "FIXED",
+      "location": {
+        "path": "tooling/plugin-output.mjs",
+        "startLine": 322,
+        "endLine": 329
+      },
+      "evidence": "The failed-write catch closes via the existing attempt accumulator and rethrows the write failure. Success-path close still propagates. Existing aggregation retains exact primary cause and ordered close/cleanup failures, all in its CLI-visible message. The cleanup deletion set and publication/restore behavior are unchanged.",
+      "verifiedBy": [
+        "targeted-correction.log",
+        "probe-write-close-control.mjs",
+        "probe-write-close-control.log"
+      ]
+    }
+  ],
+  "newFindings": [],
+  "unresolvedBlockers": [],
+  "independentVerification": [
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/tooling exec vitest run plugin-output.test.mjs -t 'reports a failure.*a staged file|keeps a staged write|continues cleanup|keeps the primary failure|reports an unpublished|says the new artifact'",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "passed": 7,
+      "intentionallyUnselected": 31,
+      "log": "targeted-correction.log",
+      "purpose": "Single write/close controls, combined error chain and adjacent existing recovery phases after moving the accumulator."
+    },
+    {
+      "command": "node (absolute review-02/probe-write-close-control.mjs)",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "cases": 8,
+      "log": "probe-write-close-control.log",
+      "purpose": "Public native writer control: review-1 and corrected writers, each with write-only, close-only, write+close, and write+close+unlink faults. The prior primary-loss failure reproduces; correction preserves exact primary and ordered failures. Incumbent bytes and expected staging state asserted in every case. File close is completed before injection, and a real OS close failure is not claimed."
+    },
+    {
+      "command": "node (absolute review-02/probe-byte-equivalence.mjs)",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "log": "probe-byte-equivalence.log",
+      "purpose": "Public assembler output bytes compared across baseline assembler+baseline writer, review-1 assembler+review-1 writer, and corrected assembler+corrected writer. All 6 Codex files and 7 Claude files, plus ownership markers, are byte-identical for common copied inputs and a common disposable MCP path. Sources are transpiled in-memory; unchanged manifest/metadata modules reused. No installed plugins or native client loading."
+    }
+  ],
+  "authorEvidenceNotRelabeledIndependent": {
+    "reportedToolingTests": 52,
+    "reportedToolingCoverage": {
+      "statements": 97.53,
+      "branches": 96.33,
+      "functions": 98.36,
+      "lines": 98.22
+    },
+    "reportedOtherGates": "Codex 11 passed plus one provider-live skip, Claude 11 passed; both plugin coverage floors, scoped typecheck/lint/format and 12-task build passed. See claude-correction-01 report. Full gates were not repeated in this targeted pass."
+  },
+  "scopeAssessment": "The correction moves the existing failures/attempt accumulator earlier and changes only the staged-file write/close handling, with public regressions. No cleanup authority, output inventory/format, docs/API/dependency or unrelated source change. Nine prior-candidate files are hash-identical, so review-1 conclusions stand outside the R1 delta.",
+  "limits": [
+    "Fresh actual Claude independent native plugin QA remains required.",
+    "CI and final exact-head gates remain required.",
+    "Reserved fresh independent Astra MAX final audit is formal review 3 and remains required.",
+    "No source or Git-index edit, commit, external record, provider turn, owner data/service or installed-plugin mutation.",
+    "A passing targeted source review does not satisfy native loading or the complete delivery pipeline."
+  ],
+  "finalState": {
+    "file": "FINAL-STATE.json",
+    "all11SourceHashesBaseHeadPatchAndIndexUnchanged": true
+  },
+  "nextStep": "Proceed with fresh actual Claude native QA, then CI/exact-head gates and reserved fresh Astra MAX final audit 3. No further general rescan justified for this unchanged correction."
+}

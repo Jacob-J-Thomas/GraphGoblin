@@ -1,0 +1,62 @@
+I ran the native wrapper once, in the foreground, with no build or unit rerun. **Verdict: FAIL (exit 1).** It finished in about 6 seconds, with no timeout and no controller error. I didn't make a second attempt. The prompt still began with "PREPARED ONLY. Root must review/approve"; I treated this session as the approved launch.
+
+**Why it failed:** the harness stopped on `One native Codex discovery plus one direct public MCP control. 1 !== 2`. Only one of the two expected sessions was captured, and it was the direct one. The output doesn't name the counter, so "sessions" is my reading of that message. As a result:
+- the two GETs during Codex discovery have `activeMcp: []`, so they aren't matched to any MCP request or process;
+- the `mcpProtocol` fields (`sessions`, `toolsCallCount`, `postCount`, `totalReadonlyGets`) and `rawProtocolInventory` are all `null`.
+
+**Wrapper receipt:** patch `d1e99a06…5a65c9` matches, and `sourceUnchanged: true`. stdout was 12,294 bytes, SHA-256 `2fb1042c…148f3f`; stderr was 0 bytes.
+
+## What the run showed
+### HTTP reads (test-owned loopback server)
+The server returned `200 {items:[],nextCursor:null}`. It recorded exactly 4 requests, all `GET /runs?limit=20`, with no other method or path and no POST.
+
+| # | Phase (labelled by the harness) | Time | Matched to MCP request |
+|---|---|---|---|
+| 1 | `app-server:mcpServerStatus/list` | t0 | **none** |
+| 2 | `app-server:mcpServerStatus/list` | +11 ms | **none** |
+| 3 | `direct:resources/list` | | PID 49164, request id 3 `resources/list`, `apps/mcp/dist/main.js` |
+| 4 | `direct:resources/list` | +9 ms | same |
+
+The total of four (two per session) fits the two-callback explanation. Only the direct pair is actually matched to an MCP request. For the Codex pair, the only evidence is the harness's phase label.
+
+### Codex 0.160.0 native
+- **Binary and artifacts:** binary `fdda5fa3…e866d1d`. `marketplace.json` `51174fc5…3cf1` and `.mcp.json` `49ec4a6e…03b5` are the same as in QA01.
+- **Install and load:** `installedAndEnabled: true`. `plugin/read` returned the skills `design-loop`, `inspect-run` and `run-loop`, and the MCP server `graphgoblin`.
+- **Discovery:** server `graphgoblin` 0.1.0, 14 tools, the two exact resource templates, and `resources: []`. These results are as Codex reported them; there is no captured MCP traffic to confirm them.
+- **App-server:** exited 0 with empty stderr. Its methods were `initialize`, `plugin/list`, `plugin/read` and `mcpServerStatus/list`; stdout `06d37cd4…d0d8be`. No `tools/call` appears and there was no POST, but the wire-level tool-call count is `null`.
+
+### Direct check against the same built entry (passed)
+- 14 tools, `{resources:[]}`, the two templates, and exactly two GETs, both matched to request id 3 `resources/list` (PID 49164).
+- The log shows no reads during the other operations.
+
+### Claude 2.1.323
+- Binary `5064e6e0…3fd13`, manifest `b784b847…aa38` and `.mcp.json` `2f85612b…a020` all match QA01.
+- **Strict validation:** `success: true`, `strict: true`, with no errors or warnings in the manifest.
+- **Non-blocking notes (qualifications, not errors):** `ICON_MISSING` (warning, `blocking: false`) and the advice to add a marketplace install line to the README.
+- This only checks the plugin's structure; no Claude session was loaded.
+
+### Isolation and reused evidence
+- Separate temporary Codex home, Claude home and neutral working folder, all with spaces in their names, under `G:\ggq\gg-native-464-B77gh8\`. The Claude output folder is `Claude plugin é fixture`. The Codex output path wasn't printed.
+- The four reused stderr logs (build, codex, claude, writer) each contain only the package command line. The original 11 build tasks and 60 tests are reused from QA01; I didn't watch them run.
+
+## Not established (each one alone means FAIL)
+- **Codex's MCP server process:** none of its raw traffic, process ID, request IDs or `resources/list` response was captured. So I can't confirm that there was exactly one `resources/list` with no retry, or that the process finished cleanly.
+- **Matching GETs 1–2** to a request: missing.
+- **Raw protocol hashes and protocol counts:** all `null`.
+- **BINDINGS.json:** the output never compares the runtime, SDK or `dist` hashes against it. Only the native binary and artifact hashes are printed.
+- **Codex install receipts:** there are no `marketplace add` / `plugin add` receipts and no Codex output path in the output.
+
+## What it does indicate (diagnosis only, not a pass)
+The harness places both Codex GETs inside the app-server's `mcpServerStatus/list` call, 11 ms apart. That suggests Codex lists resources as part of its status check, and both callbacks run once the first one succeeds. This narrows down QA01's open question by phase label only, not from captured traffic. It doesn't turn the earlier 503 failure into a pass.
+
+My guess, which I haven't confirmed, is that the recorder never loaded into the MCP server process that Codex started. For example, Codex may not pass the recorder's environment setting through to that process.
+
+## Results by issue
+- **#464:** no new evidence. It stays at the QA01 level: met in the maintained tests, with every fault injected through mocks.
+- **#465:** not closable. Codex install, load and discovery and Claude strict validation passed again, but the corrected native gate failed.
+- **#468:** unchanged. Claude strict validation passed again, and the test evidence is reused from QA01.
+
+## Limits
+- This is local Windows evidence only, and the recorder is test instrumentation. It isn't hosted CI, coverage, owner acceptance or the final audit.
+- I didn't edit or write anything myself and didn't touch the QA01 files, but I couldn't check that they're intact.
+- **Next step (needs root approval):** get the recorder working in the MCP server process that Codex starts, then approve a new frozen attempt.

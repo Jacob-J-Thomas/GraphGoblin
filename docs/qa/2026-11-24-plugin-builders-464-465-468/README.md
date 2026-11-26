@@ -1,0 +1,45 @@
+# Plugin builders: reviews, QA history and integration (#464, #465, #468)
+
+The Codex and Claude Code plugin builders now explain refused rebuilds and failed replacements (#464), refuse plugin source entries they would not package instead of silently omitting them (#465), and the Claude builder refuses to assemble when the shared run-loop skill loses either text anchor its adaptation replaces (#468). This packet binds the eleven reviewed files on `d2df8600c2c8574bec420947de686b936910b245`, patch `d1e99a060d475bd9de483c46df4e3ddfb95a498e59675ee2b2900c63595a65c9`, and records how that exact patch reached main.
+
+## Reviews
+
+Formal review 1 (independent OpenAI-family session) requested one P2 correction, R1: when writing a staged file failed and closing it also failed, the close error replaced the write error. Actual Claude Opus 5.5 corrected R1 in `tooling/plugin-output.mjs` and its tests, so the write error stays the primary `cause` and the close and cleanup failures follow it in `errors`. Targeted formal review 2 passed the correction delta, with the other nine files byte-identical to review 1, and its probes found the generated Codex and Claude files byte-identical to the baseline builders. Read [review 1](review-01/REVIEW.md.txt), [the correction report](author/correction/IMPLEMENTATION-REPORT.claude.md.txt) and [review 2](review-02/REVIEW.md.txt).
+
+## QA history
+
+Every attempt is retained as it was recorded. The failed and incomplete attempts are history, not superseded evidence.
+
+- **QA01: native gate FAIL.** [QA01](qa01/QA-REPORT.claude.md.txt) ran a forced 11-task build and 60 maintained tests (11 Codex, 11 Claude, 38 shared writer), all passing. Codex 0.160.0 installed, enabled and loaded the plugin and listed 14 tools, and Claude Code 2.1.323 strict validation passed. The native gate failed because its oracle required zero gateway requests and recorded one `GET /runs?limit=20` against a fixture that answered 503.
+- **Diagnosis 01.** [The diagnosis](qa02/diagnosis/HANDOFF.md.txt) attributed that request, by source inference rather than a captured trace, to the supported read-only MCP resource listing: a successful `resources/list` calls two list callbacks, each issuing one `GET /runs?limit=20`. Working decision FUP-047 corrected the expectation to exactly two read-only GETs per successful `resources/list`, with zero tool calls, writes or other traffic.
+- **QA02: native gate FAIL.** [QA02](qa02/run/QA-REPORT.claude.md.txt) recorded four `GET /runs?limit=20` and nothing else. The direct public MCP control passed: 14 tools, the two resource templates, empty resources and two GETs matched to its `resources/list`. The passive recorder never reached the MCP process Codex started, so the native session was untraced and the gate failed. Diagnosis 02 attributes this, from Codex 0.160.0 source and the plugin configuration rather than a captured child environment, to Codex forwarding only the configured `GG_API_URL` and `GG_API_KEY`.
+- **Diagnosis 02.** [The second diagnosis](qa03/diagnosis/HANDOFF.md.txt) proposed a disposable instrumented copy of the plugin. The write that would have prepared its QA03 driver and observer was refused by automatic approval review ("blocked by policy") and was not retried; working decision FUP-053 selected Codex's own JSON logging (`RUST_LOG`, `LOG_FORMAT=json`) without changing the generated plugin.
+- **QA03: INCOMPLETE.** The native check [exited 0](qa03/run/NATIVE-RESULT.json), but the [QA03 actor](qa03/run/QA-REPORT.claude.md.txt) could see only about the first 2 KB of its output and declined to sign a pass on what it could not inspect.
+- **QA03 evidence supplements.** Supplement 01 was prepared and never run. [Supplement 02](qa03/supplement-02/HANDOFF.md.txt) timed out at 900 seconds with no verdict. Working decision FUP-081 allowed one 1,800-second continuation: [supplement 03](qa03/supplement-03/claude/SUPPLEMENT-REPORT.claude.md.txt), a tool-free actual Claude Opus 5.5 assessment of the retained QA03 results, raw app-server logs and source excerpts, returned **SCOPED PASS**. It ran nothing new, and it saw QA01 and QA02 only as summaries and hash bindings.
+
+## What is established
+
+- **#464** at the maintained-test level: changed inventory, foreign or modified entries, missing structure, invalid markers and retained staging or cleanup failures are reported with the destination and recovery step. The shared writer's tests cover every outcome; changed inventory is also covered through the public Codex assembler. The primary failure and every cleanup failure stay observable, and a published replacement is never reported as rolled back.
+- **#465**: unsupported entries (extra files, `scripts/`, an extra shared skill, a non-file README, a link that is not followed) are refused before the output changes, in both builders. Natively, supplement 03 established from QA03's logs that Codex 0.160.0 installed and recognised the generated plugin under spaced and Unicode paths, completed discovery in one MCP client context (14 tools, two templates, empty resources), and made no gateway request other than the two read-only `GET /runs?limit=20` that its `resources/list` callbacks issue. That attribution rests on timing, the request count and the callback source, not on a correlation header.
+- **#468**: each missing anchor is refused on its own, both missing anchors are named together, the output and its marker stay untouched on refusal, and restoring the text rebuilds byte-identical output. Claude Code strict validation of the generated plugin passed, with a non-blocking `ICON_MISSING` warning and marketplace-install advice.
+
+## What is not established
+
+- **#464 native writer faults.** Every write, close, cleanup, publish and restore failure was injected through mocks over a real filesystem. No real operating-system error (`EPERM`, `EBUSY`, `ENOSPC` or a Windows sharing violation) was triggered.
+- **#468 live Claude plugin session.** Claude Code validated the plugin's structure only. No Claude Code session loaded the plugin, started its MCP server or ran its skills.
+- Byte-level MCP wire capture and the native MCP child's process ID and exit: QA03's evidence is Codex's typed logical logging, and the session closed by asynchronous cancellation.
+- Hosted CI, cross-platform runs (all QA ran on Windows), the remaining delivery gates and owner acceptance. The owner may need to accept the two native limits above.
+
+## Integration with main
+
+The reviewed files were committed unchanged as `a57c49214007a4dd853951a41e06f700dfd08781`; `git diff --binary --full-index` from `d2df8600` to that commit hashes to the reviewed patch. Merge `9e0fc4716c4c02e62c953a4974d0507f022d3653` brought in main `4e1037c9e9922ffa27237fe79850403b6b54fc70`. `CHANGELOG.md` and `docs/02-architecture.md` conflicted; their conflict hunks match the [retained projection conflicts](integration/projection/) except for marker labels, side order and the diff3 base section, and were resolved as unions that keep all of main's text. All eleven merged files are byte-identical to the prepared projection. See [the integration record](binding/INTEGRATION.json).
+
+Main's #568 changed the shared run-loop skill relative to the reviewed base. Both adaptation anchors remain, and the merged build's Claude run-loop skill carries the explicit-run and draft-consent wording. Native QA ran on the pre-merge candidate, so the generated skill text it loaded differs from the merged build's; native loading was not repeated on the merged tree.
+
+On the merged tree, the publication worker (Claude Opus 5.5, not an independent QA actor) ran the maintained tests (11 Claude; 11 Codex with the live-provider suite skipped; 52 tooling plugin-output), typecheck and lint for both plugins, tooling lint, Prettier on the eleven files, a forced build of both plugins (11 of 11 tasks) and coverage for the three changed packages: Claude 96.22% lines and 96.29% branches, Codex 95.77% and 91.66%, tooling 97.78% and 94.15% over 298 tests. The first tooling coverage run failed one unrelated test, `design-contrast.test.mjs`, because it reads `docs/qa/design-contrast.md`, which this sparse checkout had left out; with that file checked out the rerun passed. Both runs are retained. Their logs are under [integration/logs](integration/logs/).
+
+## Reading the packet
+
+Original reports are stored as `.md.txt` so their exact bytes survive formatting, and [MANIFEST.json](MANIFEST.json) records the source path, size and SHA-256 of every retained file. Scripts keep their original local paths and do not promise portable replay. Provider prompts and briefs, session event journals and provider stderr are not published. Each retained launch receipt records its prompt's SHA-256, and the supplement receipts record their own journal and stderr hashes. The manifest lists what else was left out.
+
+Opposite-family review of the integrated head, the reserved fresh independent Astra MAX final audit (formal review 3), hosted CI on the exact head, owner acceptance and merge remain separate gates.

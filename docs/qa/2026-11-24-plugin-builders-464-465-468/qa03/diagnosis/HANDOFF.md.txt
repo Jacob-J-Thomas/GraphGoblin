@@ -1,0 +1,62 @@
+# Native plugin QA02 diagnosis and prospective QA03
+
+**Preparation stop:** root approved the architecture for preparation only, but automatic approval review then rejected the command to write the external QA03 driver/observer before process creation, with the stated reason `blocked by policy`. The QA03 directory is absent. The same write was not retried through another route. [PREPARATION-BLOCKED.json](PREPARATION-BLOCKED.json) records the limit. The completed diagnosis and mechanism below are reviewable; there is no runnable/queue-ready QA03 packet, FUP053 admission or new execution.
+
+**The failure is in the recorder setup; no product defect is established.** QA02 set three recorder variables on the parent Codex process, but the generated and installed MCP configs forward only `GG_API_URL` and `GG_API_KEY`. The pinned Codex 0.160 implementation builds the child environment from Windows defaults, forwarded names and literal `env` overrides. None of QA02's three recorder names entered that configuration. The direct SDK control received its complete supplied environment and was traced.
+
+This is a source/config-derived cause, supported by the retained outcome. The native child's actual environment was not retrospectively captured. The proposed remedy has not been executed. No model, native CLI, build, unit test, HTTP fixture, source/index change or queue action ran during this diagnosis.
+
+## Evidence preserved
+
+- QA01 remains **FAIL**: its zero-HTTP oracle rejected one GET against a503 fixture. It did not capture MCP wire attribution.
+- QA02 remains **FAIL**: four `GET /runs?limit=20` requests and no other HTTP method/path; native Codex reported14tools, two templates and empty resources; app-server exited0. The first two GETs occurred during its `mcpServerStatus/list` call but had `activeMcp: []`. Only the direct session, PID49164, was traced. The observer expected two sessions and saw one. No native-child clean-exit or wire-level zero-tool-call claim is established by that missing trace.
+- The direct session's successful `resources/list` response, two mapped GETs and exit0 are retained. Claude strict validation passed, with its original nonblocking icon finding and marketplace-install advice. Those are reused positive tiers; they do not turn the overall native gate green.
+
+The complete two failed attempts, their raw native receipts/streams, actor reports and original files were rehashed without rewriting them. All116 source/runtime/SDK/executable bindings still match QA02. The candidate remains11 changed paths on `d2df8600c2c8574bec420947de686b936910b245`, patch `d1e99a060d475bd9de483c46df4e3ddfb95a498e59675ee2b2900c63595a65c9`, index `ed2daa04358565ba90a4ef53947351c4876374c2e3e2682c25453fc3ce5b8e64`. See [SOURCE-BINDINGS.json](SOURCE-BINDINGS.json) and [DIAGNOSIS.json](DIAGNOSIS.json).
+
+## Supported mechanism
+
+Official release tag `rust-v0.160.0` resolves to commit `a956835d020762cb2b570053af06f643a11c0ecc`. The tested binary reports0.160.0 and retains SHA256 `fdda5fa3cf3fb3d000b876720742857676293e4315e4b045fae6f8bd7e866d1d`. This source/version relationship is not a reproducible-binary-build attestation.
+
+The pinned source shows:
+
+- [Plugin loader](https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/core-plugins/src/loader.rs#L1648) reads `.mcp.json` and invokes the supported plugin config parser. [Parser](https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/codex-mcp/src/plugin_config.rs#L126) deserializes it into the MCP server config.
+- [Config types](https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/config/src/mcp_types.rs#L375) accept literal `env` and forwarded `env_vars` independently, preserving both in the stdio transport.
+- [Environment construction](https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/rmcp-client/src/utils.rs#L16) starts with defaults/forwarded names, merges literal overrides, then removes protected context variables. [The Windows defaults and denylist](https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/protocol/src/shell_environment.rs#L13) explain QA02's omission; the three diagnostic names are not protected context variables.
+- [The local launcher](https://github.com/openai/codex/blob/a956835d020762cb2b570053af06f643a11c0ecc/codex-rs/rmcp-client/src/stdio_server_launcher.rs#L262) applies that environment to the configured command. Current [official MCP documentation](https://developers.openai.com/codex/mcp/) also distinguishes explicit server variables from forwarded parent names. The pinned release source governs this proposal.
+
+[OFFICIAL-SOURCE-LOCATORS.json](OFFICIAL-SOURCE-LOCATORS.json) records exact Git blob IDs and line excerpts. The captured generated and installed-cache config files both hash to `49ec4a6e882bed1047af5263d4a934442607aad2c8f593604ca0e2f72ada03b5`.
+
+The proposed fixture-only change is a literal three-key `env` table in a **new disposable copy** of the generated plugin:
+
+```json
+{
+  "NODE_OPTIONS": "--import=file:///G:/.../native-only-qa-03/mcp-trace-preload.mjs",
+  "GGQ_QA_MCP_ENTRY": "G:/ggq/gg-fu-plugin-builders-20261124/GraphGoblin/apps/mcp/dist/main.js",
+  "GGQ_QA_MCP_TRACE": "G:/.../native-only-qa-03/mcp-trace"
+}
+```
+
+[instrumented-mcp-config.preview.json](instrumented-mcp-config.preview.json) contains exact prospective paths. Keep `command: node`, the original sole built-entry argument, `env_vars`, names and configured30/660second timeouts unchanged. Do not edit product files, the original artifact, a previously installed cache, or any owner config. Do not change the builder ownership marker to conceal instrumentation or rerun the builder over its modified output. The instrumented copy is explicitly different from pristine builder output.
+
+Use the supported local marketplace/plugin installation commands to populate a **second fresh isolated CODEX_HOME** from that copy. Read back the actual installed `.mcp.json` before starting its app-server and require its hash to match the instrumented source copy. No shim or alternate entry replaces the built server. The passive recorder remains visible test instrumentation.
+
+If the client rejects this supported config or a real security/permission denial occurs, stop and preserve it. Do not fall back to command-line injection, protected-variable renaming, disabled policy, edited binaries or a replacement shim.
+
+## One prospective fresh attempt
+
+[NATIVE03-PROSPECTIVE-CONTRACT.json](NATIVE03-PROSPECTIVE-CONTRACT.json) is **not admitted or queueable**. No future output directory or runnable QA03 wrapper exists. Root must review this mechanism, admit the exact scope, then review/rebind final scripts and evidence hashes before queueing.
+
+1. In fresh homeA, assemble the frozen builder output into owned Unicode/spaced paths and perform native marketplace/plugin install plus `plugin/list`/`plugin/read`. Preserve original artifact/tree hashes, enabled state, three skills and declared MCP server. Do not request MCP status in this recognition phase; require zero gateway requests. This establishes pristine generated-artifact recognition, not newly traced stdio execution. Reuse QA02's qualified native14tool/two-template tier separately.
+2. Copy that pristine artifact into a separate owned path; add only the literal `env` overlay. Record every member hash before/after and the exact one-file semantic delta. Install the instrumented copy into fresh homeB through the supported CLI, verify actual installed-cache bytes, then request native status. Require the real pluginId, original entry/hash,14tools, both templates, successful empty `resources/list`, and two GETs mapped to its exact native PID/requestID. Keep homeA and its artifact unchanged.
+3. Use the same frozen entry for one direct public MCP control. Initialization, tools and template listing require zero HTTP; one successful resource list requires two mapped GETs. Require two traced sessions overall, one list request per session, four exact GETs total, zero other HTTP, zero `tools/call` or provider turns, and both observed child exits0.
+
+The two list callbacks explain two GETs after a successful typed empty200 response; QA01's single503-aborted read remains failed history. Native03 must not loosen counts to accommodate unexpected requests or retries.
+
+Reuse the original forced11-task build/60unit results and QA02 strict Claude validation; do not rebuild or replay units. Keep existing45second subprocess,15second RPC and7second close bounds. A prospective600second outer capture cap accounts for the explicitly added recognition/install phase; it is subject to root admission and changes no existing per-call/test deadline. One native attempt only, no automatic retry.
+
+The fresh actual QA actor remains Claude Opus5.5/xhigh on ordinary included Max, at or after **2026-11-25T10:10:20Z**. No API/overage/substitution or early provider. Both homes, neutral cwd, profiles, local artifacts and loopback fixture must be owned; no owner services or ports4747/4748/7443/11434. Preserve failed resources rather than broad cleanup.
+
+The future capture wrapper must expose native install receipts/paths, pre/post/cache hashes, source/runtime binding summaries and actual protocol counters to the actor. Save full raw streams first. Always retain partial observations and the first failure before asserting; do not leave all protocol evidence null when a later session-count assertion fails. Controller/source assertions remain distinct from what the actor personally reads.
+
+No product change or extra formal review is requested. Root owns admission, scripts/queue, actual native03, CI, publication and the reserved final review. Both earlier overall native FAILs remain intact.

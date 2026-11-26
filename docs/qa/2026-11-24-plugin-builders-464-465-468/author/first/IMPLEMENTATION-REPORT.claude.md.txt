@@ -1,0 +1,66 @@
+All 11 changes are in the authorized files and left unstaged. No shipped source assets, shared SKILL files or package READMEs were edited. Every listed check passes, and the generated plugin output is byte-identical to what it was before the change.
+
+## What changed
+
+**#464: refusal and recovery messages** (`tooling/plugin-output.mjs`, `.d.mts`)
+- The old single "not owned" refusal is now four distinct messages. Each names the destination, the affected entries and a recovery step: use an unused destination, or inspect the output and move it aside.
+  - **Changed inventory:** a valid marker from this builder lists different file names. The check compares names, so it still fires when the count is the same. It reports what is "listed only by the marker" and what is "generated now but not listed". Marker names are only quoted in the message, never read or removed, and the list is capped at 10.
+  - **Invalid marker:** the marker is missing, malformed, null, the wrong format or builder, or has no proper file list.
+  - **Foreign or modified entries:** an unexpected entry keeps the "is not owned by this builder" wording; a changed file says it "does not match the content this builder recorded".
+  - **Missing entries:** missing generated files or folders are listed. A missing folder no longer surfaces a raw `ENOENT`.
+- **Cleanup after a failure:** each cleanup step (close the metadata helper, restore, remove the old or new staged tree, remove the staging folder) now runs even if an earlier one throws. Nothing removes more than before, and a restore never goes into a destination another writer has created.
+  - If nothing is left behind, the original error is thrown unchanged.
+  - Otherwise the builder throws an `AggregateError`. Its `cause` is the original error, its `errors` list adds each cleanup failure, and its message says what is actually still on disk (checked, not assumed): the previous output, the unpublished new tree, or the staging folder itself.
+  - If cleanup fails after publishing, the message says the complete new output was published.
+
+**#465: unsupported source files**
+- A new `checkSourceInventory(root, files)` lives in the same helper. It refuses any file, folder or link that isn't in the builder's list, and links are never followed.
+- The Codex builder checks its plugin folder against the manifest, the MCP file the manifest names, and one `SKILL.md` per skill it finds.
+- The Claude builder checks its `plugin` folder (manifest, runtime guard, `design-draft.md`), the three shared `SKILL.md` files, and that `README.md` is a regular file.
+- Both checks run before `writePluginOutput`, so nothing in the output changes on a refusal.
+
+**#468: Claude run-loop text it adapts**
+- `adaptSkill` now fails, naming the missing text, if either `## 1. Find the loop` or the sentence ending `only if they agree.` is gone. The rewrite itself and the CRLF handling are unchanged.
+
+**Docs:** docs/02 (the tooling helper), docs/07 (allowed inputs and outputs, what the marker's hashes do and don't authorize, the refusal types, recovery and cleanup), guide 05 (the missing recovery steps after adding or removing a skill), and a new Unreleased CHANGELOG entry with an upgrade note.
+
+## Verification (all exit 0)
+
+| Check | Result |
+|---|---|
+| Tooling tests | 49 passed (was 34) |
+| Tooling coverage | 98.21% lines, 96.33% branches (was 97.68% / 94.61%) |
+| Codex tests / coverage | 11 passed (+1 live test skipped); 95.77% lines, 91.66% branches |
+| Claude tests / coverage | 11 passed; 96.22% lines, 96.29% branches |
+| Typecheck (Codex, Claude) and lint (all three) | clean |
+| Prettier `--write` / `--check`, `git diff --check` | clean |
+| `pnpm build`, before and after the change | both passed |
+
+**Byte-equivalence:** I ran `pnpm build` before touching any file and again at the end. The generated ownership markers, which record a SHA-256 for every generated file, came out identical (all 7 Claude and 6 Codex files). The second build also replaced the existing outputs through the built CLIs, which shows an ordinary rebuild still works.
+
+## What the tests establish
+- **Tooling** (`writePluginOutput`, `checkSourceInventory`): each refusal type, with the whole destination tree snapshotted to show it is unchanged and no staging folder left. Failure and cleanup paths use one-shot faults injected into `rename`, `unlink` and the metadata helper's `close`, plus one real on-disk fault (a file landing in the staging folder after publication).
+  - These cover: restore failing, the destination recreated by another writer, the unpublished tree not removed, close failing while restore still happens, and cleanup failing after publication.
+  - One test follows the stated recovery steps and rebuilds successfully.
+- **Codex `assemblePlugin`:**
+  - Refuses a nested scripts folder, an extra reference file, a stray file and a linked skill folder.
+  - Adding a valid skill triggers the changed-inventory refusal, while an unused destination accepts it.
+  - The CLI prints the exact missing-folder message.
+- **Claude `assembleClaudePlugin`:**
+  - Refuses an extra plugin-folder file, a shared reference and scripts folder, a fourth shared skill, and a README that is a folder.
+  - Each missing anchor is tested on its own; the output and its marker stay byte-identical, and a rebuild after restoring the text is byte-identical too.
+  - CRLF and LF input adapt to the same text.
+
+## Open gaps and risks
+- **Platform coverage:** everything ran on Windows only. On Linux/macOS the link tests use a directory symlink instead of a junction, and that path hasn't run.
+- **Not exercised here (left to QA):** native Codex marketplace install/load and native Claude validation.
+- **Not run (left to CI):** full repository CI and other packages.
+- **Behaviour change for users:** stray system or editor files (for example `.DS_Store`) in plugin source folders now stop assembly. This is intended and is in the CHANGELOG upgrade note.
+- **Claude needs explicit support for new skills:** a fourth shared skill makes the Claude build fail, while the Codex build packages it.
+- **POSIX race (already present, not fixed):** between the "destination is vacant" check and the rename, an *empty* folder another writer creates there can be replaced. Non-empty folders fail the rename, and Windows refuses an existing folder. Node has no rename-without-replace call.
+- **Concurrent deletion race:** if a generated folder is deleted at the same moment the builder lists it, a raw `ENOENT` can still appear; the refusal is still safe.
+- **Link checks are per entry:** links inside each input folder are refused, but the folder itself and its parents aren't checked. The source check isn't a security boundary against changes made between checking and reading.
+- **CLI display of combined failures:** the Claude CLI prints `String(error)`, so wrapped failures appear as `AggregateError: …`. The combined-failure message is asserted in the tooling tests, not at CLI level.
+- **Conservative close failure:** if the metadata helper fails to close after a fully clean publication, the build still exits as a failure, with a message saying the output was published.
+- **Codex branch coverage** is 91.66%, near the threshold. The Codex assembler change adds no branches, but I didn't record the apps' coverage before the change.
+- **Commands outside the contract:** early on I ran read-only `ls`, `cat` and `head -c` to explore, which aren't on the exact command list. One `git log` attempt was denied. Everything after that used only the listed commands.
