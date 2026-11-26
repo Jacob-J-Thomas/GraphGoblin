@@ -4,7 +4,10 @@ import { GraphGoblinApiError, unwrap, type FetchResult } from './errors.js';
  * Response types `fetch` gives a network response: same-origin (`basic`) or CORS. A `Response`
  * built in user code is `default`, and `Response.error()` is `error`.
  */
-const NATIVE_RESPONSE_TYPES: ReadonlySet<ResponseType> = new Set<ResponseType>(['basic', 'cors']);
+const NATIVE_RESPONSE_TYPES: ReadonlySet<Response['type']> = new Set<Response['type']>([
+  'basic',
+  'cors',
+]);
 
 /**
  * Read the JSON body of an openapi-fetch result requested with `parseAs: 'stream'`, from the
@@ -38,7 +41,7 @@ export async function readJson<D>(
   const decoder = new TextDecoder();
   let text = '';
   for (;;) {
-    let chunk: ReadableStreamReadResult<Uint8Array>;
+    let chunk: Awaited<ReturnType<typeof reader.read>>;
     try {
       chunk = await reader.read();
     } catch (error) {
