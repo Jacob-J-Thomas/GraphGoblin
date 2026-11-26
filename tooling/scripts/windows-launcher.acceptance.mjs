@@ -1423,18 +1423,38 @@ test(
           assert.equal(persisted.Port, port);
           assert.equal(persisted.DataDir, store);
           assert.match(persisted.LauncherAppUserModelId, /^GraphGoblin\.[a-f0-9]{24}$/);
+          // Each install embeds one enrollment bound to its own exact gateway inputs (#566).
+          assert.equal(persisted.Enrollment.Inputs, gatewayInputsDigest(persisted));
+          assert.match(persisted.Enrollment.Launch, /^v1:[a-f0-9]{64}$/);
           await assertLauncherLinks(reinstallLinks, reinstallExe, persisted);
           installed.push(persisted);
           assert.deepEqual(await sourceState(), sourceStateBefore);
           assert.deepEqual(await readdir(store), []);
           await assertNoStages([...reinstallFolders, reinstallDir]);
         }
-        // Only the explicitly changed setting differs; the launcher identity is stable.
+        // Only the explicitly changed setting differs; the launcher identity is stable. The changed
+        // override is an enrolled input and a projected launch setting, so exactly the enrollment's
+        // input and launch digests change with it while its recorded store stays the same.
         assert.equal(installed[1].LauncherAppUserModelId, installed[0].LauncherAppUserModelId);
         assert.deepEqual(
-          { ...installed[1], Environment: null },
-          { ...installed[0], Environment: null },
+          { ...installed[1], Environment: null, Enrollment: null },
+          { ...installed[0], Environment: null, Enrollment: null },
         );
+        const [warn, debug] = installed.map(({ Enrollment: { Inputs, Launch, ...stable } }) => ({
+          Inputs,
+          Launch,
+          stable,
+        }));
+        assert.deepEqual(Object.keys(warn.stable), [
+          'Version',
+          'DataDir',
+          'Database',
+          'Lookup',
+          'Target',
+        ]);
+        assert.deepEqual(debug.stable, warn.stable);
+        assert.notEqual(debug.Inputs, warn.Inputs);
+        assert.notEqual(debug.Launch, warn.Launch);
         assert.notDeepEqual(await readFile(reinstallPinned), seededPin);
       },
     );
