@@ -103,6 +103,10 @@ pnpm.cmd --filter @graphgoblin/plugin-codex assemble
 codex plugin add graphgoblin@graphgoblin-local
 ```
 
+The build packages only the plugin manifest, its `.mcp.json` and each skill folder's `SKILL.md`. Any other file, folder or link under `apps/plugin-codex/plugin/graphgoblin` stops the build and is listed; move it out of the plugin folder. Adding or removing a skill changes the generated file list, so the builder refuses to replace the previous `dist/marketplace` and names the changed files. Inspect that directory and move it aside, or pass an unused `--out` path, then assemble and reinstall. Do the same when a refusal names unexpected, modified or missing entries in the output.
+
+If a rebuild fails part-way, its message says whether the previous output remains in the sibling `.marketplace.graphgoblin-build` directory and whether the new output was already published. Keep what you need from that directory, then move it aside before building again.
+
 Rebuilding an existing output requires Windows PowerShell with `Add-Type` on Windows, `/usr/bin/xattr` on macOS, or `/usr/bin/python3` 3.8 or later on Linux. If the builder cannot verify the destination or detects an alternate data stream or extended attribute, keep that directory and assemble to an unused `--out` path. See the [plugin build instructions](../../apps/plugin-codex/README.md).
 
 Set `GG_API_URL` and, when required, `GG_API_KEY` before starting Codex. The plugin passes those variables to MCP. Its MCP tool timeout is 660 seconds to accommodate the longest wait call.
@@ -155,6 +159,8 @@ The plugin inherits `GG_API_URL` and, when needed, `GG_API_KEY`. In an authentic
 - Use `/graphgoblin:design-loop` to create or update an unpublished draft and see validation issues.
 - Use `/graphgoblin:run-loop` to start a loop. Explicitly request draft execution when the loop has no published version. For a published loop with a newer draft, explain that the draft cannot be selected and do not substitute a published run unless the user confirms it.
 - Use `/graphgoblin:inspect-run` with the run ID to read the outcome and events.
+
+Rebuilding the Claude artifact follows the same output rules. Its build stops if `apps/plugin-claude/plugin` or the shared skills folder contains a file, folder or link it does not package, or if the shared run-loop skill loses text that the Claude adaptation replaces.
 
 Claude uses the existing stdio MCP server for all three commands, including its opt-in draft tools. See [local installation and refresh](../../apps/plugin-claude/README.md) for a persistent copy, alternate Node selection, and troubleshooting.
 

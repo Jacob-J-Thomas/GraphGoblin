@@ -1,6 +1,16 @@
-import { mkdtemp, readFile, realpath, rm, writeFile, mkdir, cp } from 'node:fs/promises';
+import {
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rm,
+  writeFile,
+  mkdir,
+  cp,
+  symlink,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
@@ -38,6 +48,18 @@ const MCP_TOOLS = [
   'provide_input',
   'send_signal',
 ];
+
+/** Every entry below `dir` with its text, to show a refusal left an output exactly as it was. */
+async function snapshot(dir: string): Promise<Record<string, string>> {
+  const tree: Record<string, string> = {};
+  for (const entry of await readdir(dir, { recursive: true, withFileTypes: true })) {
+    const path = join(entry.parentPath, entry.name);
+    tree[relative(dir, path).split(sep).join('/')] = entry.isFile()
+      ? await readFile(path, 'utf8')
+      : 'folder';
+  }
+  return tree;
+}
 
 describe('plugin source', () => {
   it('has a valid manifest, MCP config, and the three skills', async () => {
@@ -164,6 +186,80 @@ describe('assemble', () => {
   );
 
   it(
+    'refuses unsupported source entries before changing the marketplace',
+    async () => {
+      const copy = join(scratch, 'source 漢', 'plugin', 'graphgoblin');
+      await cp(pluginDir, copy, { recursive: true });
+      const outDir = join(scratch, 'marketplace');
+      const mcpEntry = join(scratch, 'main.js');
+      await assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+      const before = await snapshot(outDir);
+      const assemble = () => assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+
+      const skill = join(copy, 'skills', 'run-loop');
+      await mkdir(join(skill, 'scripts'));
+      await writeFile(join(skill, 'scripts', 'collect.ps1'), 'Write-Output 1');
+      await writeFile(join(skill, 'reference.md'), 'supporting reference');
+      await expect(assemble()).rejects.toThrow(
+        `Unsupported plugin source entries in "${copy}": "skills/run-loop/reference.md", "skills/run-loop/scripts/". This builder packages only ".codex-plugin/plugin.json", ".mcp.json", "skills/`,
+      );
+      await rm(join(skill, 'scripts'), { recursive: true });
+      await rm(join(skill, 'reference.md'));
+
+      // Neither a stray file nor a linked folder in the skills folder is skipped or followed.
+      const elsewhere = join(scratch, 'elsewhere skill');
+      await mkdir(elsewhere);
+      await writeFile(join(elsewhere, 'SKILL.md'), await readFile(join(skill, 'SKILL.md')));
+      await writeFile(join(copy, 'skills', 'notes.txt'), 'not a skill');
+      await symlink(
+        elsewhere,
+        join(copy, 'skills', 'linked-skill'),
+        process.platform === 'win32' ? 'junction' : 'dir',
+      );
+      await expect(assemble()).rejects.toThrow(
+        `: "skills/linked-skill" (link, not followed), "skills/notes.txt". This builder packages only`,
+      );
+      expect(await snapshot(outDir)).toEqual(before);
+      expect(await readdir(scratch)).not.toContain('.marketplace.graphgoblin-build');
+    },
+    fileIoTimeout,
+  );
+
+  it(
+    'names a changed generated inventory and keeps the earlier marketplace',
+    async () => {
+      const copy = join(scratch, 'source', 'plugin', 'graphgoblin');
+      await cp(pluginDir, copy, { recursive: true });
+      const outDir = join(scratch, 'marketplace');
+      const mcpEntry = join(scratch, 'main.js');
+      await assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+      const before = await snapshot(outDir);
+
+      // A new valid skill is a supported input, so it changes the generated inventory.
+      await mkdir(join(copy, 'skills', 'review-loop'));
+      await writeFile(
+        join(copy, 'skills', 'review-loop', 'SKILL.md'),
+        '---\nname: review-loop\ndescription: Review a GraphGoblin loop draft before publishing it.\n---\n\n# Review\n',
+      );
+      await expect(assemblePlugin({ pluginDir: copy, outDir, mcpEntry })).rejects.toThrow(
+        `Unsafe plugin output destination "${outDir}": its ownership marker from this builder lists a different file inventory from the one this version generates (generated now but not listed: "plugins/graphgoblin/skills/review-loop/SKILL.md"). The builder verifies and replaces only its current inventory and never removes entries named only by a marker. Inspect this directory and move it aside, or choose an unused destination`,
+      );
+      expect(await snapshot(outDir)).toEqual(before);
+
+      const fresh = join(scratch, 'fresh marketplace');
+      const assembled = await assemblePlugin({ pluginDir: copy, outDir: fresh, mcpEntry });
+      expect(assembled.skills.map((skill) => skill.name).sort()).toEqual([
+        'design-loop',
+        'inspect-run',
+        'review-loop',
+        'run-loop',
+      ]);
+      expect((await loadPlugin(join(fresh, 'plugins', 'graphgoblin'))).skills).toHaveLength(4);
+    },
+    fileIoTimeout,
+  );
+
+  it(
     'rejects a skill whose folder and name disagree',
     async () => {
       const testDir = scratch;
@@ -207,6 +303,16 @@ describe('assemble', () => {
       ).toBe(1);
       expect(lines.at(-1)).toMatch(/Unsafe plugin output destination.*unrelated.txt.*not owned/);
       expect(await readFile(sentinel, 'utf8')).toBe('preserve');
+
+      // A missing generated folder is named instead of surfacing a raw ENOENT.
+      await rm(sentinel);
+      await rm(join(out, 'plugins', 'graphgoblin', 'skills'), { recursive: true });
+      expect(
+        await runCli(['--out', out, '--mcp-entry', entry], fakePackage, (line) => lines.push(line)),
+      ).toBe(1);
+      expect(lines.at(-1)).toBe(
+        `Unsafe plugin output destination "${resolve(out)}": expected generated entries are missing: "plugins/graphgoblin/skills". Choose an unused destination, or inspect this directory and move it aside before rebuilding`,
+      );
     },
     fileIoTimeout,
   );

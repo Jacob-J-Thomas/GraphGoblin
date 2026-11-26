@@ -1,12 +1,16 @@
-import { statSync } from 'node:fs';
+import { lstatSync, statSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { join, resolve, sep } from 'node:path';
-import { writePluginOutput } from '@graphgoblin/tooling/plugin-output';
+import { checkSourceInventory, writePluginOutput } from '@graphgoblin/tooling/plugin-output';
 
 const skills = ['design-loop', 'inspect-run', 'run-loop'] as const;
 type Skill = (typeof skills)[number];
 const manifest = '.claude-plugin/plugin.json';
 const runtimeGuard = 'check-runtime.cjs';
+const designDraft = 'design-draft.md';
+/** Shared run-loop text that the Claude run-consent adaptation replaces. */
+const findLoop = '## 1. Find the loop';
+const draftConsent = 'start it from the draft (`allowDraft: true`) only if they agree.';
 
 export function defaultPaths(packageDir: string) {
   return {
@@ -40,9 +44,14 @@ export function adaptSkill(name: Skill, markdown: string, designInstructions: st
       );
     adapted += draftSection + '\n' + designInstructions;
   } else if (name === 'run-loop') {
+    const missing = [findLoop, draftConsent].filter((anchor) => !adapted.includes(anchor));
+    if (missing.length)
+      throw new Error(
+        `The shared run-loop skill is missing the Claude adaptation ${missing.length > 1 ? 'anchors' : 'anchor'} ${missing.map((anchor) => JSON.stringify(anchor)).join(' and ')}. Restore the shared text or update the Claude run-loop adaptation, then assemble again`,
+      );
     adapted = adapted
       .replace(
-        '## 1. Find the loop',
+        findLoop,
         [
           'Only start a run when the user explicitly requests one. An ambiguous request or a failed',
           'response after starting a run is a reason to check its current state before retrying.',
@@ -54,7 +63,7 @@ export function adaptSkill(name: Skill, markdown: string, designInstructions: st
         ].join('\n'),
       )
       .replace(
-        'start it from the draft (`allowDraft: true`) only if they agree.',
+        draftConsent,
         'start it from the draft (`allowDraft: true`) only if they explicitly requested the draft or confirmed draft execution.',
       );
   }
@@ -63,7 +72,11 @@ export function adaptSkill(name: Skill, markdown: string, designInstructions: st
   return adapted;
 }
 
-/** Assemble the Claude-native local artifact from the built MCP entry. */
+/**
+ * Assemble the Claude-native local artifact from the built MCP entry. Its finite inputs are the
+ * plugin folder's manifest, runtime guard and draft instructions, the three shared skills and the
+ * package README; any other entry in those folders is refused before the output is touched.
+ */
 export async function assembleClaudePlugin(
   packageDir: string,
   overrides: { outDir?: string | undefined; mcpEntry?: string | undefined } = {},
@@ -72,9 +85,20 @@ export async function assembleClaudePlugin(
   const mcpEntry = resolve(overrides.mcpEntry ?? defaults.mcpEntry);
   if (!statSync(mcpEntry, { throwIfNoEntry: false })?.isFile())
     throw new Error(`GraphGoblin MCP entry is missing at "${mcpEntry}". Run pnpm build first.`);
+  // Package only the finite inputs read below; refuse anything else before touching the output.
+  await checkSourceInventory(defaults.pluginDir, [manifest, runtimeGuard, designDraft]);
+  await checkSourceInventory(
+    defaults.sharedSkills,
+    skills.map((name) => `${name}/SKILL.md`),
+  );
+  const readme = join(packageDir, 'README.md');
+  if (!lstatSync(readme, { throwIfNoEntry: false })?.isFile())
+    throw new Error(
+      `Unsupported plugin source entry "${readme}": the package README.md must be a regular file, and links are not followed`,
+    );
   const [documentation, designInstructions, manifestBytes, guardBytes] = await Promise.all([
-    readFile(join(packageDir, 'README.md')),
-    readFile(join(defaults.pluginDir, 'design-draft.md'), 'utf8'),
+    readFile(readme),
+    readFile(join(defaults.pluginDir, designDraft), 'utf8'),
     readFile(join(defaults.pluginDir, manifest)),
     readFile(join(defaults.pluginDir, runtimeGuard)),
   ]);
