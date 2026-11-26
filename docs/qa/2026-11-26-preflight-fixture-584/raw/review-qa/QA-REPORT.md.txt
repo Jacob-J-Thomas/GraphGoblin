@@ -1,0 +1,50 @@
+PASS WITH LIMITS: PR #576 head `c7559bff`. Stable in 10 runs with no flake, sensitive to assertion and fixture mutations, and the built CLI still shows the #545/#546 behaviour. The limits are listed at the end.
+
+# Independent QA: #584 fixture staging in `apps/api/src/preflight-catalog.test.ts` (PR #576)
+
+QA agent: Claude Opus 5.5, independent of the author. Scope (`qa:touched-systems`): the change is test-only, so the touched system is the preflight catalog test file. QA covered its stability, its sensitivity and the public preflight behaviour those tests stand for.
+Source: worktree `G:/ggq/gg-fu-preflight-20261124/GraphGoblin`, HEAD `c7559bff1c1649f51709c43d7f841cfcbb33f614`. The test file SHA-256 is `c65f97518387813da430e1260572b7b236b6b1a763146c71f10f40e5f84340f9`. The worktree was clean before and after QA. No source was edited: every mutation ran on a scratch copy under `G:/ggq/tmp/preflight-rq-01/`.
+Runtime: Node v22.23.4 (project runtime), pnpm 12.8.1 and Vitest 5.0.3 on Windows 11. TEMP and TMP were set to `G:/ggq/tmp/preflight-rq-01/temp`.
+
+## Case table
+
+| ID | Steps | Expected | Actual | Result | Raw output |
+| --- | --- | --- | --- | --- | --- |
+| Q1 | `pnpm --filter @graphgoblin/api exec vitest run src/preflight-catalog.test.ts --reporter=verbose`, run 10 times one after another | 31/31 every run, no errors | 10/10 runs exited 0 with `Tests 31 passed (31)`. No `×`, `Error:` or unhandled errors. Each run took 12.9–14.6 s, while another worker's build and QA were sharing the machine. | PASS | `raw/repeat/summary.txt`, `run-01..10.log` |
+| M00 | Scratch control copy: the HEAD file with only its imports and `import.meta.url` made absolute, run through the scratch config (API settings: forks, `--expose-gc`, same setup files) | 31/31 | 31/31 | PASS (harness valid) | `raw/mutants/logs/M00-control.log` |
+| M01 | Remove the DB byte-equality check in `expectStoreUnchanged` | Comparator test fails | Only "rejects database changes…" fails: "expected [Function] to throw" | PASS (sensitive) | `M01-*.log` |
+| M02 | Remove the existing-WAL equality check | Comparator test fails | Only the comparator fails | PASS (sensitive) | `M02-*.log` |
+| M03 | Remove the "no new WAL frames" check | Comparator test fails | Only the comparator fails | PASS (sensitive) | `M03-*.log` |
+| M04 | Unsupported arm: drop `UPDATE gg_upgrade_state SET format_version = 3` | The unsupported case fails | Only the unsupported case fails: preflight exit 0 where 1 was expected | PASS (the fixture produces the format-3 store) | `M04-*.log` |
+| M05 | `pendingFixture` applies every shipped migration (no prefix) | The #546 pending tests fail | 6 fail, all on `WARN Database 3 migration(s) pending` (lines 683 and 748) | PASS (the fixture produces the pending store) | `M05-*.log` |
+| M06 | `stagedStore`: TRUNCATE replaced by PASSIVE | The all-zero gate stops every staged fixture | 24 fail. The other 7 are the tests with no store built by `stagedStore`: #545 missing ×3, #545 empty ×3 and corrupt. The failures read e.g. `{busy:0, log:141, …}` ≠ all-zero. | PASS (the gate does real work) | `M06-*.log` |
+| M07 | Unsupported arm: TRUNCATE replaced by PASSIVE | The all-zero gate stops the copy | Only the unsupported case fails: `{busy:0, log:1, checkpointed:1}` | PASS | `M07-*.log` |
+| M08 | Unsupported arm: write a file at `dbFile` before the exclusive copy | `COPYFILE_EXCL` refuses | Only the unsupported case fails with `EEXIST … copyfile` | PASS | `M08-*.log` |
+| M09 | Model of a late native finalizer, **staged** (current code): each fixture writer's `close()` is deferred and run, with GC and event-loop turns around it, after preflight returns and before the after-snapshot | All pass: late cleanup reaches only `fixture-writer-*` | 31/31 | PASS | `M09-*.log` |
+| M10 | Same model, **unstaged**: the `pendingFixture` body and unsupported arm as they stood before `a5cd4a51`/`080c1736` (writer on the inspected path) | The strict assertion catches the WAL that the late cleanup removes | 6 fail: the 5 #546 "admits…" tests and the unsupported case, at `expect(after[walName]?.equals(existingWal)).toBe(true)`. The committed-WAL test still passes because its inspected path is a copy. | PASS (sensitive under the model) | `M10-*.log` |
+| M11 | Plain revert of both staging changes (pre-change code, ordinary `close()`), no model | No expectation set; run to document a limit | 31/31: a single normal run does not detect the revert | Recorded limit (see L1) | `M11-*.log` |
+| N1 | Built `node apps/api/dist/main.js --preflight` on a staged pending store (prefix to `0026_chat`, guard `current`, 3 pending). `GG_DEFAULTS` codex = stored-only `gpt-rq-stored-only`/`low` | Exit 0; `WARN Database 3 migration(s) pending`; `ok Default model … is in the model catalog and supports effort low`; DB unchanged, WAL absent or empty | As expected. DB sha `e30a6cfe…` unchanged. A 0-byte WAL and `-shm` were created (the documented reader exception). | PASS | `raw/native/NATIVE-RESULTS.json`, `native.stdout.log` |
+| N2 | Same store. Stored `gpt-5.5` efforts narrowed to `[low]`, config asks `high` (the shipped seed lists `high`). Then ordinary startup | Preflight exit 1 with `FAIL … "high" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED)`; startup refuses; bytes unchanged | As expected. Startup exit 1: `Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION) … EFFORT_UNSUPPORTED`. DB and WAL unchanged after both. | PASS | same |
+| N3 | Same store. Stored `gpt-6.1-terra` row disabled (the shipped seed is enabled), config `medium` | Exit 0 with `WARN Default model gpt-6.1-terra is in the model catalog but disabled`, not ok | As expected. Bytes unchanged. | PASS | same |
+| N4 | Positive control: the same staged current store copied while still format 4. Codex `gpt-6-luna`/`low` | Exit 0; `ok Database reachable and migrated`; `ok Default model … supports effort low` | As expected. Bytes unchanged. | PASS | same |
+| N5 | Unsupported store: the N4 store downgraded to format 3 at the private path, then copied. Same config. Then ordinary startup | Exit 1; `FAIL Database The store is format 3; this build reads only format 4…`; `WARN Default model … not checked until the database is current and readable`; startup refuses; bytes unchanged | As expected. Startup exit 1: "cannot open the store … Found: format 3". DB and WAL unchanged after both. | PASS | same |
+| S1 | `git diff --check 2ac2cb73 c7559bff -- apps CHANGELOG.md`; `git diff --check origin/main c7559bff -- . ':!docs/qa'` | Clean | Clean | PASS | `raw/review/diff-stat-and-checks.txt` |
+
+Each native store was built the same way. A writer opened a private `stage-*` path, `TRUNCATE` was required to return busy/log/checkpointed of 0, and the writer closed. Only the main DB was then copied with `COPYFILE_EXCL` into a fresh `inspect-*` directory, which held only `gateway.db` before preflight. Harness isolation followed the earlier independent QA. Codex was the repository's `readiness-cli.mjs` fixture, which refuses turns. The Claude binary path was deliberately missing, Ollama was disabled, and the API bound only to loopback (port 0). No owner store, provider or account was used. The API was rebuilt under the heavy-suite lock with `pnpm build --filter=@graphgoblin/api --force` (7/7 tasks, 0 cached, exit 0). A `tsc -b --dry` taken before the rebuild had already reported every project up to date. Dist hashes are in `raw/native/dist-hashes.txt`. The lock was taken at 04:23:29Z and released at 04:24:17Z.
+
+## Limits (what this QA does not establish)
+
+- **L1.** The tests do not deterministically detect a regression of the staging itself. A plain revert passes in a single run (M11). The staging's protective effect is shown only under a modeled late finalizer (M09 against M10), not by reproducing the real GC timing that #584 observed on macOS. Ten clean runs here, plus the author's 2 full-suite and 2 focused runs, are consistent with the fix but cannot prove the race is gone. REVIEW.md R1 is the matching follow-up candidate.
+- **L2.** Windows only. The original #584 failure was on macOS. The macOS hosted job is the launcher job, not the API suite.
+- **L3.** API coverage was not run locally, as the brief directed. At my last readback (about 04:25Z), hosted CI run 45753245193 on `c7559bff` showed macOS launcher, Windows launcher, Template image, Repository checks (which includes typecheck, lint and format check) and Coverage as success. Browser was still in progress and Gates was queued. I did not wait for them and did not read the coverage numbers. I did not re-run typecheck or lint locally and rely on that job and the author's logs `03`/`04`/`08`/`09`.
+- **L4.** The mutation harness runs the copies from `G:/ggq/tmp` through a scratch Vitest config. It resolves `@graphgoblin/*` by alias and dedupes `vitest`. The unchanged control (M00) passing 31/31 shows the harness is faithful, but it is not the repository's own config file.
+- **L5.** The native checks compare DB and WAL bytes and directory listings only. `-shm` contents were not compared, which the reader exception allows. The process starts used fake or missing harnesses, so readiness against real providers is out of scope.
+- **L6.** The repository QA packet `docs/qa/2026-11-24-preflight-defaults-catalog/` has not been updated for these commits. That is left to the orchestrator.
+
+## Recommendations (not added to the branch)
+
+- A deterministic guard for the #584 invariant would turn L1 into a regression test. One way: a test-local registry of fixture writer paths, checked against every `dbFile` given to `cli()`/`storeBytes`. M10 shows the shape of a failing case.
+
+## Disposable state left for the orchestrator
+
+`G:/ggq/tmp/preflight-rq-01/` holds the repeat logs, the mutant copies, the scratch config, `native/work` (disposable stores and `*-data` dirs) and temp. It contains no junctions. Per COMMON-RULES it was not deleted.

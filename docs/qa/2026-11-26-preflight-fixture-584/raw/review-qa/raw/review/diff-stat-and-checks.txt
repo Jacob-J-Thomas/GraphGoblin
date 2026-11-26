@@ -1,0 +1,55 @@
+# git diff origin/main(4e1037c9) c7559bff --stat
+ CHANGELOG.md                                                                                       |   15 ++
+ apps/api/src/preflight-catalog.test.ts                                                             |  409 ++++++++++++++++++++++++++++++++-
+ apps/api/src/preflight.test.ts                                                                     |  205 ++++++++++++++++-
+ apps/api/src/preflight.ts                                                                          |  162 ++++++++++---
+ docs/11-security-and-distribution.md                                                               |   44 ++--
+ docs/guide/01-install-and-first-run.md                                                             |    4 +-
+ docs/qa/2026-11-24-preflight-defaults-catalog/.gitattributes                                       |    5 +
+ docs/qa/2026-11-24-preflight-defaults-catalog/MANIFEST.json                                        |  264 ++++++++++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/README.md                                            |   17 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/author/exit.json                                 |  163 ++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/author/report.md.txt                             |   65 ++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/baseline/public-entry.json                       |  269 ++++++++++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/baseline/reproduce-public-entry.mjs              |  186 +++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/doc-correction/exit.json                         |   64 ++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/doc-correction/expected-replacement.json         |    5 +
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/doc-correction/final-source-binding.json         |   23 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/doc-correction/provider-attestation.json         |   86 +++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/doc-correction/quota-attempt.exit.json           |   45 ++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/doc-correction/quota-attempt.report.md.txt       |    1 +
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/doc-correction/report.md.txt                     |   23 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/BUILD-RESULT.json                    |   28 +++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/CANDIDATE-PUBLIC-ENTRY.json          |  344 ++++++++++++++++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/DIFF-RESULT.json                     |   20 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/FOCUSED-RESULT.json                  |   20 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/FROZEN-AFTER.json                    |   19 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/FROZEN-BEFORE.json                   |   19 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/NATIVE-RESULT.json                   |  164 ++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/PUBLIC-ENTRY-COMPARISON.json         |  132 +++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/SOURCE-BINDINGS.json                 |   42 ++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/build.stderr.log.txt                 |    1 +
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/build.stdout.log.txt                 |   25 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/exit.json                            |   76 +++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/focused.stderr.log.txt               |    1 +
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/focused.stdout.log.txt               |   37 +++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/native.stdout.log.txt                |  122 ++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/report.md.txt                        |   85 +++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/reproduce-candidate-public-entry.mjs |  233 +++++++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/qa-original/run-check.py                         |  222 ++++++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/baseline-preflight.mjs                 |  476 +++++++++++++++++++++++++++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/closure-probe-results.json             |   89 ++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/closure-probe.mjs                      |   51 +++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/decision.json                          |   78 +++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/driver-control-results.json            |   31 +++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/driver-control.mjs                     |   25 ++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/original-source.patch                  | 1139 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/report.md.txt                          |   61 +++++
+ docs/qa/2026-11-24-preflight-defaults-catalog/raw/review-01/source-binding.json                    |   26 +++
+ 47 files changed, 5551 insertions(+), 70 deletions(-)
+
+# git diff 080c1736 c7559bff --stat -- (PR product+test files)
+(empty above = merge/CHANGELOG commits changed none of these)
+
+# git diff --check 2ac2cb73 c7559bff -- apps CHANGELOG.md
+CLEAN

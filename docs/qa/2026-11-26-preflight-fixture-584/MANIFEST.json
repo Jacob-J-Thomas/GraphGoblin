@@ -1,0 +1,673 @@
+{
+  "schemaVersion": 1,
+  "issues": [
+    545,
+    546
+  ],
+  "relatedIssues": [
+    584,
+    567
+  ],
+  "packetPath": "docs/qa/2026-11-26-preflight-fixture-584",
+  "preparedAt": "2026-11-26T04:34:33Z",
+  "sourceBranch": "codex/gg-fu-preflight-20261124",
+  "reviewedHead": "c7559bff1c1649f51709c43d7f841cfcbb33f614",
+  "targetBase": "4e1037c9e9922ffa27237fe79850403b6b54fc70",
+  "fixtureCommits": [
+    "a5cd4a51ddf1c7396862ced9ff0cfd5a61185aa8",
+    "080c1736b677cb550cdf96b8de0f65b97a1bdc82"
+  ],
+  "integrationCommits": [
+    "80d292a3fb9aa3036b0159fd44716822cd4d39ed",
+    "c7559bff1c1649f51709c43d7f841cfcbb33f614"
+  ],
+  "supersedes": {
+    "packet": "docs/qa/2026-11-24-preflight-defaults-catalog",
+    "field": "correctedFileHashes[\"apps/api/src/preflight-catalog.test.ts\"]",
+    "recordedSha256": "e5adea910d0fdcc39b4a12ef1e9d52f3e09d55739abc9c77d92fe01f6d6005f8",
+    "reviewedHeadSha256": "c65f97518387813da430e1260572b7b236b6b1a763146c71f10f40e5f84340f9",
+    "chain": [
+      {
+        "commit": "ca0aeeb7",
+        "sha256": "e5adea910d0fdcc39b4a12ef1e9d52f3e09d55739abc9c77d92fe01f6d6005f8",
+        "note": "Hash recorded by the earlier packet."
+      },
+      {
+        "commit": "2ac2cb73",
+        "sha256": "b7ca3e4cf20dc35a86827a07fc85bcb249bcbfb60a47e7691eeb44470b5445f4",
+        "note": "Integration of main, including the #577 inspector work and the #584 catalog fixture (fa7615c3)."
+      },
+      {
+        "commit": "a5cd4a51",
+        "sha256": "d25d6c998f28c374e471fbeb95f86963e13d58b49032432eb68fd757293aee99",
+        "note": "Pending-migration fixture writer staged."
+      },
+      {
+        "commit": "080c1736",
+        "sha256": "c65f97518387813da430e1260572b7b236b6b1a763146c71f10f40e5f84340f9",
+        "note": "Unsupported-format fixture writer staged; unchanged through c7559bff."
+      }
+    ]
+  },
+  "fileHashesAtReviewedHead": {
+    "CHANGELOG.md": "9302c73b526a6b20e64904ff15ed326f58806953fb4edebd702ec299c1368ea0",
+    "apps/api/src/preflight-catalog.test.ts": "c65f97518387813da430e1260572b7b236b6b1a763146c71f10f40e5f84340f9",
+    "apps/api/src/preflight.test.ts": "23a1a86a24f74686e89be78d73eeeb45ae09a6b01b8a285032e80716c0f2d66e",
+    "apps/api/src/preflight.ts": "b52423f121c10728ea8160cd5e6c890210548d04b46b5010a1b149f628b16d45",
+    "docs/11-security-and-distribution.md": "a712afae8c33a1de713cbf5b981e8e76790833973070b25798e71e6e90b41d79",
+    "docs/guide/01-install-and-first-run.md": "688b6295686ac44700bb9ca6993a65ac5a52dfe7d42839eaf279603d8a3f2f6d"
+  },
+  "unchangedSinceEarlierPacket": [
+    "apps/api/src/preflight.test.ts",
+    "apps/api/src/preflight.ts"
+  ],
+  "changedOnlyByMainIntegration": [
+    "CHANGELOG.md",
+    "docs/11-security-and-distribution.md",
+    "docs/guide/01-install-and-first-run.md"
+  ],
+  "results": {
+    "independentReview": "READY (no FIX-IN-PR findings; P3 follow-up candidate R1)",
+    "independentQA": "PASS WITH LIMITS (L1-L6)",
+    "hostedCI": "run 45753245193 on c7559bff: all seven jobs succeeded",
+    "oppositeFamilyTargetedReview": "pending (deferred to 2026-11-28)",
+    "freshFinalAudit": "pending (deferred to 2026-11-28)",
+    "ownerAcceptance": "pending"
+  },
+  "sourceRoot": "External delivery evidence folder 2026-11-24-followups, outside the repository; sourcePath values are relative to it.",
+  "rawMembers": [
+    {
+      "path": "raw/author/01-preflight-catalog-pre-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "969ed873875f884b47ab21b762b2364a23e855262f548049dbd82656a889a379",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-01/01-preflight-catalog-pre-merge.log",
+      "renamedFrom": "01-preflight-catalog-pre-merge.log"
+    },
+    {
+      "path": "raw/author/02-preflight-pre-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "52fdcc987c6b5e69524a90e4814433555341e77c71765aedf6858175c93ce174",
+      "bytes": 205,
+      "sourcePath": "publication-545-546/claude-window-01/02-preflight-pre-merge.log",
+      "renamedFrom": "02-preflight-pre-merge.log"
+    },
+    {
+      "path": "raw/author/03-api-typecheck-pre-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "bytes": 53,
+      "sourcePath": "publication-545-546/claude-window-01/03-api-typecheck-pre-merge.log",
+      "renamedFrom": "03-api-typecheck-pre-merge.log"
+    },
+    {
+      "path": "raw/author/04-api-lint-pre-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "050c69da23536758722729aeda55a8d0fb9d557495ef6d33d70873a3b64a71c1",
+      "bytes": 11,
+      "sourcePath": "publication-545-546/claude-window-01/04-api-lint-pre-merge.log",
+      "renamedFrom": "04-api-lint-pre-merge.log"
+    },
+    {
+      "path": "raw/author/05-prettier-pre-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "bytes": 66,
+      "sourcePath": "publication-545-546/claude-window-01/05-prettier-pre-merge.log",
+      "renamedFrom": "05-prettier-pre-merge.log"
+    },
+    {
+      "path": "raw/author/06-preflight-catalog-post-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "8b4c040af229baab2415e140407b16a80fc72534a367a0950e1ecee03f3b4109",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-01/06-preflight-catalog-post-merge.log",
+      "renamedFrom": "06-preflight-catalog-post-merge.log"
+    },
+    {
+      "path": "raw/author/07-preflight-post-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "9dc8186e4f068a257ff3be5e8b9af994029ef9bc3e9c2506c40aac2e7f2033d9",
+      "bytes": 205,
+      "sourcePath": "publication-545-546/claude-window-01/07-preflight-post-merge.log",
+      "renamedFrom": "07-preflight-post-merge.log"
+    },
+    {
+      "path": "raw/author/08-api-typecheck-post-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "33a187561d34a5b8dc187db3265247c3d279b73d7d1ee4ac766f5c6ca484d7f1",
+      "bytes": 53,
+      "sourcePath": "publication-545-546/claude-window-01/08-api-typecheck-post-merge.log",
+      "renamedFrom": "08-api-typecheck-post-merge.log"
+    },
+    {
+      "path": "raw/author/09-api-lint-post-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "050c69da23536758722729aeda55a8d0fb9d557495ef6d33d70873a3b64a71c1",
+      "bytes": 11,
+      "sourcePath": "publication-545-546/claude-window-01/09-api-lint-post-merge.log",
+      "renamedFrom": "09-api-lint-post-merge.log"
+    },
+    {
+      "path": "raw/author/10-preflight-ollama-post-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "0e96d46ae6e29a9fe8d322f7f38550ea33e4bc5b6b14d315d5a8318a8bdfcad4",
+      "bytes": 204,
+      "sourcePath": "publication-545-546/claude-window-01/10-preflight-ollama-post-merge.log",
+      "renamedFrom": "10-preflight-ollama-post-merge.log"
+    },
+    {
+      "path": "raw/author/13-api-coverage-post-merge.log.txt",
+      "tier": "author-b3",
+      "sha256": "6b249f6f17279ba358c21fe7202a0a2a3d194224aa136d264b81266fcc84df28",
+      "bytes": 239838,
+      "sourcePath": "publication-545-546/claude-window-01/13-api-coverage-post-merge.log",
+      "renamedFrom": "13-api-coverage-post-merge.log"
+    },
+    {
+      "path": "raw/author/14-subloop-restart-focused.log.txt",
+      "tier": "author-b3",
+      "sha256": "08791e28a2ebdad4a2a974baaf420cfb9ff6bbfd8ab2d02a7c4c6aab478ccd02",
+      "bytes": 863,
+      "sourcePath": "publication-545-546/claude-window-01/14-subloop-restart-focused.log",
+      "renamedFrom": "14-subloop-restart-focused.log"
+    },
+    {
+      "path": "raw/author/15-api-coverage-attempt2.log.txt",
+      "tier": "author-b3",
+      "sha256": "6d131c4dd1297acefc51e1dad5c429bc1b068528986df026f265940e933057a4",
+      "bytes": 300508,
+      "sourcePath": "publication-545-546/claude-window-01/15-api-coverage-attempt2.log",
+      "renamedFrom": "15-api-coverage-attempt2.log"
+    },
+    {
+      "path": "raw/author/16-prettier-changelog.log.txt",
+      "tier": "author-b3",
+      "sha256": "17aa973d3f004560237d9a95171210b0671deff23d61628eecf7322ff5938f20",
+      "bytes": 66,
+      "sourcePath": "publication-545-546/claude-window-01/16-prettier-changelog.log",
+      "renamedFrom": "16-prettier-changelog.log"
+    },
+    {
+      "path": "raw/author/17-format-check.log.txt",
+      "tier": "author-b3",
+      "sha256": "1d66faad74f5e8709353f7288592866bd3a9095da1174a916e7aa632949971e2",
+      "bytes": 87,
+      "sourcePath": "publication-545-546/claude-window-01/17-format-check.log",
+      "renamedFrom": "17-format-check.log"
+    },
+    {
+      "path": "raw/review-qa/EVIDENCE-SHA256SUMS.txt",
+      "tier": "independent-review-qa",
+      "sha256": "426e165cb584dfc8b625d48c8bc23ea2070fdc17e55b284a6e8a502d1ece5f2c",
+      "bytes": 6748,
+      "sourcePath": "publication-545-546/claude-window-rq-01/EVIDENCE-SHA256SUMS.txt"
+    },
+    {
+      "path": "raw/review-qa/QA-REPORT.md.txt",
+      "tier": "independent-review-qa",
+      "sha256": "7a21260a2cb73c7088f9945a4eecc8fb7da6e48d06065a945e817039b6c2ae5a",
+      "bytes": 9965,
+      "sourcePath": "publication-545-546/claude-window-rq-01/QA-REPORT.md",
+      "renamedFrom": "QA-REPORT.md"
+    },
+    {
+      "path": "raw/review-qa/REVIEW.md.txt",
+      "tier": "independent-review-qa",
+      "sha256": "666331bfd85880e59958a7eef0de3fc765b8867bfc3be40005e9590ad71bb91e",
+      "bytes": 10437,
+      "sourcePath": "publication-545-546/claude-window-rq-01/REVIEW.md",
+      "renamedFrom": "REVIEW.md"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/MANIFEST.json",
+      "tier": "independent-review-qa",
+      "sha256": "8fdf221cc54ba752f35ce47b2fb59f6270c66a3d0648c791033c4e59cf32f9b6",
+      "bytes": 1433,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/MANIFEST.json"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M00-control.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "ec7dd322849a9dede0c490d89de77f4f6c555fb02d87a2e6963fdc9797542cb9",
+      "bytes": 5896,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M00-control.log",
+      "renamedFrom": "M00-control.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M01-db-equality-removed.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "3e41e1d14522b966110590f7de023a6d5047d0bb07f24a5756a1137f97dcdd88",
+      "bytes": 7153,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M01-db-equality-removed.log",
+      "renamedFrom": "M01-db-equality-removed.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M02-existing-wal-equality-removed.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "fb58ace090da07ec9d7fa5cf3aa932f81c6f1e050e3df6252725dabe7fb18215",
+      "bytes": 7479,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M02-existing-wal-equality-removed.log",
+      "renamedFrom": "M02-existing-wal-equality-removed.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M03-new-frames-check-removed.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "948a3259d8b6abbfc09595a397a937da6a2b35916ae4fa75e75fea66d7bd1f8f",
+      "bytes": 7371,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M03-new-frames-check-removed.log",
+      "renamedFrom": "M03-new-frames-check-removed.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M04-unsupported-downgrade-removed.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "69f288afd9520c1b477bdc860b52d14cd5f2b72128eccf2690fe5c6c81ae750d",
+      "bytes": 9779,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M04-unsupported-downgrade-removed.log",
+      "renamedFrom": "M04-unsupported-downgrade-removed.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M05-pending-prefix-removed.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "d4795a3f3170706a70e23982823dd5aab3be270f80d121ef5f914366120fcbff",
+      "bytes": 18833,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M05-pending-prefix-removed.log",
+      "renamedFrom": "M05-pending-prefix-removed.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M06-staged-passive-checkpoint.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "5fc12c72f3c6015490a8c836d749bc18c8c189c3899bde6906324c15ba4951e8",
+      "bytes": 23050,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M06-staged-passive-checkpoint.log",
+      "renamedFrom": "M06-staged-passive-checkpoint.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M07-unsupported-passive-checkpoint.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "32ca177afed0265a346e52a86572e5f572c6d02d46077674940b237246230330",
+      "bytes": 7717,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M07-unsupported-passive-checkpoint.log",
+      "renamedFrom": "M07-unsupported-passive-checkpoint.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M08-unsupported-target-exists.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "9a2c3e28afe254350cf5a466e883555f196754ec60c9ecdece39812d762b0cd1",
+      "bytes": 7965,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M08-unsupported-target-exists.log",
+      "renamedFrom": "M08-unsupported-target-exists.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M09-model-late-finalizer-staged.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "be8cf6caa1ae3eb25ff6b66be86b38e665164bd33a7a84f09b004e2cdd16ad54",
+      "bytes": 6518,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M09-model-late-finalizer-staged.log",
+      "renamedFrom": "M09-model-late-finalizer-staged.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M10-model-late-finalizer-unstaged.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "4735f18a5b5ab62b026e2f57d2b5aaeeb5cc136563b8c03aeed2ecdc43f848cb",
+      "bytes": 9814,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M10-model-late-finalizer-unstaged.log",
+      "renamedFrom": "M10-model-late-finalizer-unstaged.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/M11-plain-revert-unstaged.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "82ab9aabf4c17dd93a78cc2caf91e11604243ae05e7fe50d027aa1e0861daabf",
+      "bytes": 6329,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/M11-plain-revert-unstaged.log",
+      "renamedFrom": "M11-plain-revert-unstaged.log"
+    },
+    {
+      "path": "raw/review-qa/raw/mutants/logs/summary.txt",
+      "tier": "independent-review-qa",
+      "sha256": "7c407bcd0c37426e024aaf630a5d2e1e711523cac2f5385ee89e8ba5f6c4f646",
+      "bytes": 799,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/logs/summary.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/native/NATIVE-RESULTS.json",
+      "tier": "independent-review-qa",
+      "sha256": "172771cd630944b8a0dab40173ff72672d5f9f23e6adbe83a94ca209ee0ae0f5",
+      "bytes": 15675,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/native/NATIVE-RESULTS.json"
+    },
+    {
+      "path": "raw/review-qa/raw/native/api-build.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "a5f3efd8dfb5188f9702056aeba9f68dec3c06eece50261050f02c66958240dc",
+      "bytes": 1296,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/native/api-build.log",
+      "renamedFrom": "api-build.log"
+    },
+    {
+      "path": "raw/review-qa/raw/native/build-head.txt",
+      "tier": "independent-review-qa",
+      "sha256": "12a86dcf4958cc3a9689b46bba05264dcb550306715701f5db8bc79f07b04faa",
+      "bytes": 41,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/native/build-head.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/native/dist-hashes.txt",
+      "tier": "independent-review-qa",
+      "sha256": "a8c59ad40d4dc44021b0a55c0ad282aefd102942169aef0d96e76f8050946af9",
+      "bytes": 400,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/native/dist-hashes.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/native/native.stderr.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/native/native.stderr.log",
+      "renamedFrom": "native.stderr.log"
+    },
+    {
+      "path": "raw/review-qa/raw/native/native.stdout.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "b3875e8b691635b93b2af6d4d288a4929cff814b92f20eb711ad74c9d29d3921",
+      "bytes": 4350,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/native/native.stdout.log",
+      "renamedFrom": "native.stdout.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/file-sha.txt",
+      "tier": "independent-review-qa",
+      "sha256": "13fdba51b0b7a68c6b0757f01dd7f53e605f274324d15abf9e1d23ad2e2161a9",
+      "bytes": 105,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/file-sha.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/head.txt",
+      "tier": "independent-review-qa",
+      "sha256": "12a86dcf4958cc3a9689b46bba05264dcb550306715701f5db8bc79f07b04faa",
+      "bytes": 41,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/head.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/node-version.txt",
+      "tier": "independent-review-qa",
+      "sha256": "31d84dc2908d3a965a81239624d11353c9fa77f007a2b4f2c20022f250ea3751",
+      "bytes": 10,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/node-version.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-01.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "0d3f36c5a479ca2db79b30495732bc90a82b139a05ea630c5cc4cdea35e532c8",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-01.log",
+      "renamedFrom": "run-01.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-02.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "01603efd1b30dbb90c93e1c7511663b4b2872634668b174037c500d22f1ca962",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-02.log",
+      "renamedFrom": "run-02.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-03.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "a37272e5f0ce92d5efe99fe1171d2192b85d312b217cd11b72e27b385bf070b0",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-03.log",
+      "renamedFrom": "run-03.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-04.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "254b6989a452863559e59bdab8a1370aa944ee05856289836aa95cae5ed9344a",
+      "bytes": 4903,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-04.log",
+      "renamedFrom": "run-04.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-05.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "89c95d94b6cd0249e820973c902a7809c347ddeb3904822094ec33e8a930b487",
+      "bytes": 4903,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-05.log",
+      "renamedFrom": "run-05.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-06.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "080c314adbc97d98993c7f05686203ee48b2f823b5aef8359d4d186779e83c0a",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-06.log",
+      "renamedFrom": "run-06.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-07.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "d25618c6dd08d89249ffa4030e3ce4e8a36abcae70f40993acd2027761fd42fe",
+      "bytes": 4903,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-07.log",
+      "renamedFrom": "run-07.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-08.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "db1afba623bd1b1764be8356de4b95f61fbb01e7c945e29658c04fdbbbd31c43",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-08.log",
+      "renamedFrom": "run-08.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-09.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "724c5d20fe6bcca3d3007fe4ec558bbb5886c74c63970464ca33653598be34cd",
+      "bytes": 4904,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-09.log",
+      "renamedFrom": "run-09.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/run-10.log.txt",
+      "tier": "independent-review-qa",
+      "sha256": "e26516302f25d3c08d37bb5d22bb25ea915ad20b678da41fa484565c75951a41",
+      "bytes": 4903,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/run-10.log",
+      "renamedFrom": "run-10.log"
+    },
+    {
+      "path": "raw/review-qa/raw/repeat/summary.txt",
+      "tier": "independent-review-qa",
+      "sha256": "00d684873ed27fad982937e4172942bebb0cbaea9e83b77d61d6829575ca1ed8",
+      "bytes": 885,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/repeat/summary.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/review/changelog-entry-identity.txt",
+      "tier": "independent-review-qa",
+      "sha256": "2c642205631c54b0fdb59f8e2478f1e54350a4020d87f10cf6185f712313acb7",
+      "bytes": 387,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/changelog-entry-identity.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/review/diff-stat-and-checks.txt",
+      "tier": "independent-review-qa",
+      "sha256": "bc814d85f4f209a19cce41f9f9843b8a309616f7ebe9e89c86e64ea06e3d3d47",
+      "bytes": 5847,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/diff-stat-and-checks.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/review/merge-80d292a3-check.txt",
+      "tier": "independent-review-qa",
+      "sha256": "dd0089abdab2babad906f3fa348a50686cf82377422e7a536fdcb40c9ef1bcf2",
+      "bytes": 196,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/merge-80d292a3-check.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/review/unsupported-change-window.txt",
+      "tier": "independent-review-qa",
+      "sha256": "e62c93db8b12688638f9afa7f2eb64b69422547d1df30f48a61b2b4ca242bf9c",
+      "bytes": 1106,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/unsupported-change-window.txt"
+    },
+    {
+      "path": "raw/review-qa/raw/review/writer-call-sites.txt",
+      "tier": "independent-review-qa",
+      "sha256": "5e6849a1e79361ba7e9d95127860127d291ba3d6444b3d7e0aaf8d1a645bd672",
+      "bytes": 1189,
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/writer-call-sites.txt"
+    }
+  ],
+  "omittedMembers": [
+    {
+      "sourcePath": "publication-545-546/claude-window-01/11-commit-a5cd4a51-fup082-adaptation.patch.txt",
+      "sha256": "51ab966cba4f40ba6f4b7d3bc0f33550c40f6f7bda144dc0ce6ba70d734d06ee",
+      "bytes": 3249,
+      "reason": "Patch of commit a5cd4a51; the commit itself is in Git history."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-01/12-commit-080c1736-unsupported-arm.patch.txt",
+      "sha256": "c8239ea3c56c8a11d82feabe08daba6f5bd4358d41527468ae7c1fc6db83f5a8",
+      "bytes": 2343,
+      "reason": "Patch of commit 080c1736; the commit itself is in Git history."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M00-control.test.ts.txt",
+      "sha256": "3b7d6031bb6b5575a6b6f5ba6d47f46a95b092a1a91a454aa76c43a1c2588c86",
+      "bytes": 32635,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M01-db-equality-removed.test.ts.txt",
+      "sha256": "68d487e26ee6a8a0deb1feb3e8dd1ec4ab0614bb66031e16ef4469f6e5f1b571",
+      "bytes": 32618,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M02-existing-wal-equality-removed.test.ts.txt",
+      "sha256": "2123964879fcb8e98e6c5ef63177342c44b38a932418a0e4297bb4a775c9c77a",
+      "bytes": 32626,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M03-new-frames-check-removed.test.ts.txt",
+      "sha256": "03480dd4e8367cdc6749aa08ebc3810230881f414791422fabcbc25e54b793cd",
+      "bytes": 32639,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M04-unsupported-downgrade-removed.test.ts.txt",
+      "sha256": "7044c588dcb4f849e7483fbddfe4a64f0e3d89c0a704054e5123fefac44a47b2",
+      "bytes": 32598,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M05-pending-prefix-removed.test.ts.txt",
+      "sha256": "389dfc4c4c74f824a64657f3b098a44f44c799be3c258af26a94d597d5b837d3",
+      "bytes": 32659,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M06-staged-passive-checkpoint.test.ts.txt",
+      "sha256": "5e4a0bf3cb848718a5150dc189419c43730215b873c883db5ad5bf5a1ff2c898",
+      "bytes": 32650,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M07-unsupported-passive-checkpoint.test.ts.txt",
+      "sha256": "1affd38530d8aa84df4bfe9a18126d2957aa5ae70165130c6a7eb119a704c556",
+      "bytes": 32650,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M08-unsupported-target-exists.test.ts.txt",
+      "sha256": "5b3ae63ab91b6cb6f56e17dca2456bbc4f6399295e15a9d07d2c4716e69b94bb",
+      "bytes": 32707,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M09-model-late-finalizer-staged.test.ts.txt",
+      "sha256": "bbbe2c8838b1f64009d62aacb3044f1144e83286bb472a81d8c2d08b1a90f5e7",
+      "bytes": 33184,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M10-model-late-finalizer-unstaged.test.ts.txt",
+      "sha256": "43111595d3d4b9fb94e88847315d28b6222cc309fc4f3446442eaecff26a941d",
+      "bytes": 32848,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/cases/M11-plain-revert-unstaged.test.ts.txt",
+      "sha256": "e1f8a420dca0ef415f0115c3f7df124e50cb9402caf3fc9bb1eed097d202d9f6",
+      "bytes": 32273,
+      "reason": "Full mutated copy of the test file; its SHA-256 is also in raw/review-qa/raw/mutants/MANIFEST.json."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/mutants/vitest.mut.config.mjs.txt",
+      "sha256": "e99c7f30a603ab70e5e3ebac70395a964c3177cb113f29bd48b8ad6e4fe67c74",
+      "bytes": 1029,
+      "reason": "Scratch Vitest configuration for the mutation copies (QA limit L4)."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/scripts/make_mutants.py.txt",
+      "sha256": "8b043e799d6ba31aa182e862fc1170b8bd12377bd1311e5d5252adf81252dbe2",
+      "bytes": 7347,
+      "reason": "QA harness script."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/scripts/native-qa.mjs.txt",
+      "sha256": "4c9488d8521b0994ffe36bcdb95219aeec3a6600efdc4f6af75ec81451db8db9",
+      "bytes": 9421,
+      "reason": "QA harness script."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/scripts/repeat.sh.txt",
+      "sha256": "dcfe05ea9a81c8d7f24014baa5c998ee577a984ee3d43979bd00a346d4226dea",
+      "bytes": 781,
+      "reason": "QA harness script."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/scripts/run-mutants.sh.txt",
+      "sha256": "88bfcd73046939655dc37e3ba09a67c1996c701ef78afb8d1a35e8e54128a66a",
+      "bytes": 937,
+      "reason": "QA harness script."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/scripts/window.py.txt",
+      "sha256": "72bacdca3fbc6261309dbac54705cd7f6bc516742713e9aefcbc006d9f109c77",
+      "bytes": 943,
+      "reason": "QA harness script."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/080c1736.patch.txt",
+      "sha256": "bd069de6156a7868ebc9a48f26f44642a9ee18b0101fc98dd2c6d72692da51b5",
+      "bytes": 2345,
+      "reason": "Patch of a reviewed commit; the commit itself is in Git history."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/a5cd4a51.patch.txt",
+      "sha256": "d71fe8ff0537ef5248339119cdc4484aac78d2749ec5d01f03c5d089deb7b1af",
+      "bytes": 3251,
+      "reason": "Patch of a reviewed commit; the commit itself is in Git history."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/c7559bff.patch.txt",
+      "sha256": "456d155d0162a028e110fa45bc5f4d8b6e7e56a1bbb6eef9679d2951963614fe",
+      "bytes": 4347,
+      "reason": "Patch of a reviewed commit; the commit itself is in Git history."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/review/changelog-vs-main.diff.txt",
+      "sha256": "4e00f7c9dda184d381c3038329ef505936f41a43eafcbc323aad382bf5c884ec",
+      "bytes": 1806,
+      "reason": "CHANGELOG diff against main; reproducible from Git history."
+    },
+    {
+      "sourcePath": "publication-545-546/claude-window-rq-01/raw/native/tsc-build-dry-run.log",
+      "sha256": "419aca2eaa3e01fcc98020f11ba0bd291a59d3898e0d4ec0fef7b168d8a6c41a",
+      "bytes": 2740,
+      "reason": "tsc -b --dry listing taken before the native rebuild."
+    }
+  ]
+}
