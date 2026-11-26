@@ -43,7 +43,14 @@ import {
   type EditorIssue,
 } from './model.js';
 import { NodeEditorDialog } from './NodeEditorDialog.js';
-import { deviceCopyOf, deviceNotice, saveNotice, useDeviceStorageProblem } from './save-status.js';
+import {
+  deviceCopyOf,
+  deviceNotice,
+  HELD_INPUT_LABEL,
+  hasHeldInput,
+  saveNotice,
+  useDeviceStorageProblem,
+} from './save-status.js';
 import { LOOP_PANEL_STORAGE_KEY, LoopPanel, loopPanelDefault } from './LoopPanel.js';
 import { PALETTE_STORAGE_KEY, Palette, palettePanelDefault } from './Palette.js';
 import { hasRenameNotice, RenameNotice } from './RenameNotice.js';
@@ -153,6 +160,18 @@ export function EditorPage() {
   const revision = useEditorStore((s) => s.revision);
   const baseToken = useEditorStore((s) => s.baseToken);
   const fieldErrors = useEditorStore((s) => s.fieldErrors);
+  // Input a field holds apart from the draft, kept in this window only (#526). The indicator shows
+  // it beside the draft's own state; a polite announcement says so once, as it begins, in the open
+  // node dialog (the modal leaves the page behind it inert) or else on the page. A move between
+  // them, typing while it lasts, and its end announce nothing.
+  const heldInput = hasHeldInput(fieldErrors);
+  const announcePlace = nodeDialogOpen ? `dialog ${String(nodeDialogSession)}` : 'page';
+  const [heldSeen, setHeldSeen] = useState({ held: heldInput, place: announcePlace });
+  const [heldAnnouncedIn, setHeldAnnouncedIn] = useState<string>();
+  if (heldSeen.held !== heldInput || heldSeen.place !== announcePlace) {
+    setHeldSeen({ held: heldInput, place: announcePlace });
+    setHeldAnnouncedIn(heldInput && !heldSeen.held ? announcePlace : undefined);
+  }
   const local = useMemo(
     () =>
       definition ? validateDraft(definition, Boolean(system)) : { issues: [], schemaValid: false },
@@ -447,6 +466,20 @@ export function EditorPage() {
     state.setSaveState('pending');
     void flush({ loopId: state.loopId, generation: state.generation, refusal });
   };
+  /**
+   * A polite region for the held-input announcement, mounted with the page or the node dialog so
+   * its text is a change it reads; it holds the text only where held input began (`heldAnnouncedIn`).
+   */
+  const heldInputAnnouncement = (place: string) => (
+    <span
+      aria-live="polite"
+      aria-atomic="true"
+      className="sr-only"
+      data-testid={`held-input-announcement-${place === 'page' ? 'page' : 'dialog'}`}
+    >
+      {heldAnnouncedIn === place ? HELD_INPUT_LABEL : ''}
+    </span>
+  );
   const nameConflictNotice = (inDialog: boolean) =>
     showNameConflict ? (
       <NameConflictNotice
@@ -646,6 +679,7 @@ export function EditorPage() {
         version={query.data?.current?.version}
         saveState={saveState}
         device={device}
+        heldInput={heldInput}
         saveMessage={notice ?? saveMessage}
         errors={errors}
         validation={
@@ -696,6 +730,7 @@ export function EditorPage() {
           {dismissalAnnouncement > 0 ? 'Notice dismissed' : ''}
         </span>
       </span>
+      {heldInputAnnouncement('page')}
       <ReactFlowProvider>
         <div className="relative flex min-h-0 flex-1">
           <Palette expanded={paletteExpanded} onExpandedChange={setPaletteExpanded} />
@@ -721,11 +756,14 @@ export function EditorPage() {
           issues={validation.issues}
           loopId={loopId}
           notice={
-            conflict ? (
-              <ConflictNotice resolve={resolve} device={device} />
-            ) : (
-              nameConflictNotice(true)
-            )
+            <>
+              {heldInputAnnouncement(`dialog ${String(nodeDialogSession)}`)}
+              {conflict ? (
+                <ConflictNotice resolve={resolve} device={device} />
+              ) : (
+                nameConflictNotice(true)
+              )}
+            </>
           }
         />
       ) : null}

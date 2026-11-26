@@ -32,7 +32,13 @@ import {
   type FieldOverrides,
   type UnionPickers,
 } from './fields.js';
-import { FieldIssuesContext, FormScopeContext, ProblemPathsContext } from './fields/shared.js';
+import {
+  FieldIssueListContext,
+  FieldIssuesContext,
+  FormScopeContext,
+  ProblemPathsContext,
+  type FieldIssue,
+} from './fields/shared.js';
 import {
   humanize,
   initialValue,
@@ -137,6 +143,8 @@ const NO_PROBLEMS: readonly string[] = [];
 
 interface Issue {
   path: string;
+  /** The path's raw segments: a record key may hold a dot, which the joined `path` hides. */
+  segments: string[];
   message: string;
   instruction?: string | undefined;
 }
@@ -146,6 +154,7 @@ function issuesOf(schema: Schema, value: unknown): Issue[] {
   if (result.success) return [];
   return result.error.issues.map((issue) => ({
     path: issue.path.map(String).join('.'),
+    segments: issue.path.map(String),
     message: issue.message,
     instruction: setupInstruction(value, issue.path.map(String).join('.')),
   }));
@@ -235,6 +244,15 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
       if (!byPath.has(issue.path)) byPath.set(issue.path, issue.instruction ?? issue.message);
     return byPath;
   }, [issues]);
+  // The same issues by raw segments, so a record tells its entries' issues apart (#521).
+  const issueList = useMemo<FieldIssue[]>(
+    () =>
+      issues.map((issue) => ({
+        segments: issue.segments,
+        message: issue.instruction ?? issue.message,
+      })),
+    [issues],
+  );
   // The change under way (`ChangeScope`): its writes are reported with it.
   const pendingChangeRef = useRef<FormChange | undefined>(undefined);
   const changeScope = useMemo<ChangeScope>(
@@ -398,92 +416,98 @@ const SchemaFormBindings = memo(function SchemaFormBindings({
         <DisclosureStoreContext value={disclosureStore}>
           <ParseErrorContext value={parseErrorChannel}>
             <FieldIssuesContext value={issuesByPath}>
-              <FieldControlsContext value={controls ?? NO_CONTROLS}>
-                <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
-                  <UnionPickersContext value={unionPickers ?? NO_UNION_PICKERS}>
-                    <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
-                      <FormScopeContext value={{ schema: variantSchema, rootSchema: schema, id }}>
-                        <FormProvider {...form}>
-                          <form
-                            aria-label={label}
-                            noValidate
-                            onSubmit={(e) => e.preventDefault()}
-                            className="grid gap-field"
-                          >
-                            {shape.kind === 'union' && RootPicker ? (
-                              <div data-field={shape.discriminator ?? 'kind'}>
-                                <RootPicker
-                                  name={shape.discriminator ?? 'kind'}
-                                  label={humanize(shape.discriminator ?? 'kind')}
-                                  required
-                                  options={shape.options.map((option, index) => ({
-                                    value: String(index),
-                                    label: optionLabel(option, shape.discriminator),
-                                    schema: option,
-                                  }))}
-                                  value={String(unionIndex)}
-                                  onChange={(value) => switchVariant(Number(value))}
-                                />
-                              </div>
-                            ) : shape.kind === 'union' ? (
-                              <FieldGroup
-                                data-field={shape.discriminator === 'kind' ? 'kind' : undefined}
-                              >
-                                <Label htmlFor={id}>
-                                  {humanize(shape.discriminator ?? 'kind')}
-                                </Label>
-                                <Select
-                                  id={id}
-                                  value={String(unionIndex)}
-                                  onChange={(e) => switchVariant(Number(e.target.value))}
+              <FieldIssueListContext value={issueList}>
+                <FieldControlsContext value={controls ?? NO_CONTROLS}>
+                  <FieldOverridesContext value={fieldOverrides ?? NO_FIELD_OVERRIDES}>
+                    <UnionPickersContext value={unionPickers ?? NO_UNION_PICKERS}>
+                      <ProblemPathsContext value={problems ?? NO_PROBLEMS}>
+                        <FormScopeContext value={{ schema: variantSchema, rootSchema: schema, id }}>
+                          <FormProvider {...form}>
+                            <form
+                              aria-label={label}
+                              noValidate
+                              onSubmit={(e) => e.preventDefault()}
+                              className="grid gap-field"
+                            >
+                              {shape.kind === 'union' && RootPicker ? (
+                                <div data-field={shape.discriminator ?? 'kind'}>
+                                  <RootPicker
+                                    name={shape.discriminator ?? 'kind'}
+                                    label={humanize(shape.discriminator ?? 'kind')}
+                                    required
+                                    options={shape.options.map((option, index) => ({
+                                      value: String(index),
+                                      label: optionLabel(option, shape.discriminator),
+                                      schema: option,
+                                    }))}
+                                    value={String(unionIndex)}
+                                    onChange={(value) => switchVariant(Number(value))}
+                                  />
+                                </div>
+                              ) : shape.kind === 'union' ? (
+                                <FieldGroup
+                                  data-field={shape.discriminator === 'kind' ? 'kind' : undefined}
                                 >
-                                  {shape.options.map((option, index) => (
-                                    <option key={index} value={index}>
-                                      {optionLabel(option, shape.discriminator)}
-                                    </option>
-                                  ))}
-                                </Select>
-                              </FieldGroup>
-                            ) : null}
-                            {layout ? (
-                              <FormPanels
-                                key={unionIndex}
-                                schema={variantSchema}
-                                layout={layout}
-                                fieldOrder={fieldOrder}
-                                keyPrefix=""
-                                Field={Field}
-                              />
-                            ) : null}
-                            {issues
-                              .filter((issue) => issue.path === '')
-                              .map((issue, index) => (
-                                <p key={index} role="alert" className="text-sm text-status-bad-fg">
-                                  {issue.message}
-                                </p>
-                              ))}
-                            {issues.length > 0 ? (
-                              <Disclosure
-                                label="Validation details"
-                                summary={`${issues.length} config issue${issues.length === 1 ? '' : 's'}`}
-                              >
-                                <ul className="list-disc pl-4">
-                                  {issues.map((issue, index) => (
-                                    <li key={index}>
-                                      {issue.path ? <code>{issue.path}</code> : 'config'}:{' '}
-                                      {issue.message}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </Disclosure>
-                            ) : null}
-                          </form>
-                        </FormProvider>
-                      </FormScopeContext>
-                    </ProblemPathsContext>
-                  </UnionPickersContext>
-                </FieldOverridesContext>
-              </FieldControlsContext>
+                                  <Label htmlFor={id}>
+                                    {humanize(shape.discriminator ?? 'kind')}
+                                  </Label>
+                                  <Select
+                                    id={id}
+                                    value={String(unionIndex)}
+                                    onChange={(e) => switchVariant(Number(e.target.value))}
+                                  >
+                                    {shape.options.map((option, index) => (
+                                      <option key={index} value={index}>
+                                        {optionLabel(option, shape.discriminator)}
+                                      </option>
+                                    ))}
+                                  </Select>
+                                </FieldGroup>
+                              ) : null}
+                              {layout ? (
+                                <FormPanels
+                                  key={unionIndex}
+                                  schema={variantSchema}
+                                  layout={layout}
+                                  fieldOrder={fieldOrder}
+                                  keyPrefix=""
+                                  Field={Field}
+                                />
+                              ) : null}
+                              {issues
+                                .filter((issue) => issue.path === '')
+                                .map((issue, index) => (
+                                  <p
+                                    key={index}
+                                    role="alert"
+                                    className="text-sm text-status-bad-fg"
+                                  >
+                                    {issue.message}
+                                  </p>
+                                ))}
+                              {issues.length > 0 ? (
+                                <Disclosure
+                                  label="Validation details"
+                                  summary={`${issues.length} config issue${issues.length === 1 ? '' : 's'}`}
+                                >
+                                  <ul className="list-disc pl-4">
+                                    {issues.map((issue, index) => (
+                                      <li key={index}>
+                                        {issue.path ? <code>{issue.path}</code> : 'config'}:{' '}
+                                        {issue.message}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </Disclosure>
+                              ) : null}
+                            </form>
+                          </FormProvider>
+                        </FormScopeContext>
+                      </ProblemPathsContext>
+                    </UnionPickersContext>
+                  </FieldOverridesContext>
+                </FieldControlsContext>
+              </FieldIssueListContext>
             </FieldIssuesContext>
           </ParseErrorContext>
         </DisclosureStoreContext>

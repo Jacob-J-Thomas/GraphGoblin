@@ -1,0 +1,173 @@
+{
+  "id": "527-E",
+  "issue": 527,
+  "title": "Impact probe: member equal to the unset marker stored via API, then an unrelated editor edit",
+  "expected": "Stored variable schema stays whole.",
+  "steps": [
+    "Edit only the loop Description; read the saved draft."
+  ],
+  "checks": [
+    {
+      "label": "API admitted and stored the member",
+      "actual": {
+        "type": "string",
+        "title": "stored sentinel",
+        "default": "\u0000graphgoblin:unset"
+      },
+      "expected": {
+        "type": "string",
+        "title": "stored sentinel",
+        "default": "\u0000graphgoblin:unset"
+      },
+      "pass": true
+    },
+    {
+      "label": "PUT topic",
+      "actual": {
+        "type": "string",
+        "title": "stored sentinel",
+        "default": "\u0000graphgoblin:unset"
+      },
+      "observation": true
+    },
+    {
+      "label": "stored topic after unrelated edit",
+      "actual": {
+        "type": "string",
+        "title": "stored sentinel",
+        "default": "\u0000graphgoblin:unset"
+      },
+      "observation": true
+    },
+    {
+      "label": "unrelated edit keeps the stored variable schema whole",
+      "actual": {
+        "type": "string",
+        "title": "stored sentinel",
+        "default": "\u0000graphgoblin:unset"
+      },
+      "pass": true
+    }
+  ],
+  "screenshots": [],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:33:22.504Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 527 stored sentinel 1",
+          "description": "unrelated edit",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "string",
+              "title": "stored sentinel",
+              "default": "\u0000graphgoblin:unset"
+            },
+            "other": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 1606,
+  "consoleErrors": [],
+  "trace": "527-E-trace.zip"
+}

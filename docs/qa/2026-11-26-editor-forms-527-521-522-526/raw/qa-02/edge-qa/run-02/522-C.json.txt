@@ -1,0 +1,79 @@
+{
+  "id": "522-C",
+  "issue": 522,
+  "title": "Refused top-level key and device-restored draft open with passive diagnostic",
+  "expected": "First render invalid with key rule, Apply disabled, no held, also after reload from the device copy.",
+  "steps": [
+    "Commit a refused top-level key (\"bad key\") in the structured editor, then open JSON mode.",
+    "Reload: the device copy restores the schema-invalid draft; open JSON mode again."
+  ],
+  "checks": [
+    {
+      "label": "first render shows the key rule, invalid",
+      "actual": {
+        "invalid": "true",
+        "label": "Config overrides JSON",
+        "description": "Raw Codex configuration. Each dotted key segment must use letters, digits, _ or -, and not __proto__, constructor or prototype. | bad key: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+        "focused": false
+      },
+      "pass": true
+    },
+    {
+      "label": "Apply disabled",
+      "actual": false,
+      "pass": true
+    },
+    {
+      "label": "no held segment",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "status with schema-invalid committed draft",
+      "actual": {
+        "whole": "Saved on this device only",
+        "draft": "Saved on this device only",
+        "held": null
+      },
+      "observation": true
+    },
+    {
+      "label": "restored notice visible",
+      "actual": true,
+      "observation": true
+    },
+    {
+      "label": "after reload: first render invalid with key rule",
+      "actual": {
+        "invalid": "true",
+        "label": "Config overrides JSON",
+        "description": "Raw Codex configuration. Each dotted key segment must use letters, digits, _ or -, and not __proto__, constructor or prototype. | bad key: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+        "focused": false
+      },
+      "pass": true
+    },
+    {
+      "label": "after reload: Apply disabled",
+      "actual": false,
+      "pass": true
+    },
+    {
+      "label": "after reload: no held segment",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "no PUT carried the refused key",
+      "actual": true,
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "522-C-device-reload-first-render.png"
+  ],
+  "verdict": "PASS",
+  "puts": [],
+  "durationMs": 2129,
+  "consoleErrors": [],
+  "trace": "522-C-trace.zip"
+}

@@ -52,15 +52,16 @@ import { useCollectionFocus } from './collection.js';
 import { JsonControl, JsonField, JsonSection } from './json.js';
 import {
   FieldControlsContext,
-  FieldIssuesContext,
+  FieldIssueListContext,
   FieldOverridesContext,
   FieldLabelsContext,
-  RecordKeyIssueContext,
+  RecordValueIssueContext,
   UnionPickersContext,
   FieldError,
   FieldHelp,
   fieldMeta,
   joinPath,
+  recordEntryIssues,
   useCollectionField,
   useField,
   useFieldControl,
@@ -713,14 +714,22 @@ function RecordField({
   };
   const { required, help } = fieldMeta(schema);
   const group = useGroupDescription(name, help, undefined);
-  const issues = use(FieldIssuesContext);
+  const issues = use(FieldIssueListContext);
   return (
     <Fieldset ref={focus.ref} tabIndex={-1} data-field={name} aria-describedby={group.describedBy}>
       <GroupLegend label={label} required={required} />
       <GroupText group={group} help={help} rule={undefined} />
       {entries.map(([key, value], index) => {
         const path = joinPath(name, key);
-        const keyIssue = entryKeyIssue(shape, key, value, issues.get(path));
+        // The entry's issues by raw segments: a sibling key "a.b" never takes member b of "a".
+        const owned = recordEntryIssues(issues, name, key);
+        const keyIssue = entryKeyIssue(shape, key, value, owned.exact);
+        // Issues inside a value drawn as JSON are the value's: it shows the first (#521).
+        const nested = recordValueKind(shape.value, path) === 'json' ? owned.nested : [];
+        const valueIssue =
+          keyIssue === undefined && owned.exact !== undefined
+            ? owned.exact
+            : nested[0] && `${nested[0].relative}: ${nested[0].message}`;
         return (
           <div key={rowIds.get(key)} data-collection-row={index} className={COLLECTION_ROW}>
             <RecordKey
@@ -741,9 +750,16 @@ function RecordField({
             </div>
             {/* The value is a field of its own at `<record>.<key>`: its marker, help, error, and
                 unparsed JSON all follow that path, so a rename or removal moves them with the row.
-                An issue there about the key is the key's, not the value's. */}
-            <div className="col-span-2 col-start-1 row-start-2 min-w-0">
-              <RecordKeyIssueContext value={keyIssue === undefined ? undefined : path}>
+                An issue there about the key is the key's, not the value's. The issues inside a
+                JSON value are listed, as data, for an issue's link to find its owner
+                (`focusIssuePath`). */}
+            <div
+              className="col-span-2 col-start-1 row-start-2 min-w-0"
+              data-value-issues={
+                nested.length > 0 ? JSON.stringify(nested.map((issue) => issue.path)) : undefined
+              }
+            >
+              <RecordValueIssueContext value={{ name: path, message: valueIssue }}>
                 <RecordValue
                   schema={shape.value}
                   name={path}
@@ -752,7 +768,7 @@ function RecordField({
                   onChange={(next) => setValue(index, key, next)}
                   validateValue={(next) => entryValueRefusal(schema, shape, key, next)}
                 />
-              </RecordKeyIssueContext>
+              </RecordValueIssueContext>
             </div>
           </div>
         );
@@ -790,6 +806,7 @@ function RecordValue({
   validateValue: (value: unknown) => string | undefined;
 }) {
   const shape = shapeOf(schema);
+  const kind = recordValueKind(schema, name);
   return shape.kind === 'string' ? (
     <StringControl
       schema={schema}
@@ -800,7 +817,7 @@ function RecordValue({
       value={value}
       onChange={onChange}
     />
-  ) : shape.kind === 'object' && /(?:^|\.)defaults\.byHarness\.[^.]+$/.test(name) ? (
+  ) : kind === 'object' ? (
     <Field schema={schema} name={name} label={label} />
   ) : (
     <JsonControl
@@ -816,6 +833,18 @@ function RecordValue({
 }
 
 /**
+ * How `RecordValue` draws an entry's value at `name`: a string control, the fields of a harness's
+ * defaults, or a JSON editor, whose value shows the issues inside it (#521).
+ */
+function recordValueKind(schema: Schema, name: string): 'string' | 'object' | 'json' {
+  const shape = shapeOf(schema);
+  if (shape.kind === 'string') return 'string';
+  return shape.kind === 'object' && /(?:^|\.)defaults\.byHarness\.[^.]+$/.test(name)
+    ? 'object'
+    : 'json';
+}
+
+/**
  * Why a record entry's value, parsed from its JSON, is held rather than taken (#429): the form
  * would not keep it as authored, and its schema refuses it. The form keeps values by assignment
  * (react-hook-form's copies, `stripUnset`), which loses a member named `__proto__` that JSON parses
@@ -825,9 +854,11 @@ function RecordValue({
  * its path from the value, an issue about the entry's key as its Key shows it (a check of the
  * record's keys, such as the Codex override keys', stops at the key before the value; once the key
  * is corrected, the held value's message names its member). A key the record's key schema refuses
- * leaves its value unchecked (Zod's `invalid_key`), so the value schema decides then. Any other
- * value is taken as before, its issues shown through the form's own validation: one the form keeps
- * as authored, and one its schema accepts.
+ * leaves its value unchecked (Zod's `invalid_key`), so the value schema decides then. A schema
+ * that names no rule for it (a declared variable's JSON Schema, whose record parse skips the
+ * member, #527) still has it held: the message names the member by its path from the value
+ * (`UNHELD_MEMBER_MESSAGE`). Any other value is taken as before, its issues shown through the
+ * form's own validation: one the form keeps as authored, and one its schema accepts.
  */
 function entryValueRefusal(
   schema: Schema,
@@ -838,20 +869,48 @@ function entryValueRefusal(
   if (sameJson(stripUnset(value), value)) return undefined;
   const inside = (path: readonly PropertyKey[], message: string) =>
     path.length > 0 ? `${path.map(String).join('.')}: ${message}` : message;
-  if (!shape.key.safeParse(key).success)
-    return shape.value
-      .safeParse(value)
-      .error?.issues.map(({ path, message }) => inside(path, message))
-      .join('; ');
   // Every issue is at the entry's key, or below it in the value.
-  return schema
-    .safeParse({ [key]: value })
-    .error?.issues.map(({ path, message }) =>
-      path.length === 1 && entryKeyIssue(shape, key, value, message) !== undefined
-        ? `Key "${key}": ${message}`
-        : inside(path.slice(1), message),
-    )
-    .join('; ');
+  const refusal = !shape.key.safeParse(key).success
+    ? shape.value
+        .safeParse(value)
+        .error?.issues.map(({ path, message }) => inside(path, message))
+        .join('; ')
+    : schema
+        .safeParse({ [key]: value })
+        .error?.issues.map(({ path, message }) =>
+          path.length === 1 && entryKeyIssue(shape, key, value, message) !== undefined
+            ? `Key "${key}": ${message}`
+            : inside(path.slice(1), message),
+        )
+        .join('; ');
+  if (refusal) return refusal;
+  const member = unheldMemberPath(value);
+  return member === undefined ? undefined : inside(member, UNHELD_MEMBER_MESSAGE);
+}
+
+/** Why a value with an own member named `UNHELD_RECORD_KEY` is held when its schema names no rule. */
+const UNHELD_MEMBER_MESSAGE = 'This member name cannot be saved. Rename or remove it.';
+
+/**
+ * The path, from a parsed JSON value, of its first own member named `UNHELD_RECORD_KEY` (#527),
+ * depth first in document order, through array items and objects' own entries only: a string
+ * that mentions the name, an inherited property, and other names (`constructor`, `prototype`)
+ * are not such a member. Each member is read from its own entry, never by name, so the walk
+ * never reaches the object's prototype.
+ */
+function unheldMemberPath(value: unknown, prefix: readonly string[] = []): string[] | undefined {
+  const children: [string, unknown][] = Array.isArray(value)
+    ? value.map((item: unknown, index) => [String(index), item])
+    : typeof value === 'object' && value !== null
+      ? Object.entries(value)
+      : [];
+  for (const [key, child] of children) {
+    const path = [...prefix, key];
+    if (!Array.isArray(value) && key === UNHELD_RECORD_KEY) return path;
+    const found = unheldMemberPath(child, path);
+    if (found !== undefined) return found;
+  }
+  return undefined;
 }
 
 /**

@@ -1,0 +1,64 @@
+{
+  "id": "522-A",
+  "issue": 522,
+  "title": "Valid committed section opens in JSON mode with normal controls",
+  "expected": "Not invalid, Apply enabled, no error, no PUT.",
+  "steps": [
+    "Open Config overrides in JSON mode over a valid committed value."
+  ],
+  "checks": [
+    {
+      "label": "editor not invalid",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "Apply enabled (normal controls)",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "no inline error text",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "no held segment",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "opened text equals the committed section",
+      "actual": {
+        "example": {
+          "outer": {
+            "team_docs": false
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "expected": {
+        "example": {
+          "outer": {
+            "team_docs": false
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "pass": true
+    },
+    {
+      "label": "opening sent no PUT",
+      "actual": 0,
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "522-A-valid-open.png"
+  ],
+  "verdict": "PASS",
+  "puts": [],
+  "durationMs": 1997,
+  "consoleErrors": [],
+  "trace": "522-A-trace.zip"
+}

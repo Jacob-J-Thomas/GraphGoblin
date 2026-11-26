@@ -1,0 +1,537 @@
+{
+  "id": "527-B",
+  "issue": 527,
+  "title": "Own __proto__ refused at the Value; lossy save refused; neighbour saves; publish refused; reload",
+  "expected": "Exact text held, member path + remedy described, no PUT/SQL change, neighbour PUT without held text, publish refused, reload shows last complete value.",
+  "steps": [
+    "Type a schema with an own \"__proto__\" member under properties into Variables value 1.",
+    "Variants: own __proto__ at top level, inside an array item, and deep inside items.",
+    "Neighbour edit (Variables value 2) while Value 1 is held.",
+    "Publish while held.",
+    "Reload: window-only text is gone, the last complete value and the neighbour remain."
+  ],
+  "checks": [
+    {
+      "label": "Value aria-invalid=true",
+      "actual": "true",
+      "pass": true
+    },
+    {
+      "label": "accessible description names properties.__proto__ and the remedy",
+      "actual": "properties.__proto__: This member name cannot be saved. Rename or remove it. Discard the unparsed text",
+      "pass": true
+    },
+    {
+      "label": "Value keeps the exact typed text",
+      "actual": "{\"type\":\"object\",\"description\":\"held\",\"properties\":{\"__proto__\":{\"type\":\"number\"},\"name\":{\"type\":\"string\"}}}",
+      "pass": true
+    },
+    {
+      "label": "Discard action offered beside the message",
+      "actual": 1,
+      "pass": true
+    },
+    {
+      "label": "no draft PUT for the refused value (1.5 s > 600 ms debounce)",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "server+SQL draft unchanged while held",
+      "actual": {
+        "schemaVersion": 4,
+        "name": "QA 527 own proto refusal 2",
+        "description": "kept",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {
+          "topic": {
+            "type": "string",
+            "title": "last complete topic"
+          },
+          "other": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 80
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "approve",
+            "label": "Approve",
+            "ui": {
+              "x": 290,
+              "y": 80
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "Approve?",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 570,
+              "y": 80
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "approve",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "approve",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "schemaVersion": 4,
+        "name": "QA 527 own proto refusal 2",
+        "description": "kept",
+        "settings": {
+          "workingDirectory": {
+            "kind": "temp"
+          },
+          "defaults": {
+            "byHarness": {}
+          },
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null,
+          "subloopDepthLimit": 8
+        },
+        "variables": {
+          "topic": {
+            "type": "string",
+            "title": "last complete topic"
+          },
+          "other": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "nodes": [
+          {
+            "id": "start",
+            "label": "Start",
+            "ui": {
+              "x": 0,
+              "y": 80
+            },
+            "kind": "trigger",
+            "config": {
+              "type": "manual",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ]
+            }
+          },
+          {
+            "id": "approve",
+            "label": "Approve",
+            "ui": {
+              "x": 290,
+              "y": 80
+            },
+            "kind": "wait",
+            "config": {
+              "mode": "input",
+              "prompt": "Approve?",
+              "exposeTo": [
+                "ui",
+                "api",
+                "mcp"
+              ],
+              "onTimeout": "continue"
+            }
+          },
+          {
+            "id": "done",
+            "label": "Done",
+            "ui": {
+              "x": 570,
+              "y": 80
+            },
+            "kind": "exit",
+            "config": {
+              "outcome": "success",
+              "returns": "none",
+              "destinations": [
+                {
+                  "kind": "caller"
+                }
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "id": "e1",
+            "from": {
+              "node": "start",
+              "port": "out"
+            },
+            "to": {
+              "node": "approve",
+              "port": "in"
+            }
+          },
+          {
+            "id": "e2",
+            "from": {
+              "node": "approve",
+              "port": "out"
+            },
+            "to": {
+              "node": "done",
+              "port": "in"
+            }
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "label": "status while held",
+      "actual": {
+        "whole": "Draft saved . Field input kept in this window only",
+        "draft": "Draft saved",
+        "held": ". Field input kept in this window only"
+      },
+      "observation": true
+    },
+    {
+      "label": "held segment shown",
+      "actual": ". Field input kept in this window only",
+      "pass": true
+    },
+    {
+      "label": "draft segment says Draft saved (not All changes saved)",
+      "actual": "Draft saved",
+      "pass": true
+    },
+    {
+      "label": "variant __proto__: invalid and named",
+      "actual": {
+        "invalid": "true",
+        "label": "Variables value 1",
+        "description": "__proto__: This member name cannot be saved. Rename or remove it. Discard the unparsed text",
+        "focused": true
+      },
+      "pass": true
+    },
+    {
+      "label": "variant anyOf.1.__proto__: invalid and named",
+      "actual": {
+        "invalid": "true",
+        "label": "Variables value 1",
+        "description": "anyOf.1.__proto__: This member name cannot be saved. Rename or remove it. Discard the unparsed text",
+        "focused": true
+      },
+      "pass": true
+    },
+    {
+      "label": "variant properties.a.items.0.properties.__proto__: invalid and named",
+      "actual": {
+        "invalid": "true",
+        "label": "Variables value 1",
+        "description": "properties.a.items.0.properties.__proto__: This member name cannot be saved. Rename or remove it. Discard the unparsed text",
+        "focused": true
+      },
+      "pass": true
+    },
+    {
+      "label": "still no PUT after variants",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "SQL variables: last complete topic + new neighbour",
+      "actual": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        },
+        "other": {
+          "type": "integer",
+          "description": "neighbour saved independently"
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        },
+        "other": {
+          "type": "integer",
+          "description": "neighbour saved independently"
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "neighbour PUT 200",
+      "actual": 200,
+      "pass": true
+    },
+    {
+      "label": "PUT payload variables",
+      "actual": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        },
+        "other": {
+          "type": "integer",
+          "description": "neighbour saved independently"
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        },
+        "other": {
+          "type": "integer",
+          "description": "neighbour saved independently"
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "PUT payload carries no __proto__ text and no held description",
+      "actual": "{\"definition\":{\"schemaVersion\":4,\"name\":\"QA 527 own proto refusal 2\",\"description\":\"kept\",\"settings\":{\"workingDirectory\":{\"kind\":\"temp\"},\"defaults\":{\"byHarness\":{}},\"maxNodeVisits\":10,\"runDeadlineSeconds\":null,\"structuredTimeoutMs\":null,\"subloopDepthLimit\":8},\"variables\":{\"topic\":{\"type\":\"string\",\"title\":\"last complete topic\"},\"other\":{\"type\":\"integer\",\"description\":\"neighbour saved independently\"}},\"nodes\":[{\"id\":\"start\",\"label\":\"Start\",\"ui\":{\"x\":0,\"y\":80},\"kind\":\"trigger\",\"config\":{\"type\":\"manual\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"]}},{\"id\":\"approve\",\"label\":\"Approve\",\"ui\":{\"x\":290,\"y\":80},\"kind\":\"wait\",\"config\":{\"mode\":\"input\",\"prompt\":\"Approve?\",\"exposeTo\":[\"ui\",\"api\",\"mcp\"],\"onTimeout\":\"continue\"}},{\"id\":\"done\",\"label\":\"Done\",\"ui\":{\"x\":570,\"y\":80},\"kind\":\"exit\",\"config\":{\"outcome\":\"success\",\"returns\":\"none\",\"destinations\":[{\"kind\":\"caller\"}]}}],\"edges\":[{\"id\":\"e1\",\"from\":{\"node\":\"start\",\"port\":\"out\"},\"to\":{\"node\":\"approve\",\"port\":\"in\"}},{\"id\":\"e2\",\"from\":{\"node\":\"approve\",\"port\":\"out\"},\"to\":{\"node\":\"done\",\"port\":\"in\"}}]}}",
+      "pass": true
+    },
+    {
+      "label": "Value 1 still holds the exact text",
+      "actual": "{\"type\":\"object\",\"description\":\"held\",\"properties\":{\"__proto__\":{\"type\":\"number\"},\"name\":{\"type\":\"string\"}}}",
+      "pass": true
+    },
+    {
+      "label": "publish refusal text",
+      "actual": "Publish failed Some fields hold input that is not a valid value yet; complete or discard it first.",
+      "observation": true
+    },
+    {
+      "label": "nothing published",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "reloaded Value 1 = last complete topic",
+      "actual": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "expected": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "pass": true
+    },
+    {
+      "label": "reloaded Value 2 = neighbour",
+      "actual": {
+        "type": "integer",
+        "description": "neighbour saved independently"
+      },
+      "expected": {
+        "type": "integer",
+        "description": "neighbour saved independently"
+      },
+      "pass": true
+    },
+    {
+      "label": "no held segment after reload",
+      "actual": null,
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "527-B-held.png",
+    "527-B-publish-refused.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:27:45.572Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 527 own proto refusal 2",
+          "description": "kept",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "string",
+              "title": "last complete topic"
+            },
+            "other": {
+              "type": "integer",
+              "description": "neighbour saved independently"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 5388,
+  "consoleErrors": [],
+  "trace": "527-B-trace.zip"
+}

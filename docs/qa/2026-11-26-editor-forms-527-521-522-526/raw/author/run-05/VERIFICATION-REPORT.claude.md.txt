@@ -1,0 +1,30 @@
+I ran all three wrappers once, in order, and each one reported a pass. None failed, so there was no stop and no retry. I could only see the JSON receipt each wrapper printed. File reads are restricted to the worktree, which blocked the raw logs and settlement records in the evidence folder, so they remain a visibility limit.
+
+| Arm | Run time (UTC) | Exit | Result | Index before = after |
+|---|---|---|---|---|
+| unit | 11:01:23 → 11:02:02 (~39s) | 0 | 5 files passed, 54 tests passed, verbose reporter, completed nine not rerun | `2a4c1383…54053a6`, unchanged |
+| browser-build | 11:02:49 → 11:03:20 (~32s) | 0 | 28 owned built files | unchanged |
+| browser | 11:03:24 → 11:04:27 (~64s) | 0 | 5 expected, 5 passed, 0 failed, 0 retried | unchanged |
+
+**Unit scope:** only the five files you specified: `fields.test.tsx`, `JsonText.test.tsx`, `save-status.test.ts`, `EditorToolbar.test.tsx` and `focus-field.test.ts`. The 54 passing tests match the expected count.
+
+**Browser titles reported:**
+- conflict inside Context JSON retains pending text; overwrite saves applied values; reload closes dialog
+- I6 incomplete optional numeric text keeps the last applied number in every persistence layer
+- I4 parent validation Config overrides: invalid Claude JSON must not apply or reach the device draft
+- I4 parent validation Capabilities: invalid Claude JSON must not apply or reach the device draft
+- focus stays in the repaired form, and unfinished input elsewhere survives the rename
+
+**What I couldn't see:**
+- **Unit cleanup:** the unit receipt has no fields showing whether the test processes fully shut down (the separate 2s check on the owned Job) or how many were still active. I never saw a positive zero count. I went ahead because the wrapper exited 0, wrote a complete receipt and printed no traceback. A run of ~39s also can't have gone down the 150s timeout path. That was my judgement, not something I observed, so a root review of the unit receipt should confirm cleanup before relying on the later two arms.
+- **Raw logs:** none of the raw stdout/stderr, per-test lines, process-cleanup or settlement records were visible to me for any arm.
+- **Browser setup:** I also couldn't confirm the browser setup details: loopback ports, isolated profile, Ollama disabled, the bound Edge image, and the copied served-dist. These belong to the wrapper and weren't shown in its output.
+- **Model:** the model ID is `claude-opus-5-5`. I can't see the reasoning-effort or plan setting, so I can't confirm "xhigh/ordinary-Max" myself.
+
+**One deviation:** after the unit arm I made one read-only attempt to open `verify04.py` to find where it stores its records. The restriction denied it and nothing came back. It was outside the three-wrapper allowlist, so it counts as a deviation. I did not use `cat`, Git, Glob or any other shell command, and I made no edits.
+
+**What this does not establish:**
+- I did not admit the source or rule on 04's `cat` deviation; both remain root decisions.
+- Original04 is still a 150s timeout failure. The 54 passing tests here don't explain that timeout or make that run pass.
+- This is not a full 14-file / 238-test result, owner PWA/pin acceptance, or integrated delivery.
+- Full hosted coverage and current-target CI, independent review/QA, and the reserved final review are still required.

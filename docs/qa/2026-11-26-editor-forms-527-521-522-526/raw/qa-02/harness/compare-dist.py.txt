@@ -1,0 +1,26 @@
+"""Compare a built web dist against the frozen 28-asset hashes in the QA preparation contract."""
+import hashlib
+import json
+import os
+import sys
+
+dist, contract, out = sys.argv[1:4]
+expected = json.load(open(contract, encoding='utf-8'))['builtAssets']
+actual = {}
+for root, _, files in os.walk(dist):
+    for name in files:
+        path = os.path.join(root, name)
+        rel = os.path.relpath(path, dist).replace('\\', '/')
+        actual[rel] = hashlib.sha256(open(path, 'rb').read()).hexdigest()
+report = {
+    'dist': dist,
+    'expectedCount': len(expected),
+    'actualCount': len(actual),
+    'identical': actual == expected,
+    'missing': sorted(set(expected) - set(actual)),
+    'extra': sorted(set(actual) - set(expected)),
+    'differing': sorted(k for k in set(expected) & set(actual) if expected[k] != actual[k]),
+    'actual': actual,
+}
+json.dump(report, open(out, 'w', encoding='utf-8'), indent=2)
+print(json.dumps({k: v for k, v in report.items() if k != 'actual'}))

@@ -1,0 +1,39 @@
+{
+  "id": "527-C",
+  "issue": 527,
+  "title": "Discard restores and refocuses; correction saves the whole object",
+  "expected": "Discard: text restored, focus in Value, no PUT. Correction: whole renamed object saved and reloaded.",
+  "steps": [
+    "Hold a value with own __proto__, then Discard."
+  ],
+  "checks": [
+    {
+      "label": "focus returns to the Value editor after Discard",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "active element after discard",
+      "actual": {
+        "tag": "DIV",
+        "label": "Variables value 1",
+        "text": ""
+      },
+      "observation": true
+    },
+    {
+      "label": "Value no longer invalid",
+      "actual": null,
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "527-C-first-failure.png"
+  ],
+  "verdict": "FAIL",
+  "failure": "SyntaxError: Unexpected end of JSON input",
+  "stack": "SyntaxError: Unexpected end of JSON input\n    at JSON.parse (<anonymous>)\n    at case527Correct (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:403:66)\n    at async file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:904:22",
+  "durationMs": 1312,
+  "consoleErrors": [],
+  "trace": "527-C-trace.zip"
+}

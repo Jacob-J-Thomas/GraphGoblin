@@ -1,0 +1,69 @@
+{
+  "id": "527-D",
+  "issue": 527,
+  "title": "Adversarial: string member equal to the form internal unset marker",
+  "expected": "Either a field-associated refusal or the whole entered object stored.",
+  "steps": [
+    "Type a schema whose default (and an examples item) is the string \"\\u0000graphgoblin:unset\"."
+  ],
+  "checks": [
+    {
+      "label": "field state",
+      "actual": {
+        "invalid": null,
+        "label": "Variables value 1",
+        "description": "",
+        "focused": true
+      },
+      "observation": true
+    },
+    {
+      "label": "stored after entry",
+      "actual": {
+        "type": "string",
+        "title": "sentinel",
+        "examples": [
+          null,
+          "kept"
+        ]
+      },
+      "observation": true
+    },
+    {
+      "label": "PUT payload topic",
+      "actual": {
+        "type": "string",
+        "title": "sentinel",
+        "examples": [
+          null,
+          "kept"
+        ]
+      },
+      "observation": true
+    },
+    {
+      "label": "either a field-associated refusal or the whole entered object stored",
+      "actual": {
+        "refused": false,
+        "stored": {
+          "type": "string",
+          "title": "sentinel",
+          "examples": [
+            null,
+            "kept"
+          ]
+        }
+      },
+      "pass": false
+    }
+  ],
+  "screenshots": [
+    "527-D-first-failure.png"
+  ],
+  "verdict": "FAIL",
+  "failure": "Error: CHECK FAILED: either a field-associated refusal or the whole entered object stored: {\"refused\":false,\"stored\":{\"type\":\"string\",\"title\":\"sentinel\",\"examples\":[null,\"kept\"]}}",
+  "stack": "Error: CHECK FAILED: either a field-associated refusal or the whole entered object stored: {\"refused\":false,\"stored\":{\"type\":\"string\",\"title\":\"sentinel\",\"examples\":[null,\"kept\"]}}\n    at Object.check (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:221:22)\n    at case527Sentinel (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:444:5)\n    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at async file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:935:22",
+  "durationMs": 1504,
+  "consoleErrors": [],
+  "trace": "527-D-trace.zip"
+}
