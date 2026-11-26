@@ -74,8 +74,11 @@ apps/
   plugin-codex/       Codex plugin: MCP server registration plus skills.
   plugin-claude/      Claude Code plugin: local stdio MCP registration plus skills.
   macos-launcher/     Swift package: native launch engine, AppKit presentation and installer.
-tooling/              Shared tsconfig, eslint config, dependency-cruiser rules, licence allowlist.
+tooling/              Shared tsconfig, eslint config, dependency-cruiser rules, licence allowlist,
+                      and the plugin builders' output helper (@graphgoblin/tooling/plugin-output).
 ```
+
+Both plugin apps list `tooling` as a production dependency: their assemblers import `@graphgoblin/tooling/plugin-output` when they run. It is plain JavaScript (`plugin-output.mjs`, typed by `plugin-output.d.mts`), so it needs no build, and `plugin-output-metadata.mjs` holds its platform metadata check. It refuses source entries outside a builder's finite current inputs, then publishes the builder's finite current output inventory. An existing output is replaced only when it holds exactly that current inventory with the content hashes its ownership marker recorded at the previous build; the marker verifies the current names and never authorizes others. See [Codex plugin](07-api-and-streaming.md#codex-plugin-decided).
 
 Post-1.0 packages: `adapter-claude`, `adapter-litellm`, `adapter-postgres`, `apps/runner`.
 

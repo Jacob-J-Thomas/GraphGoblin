@@ -1,0 +1,103 @@
+{
+  "boundary": "public writePluginOutput; native filesystem with narrowly instrumented actual file handle and one unlink",
+  "cases": [
+    {
+      "revision": "review-01-control",
+      "mode": "write-only",
+      "observedName": "Error",
+      "observedMessage": "REVIEW: primary staged write failure",
+      "observedCause": null,
+      "observedErrors": null,
+      "primaryRetained": true,
+      "previousOutputUnchanged": true,
+      "retainedStaging": false
+    },
+    {
+      "revision": "review-01-control",
+      "mode": "close-only",
+      "observedName": "Error",
+      "observedMessage": "REVIEW: staged file close failure",
+      "observedCause": null,
+      "observedErrors": null,
+      "primaryRetained": false,
+      "previousOutputUnchanged": true,
+      "retainedStaging": false
+    },
+    {
+      "revision": "review-01-control",
+      "mode": "write-plus-close",
+      "observedName": "Error",
+      "observedMessage": "REVIEW: staged file close failure",
+      "observedCause": null,
+      "observedErrors": null,
+      "primaryRetained": false,
+      "previousOutputUnchanged": true,
+      "retainedStaging": false
+    },
+    {
+      "revision": "review-01-control",
+      "mode": "write-plus-close-plus-cleanup",
+      "observedName": "AggregateError",
+      "observedMessage": "REVIEW: staged file close failure. Cleanup also failed: REVIEW: staged removal failure. The unpublished new output remains at \"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-review2-faults-yIT5eA\\review-01-control\\write-plus-close-plus-cleanup\\package\\dist\\.marketplace.graphgoblin-build\\next\". Staging directory \"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-review2-faults-yIT5eA\\review-01-control\\write-plus-close-plus-cleanup\\package\\dist\\.marketplace.graphgoblin-build\" remains; once no build is running, keep anything you need from it and move it aside before rebuilding this destination.",
+      "observedCause": "REVIEW: staged file close failure",
+      "observedErrors": [
+        "REVIEW: staged file close failure",
+        "REVIEW: staged removal failure"
+      ],
+      "primaryRetained": false,
+      "previousOutputUnchanged": true,
+      "retainedStaging": true
+    },
+    {
+      "revision": "review-02-corrected",
+      "mode": "write-only",
+      "observedName": "Error",
+      "observedMessage": "REVIEW: primary staged write failure",
+      "observedCause": null,
+      "observedErrors": null,
+      "primaryRetained": true,
+      "previousOutputUnchanged": true,
+      "retainedStaging": false
+    },
+    {
+      "revision": "review-02-corrected",
+      "mode": "close-only",
+      "observedName": "Error",
+      "observedMessage": "REVIEW: staged file close failure",
+      "observedCause": null,
+      "observedErrors": null,
+      "primaryRetained": false,
+      "previousOutputUnchanged": true,
+      "retainedStaging": false
+    },
+    {
+      "revision": "review-02-corrected",
+      "mode": "write-plus-close",
+      "observedName": "AggregateError",
+      "observedMessage": "REVIEW: primary staged write failure. Cleanup also failed: REVIEW: staged file close failure.",
+      "observedCause": "REVIEW: primary staged write failure",
+      "observedErrors": [
+        "REVIEW: primary staged write failure",
+        "REVIEW: staged file close failure"
+      ],
+      "primaryRetained": true,
+      "previousOutputUnchanged": true,
+      "retainedStaging": false
+    },
+    {
+      "revision": "review-02-corrected",
+      "mode": "write-plus-close-plus-cleanup",
+      "observedName": "AggregateError",
+      "observedMessage": "REVIEW: primary staged write failure. Cleanup also failed: REVIEW: staged file close failure; REVIEW: staged removal failure. The unpublished new output remains at \"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-review2-faults-yIT5eA\\review-02-corrected\\write-plus-close-plus-cleanup\\package\\dist\\.marketplace.graphgoblin-build\\next\". Staging directory \"C:\\Users\\98jak\\AppData\\Local\\Temp\\gg-review2-faults-yIT5eA\\review-02-corrected\\write-plus-close-plus-cleanup\\package\\dist\\.marketplace.graphgoblin-build\" remains; once no build is running, keep anything you need from it and move it aside before rebuilding this destination.",
+      "observedCause": "REVIEW: primary staged write failure",
+      "observedErrors": [
+        "REVIEW: primary staged write failure",
+        "REVIEW: staged file close failure",
+        "REVIEW: staged removal failure"
+      ],
+      "primaryRetained": true,
+      "previousOutputUnchanged": true,
+      "retainedStaging": true
+    }
+  ]
+}

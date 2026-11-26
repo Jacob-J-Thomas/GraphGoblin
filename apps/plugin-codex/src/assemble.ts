@@ -1,6 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
-import { writePluginOutput } from '@graphgoblin/tooling/plugin-output';
+import { checkSourceInventory, writePluginOutput } from '@graphgoblin/tooling/plugin-output';
 import {
   MarketplaceSchema,
   McpConfigSchema,
@@ -65,7 +65,8 @@ export interface AssembledPlugin extends LoadedPlugin {
 /**
  * Codex copies an installed plugin into its cache (`~/.codex/plugins/cache/<marketplace>/...`), so
  * a path relative to this repository would break. Assembling copies the plugin into a local
- * marketplace and writes the absolute MCP server path into its `.mcp.json`.
+ * marketplace and writes the absolute MCP server path into its `.mcp.json`. It packages only the
+ * manifest, the configured MCP file and each skill's `SKILL.md`, and refuses any other source entry.
  */
 export async function assemblePlugin(options: AssembleOptions): Promise<AssembledPlugin> {
   const source = await loadPlugin(options.pluginDir);
@@ -100,11 +101,20 @@ export async function assemblePlugin(options: AssembleOptions): Promise<Assemble
   });
   const packageDir = resolve(options.pluginDir, '..', '..');
   const prefix = `plugins/${name}`;
+  const mcpFile = source.manifest.mcpServers.slice(2);
+  const skillNames = source.skills.map((skill) =>
+    posix.join(source.manifest.skills, skill.name, 'SKILL.md'),
+  );
+  // Package only the finite inputs read here; refuse anything else before touching the output.
+  await checkSourceInventory(options.pluginDir, [
+    '.codex-plugin/plugin.json',
+    mcpFile,
+    ...skillNames,
+  ]);
   const skillFiles = await Promise.all(
-    source.skills.map(async (skill) => {
-      const file = posix.join(source.manifest.skills, skill.name, 'SKILL.md');
-      return [`${prefix}/${file}`, await readFile(join(options.pluginDir, file))] as const;
-    }),
+    skillNames.map(
+      async (file) => [`${prefix}/${file}`, await readFile(join(options.pluginDir, file))] as const,
+    ),
   );
   await writePluginOutput({
     outDir: marketplaceDir,
@@ -117,7 +127,7 @@ export async function assemblePlugin(options: AssembleOptions): Promise<Assemble
       [`${prefix}/.codex-plugin/plugin.json`]: await readFile(
         join(options.pluginDir, '.codex-plugin', 'plugin.json'),
       ),
-      [`${prefix}/${source.manifest.mcpServers.slice(2)}`]: `${JSON.stringify(mcp, null, 2)}\n`,
+      [`${prefix}/${mcpFile}`]: `${JSON.stringify(mcp, null, 2)}\n`,
       ...Object.fromEntries(skillFiles),
     },
   });

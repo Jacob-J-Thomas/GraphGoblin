@@ -1,0 +1,151 @@
+--- review-01/tooling/plugin-output.mjs
++++ review-02/tooling/plugin-output.mjs
+@@ -280,6 +280,15 @@
+   let moved = false;
+   let published = false;
+   let primary;
++  // Attempt every cleanup step even if another fails; none removes more than this build verified.
++  const failures = [];
++  const attempt = async (step) => {
++    try {
++      await step();
++    } catch (error) {
++      failures.push(error);
++    }
++  };
+   let metadataCheck;
+   const checkMetadata = async (path, directoryNames, fileNames) => {
+     try {
+@@ -312,9 +321,12 @@
+       createdFiles.push(name);
+       try {
+         await handle.writeFile(content);
+-      } finally {
+-        await handle.close();
++      } catch (error) {
++        // Closing after a failed write is cleanup: its own failure must not mask the write's.
++        await attempt(() => handle.close());
++        throw error;
+       }
++      await handle.close();
+     }
+     if ((await inspect(destination, checkMetadata)) !== incumbent)
+       throw unsafe(destination, 'it changed during assembly');
+@@ -339,15 +351,6 @@
+     primary = error;
+   }
+ 
+-  // Attempt every cleanup step even if another fails; none removes more than this build verified.
+-  const failures = [];
+-  const attempt = async (step) => {
+-    try {
+-      await step();
+-    } catch (error) {
+-      failures.push(error);
+-    }
+-  };
+   if (metadataCheck) await attempt(() => metadataCheck.close());
+   // Restore only into a vacant destination; a tree another writer created there is left alone.
+   if (primary && moved)
+--- review-01/tooling/plugin-output.test.mjs
++++ review-02/tooling/plugin-output.test.mjs
+@@ -20,7 +20,12 @@
+ 
+ vi.mock('node:fs/promises', async (load) => {
+   const actual = await load();
+-  return { ...actual, rename: vi.fn(actual.rename), unlink: vi.fn(actual.unlink) };
++  return {
++    ...actual,
++    open: vi.fn(actual.open),
++    rename: vi.fn(actual.rename),
++    unlink: vi.fn(actual.unlink),
++  };
+ });
+ vi.mock('./plugin-output-metadata.mjs', async (load) => {
+   const actual = await load();
+@@ -45,6 +50,22 @@
+ async function rewriteMarker(outDir, change) {
+   const marker = join(outDir, inventory);
+   await writeFile(marker, JSON.stringify(change(JSON.parse(await readFile(marker, 'utf8')))));
++}
++
++/** Open the next staged file for real, then fail its write, its completed close, or both. */
++async function failStagedFile({ write, close }) {
++  const actual = await vi.importActual('node:fs/promises');
++  fs.open.mockImplementationOnce(async (path, flags) => {
++    const handle = await actual.open(path, flags);
++    const { writeFile: writeHandle, close: closeHandle } = handle;
++    return Object.assign(handle, {
++      writeFile: write ? async () => Promise.reject(write) : writeHandle,
++      async close() {
++        await closeHandle.call(handle);
++        if (close) throw close;
++      },
++    });
++  });
+ }
+ 
+ describe('generated plugin output', () => {
+@@ -357,6 +378,62 @@
+     expect(await readdir(lock)).toEqual(['next']);
+   });
+ 
++  it.each([
++    ['writing', { write: new Error('instrumented write failure') }],
++    ['closing', { close: new Error('instrumented close failure') }],
++  ])(
++    'reports a failure %s a staged file unchanged and keeps the prior output',
++    async (_label, failure) => {
++      await writePluginOutput(options);
++      const before = await snapshot(options.outDir);
++      await failStagedFile(failure);
++      const files = { ...options.files, '.mcp.json': 'new config' };
++      // A close failure after a complete write is never swallowed; either one stays the error.
++      await expect(writePluginOutput({ ...options, files })).rejects.toBe(
++        failure.write ?? failure.close,
++      );
++      expect(await snapshot(options.outDir)).toEqual(before);
++      expect(await readdir(join(options.packageDir, 'dist'))).toEqual(['marketplace']);
++    },
++  );
++
++  it('keeps a staged write failure primary when closing the file also fails', async () => {
++    await writePluginOutput(options);
++    const before = await snapshot(options.outDir);
++    const write = new Error('instrumented write failure');
++    const close = new Error('instrumented close failure');
++    await failStagedFile({ write, close });
++    const files = { ...options.files, '.mcp.json': 'new config' };
++    const error = await writePluginOutput({ ...options, files }).catch((reason) => reason);
++    expect(error).toBeInstanceOf(AggregateError);
++    expect(error.cause).toBe(write);
++    expect(error.errors).toHaveLength(2);
++    expect(error.errors[0]).toBe(write);
++    expect(error.errors[1]).toBe(close);
++    expect(error.message).toBe(
++      'instrumented write failure. Cleanup also failed: instrumented close failure.',
++    );
++    // The failed close did not stop removal of the unpublished staged tree.
++    expect(await snapshot(options.outDir)).toEqual(before);
++    expect(await readdir(join(options.packageDir, 'dist'))).toEqual(['marketplace']);
++
++    // When removing the staged tree also fails, every failure and the remaining tree are reported.
++    const cleanup = new Error('instrumented cleanup failure');
++    await failStagedFile({ write, close });
++    fs.unlink.mockRejectedValueOnce(cleanup);
++    const retained = await writePluginOutput({ ...options, files }).catch((reason) => reason);
++    expect(retained.cause).toBe(write);
++    expect(retained.errors).toHaveLength(3);
++    expect(retained.errors[0]).toBe(write);
++    expect(retained.errors[1]).toBe(close);
++    expect(retained.errors[2]).toBe(cleanup);
++    expect(retained.message).toBe(
++      `instrumented write failure. Cleanup also failed: instrumented close failure; instrumented cleanup failure. The unpublished new output remains at "${next}". Staging directory "${lock}" remains; once no build is running, keep anything you need from it and move it aside before rebuilding this destination.`,
++    );
++    expect(await snapshot(options.outDir)).toEqual(before);
++    expect(await readdir(lock)).toEqual(['next']);
++  });
++
+   it('continues cleanup when the metadata helper fails to close', async () => {
+     await writePluginOutput(options);
+     const before = await snapshot(options.outDir);

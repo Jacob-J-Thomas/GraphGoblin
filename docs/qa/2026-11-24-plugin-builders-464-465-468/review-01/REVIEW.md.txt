@@ -1,0 +1,29 @@
+**Changes requested — formal review 1 of 3.** One P2 root cause requires the admitted #464 correction. No P0/P1 finding or other admissible root cause was found.
+
+Reviewed branch `codex/gg-fu-plugin-builders-20261124`, base/head `d2df8600c2c8574bec420947de686b936910b245`, with exactly 11 unstaged source files. The immutable candidate is identified by `CANDIDATE-MANIFEST.json` (every source hash, including `.d.mts`) and patch SHA-256 `d76727d01ed84999bd4302832c8ceeb1f1f6aa627e03589915f17c2486f59c35`. `FINAL-STATE.json` confirms the head, patch, all 11 raw hashes, status and empty index remained unchanged.
+
+**R1 — P2, FIX-IN-PR:** retain the staged write failure when closing that file also fails. Signature: `plugin-output/staged-write-close-masks-primary`. Location: `tooling/plugin-output.mjs:313-316`.
+
+If `handle.writeFile(content)` throws and `handle.close()` also throws in the inner `finally`, the close rejection replaces the write rejection before the outer catch runs. The new error aggregation therefore receives only the close error. The public-boundary probe reports `Error: REVIEW: staged file close failure`, with no `cause`, no `errors`, and none of the primary write message. The prior output remains byte-identical and staging is removed: this is a diagnostic defect, with no demonstrated data loss.
+
+The inner `try/finally` is identical at the intended base. This is an unhandled pre-existing branch inside #464's explicit acceptance to keep the primary failure and any cleanup failure observable in error details and the message existing CLIs display. The orchestrator confirmed P2 FIX-IN-PR for this bounded contract during review. Preserve both failures, continue safe cleanup, and add a public-writer regression. `probe-write-close.mjs` and `probe-write-close.log` retain the narrow native-filesystem reproduction; the injected close first closes the real file safely.
+
+**Independent verification:** all ran on Node `v22.23.4` and exited 0.
+
+| Evidence | Result and purpose |
+| --- | --- |
+| `targeted-tooling.log` | 24 selected maintained tests passed, 11 intentionally unselected; changed inventory, missing/foreign/modified output, recovery/error aggregation and finite source checks. |
+| `targeted-codex.log` | 2 selected public-assembler tests passed, 9 intentionally unselected; unsupported assets and changed inventory preserve output. |
+| `targeted-claude.log` | 3 selected tests passed, 8 intentionally unselected; each missing anchor, source refusal and CRLF normalization. |
+| `probe-write-close.log` | R1 reproduced through public `writePluginOutput`; prior bytes preserved. |
+| `probe-byte-equivalence.log` | Baseline/candidate public assembler source produces identical bytes for all 6 Codex and 7 Claude generated files, plus both markers. |
+
+The byte-equivalence probe transpiles the baseline and current assembler source in memory, uses unchanged manifest code and the current shared writer, and works only on copied inputs and unused disposable outputs. It verifies generation behavior; it is neither native plugin loading nor a safety comparison of the baseline writer.
+
+**Review coverage:** every authorized changed file was inspected, including docs, declarations and tests. Current output inventory and stored digests still control replacement; marker-only names are quoted rather than read or deleted. Platform metadata checks before/after quarantine, overlap/link guards, restore conflict preservation and finite cleanup authority remain. Source checks stay at actual input roots, and the run-loop adaptation requires both anchors before publication while retaining valid transform bytes. The new `.DS_Store` refusal is the intended documented policy. No new format, dependency, package or deletion authority was introduced.
+
+**Evidence limits:** this is source review, not formal independent QA. Native Codex marketplace installation/loading and native Claude validation remain required after correction in disposable configurations. The author's scoped coverage/typecheck/lint/format/build results are retained as author evidence and were not relabeled independent QA. Full repository CI was not repeated. No provider was invoked; no installed plugin, owner data/service, source, Git index, commit or external record was changed.
+
+The existing POSIX vacant-check/rename empty-directory race, concurrent deletion race and source-root/parent-link trust boundaries remain explicit non-goals. They are not new findings or reasons to expand this patch.
+
+Next: actual Claude author batches R1, followed by fresh independent QA and targeted review 2 of the correction delta. Pass 3 remains reserved for the required final audit.

@@ -1,0 +1,197 @@
+{
+  "scratch": "G:/ggq/gg-native-464-EbS5Px",
+  "nodeVersion": "v22.23.4",
+  "isolated": {
+    "codexHome": "G:\\ggq\\gg-native-464-EbS5Px\\disposable Codex home",
+    "claudeHome": "G:\\ggq\\gg-native-464-EbS5Px\\disposable Claude home",
+    "neutralCwd": "G:\\ggq\\gg-native-464-EbS5Px\\neutral workspace"
+  },
+  "fixtureGateway": "http://127.0.0.1:53770",
+  "fixtureGatewayRequests": [
+    {
+      "method": "GET",
+      "url": "/runs?limit=20"
+    }
+  ],
+  "exactMcpEntry": "G:\\ggq\\gg-fu-plugin-builders-20261124\\GraphGoblin\\apps\\mcp\\dist\\main.js",
+  "commandReceipts": [
+    {
+      "label": "codex-version",
+      "binary": "codex.exe",
+      "args": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "f6464b8cc67af75deb2589fe1dbcde152fc15ffb76a91de1cf0686b4623afb1e",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "assemble-codex",
+      "binary": "node.exe",
+      "args": [
+        "G:\\ggq\\gg-fu-plugin-builders-20261124\\GraphGoblin\\apps\\plugin-codex\\dist\\cli.js",
+        "--out",
+        "G:\\ggq\\gg-native-464-EbS5Px\\marketplace 漢 fixture",
+        "--mcp-entry",
+        "G:\\ggq\\gg-fu-plugin-builders-20261124\\GraphGoblin\\apps\\mcp\\dist\\main.js"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "c6f16b0925f9be6e63cc949d74af643c3c672139eae6cc4f2285bb2e7b056a47"
+    },
+    {
+      "label": "marketplace-add",
+      "binary": "codex.exe",
+      "args": [
+        "plugin",
+        "marketplace",
+        "add",
+        "G:\\ggq\\gg-native-464-EbS5Px\\marketplace 漢 fixture",
+        "--json"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "16002913fbbfd4a2fa5be0998a8ed96c005fbfea888835538860ae7800b02d37",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "plugin-add",
+      "binary": "codex.exe",
+      "args": [
+        "plugin",
+        "add",
+        "graphgoblin@graphgoblin-local",
+        "--json"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "b98b68a6121de20c96e3844498052a9e0e4d28932c3517b97d22e3f155efff68",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "claude-version",
+      "binary": "claude.exe",
+      "args": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "6ed611782bb054b29144b6975023a2729b4fa967ef871fc679e712686473e31b",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "assemble-claude",
+      "binary": "node.exe",
+      "args": [
+        "G:\\ggq\\gg-fu-plugin-builders-20261124\\GraphGoblin\\apps\\plugin-claude\\dist\\cli.js",
+        "--out",
+        "G:\\ggq\\gg-native-464-EbS5Px\\Claude plugin é fixture",
+        "--mcp-entry",
+        "G:\\ggq\\gg-fu-plugin-builders-20261124\\GraphGoblin\\apps\\mcp\\dist\\main.js"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "8b2058e559e747835007433e16ab0ffd948d001f60a6c9a2a3ed0a9f44f066d8"
+    },
+    {
+      "label": "claude-validate",
+      "binary": "claude.exe",
+      "args": [
+        "plugin",
+        "validate",
+        "--strict",
+        "--json",
+        "G:\\ggq\\gg-native-464-EbS5Px\\Claude plugin é fixture"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "error": null,
+      "stdoutSha256": "897bcf7c1ef1675c17ef403c2819e70380402b76c378db3e3833d25b4d7783f3",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "codex": {
+    "binarySha256": "fdda5fa3cf3fb3d000b876720742857676293e4315e4b045fae6f8bd7e866d1d",
+    "version": "codex-cli 0.160.0",
+    "artifact": {
+      "marketplaceSha256": "51174fc58c40bb37208dc0f7e478af4daa86ebb3075368dae04da4e679423cf1",
+      "mcpConfigSha256": "49ec4a6e882bed1047af5263d4a934442607aad2c8f593604ca0e2f72ada03b5"
+    },
+    "installedAndEnabled": true,
+    "loadedMetadata": {
+      "skills": [
+        "design-loop",
+        "inspect-run",
+        "run-loop"
+      ],
+      "mcpServers": [
+        "graphgoblin"
+      ]
+    },
+    "nativeStdioDiscovery": {
+      "serverInfo": {
+        "name": "graphgoblin",
+        "title": "GraphGoblin",
+        "version": "0.1.0",
+        "description": null,
+        "icons": null,
+        "websiteUrl": null
+      },
+      "toolNames": [
+        "cancel_run",
+        "describe_loop",
+        "get_run",
+        "get_run_thread",
+        "list_loops",
+        "list_runs",
+        "pause_run",
+        "provide_input",
+        "read_run_events",
+        "replay_run",
+        "resume_run",
+        "send_signal",
+        "start_run",
+        "wait_for_run"
+      ]
+    },
+    "appServer": {
+      "args": [
+        "app-server",
+        "--disable",
+        "remote_plugin",
+        "--stdio"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "methodsObserved": [
+        "initialize",
+        "plugin/list",
+        "plugin/read",
+        "mcpServerStatus/list"
+      ],
+      "stdoutSha256": "26b1b02b040e657fc7bbb817fd1ffea5519a6ab8367794c7dafb4b48c7f0074d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "failure": "Metadata discovery should not call the local gateway\n+ actual - expected\n\n+ [\n+   {\n+     method: 'GET',\n+     url: '/runs?limit=20'\n+   }\n+ ]\n- []\n"
+  },
+  "claude": {
+    "binarySha256": "5064e6e0572dca86257363ca04d48653eef20ef27f1bd04b504ed7199ed3fd13",
+    "version": "2.1.323 (Claude Code)",
+    "strictValidated": true,
+    "artifact": {
+      "manifestSha256": "b784b847485520ad0250cae44e3706cf8b5e6589ccd9b8860d99fa2b84b9aa38",
+      "mcpConfigSha256": "2f85612bdcc82e08993aad0fa12b5824df0b7b9652b1687dea3fde63ac7fa020"
+    }
+  }
+}

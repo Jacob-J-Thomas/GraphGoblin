@@ -1,0 +1,30 @@
+The write failure now stays primary when closing the staged file also fails. The fix is in `tooling/plugin-output.mjs`, with new public-method regression tests in `tooling/plugin-output.test.mjs`. Those are the only two of the 11 paths I edited. Every check in the contract passed and all changes are unstaged.
+
+## The fix
+- **Before:** the staged-file `try { writeFile } finally { close }` let a close failure replace the write failure, so nothing kept the write error.
+- **Now:** if the write fails, the handle is still closed through the existing cleanup `attempt`, so a close failure is recorded as a cleanup failure and the write failure is rethrown as primary. If the write succeeds, `close()` runs as before and any close failure is still thrown, not swallowed.
+- **Structure:** the existing `failures`/`attempt` code moved above the staging `try`, unchanged. The rest of the outer cleanup is unchanged. It still attempts every owned cleanup step, deletes nothing new, and still can't claim publication or rollback here, because this failure happens before anything is moved or published.
+- **Result:** the error uses the existing `AggregateError`, with `cause` set to the write error and `errors` = [write, close, any other cleanup failures]. There is no new public API.
+
+## Red/green evidence
+- **Red (old helper, new tests):** the tooling test command gave 1 failed / 51 passed. The combined test failed with `expected Error: instrumented close failure to be an instance of AggregateError`, which reproduces the finding. Both single-failure controls passed on the old code, as controls should.
+- **Green:** 52/52 passed.
+- **New tests** (all through `writePluginOutput`, failures injected by wrapping a real file handle):
+  - **Write fails only:** rejects with exactly that error; prior output unchanged; staging removed.
+  - **Close fails after a complete write:** rejects with exactly that error, showing it isn't swallowed; prior output unchanged; staging removed.
+  - **Write and close both fail:** `AggregateError` with the exact message `instrumented write failure. Cleanup also failed: instrumented close failure.`; the object identities above are asserted; prior output unchanged; staging removed.
+  - **Same, plus removing the staged tree fails:** `errors` = [write, close, cleanup]; the message reports the leftover `next` and lock directories; `lock` contains only `next`; prior output unchanged.
+
+## Other checks
+- **Tooling coverage (both helper files combined):** 97.53% statements, 96.33% branches, 98.36% functions, 98.22% lines. The reporter only gives a summary, not per-file figures.
+- **Codex builder coverage:** 11 passed, 1 skipped (the live Codex session suite, which needs an external provider). 96.05% statements, 91.66% branches, 100% functions, 95.77% lines.
+- **Claude builder coverage:** 11 passed. 96.42% statements, 96.29% branches, 100% functions, 96.22% lines. This suite covers source refusal and the adaptation anchors.
+- **Typecheck, lint, formatting:** Codex and Claude typecheck and lint, tooling lint, `prettier --check` on the 11 paths and `git diff --check` are all clean. Thresholds are unchanged.
+- **`pnpm build`:** 12/12 tasks succeeded, and both real plugin CLIs assembled successfully.
+
+## Limits and open items
+- **Rebuilt outputs not byte-checked:** `pnpm build` rewrote this worktree's own outputs (`apps/plugin-codex/dist/marketplace` and `apps/plugin-claude/dist/plugin/graphgoblin`). No installed plugins were touched. None of my permitted commands can hash files, so I couldn't compare them with the reviewer's baseline bytes, and that comparison needs redoing.
+- **Source hashes not re-checked:** I didn't touch any plugin source inputs, but I couldn't recompute the frozen source hashes either.
+- **Injection is simulated:** the tests close the real handle before throwing. A real close failure that leaves the file open (likely on Windows) would also make removing the staged tree fail. The code would then report that and the leftover directories; the second combined case simulates this with an injected `unlink` failure, not a genuinely open handle.
+- **No doc changes:** the existing contract (`cause` is the primary failure, `errors` lists it before each cleanup failure) now holds for this path, since closing after a failed write counts as cleanup. If reviewers want that stated outright, a short clause in the comment in `plugin-output.d.mts` and in `docs/07-api-and-streaming.md` would do it.
+- **Still to do:** the targeted correction review, the final Astra MAX review, native plugin QA and CI. Two of the 11 files now differ from the frozen patch, so the patch needs re-freezing.
