@@ -1,0 +1,295 @@
+{
+  "scope": "Independent disposable browser QA of inspector outage; no repository source edits",
+  "testedBaseCommit": "eadb202946d4e76db5d8e2ff4af1733197e96ea2",
+  "baselineSourceTree": "ff7992d6d2a78c3e50c3596353b65642326d30c5 (same source tree)",
+  "runtime": {
+    "node": "22.22.2",
+    "pnpm": "12.8.1 via corepack",
+    "playwright": "1.63.0",
+    "browser": "Google Chrome for Testing 153.0.8010.12; bundled Chromium revision 1243",
+    "os": "macOS arm64"
+  },
+  "probeSha256": "ed2cb8bfc7fdd999acc45cc23972eab968ef7ba6cac00be6659a4fbd6be9bde0",
+  "sourceSha256": {
+    "baselineInspectorAvailabilityTest": "7c3bf7921d5ef1848fee44e7c7ae0f4dd6912f11ce4b4687cd9ca59bbfcd9ff5",
+    "candidateInspectorAvailabilityTest": "7c3bf7921d5ef1848fee44e7c7ae0f4dd6912f11ce4b4687cd9ca59bbfcd9ff5",
+    "harnessServer": "c141941ddf4429ee870cfda0da79ce24bba4a4e002a7aba29001417feb33a98f",
+    "createTestApp": "275fd7228ef196733bdcc884a05eaf8f3ffce8498bb4298ce18ca13b4f75cff0",
+    "candidateInspectorReadProvenance": "11e5f198dbb2cee224b43b02e37abc41bc9679b344a8fee1cb05a64c9201f871",
+    "candidateUseRunEvents": "4fa99c0930b20c756d7fc8ee35779c139ae91553d7cdd3f933e6dc21a3fa6848"
+  },
+  "buildAssetsSha256": {
+    "baselineManifest": "3847453936dc564de0ffd09f758c2428d1011825028e85b758e83a8501cea551",
+    "candidateManifest": "1234536bfc02f3383e105ab0d3136d7cb23b9f7083a6010f68f1a3912d15404e",
+    "baselineIndex": "73410a6f758f9db331febdcb49a421a55d50a99938318230d7a4537c47fec603",
+    "candidateIndex": "f99a72f89a4421805c1b90852e77fc604848b20c7acbf44731a0407c6bcd3cf5",
+    "baselineAppJs": "6fc57a7e01ed0712597e83a6dbe2b4902db0a87a1f1377145646cebd6754c368",
+    "candidateAppJs": "0bc957ccf8100989b09bcf3159e6f38e3bfd12085998df1525c30bb54bf5a126"
+  },
+  "setupAttempt": {
+    "outcome": "setup failure only",
+    "reason": "default sandbox denied ephemeral 127.0.0.1 listener bind (EPERM), before browser/product run",
+    "resultSha256": "e5999dd113561bde22b50a09e26288e996b7feee26205600a3e3d2265473b4dd"
+  },
+  "baseline": {
+    "outcome": "failed",
+    "failure": "expect(locator).toBeVisible() failed",
+    "events": [
+      {
+        "at": "2026-11-25T06:50:41.718Z",
+        "kind": "browser-run-get",
+        "ordinal": 1,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:50:41.893Z",
+        "kind": "browser-run-get",
+        "ordinal": 2,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:50:41.905Z",
+        "kind": "preloss-run-response-held",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:50:41.905Z",
+        "kind": "before-loss-ready",
+        "ordinal": null,
+        "runGets": 2
+      },
+      {
+        "at": "2026-11-25T06:50:41.909Z",
+        "kind": "listener-stopped",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:50:41.965Z",
+        "kind": "global-outage-visible",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:50:41.966Z",
+        "kind": "preloss-run-response-delivered",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:51:02.025Z",
+        "kind": "failure",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:51:02.123Z",
+        "kind": "listener-restored-in-finally",
+        "ordinal": null,
+        "runGets": null
+      }
+    ],
+    "browserWrites": [],
+    "browserRunGets": 2,
+    "transportFailures": [
+      {
+        "at": "2026-11-25T06:50:41.910Z",
+        "pathClass": "run events",
+        "error": "net::ERR_INCOMPLETE_CHUNKED_ENCODING"
+      },
+      {
+        "at": "2026-11-25T06:50:41.972Z",
+        "pathClass": "run events",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:42.476Z",
+        "pathClass": "run events",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:43.482Z",
+        "pathClass": "run events",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:45.486Z",
+        "pathClass": "run events",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:49.493Z",
+        "pathClass": "run events",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:51.726Z",
+        "pathClass": "/system/shutdown",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:53.731Z",
+        "pathClass": "/healthz",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:56.742Z",
+        "pathClass": "/system/storage",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:57.498Z",
+        "pathClass": "run events",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:50:57.737Z",
+        "pathClass": "/healthz",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      }
+    ],
+    "resultSha256": "aadb5a2267b0ff9b83725b65645c7268d13e26e385f74dca0d9cb7e4afdc39c1",
+    "traceSha256": "fe2121db8e46a5861c8667f7371cfed93fc5041c4446dcce6687dc7639cc483b"
+  },
+  "candidate": {
+    "outcome": "passed",
+    "failure": "",
+    "events": [
+      {
+        "at": "2026-11-25T06:52:17.694Z",
+        "kind": "browser-run-get",
+        "ordinal": 1,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:17.848Z",
+        "kind": "browser-run-get",
+        "ordinal": 2,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:17.860Z",
+        "kind": "preloss-run-response-held",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:17.860Z",
+        "kind": "before-loss-ready",
+        "ordinal": null,
+        "runGets": 2
+      },
+      {
+        "at": "2026-11-25T06:52:17.864Z",
+        "kind": "listener-stopped",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:17.919Z",
+        "kind": "global-outage-visible",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:17.919Z",
+        "kind": "preloss-run-response-delivered",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:17.923Z",
+        "kind": "browser-run-get",
+        "ordinal": 3,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:18.040Z",
+        "kind": "stale-gate-verified",
+        "ordinal": null,
+        "runGets": 3
+      },
+      {
+        "at": "2026-11-25T06:52:18.041Z",
+        "kind": "listener-restored",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:18.932Z",
+        "kind": "browser-run-get",
+        "ordinal": 4,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:19.071Z",
+        "kind": "browser-run-get",
+        "ordinal": 5,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:19.077Z",
+        "kind": "recovery-and-submit-verified",
+        "ordinal": null,
+        "runGets": null
+      },
+      {
+        "at": "2026-11-25T06:52:19.170Z",
+        "kind": "browser-run-get",
+        "ordinal": 6,
+        "runGets": null
+      }
+    ],
+    "browserWrites": [
+      {
+        "at": "2026-11-25T06:52:19.039Z",
+        "method": "POST",
+        "pathClass": "run input",
+        "listenerDown": false
+      }
+    ],
+    "browserRunGets": 6,
+    "transportFailures": [
+      {
+        "at": "2026-11-25T06:52:17.864Z",
+        "pathClass": "run events",
+        "error": "net::ERR_INCOMPLETE_CHUNKED_ENCODING"
+      },
+      {
+        "at": "2026-11-25T06:52:17.925Z",
+        "pathClass": "run events",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      },
+      {
+        "at": "2026-11-25T06:52:17.926Z",
+        "pathClass": "/runs/01M3Y7RKG0WDB9EE2GMTTABSRC",
+        "error": "net::ERR_CONNECTION_REFUSED"
+      }
+    ],
+    "resultSha256": "3cef139dc3d27861c061c0d8346cde25927590910b49a87c764d1038c7d330cf",
+    "traceSha256": "34cbb5b5c5431b13755b512113612f70c991813ae70b8079e0f19c77eb6819b2"
+  },
+  "originalUnchangedRegression": {
+    "outcome": "passed",
+    "selectedTests": 1,
+    "passed": 1,
+    "retries": 0,
+    "sourceUnchanged": true,
+    "logSha256": "a9c5c563270098eca7d7f550266ead8f9e534cb794bc1a4e81e405c920aa6946"
+  },
+  "cleanup": {
+    "baselineAndCandidateControlAndApiListeners": "no listeners on recorded ports after runs",
+    "serverTeardown": "stdin stop; server restores worker and closes createTestApp; browser/context disposed",
+    "scratchStore": "createTestApp uses in-memory SQLite with temporary data directory removed on close"
+  },
+  "limits": [
+    "Candidate runtime source hashes bind to build01 and working tree; root must bind final commit blobs and dist equivalence before final acceptance.",
+    "Transport failure callback ordering can occur during listener close; this observed baseline and candidate both had stream failure after control returned."
+  ],
+  "commands": {
+    "baseline": "GG_QA_REPO=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair GG_QA_WEB_DIST=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/baseline-dist GG_QA_OUT=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/baseline-run-escalated /opt/homebrew/bin/node /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/read-crosses-listener-loss.mjs",
+    "candidate": "GG_QA_REPO=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/inspector-repair GG_QA_WEB_DIST=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/candidate-dist GG_QA_OUT=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/candidate-run /opt/homebrew/bin/node /Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/read-crosses-listener-loss.mjs",
+    "originalUnchanged": "GG_E2E_WEB_DIST=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/candidate-dist GG_E2E_MAIN_PORT=0 GG_E2E_CONTROL_PORT=0 /opt/homebrew/bin/corepack pnpm exec playwright test -c playwright.config.ts e2e/inspector-availability.spec.ts --grep \"a waiting run stays last observed\" --output=/Users/jake/Documents/Codex/2026-11-23/files-pasted-by-the-user-prompt/work/aidlc/inspector-independent-qa/original-candidate-results --reporter=list"
+  }
+}

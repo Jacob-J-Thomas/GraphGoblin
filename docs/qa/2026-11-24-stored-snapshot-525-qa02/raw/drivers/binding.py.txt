@@ -1,0 +1,49 @@
+"""Read-only candidate/index freeze. Root binds only AFTER the actual docs correction succeeds."""
+from pathlib import Path
+import hashlib,json,subprocess,sys
+BASE='d2df8600c2c8574bec420947de686b936910b245'
+E=Path(__file__).resolve().parent.parent;QA=E/'independent-qa-01';PREP=E/'independent-qa-preparation'
+WORKTREE=Path('G:/ggq/gg-fu-snapshot-validation-20261124/GraphGoblin')
+CORRECTION=E/'doc-correction-01/claude-correction-01/CLAUDE-EXIT.json'
+PROTECTED=json.loads((E/'doc-correction-01/CORRECTION-CONTRACT.json').read_bytes())['protectedWorktreeChanges']
+DOCS={'CHANGELOG.md','docs/06-harness-integration.md'}
+def sha(data):return hashlib.sha256(data).hexdigest()
+def read(path):return json.loads(path.read_bytes())
+def save(path,value):path.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+def git(*args):return subprocess.run(['git','--no-optional-locks','-c','diff.autoRefreshIndex=false',*args],cwd=WORKTREE,capture_output=True,check=True).stdout
+
+def snapshot(require_correction=True):
+ if require_correction and not CORRECTION.exists():raise RuntimeError('WAIT_DOC_CORRECTION_RECEIPT; do not bind or enqueue current hashes')
+ index=Path(git('rev-parse','--path-format=absolute','--git-path','index').decode().strip());before=sha(index.read_bytes())
+ head=git('rev-parse','HEAD').decode().strip();branch=git('branch','--show-current').decode().strip()
+ assert head==BASE and branch=='codex/gg-fu-snapshot-validation-20261124'
+ assert not git('diff','--cached','--name-only','-z')
+ paths=set(filter(None,git('diff','--name-only','--no-renames','HEAD').decode().splitlines()))|set(filter(None,git('ls-files','--others','--exclude-standard').decode().splitlines()))
+ assert paths==(set(PROTECTED)|DOCS if require_correction else set(PROTECTED)),paths
+ hashes={p:sha((WORKTREE/p).read_bytes()) for p in sorted(paths)}
+ assert all(hashes[p]==h for p,h in PROTECTED.items()),'Protected implementation changed'
+ receipt=None
+ if require_correction:
+  receipt=read(CORRECTION);assert receipt.get('invocationSucceeded') is True and receipt.get('providerModel')=='claude-opus-5-5' and receipt.get('providerApiKeySource')=='none' and not receipt.get('stagedPaths')
+  assert receipt.get('worktreeChanges')==hashes,'Correction receipt and candidate bytes differ'
+ patch=git('diff','--binary','--full-index','--no-ext-diff','--no-textconv',BASE)
+ for p in sorted(paths-set(filter(None,git('diff','--name-only',BASE).decode().splitlines()))):
+  result=subprocess.run(['git','diff','--no-index','--binary','--full-index','--','/dev/null',p],cwd=WORKTREE,capture_output=True);assert result.returncode in (0,1);patch+=result.stdout
+ assert sha(index.read_bytes())==before,'Read-only freeze refreshed index'
+ return {'head':head,'branch':branch,'patchSha256':sha(patch),'indexSha256':before,'files':hashes,'correctionReceiptSha256':sha(CORRECTION.read_bytes()) if receipt else None},patch
+
+def verify():
+ if not (QA/'BINDING.json').exists():raise RuntimeError('WAIT_REBIND_AFTER_DOC_CORRECTION; no QA provider/session is authorized yet')
+ expected=read(QA/'BINDING.json');actual,_=snapshot();assert actual==expected['candidate'],'Candidate or index differs from bound correction'
+ for p,h in expected['driverHashes'].items():assert sha(Path(p).read_bytes())==h,p
+ return actual
+
+def main():
+ if sys.argv[1:]!=['--bind-after-correction']:raise SystemExit('Root only: --bind-after-correction after receipt and docs review')
+ candidate,patch=snapshot();drivers=[QA/'binding.py',QA/'run-check.py',QA/'launch-independent-qa.py',QA/'QA-BRIEF.md',PREP/'fixture.mjs',PREP/'browser-driver.py']
+ state={'candidate':candidate,'driverHashes':{str(p):sha(p.read_bytes()) for p in drivers},'notBeforeUtc':'2026-11-25T05:10:20Z','role':'fresh separate actual Claude QA; no reviewer context','status':'BOUND_AWAITING_ROOT_QUEUE'}
+ assert not (QA/'BINDING.json').exists(),'Do not overwrite an existing freeze/session'
+ save(QA/'BINDING.json',state);(QA/'SOURCE.patch').write_bytes(patch)
+ task={'id':'snapshot-525-independent-qa-01','notBefore':'2026-11-25T05:10:20+00:00','argv':[sys.executable,str(QA/'launch-independent-qa.py')],'cwd':str(QA)}
+ save(QA/'QUEUE-TASK.after-rebind.json',task);save(QA/'STATUS.json',{'status':'BOUND_AWAITING_ROOT_QUEUE','queueEligible':True,'providerInvoked':False,'formalScanConsumed':False});print(json.dumps({'bound':True,'patchSha256':candidate['patchSha256'],'queueFile':'QUEUE-TASK.after-rebind.json','providerInvoked':False}))
+if __name__=='__main__':main()

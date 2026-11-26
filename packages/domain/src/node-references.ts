@@ -33,7 +33,12 @@ export type NodeRenameResult =
   | {
       kind: 'renamed';
       definition: LoopDefinitionInput;
-      repairedReferences: number;
+      /** Rewritten reference spans in expressions, templates and mutation pointers, each once. */
+      repairedSources: number;
+      /** Edges with an end moved to the new id: one per edge, so a self-edge counts one. */
+      repairedConnections: number;
+      /** Edge ends moved to the new id: one per end, so a self-edge counts two. */
+      repairedEndpoints: number;
       warnings: ValidationIssue[];
     };
 
@@ -245,7 +250,9 @@ export function renameLoopNode(
   const sourceFields = fields(definition);
   const customKeys = authoredOutputKeys(sourceFields);
   const outputMayBeCustom = customKeys.has('') || customKeys.has(oldId) || customKeys.has(nextId);
-  let repairedReferences = 0;
+  let repairedSources = 0;
+  let repairedConnections = 0;
+  let repairedEndpoints = 0;
   let updated = definition;
   const warnings: ValidationIssue[] = [];
   for (const field of sourceFields) {
@@ -281,13 +288,15 @@ export function renameLoopNode(
       'replace',
       text,
     ) as LoopDefinitionInput;
-    repairedReferences += new Set(patchable.map(({ span }) => span.start)).size;
+    repairedSources += new Set(patchable.map(({ span }) => span.start)).size;
   }
   const nodes = updated.nodes.map((node) => (node.id === oldId ? { ...node, id: nextId } : node));
   const edges = updated.edges.map((edge) => {
     const from = edge.from.node === oldId;
     const to = edge.to.node === oldId;
-    repairedReferences += Number(from) + Number(to);
+    // The edge changes once however many of its ends move; each moved end is an endpoint.
+    repairedConnections += Number(from || to);
+    repairedEndpoints += Number(from) + Number(to);
     return from || to
       ? {
           ...edge,
@@ -310,7 +319,9 @@ export function renameLoopNode(
   return {
     kind: 'renamed',
     definition: { ...updated, nodes, edges },
-    repairedReferences,
+    repairedSources,
+    repairedConnections,
+    repairedEndpoints,
     warnings,
   };
 }

@@ -661,6 +661,17 @@ listed in the version history. Starting a snapshot directly answers 409 `VERSION
 `label` and `name` are those of the pinned definition, so renaming or editing the loop later does
 not change them. MCP compact runs (`list_runs`, control tools) include `definition`, the label.
 
+`GET /loops/{id}/versions/{versionId}` serves a stored record of any status as the current
+`LoopVersionRecordSchema` reads it, through the same response model (#525). A current-format record
+that omits a field the schema defaults, such as an inference node's `harness` in a hand-authored
+draft-run snapshot, is served with the schema's default. The stored row is not rewritten: such a
+snapshot needs no edit to be read here and keeps its immutability protection. Before the record is
+validated, the caller must own the loop (otherwise 404 `LOOP_NOT_FOUND`) and the version must belong
+to it (otherwise 404 `VERSION_NOT_FOUND`). A retired Event destination still answers 409
+`LOOP_UPGRADE_REQUIRED` (below). A record the current schema refuses answers the sanitized 500
+`RESPONSE_INVALID`, which carries nothing from the stored record. The rule is this endpoint's: the
+loop detail, version history and export serve their records as before.
+
 **Stored definitions that predate ADR-0044 (#242).** A version, draft or draft-run snapshot saved
 before exits stopped publishing Events can still hold an exit destination `{ kind: "event" }`.
 It is refused before it is served or run, never dropped silently: `GET /loops/{id}`,

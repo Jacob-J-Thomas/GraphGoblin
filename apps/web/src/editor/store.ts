@@ -329,9 +329,16 @@ export interface NodeFocusTarget {
 export interface RenameReport {
   from: string;
   to: string;
-  /** Connections with an end on the node; they follow it. */
+  /**
+   * Connections with an end on the node, which follow it: the domain's `repairedConnections`, one
+   * per edge, so a self-edge counts once although the domain's `repairedEndpoints` counts its two
+   * ends.
+   */
   connections: number;
-  /** References rewritten in expressions, templates and mutation paths. */
+  /**
+   * References rewritten in expressions, templates and mutation paths: the domain's
+   * `repairedSources`, which never includes connection ends.
+   */
   references: number;
   /**
    * Fields the rename left for the author: dynamic, inherited or authored keys, and sources it
@@ -835,11 +842,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
         if (node.config !== def.nodes[index]?.config) bump(`node:${node.id}`);
       });
       if (result.definition.settings !== def.settings) bump('settings');
-      const endpoints = def.edges.reduce(
-        (count, edge) =>
-          count + Number(edge.from.node === nodeId) + Number(edge.to.node === nodeId),
-        0,
-      );
       const before = {
         definition: def,
         fieldErrors: s.fieldErrors,
@@ -858,10 +860,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
         renameReport: {
           from: nodeId,
           to: nextId,
-          connections: def.edges.filter(
-            (edge) => edge.from.node === nodeId || edge.to.node === nodeId,
-          ).length,
-          references: result.repairedReferences - endpoints,
+          connections: result.repairedConnections,
+          references: result.repairedSources,
           warnings: result.warnings,
           definition,
         },

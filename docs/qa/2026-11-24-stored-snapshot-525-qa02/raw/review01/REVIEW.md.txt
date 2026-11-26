@@ -1,0 +1,40 @@
+# Formal review 1: #525
+
+**CHANGES_REQUIRED** — one documentation root cause must be fixed in this PR. No implementation correctness blocker was found.
+
+Independent OpenAI source review of the actual Claude Opus 5.5 implementation. Base and HEAD: `d2df8600c2c8574bec420947de686b936910b245`. Source patch SHA-256: `24defc2d00aa4d0b9d41cc230b05b7646bb424a2b6b70dea2b6c0f104c0489b3`. The exact tracked plus untracked patch, empty index patch, three file hashes, gate document hashes and final unchanged-source readback are in `SOURCE.patch`, `INDEX.patch`, `SOURCE-MANIFEST.json` and `FRESHNESS.json`. This is scan 1 of at most 3; it does not consume the reserved final fresh Astra MAX review.
+
+## Required finding
+
+**R1 — P2, FIX-IN-PR: Reconcile the old explicit-snapshot read guidance.** `docs/06-harness-integration.md:556-558` and `CHANGELOG.md:322-325` still state that the explicit read of a manually authored immutable snapshot with an omitted default harness can return `500 RESPONSE_INVALID`. The changed handler and the new paragraph in `docs/07-api-and-streaming.md:652-663` now establish 200 for that otherwise valid current-format shape. Leaving both statements gives operators contradictory recovery and verification guidance for the exact issue being fixed. Correct both passages as one documentation root cause. Scope the correction to explicit version GET; preserve the advice for actually incompatible snapshots, immutable history, other read paths and hand correction of genuinely invalid stored content. No storage rewrite or broader serializer change is requested.
+
+## Source and contract assessment
+
+- `apps/api/src/routes/loops.ts:54-59` uses the existing strict `LoopVersionRecordSchema.safeParse` and the active provider's `ResponseSerializationError`. At `:462-472`, ownership, lookup, loop/version binding and `served()` retired-event refusal all precede parsing. Failure reaches the existing sanitized `RESPONSE_INVALID` branch. The provider constructor and handler recognition were read from the installed dependency and product source.
+- The current inference schema supplies fixed `harness: codex` (`packages/contracts/src/nodes.ts:299`). This new function has no container, settings, catalog, engine or storage dependency, performs no write, and returns the parsed current-schema view through the existing output model. No older schema parser, converter, or tolerant branch was added. Other routes and repository behavior are unchanged in the exact patch.
+- The new test inserts synthetic rows with real snapshot immutability triggers active and verifies the complete omitted and materialized responses, authored prompt/overrides/schema/timeout and identity/timestamps. It compares exact raw definition text and all listed loop/version/run/event/trigger rows, tests wrong-loop/unknown/foreign/no-key isolation using an invalid record, tests sanitized 500 without record leakage, verifies guard acceptance of a valid omitted shape, and verifies the snapshot still cannot be edited.
+- Existing retired-event tests directly exercise the explicit endpoint's 409 precedence. Stored-text-capture and stored-loop-defaults cover adjacent current record shapes without broadening the implementation.
+
+## Independent verification
+
+All commands selected Node **v22.23.4** on PATH and used `pnpm.cmd` from this worktree.
+
+| Check | Result | Evidence |
+| --- | --- | --- |
+| Focused Vitest, 6 files / 34 tests | PASS | `FOCUSED-TESTS.log` |
+| API typecheck | PASS | `TYPECHECK.log` |
+| API lint | PASS | `LINT.log` |
+| `git diff --check` | PASS | Review execution |
+| Frozen source/index readback | PASS, unchanged | `FRESHNESS.json` |
+
+Focused test command: `pnpm.cmd --filter @graphgoblin/api exec vitest run src/stored-snapshot-read.test.ts src/retired-event-destination.test.ts src/codex-config-overrides.test.ts src/loop-names.test.ts src/stored-text-capture.test.ts src/stored-loop-defaults.test.ts`.
+
+The review used production `buildApp` route injection, real disposable SQLite/libsql and fake providers, with `createTestApp` forcing Ollama off. The separate supplied `../../BASELINE-HTTP.json` receipt records actual loopback HTTP on the pre-fix base: valid omitted snapshot 500, materialized control 200, stable denial controls and unchanged rows. That baseline receipt was inspected, not independently recreated by this review. No owner ports, owner storage or provider execution were used.
+
+## Follow-up and remaining gates
+
+**F1 — P2, FOLLOW-UP, pre-existing and outside this patch:** `SCHEMA-ENCODE-PROBE.json` independently verifies that a bad override key is refused by inference-config parse/encode and node parse, while `NodeSchema` encode accepts it. This explains the author's observation for manually corrupted/inserted live rows. The explicit GET now refuses that record with the required sanitized 500; no broader response change is needed for #525. Other read routes retain a pre-existing gap, and the startup guard refuses the invalid store. The probe and exact bytes are retained; the finding must remain qualified to this visibility boundary.
+
+`definition-pins.test.ts` was deliberately excluded: its own `open()` at lines 90-110 loads configuration without `GG_OLLAMA_ENABLED: false`, so it is not covered by the safe `createTestApp` fixture guarantee. Do not treat #565 or these focused checks as isolation of every container fixture. No broad API suite or full coverage run was attempted locally.
+
+Separate Claude QA, the built run-inspector check with a disposable pinned terminal run, hosted CI including coverage, and the final fresh Astra MAX review remain pending. This verdict is a source review, not release or human acceptance. Reviewer changed no source, index or GitHub state.

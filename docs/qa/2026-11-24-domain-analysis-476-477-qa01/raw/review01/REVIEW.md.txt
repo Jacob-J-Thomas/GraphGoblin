@@ -1,0 +1,43 @@
+# Independent formal review 01: #476 / #477
+
+**Decision: READY for the subsequent delivery gates.** No actionable correctness, regression, contract or scope finding was established. FIX-IN-PR: none. New follow-up findings: none. This is formal scan 1, performed by the independent OpenAI reviewer agent `domain_followup_review`; it is not the reserved final independent Astra MAX audit, independent QA, CI, publication approval or merge approval.
+
+Reviewed worktree: `G:/ggq/gg-fu-domain-analysis-20261124/GraphGoblin`, base `d2df8600c2c8574bec420947de686b936910b245`. All ten modified paths were read directly, including the production implementations, test diffs and documentation. The frozen patch SHA-256 is `dd0f9f6b5df075bbcbc914a1982968e6aeb9677b8c456d21bb7f804841766345`. The final patch and every changed file match the freeze and the actual Claude correction EXIT record. Index SHA-256 stayed `68a4937db310819d83d24e28b9c3c63d76b2d3b8b289b71705d71ba15f2c277b`; no paths are staged or untracked. See `SOURCE-MANIFEST.json` and `SOURCE-VERIFICATION.json` for individual file hashes and exact provenance.
+
+Admission context was read from `AGENTS.md`, `docs/README.md`, `docs/12-implementation-plan.md`, `docs/15-issue-workflow.md`, the issue bodies in the parent evidence directory's `LIVE-ISSUE-READBACK.json`, and the current implementation/correction briefs. The briefs and controller task record the current admission superseding the issue bodies' older parked language. No issue state was changed by this review.
+
+## Source assessment
+
+| Area | Assessment and evidence |
+| --- | --- |
+| Domain owns counts | `packages/domain/src/node-references.ts:31` exposes exactly the three intended counts for a successful rename. Source spans are counted after a verified rewrite at line 291. The edge rewrite increments connections once per changed edge at line 298 and endpoints once per moved end at line 299. A self-edge is consequently one connection and two endpoints. Existing repair, warning, ordering and immutable-draft behavior are preserved. |
+| Caller ownership and notice | `apps/web/src/editor/store.ts:863` consumes `repairedConnections` and `repairedSources` directly. The endpoint subtraction and connection recount are gone. The `RenameReport` shape and `RenameNotice` wording/visibility logic remain unchanged. The new repeat-self-edge store test at `store.rename.test.ts:320` verifies exact summary copy, 2 sources / 4 connections / 5 endpoints and undo/redo. |
+| No-op and refusal | Domain identity checks still return before source analysis. Their result contains only `kind`, without counts, a returned draft or authored text. Existing store refusals retain the same state object, error wording, selection and history. Exact-result negative controls and the focused store regressions passed. |
+| One diagnostic producer | `syntaxIssues` is removed from its definition and the public barrel. Base caller search found only that definition, barrel and tests; current production/test source contains no remaining `syntaxIssues` or `repairedReferences` use. No compatibility alias was introduced. `validateLoop` still calls the unchanged `authoredSourceIssues` at `graph.ts:326`, which uses the shared walker and `syntaxIssue` formatter. |
+| Discriminants and partial drafts | Focused diagnostics now call `validateLoop` and filter exactly `TEMPLATE_INVALID` / `EXPRESSION_INVALID` (`syntax.test.ts:28`). Nested paths, ordering, settings-versus-node location and required-expression message are asserted. Production-path partial-sibling coverage starts at line 222; walker controls reject unknown, missing and wrong-type discriminants. Independent public-method controls also exercised these negative branches and ignored inactive malformed source. This does not change request-schema rejection of an invalid draft. |
+| Cache and identity | `findAuthoredSources`, the walker, parser/cache implementations, scope distinctions and golden fixtures are retained. Fresh `source-analysis.test.ts` and `parse-identity.test.ts` passed. The focused syntax tests check one parse reused across two locations and repeated validation, while retaining location-specific diagnostics. |
+| Error paths, rejection and privacy | No error-detail formatter, source-message constructor, request-path encoder or API rejection shape is changed. Refused rename results were checked for their exact count-free shape. API request validation still parses before routing; publication still reaches `loopPublicationIssues` -> `validateLoop`, and error-severity issues still return 422 `LOOP_INVALID` before publishing (`apps/api/src/loop-issues.ts:21`, `routes/loops.ts:388`). API request/privacy and publication behavior were reviewed from source here, not claimed as newly exercised HTTP acceptance. |
+| Documentation and formats | The domain/frontend docs and CHANGELOG describe three separate counts, self-edge semantics, removed exports and clean caller updates. No schema, persistence, export/device format, dependency or golden-fixture changes are present; no generated-route/schema output or ADR change is needed for this bounded cleanup. |
+
+## Fresh reviewer checks
+
+All runtime commands used the project-scoped Node **v22.23.4** and `pnpm.cmd`. Full command strings, timestamps and exit codes are in the adjacent JSON records; output is retained in the corresponding logs.
+
+| Command | Result |
+| --- | --- |
+| `pnpm.cmd --filter @graphgoblin/domain test src/syntax.test.ts src/node-references.test.ts src/source-analysis.test.ts src/parse-identity.test.ts src/graph.test.ts` | Exit 0; 5 files, **116 tests passed**. |
+| `pnpm.cmd --filter @graphgoblin/web test src/editor/store.rename.test.ts src/editor/RenameNotice.test.tsx src/editor/EditorPage.rename.test.tsx src/editor/EditorPage.rename-activation.test.tsx` | Exit 0; 4 files, **34 tests passed**. Exercises notices, held form/section JSON, one-step undo/redo, selection, stale paths and pointer activation. |
+| `pnpm.cmd --filter @graphgoblin/web exec tsx --conditions=development <review-01>/review-controls.mts` | Exit 0; **203 finite control cases passed**, described below. |
+| `pnpm.cmd --filter @graphgoblin/domain --filter @graphgoblin/web typecheck` | Exit 0. |
+| `pnpm.cmd --filter @graphgoblin/domain --filter @graphgoblin/web lint` | Exit 0; zero errors, five ref-naming warnings in unchanged `RunInspectorPage.tsx` and `SessionRecoveryControls.tsx`. |
+| `pnpm.cmd exec prettier --check <10 frozen changed paths>` | Exit 0; all files formatted. Check-only operation. |
+| `git diff --check` | Exit 0. |
+| Base/current caller searches and final file/patch/index verification | Removed symbols have no remaining source callers; all ten source hashes and both patch/index invariants match. |
+
+`review-controls.mts` is an evidence-only script outside the repository. It runs the base rename function statements extracted from the immutable base commit, relocating imports to the candidate's unchanged helpers, beside the actual candidate public function. The 192-case matrix varies expressions, templates and incoming/outgoing/self/unrelated edges; it compares the returned repaired definition and warnings, input immutability, old mixed-count conservation and separate connection/endpoint totals. This is bounded differential evidence, not exhaustive equivalence. Five controls assert exact refusal/no-op shapes. Six controls exercise `validateLoop` branch selection with an invalid sibling, unknown/wrong-type/missing discriminants and inactive malformed source. See `review-controls.results.json`; baseline original/relocated hashes are recorded there.
+
+## Remaining delivery evidence
+
+No source changes are requested by this review. The next gates remain independent touched-system QA (including safely isolated API publication diagnostics and any required browser evidence), full required coverage/checks and exact-head/target CI, and the reserved final independent Astra MAX audit. This reviewer did not run the broad local API suite, full web suite, browser E2E, or `pnpm check`, and does not claim those gates complete. The author's reported full-domain coverage is carried evidence for the same source hashes, not a coverage run executed by this reviewer.
+
+The owner checkout/data and services on 4747, 4748, 7443 and 11434 were not accessed or changed. No provider turns, source edits, Git index writes, commits, issue writes, publication or merge were performed. Evidence artifacts were written only under this `review-01` directory.
