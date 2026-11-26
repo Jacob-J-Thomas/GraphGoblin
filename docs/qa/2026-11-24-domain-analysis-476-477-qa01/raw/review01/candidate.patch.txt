@@ -1,0 +1,942 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 045744fb1c8ed1819e05d4366542706615ec72f3..31c92178c1f37e129bb290e742cca103c0c472b3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,21 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
++  `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
++  template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so
++  a self-edge counts one) and `repairedEndpoints` (each edge end moved, so both ends of a self-edge)
++  instead of the combined `repairedReferences`, which is removed with no alias. The editor's rename
++  notice takes its reference count from `repairedSources` and its connection count from
++  `repairedConnections` instead of recounting edges, and still counts a self-edge as one
++  connection. The redundant
++  `syntaxIssues` export is removed: `validateLoop` remains the only producer of
++  `TEMPLATE_INVALID` and `EXPRESSION_INVALID`, with the same paths, messages and order.
++  `findAuthoredSources` stays as a discovery helper. Upgrade note: code that read
++  `repairedReferences` reads the separate counts instead, and code that called `syntaxIssues` filters
++  `validateLoop` by those two codes. No stored, export, device-draft or contract format changes,
++  and no repairs, warnings or notice wording change.
++
+ - The run inspector keeps the last run it read through an API or browser outage (#416). The run
+   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
+   the record's status, failure, result, wait form and delivery or finalization state under
+diff --git a/apps/web/src/editor/store.rename.test.ts b/apps/web/src/editor/store.rename.test.ts
+index b332462c4887e565957ebd3c0a5bbfc95cf455d0..badff21c0eaa469e82bd0fb95a973b2a49c77075 100644
+--- a/apps/web/src/editor/store.rename.test.ts
++++ b/apps/web/src/editor/store.rename.test.ts
+@@ -1,9 +1,10 @@
+ import { CURRENT_DEFINITION_FORMAT, type LoopDefinitionInput } from '@graphgoblin/contracts';
+-import { createSystemChatDefinition, enableChatAudio } from '@graphgoblin/domain';
++import { createSystemChatDefinition, enableChatAudio, renameLoopNode } from '@graphgoblin/domain';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ import { VOICE_STEP_MESSAGE } from './chat-protection.js';
+ import { COALESCE_MS } from './history.js';
+ import { validateDraft } from './model.js';
++import { renameSummary } from './RenameNotice.js';
+ import { ID_FORMAT_MESSAGE, useEditorStore, type EditorState } from './store.js';
+ 
+ const store = () => useEditorStore.getState();
+@@ -316,6 +317,92 @@ describe('renaming a node with its references (#273)', () => {
+     expect(store().decisionRoutes['check']).toBe(rows);
+   });
+ 
++  it('reports the repaired sources and each connection once, a repeat self-edge included (#476)', () => {
++    const base = referencing();
++    const definition: LoopDefinitionInput = {
++      ...base,
++      nodes: [
++        ...base.nodes.filter((n) => n.id !== 'done'),
++        {
++          id: 'gate',
++          kind: 'decision',
++          label: 'Gate',
++          config: {
++            kind: 'expression',
++            jsonata: 'counters.nodeVisits.gate > 2 ? "stop" : "again"',
++            routes: [
++              { id: 'again', label: 'Again', repeat: true },
++              { id: 'stop', label: 'Stop' },
++            ],
++            maxPasses: 3,
++          },
++        },
++        { id: 'done', kind: 'exit', label: 'Done', config: { returns: 'gates.gate.passes' } },
++      ],
++      edges: [
++        ...base.edges.filter((e) => e.id !== 'e3'),
++        { id: 'e3', from: { node: 'review', port: 'out' }, to: { node: 'gate', port: 'in' } },
++        { id: 'e4', from: { node: 'gate', port: 'again' }, to: { node: 'gate', port: 'in' } },
++        { id: 'e5', from: { node: 'gate', port: 'stop' }, to: { node: 'done', port: 'in' } },
++        {
++          id: 'e6',
++          from: { node: 'gate', port: 'limit-reached' },
++          to: { node: 'done', port: 'in' },
++        },
++      ],
++    };
++    store().load('L1', definition);
++    pause();
++    const loaded = store().definition;
++    expect(store().renameNode('gate', 'check')).toBeUndefined();
++    const ends = () => store().definition!.edges.map((e) => [e.id, e.from.node, e.to.node]);
++    const renamedEnds = [
++      ['e1', 'start', 'work'],
++      ['e2', 'work', 'review'],
++      ['e3', 'review', 'check'],
++      ['e4', 'check', 'check'],
++      ['e5', 'check', 'done'],
++      ['e6', 'check', 'done'],
++    ];
++    expect(ends()).toEqual(renamedEnds);
++    expect(config('check')['jsonata']).toBe('counters.nodeVisits.check > 2 ? "stop" : "again"');
++    expect(config('done')['returns']).toBe('gates.check.passes');
++
++    // Four connections hold the gate, e4 at both ends; the two sources reading it are the
++    // references. Connection ends are never counted as references.
++    const report = store().renameReport!;
++    expect(report).toMatchObject({
++      from: 'gate',
++      to: 'check',
++      connections: 4,
++      references: 2,
++      warnings: [],
++    });
++    expect(renameSummary(report)).toBe(
++      'Updated 2 references in expressions, templates and mutation paths, and 4 connections.',
++    );
++    // Both counts are the domain's for the draft the store renamed, taken as returned: the
++    // connections are its `repairedConnections`, not its five `repairedEndpoints`.
++    const domain = renameLoopNode(loaded!, 'gate', 'check');
++    if (domain.kind !== 'renamed') throw new Error(domain.kind);
++    expect(domain).toMatchObject({
++      repairedSources: 2,
++      repairedConnections: 4,
++      repairedEndpoints: 5,
++    });
++    expect(report).toMatchObject({
++      connections: domain.repairedConnections,
++      references: domain.repairedSources,
++    });
++
++    store().undo();
++    expect(store().definition).toEqual(loaded);
++    expect(store().renameReport).toBeUndefined();
++    store().redo();
++    expect(ends()).toEqual(renamedEnds);
++    expect(store().renameReport).toBeUndefined();
++  });
++
+   it('keeps protected voice steps: no rename, no report, the existing message', () => {
+     const definition = enableChatAudio(
+       createSystemChatDefinition({ name: 'Gateway chat', harness: 'codex' }),
+diff --git a/apps/web/src/editor/store.ts b/apps/web/src/editor/store.ts
+index 5b7a375cbb6d72852fbaf297b201d09a30238708..1d48c9493cf117a39a0c73028a46b9b4eb9fb670 100644
+--- a/apps/web/src/editor/store.ts
++++ b/apps/web/src/editor/store.ts
+@@ -329,9 +329,16 @@ export interface NodeFocusTarget {
+ export interface RenameReport {
+   from: string;
+   to: string;
+-  /** Connections with an end on the node; they follow it. */
++  /**
++   * Connections with an end on the node, which follow it: the domain's `repairedConnections`, one
++   * per edge, so a self-edge counts once although the domain's `repairedEndpoints` counts its two
++   * ends.
++   */
+   connections: number;
+-  /** References rewritten in expressions, templates and mutation paths. */
++  /**
++   * References rewritten in expressions, templates and mutation paths: the domain's
++   * `repairedSources`, which never includes connection ends.
++   */
+   references: number;
+   /**
+    * Fields the rename left for the author: dynamic, inherited or authored keys, and sources it
+@@ -835,11 +842,6 @@ export const useEditorStore = create<EditorState>((set, get) => {
+         if (node.config !== def.nodes[index]?.config) bump(`node:${node.id}`);
+       });
+       if (result.definition.settings !== def.settings) bump('settings');
+-      const endpoints = def.edges.reduce(
+-        (count, edge) =>
+-          count + Number(edge.from.node === nodeId) + Number(edge.to.node === nodeId),
+-        0,
+-      );
+       const before = {
+         definition: def,
+         fieldErrors: s.fieldErrors,
+@@ -858,10 +860,8 @@ export const useEditorStore = create<EditorState>((set, get) => {
+         renameReport: {
+           from: nodeId,
+           to: nextId,
+-          connections: def.edges.filter(
+-            (edge) => edge.from.node === nodeId || edge.to.node === nodeId,
+-          ).length,
+-          references: result.repairedReferences - endpoints,
++          connections: result.repairedConnections,
++          references: result.repairedSources,
+           warnings: result.warnings,
+           definition,
+         },
+diff --git a/docs/03-domain-model.md b/docs/03-domain-model.md
+index 357fbe2eb2cac987e05d740cc4b1e2bcbd9bcb3e..193c4f5475e49b4441a13da5a78bbd78401d4072 100644
+--- a/docs/03-domain-model.md
++++ b/docs/03-domain-model.md
+@@ -88,7 +88,7 @@ Validation rules enforced by `domain` before a version can be published:
+ - Every trigger connects, directly or through other nodes, to an exit.
+ - Every output port is connected, including a marked gate's `limit-reached`. Exits are terminal and have no outputs.
+ - Node configs validate against their kind's schema. Referenced variables exist. Referenced subloops exist and are published (checked by the API, which can see other loops; a loop may reference itself).
+-- Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`, each with the field's `path`: `config.<path>` relative to its node, or `settings.<path>`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults.
++- Every supplied Liquid template parses and every JSONata expression contains non-whitespace source and compiles, in node configs and loop settings (`TEMPLATE_INVALID`, `EXPRESSION_INVALID`, each with the field's `path`: `config.<path>` relative to its node, or `settings.<path>`). Empty and whitespace-only templates are valid and render exactly as authored. Omit optional blank expressions; the editor clears them. For optional templates, only exactly empty input means absent in the form; whitespace is preserved. This authoring rule lives in shared domain validation, so API imports and publishing agree with the editor without changing contracts parsing or fixture defaults. Graph validation (`validateLoop`) is the only producer of these two diagnostics; the domain has no separate syntax check. It finds sources with the same schema walk node renaming uses, which selects a discriminated branch by its discriminant value alone, so a sibling field that is temporarily invalid in a draft neither hides nor moves a typed source, and an unknown discriminant selects no branch. `findAuthoredSources` remains a discovery helper for parse-identity checks and produces no diagnostics.
+ - A known read of a missing node in `counters.nodeVisits` or a missing decision gate in `gates` blocks publication (`NODE_REFERENCE_MISSING`). Direct existence checks warn (`NODE_REFERENCE_OPTIONAL_MISSING`). A missing `outputs` key can come from inherited or authored state and warns when its origin cannot be verified (`NODE_REFERENCE_OUTPUT_UNVERIFIED`). Dynamic and scoped accesses that the authoring checks cannot establish report `NODE_REFERENCE_UNCERTAIN`.
+ - No edge targets a trigger node's input.
+ 
+@@ -98,6 +98,15 @@ item and access the current run through `$thread`. Subloop input variable expres
+ the parent thread directly, including a variable named `where`. In a JSONata filter or group
+ within a thread expression, `$$` can still refer to the original thread after the focus changes.
+ 
++Renaming a node (`renameLoopNode`) changes its id, its edge ends and the references the domain
++understands together, without parsing the draft. A completed rename reports three separate
++counts: `repairedSources`, each rewritten reference span in an expression, template or mutation
++pointer once; `repairedConnections`, each edge with an end moved to the new id once, so a self-edge
++counts one; and `repairedEndpoints`, each edge end moved, so a self-edge counts two. There is no
++combined count. A no-op, or a refusal (missing, ambiguous, invalid or duplicate id), carries no
++counts and changes nothing. Callers read these counts from the result instead of deriving one from
++another or recounting edges.
++
+ Harness selection belongs to inference nodes (`config.harness`, default `codex`). Loop defaults
+ provide only model and effort. Definitions containing `settings.defaults.harness` are rejected
+ as unknown keys; imports and API clients must remove it. There is no compatibility parser.
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index b13e570c1d43ff7987e11f214e4694f8adb7f682..14ffdf8bfb7a314108c2c14c7e37309a286ac4ea 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -510,9 +510,9 @@ Forms keep their own state. When a rename repaired a source the open node's conf
+ 
+ Held section JSON (unapplied **Edit as JSON** text) is not form state the rename repairs. The rename analyzes and repairs the accepted section only, and the held text keeps its exact bytes, also when the repair makes the accepted section equal to it. It stays held, with **Apply JSON** and **Cancel JSON**, until the author settles it; taking the repair adds no undo step and keeps redo, and the notice gives no diagnostics for that text. A later explicit **Apply JSON** is an ordinary whole-section edit that writes the document as held, including any old id it still names.
+ 
+-A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. While a primary pointer press is under way it keeps showing what it showed when the press began, and appears or changes once the click that press produces has been delivered, or when the press ends without one (the browser cancels it, a drag ends, the window loses focus), so it never moves the button being pressed (`editor/pointer-press.ts`). Focus moved by the keyboard shows it at once. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row opens its node's editor at the field (in place for the open node) only while that node's config is still the value the rename left, which undo and redo restore. After another edit of that node a listed path can name a different row (removing an earlier operation shifts the indices), so its rows then only inform: the notice says the node changed after the rename and that its places show where they were then. Rows for loop settings, for scripts and generated patches, and on a node no longer in the draft only inform too. The summary and the list keep their counts. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
++A rename that updated references or left something to review shows a notice titled "Renamed <old> to <new>". It appears above the canvas and, while the node dialog is open, at the top of the dialog too, like the draft conflict notice. While a primary pointer press is under way it keeps showing what it showed when the press began, and appears or changes once the click that press produces has been delivered, or when the press ends without one (the browser cancels it, a drag ends, the window loses focus), so it never moves the button being pressed (`editor/pointer-press.ts`). Focus moved by the keyboard shows it at once. It counts the updated references and connections, and says that plain text, JSON values and scripts are not changed. Both counts are the domain's own, taken as returned, and the editor counts nothing itself: references are `repairedSources`, which never includes connection ends, and connections are `repairedConnections`, one per edge with an end on the node, so a repeat route back to the same node is one connection although the domain's `repairedEndpoints` counts its two repaired ends. It then lists the places where the old id may remain as the issue badge's rows (Warning, `NODE_REFERENCE_UNCERTAIN`, message, node and path). These are dynamic or computed keys, output keys that an authored patch may own, sources the domain could not verify, and scripts and generated patches. A row opens its node's editor at the field (in place for the open node) only while that node's config is still the value the rename left, which undo and redo restore. After another edit of that node a listed path can name a different row (removing an earlier operation shifts the indices), so its rows then only inform: the notice says the node changed after the rename and that its places show where they were then. Rows for loop settings, for scripts and generated patches, and on a node no longer in the draft only inform too. The summary and the list keep their counts. "Undo reverses the whole rename." The notice stays until it is dismissed, the rename is undone or redone, another rename replaces it, or the editor loads again. A rename that only moved connections shows nothing, as before. There is no preview step; Undo is the way back. A computed key could name any node, so every rename lists it.
+ 
+-The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. A direct presence check of that one reference alone (`$exists(gates."old-id")` in JSONata, `{% if gates["old-id"] %}` in Liquid; `NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. A rename made while the loop's name is refused (see "Loop names" below) stays on this device with the other held edits; the save that follows a new name sends the whole renamed draft once. Regression: `editor/store.rename.test.ts`, `editor/EditorPage.rename.test.tsx` (also a Coerce source repaired under open and collapsed identical operations on Enter, pointer focus into the in-place repaired Source, a review row whose operation moved, and held Input JSON the repair makes equal, through one undo and redo), `forms/json-sections.test.tsx` and Edge `e2e/rename-references.spec.ts` (the Starter's sibling Liquid and Exit through undo, redo, reload, publish and pinned runs; uncertain, optional and missing references with Publish; focus through the in-place node repair and settings remount; held input; a stale tab; protected voice steps).
++The persistent reference diagnostics come from the same local `domain` validation as other issues, on node badges and beside Publish. A known missing gate or visit count is an error (`NODE_REFERENCE_MISSING`), and Publish refuses with it. A direct presence check of that one reference alone (`$exists(gates."old-id")` in JSONata, `{% if gates["old-id"] %}` in Liquid; `NODE_REFERENCE_OPTIONAL_MISSING`), unverified output keys (`NODE_REFERENCE_OUTPUT_UNVERIFIED`) and dynamic reads (`NODE_REFERENCE_UNCERTAIN`) are warnings. A rename made while the loop's name is refused (see "Loop names" below) stays on this device with the other held edits; the save that follows a new name sends the whole renamed draft once. Regression: `editor/store.rename.test.ts` (also a repeat self-edge: one connection, and only the domain's repaired sources as references, through undo and redo), `editor/EditorPage.rename.test.tsx` (also a Coerce source repaired under open and collapsed identical operations on Enter, pointer focus into the in-place repaired Source, a review row whose operation moved, and held Input JSON the repair makes equal, through one undo and redo), `forms/json-sections.test.tsx` and Edge `e2e/rename-references.spec.ts` (the Starter's sibling Liquid and Exit through undo, redo, reload, publish and pinned runs; uncertain, optional and missing references with Publish; focus through the in-place node repair and settings remount; held input; a stale tab; protected voice steps).
+ 
+ ### Editing decision routes
+ 
+diff --git a/packages/domain/src/index.ts b/packages/domain/src/index.ts
+index 9628b2e5681d06a08bd23af3bab3ad55738de60c..964b1cf1ecc07cebe32c253f88811fd8d9a2d674 100644
+--- a/packages/domain/src/index.ts
++++ b/packages/domain/src/index.ts
+@@ -24,7 +24,7 @@ export * from './json-schema.js';
+ export * from './mutations.js';
+ export * from './graph.js';
+ export * from './answers.js';
+-export { findAuthoredSources, syntaxIssues } from './syntax.js';
++export { findAuthoredSources } from './syntax.js';
+ export { renameLoopNode, type NodeRenameResult } from './node-references.js';
+ export * from './state-machine.js';
+ export * from './loop-io.js';
+diff --git a/packages/domain/src/node-references.test.ts b/packages/domain/src/node-references.test.ts
+index a628c85719510242d00ad88d740cf263f2989e76..49bb3a1f2537baa830359470d5505eb5060f1b70 100644
+--- a/packages/domain/src/node-references.test.ts
++++ b/packages/domain/src/node-references.test.ts
+@@ -184,7 +184,7 @@ describe('reference scopes and source boundaries', () => {
+       const result = renamed(returning(before));
+       const expression = expressionOf(result.definition);
+       expect(expression).toBe(after);
+-      expect(result.repairedReferences).toBe(2);
++      expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
+       expect(result.warnings).toMatchObject([
+         { code: 'NODE_REFERENCE_UNCERTAIN', nodeId: 'done', path: 'config.returns' },
+       ]);
+@@ -238,7 +238,7 @@ describe('reference scopes and source boundaries', () => {
+     ]);
+     const result = renamed(definition);
+     expect(expressionOf(result.definition)).toBe(source);
+-    expect(result.repairedReferences).toBe(1);
++    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
+     expect(await evaluateExpression(source, { outputs: { choice: { value: 'chosen' } } })).toBe(
+       'chosen',
+     );
+@@ -258,7 +258,7 @@ describe('reference scopes and source boundaries', () => {
+     ]);
+     const result = renamed(definition);
+     expect(expressionOf(result.definition)).toBe(source);
+-    expect(result.repairedReferences).toBe(1);
++    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
+     expect(
+       await evaluateExpression(source, {
+         outputs: { start: { value: 'chosen' } },
+@@ -297,7 +297,7 @@ describe('reference scopes and source boundaries', () => {
+           },
+         },
+       });
+-      expect(result.repairedReferences).toBe(2);
++      expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
+       expect(result.warnings).toEqual([]);
+       const parsed = LoopDefinitionSchema.parse(result.definition);
+       expect(validateLoop(parsed).filter((issue) => issue.severity === 'error')).toEqual(
+@@ -354,7 +354,7 @@ describe('reference scopes and source boundaries', () => {
+         },
+       },
+     });
+-    expect(result.repairedReferences).toBe(4);
++    expect(result).toMatchObject({ repairedSources: 3, repairedEndpoints: 1 });
+     expect(result.warnings).toEqual([]);
+     expect(referenceIssues(result.definition)).toEqual([
+       expect.objectContaining({
+@@ -400,7 +400,7 @@ describe('reference scopes and source boundaries', () => {
+         },
+       },
+     ]);
+-    expect(result.repairedReferences).toBe(5);
++    expect(result).toMatchObject({ repairedSources: 4, repairedEndpoints: 1 });
+     expect(result.warnings).toEqual([]);
+     expect(referenceIssues(result.definition)).toEqual([]);
+   });
+@@ -457,7 +457,7 @@ describe('reference scopes and source boundaries', () => {
+       ];
+       const result = renamed(returning(before));
+       expect(expressionOf(result.definition)).toBe(after);
+-      expect(result.repairedReferences).toBe(2);
++      expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
+       expect(result.warnings).toEqual([]);
+       expect(await evaluateExpression(before, { rows, outputs: { start: { value: 2 } } })).toEqual(
+         value,
+@@ -501,7 +501,7 @@ describe('reference scopes and source boundaries', () => {
+     const definition = returning(source);
+     const result = renamed(definition);
+     expect(expressionOf(result.definition)).toBe(source);
+-    expect(result.repairedReferences).toBe(1);
++    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
+     const issue = expect.objectContaining({
+       code: 'NODE_REFERENCE_UNCERTAIN',
+       nodeId: 'done',
+@@ -529,7 +529,7 @@ describe('reference scopes and source boundaries', () => {
+       expect(referenceIssues(definition)).toEqual([issue]);
+       const result = renamed(definition);
+       expect(expressionOf(result.definition)).toBe(source);
+-      expect(result.repairedReferences).toBe(1);
++      expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
+       expect(result.warnings).toEqual([issue]);
+     },
+   );
+@@ -541,7 +541,7 @@ describe('reference scopes and source boundaries', () => {
+       'rows ~> $filter(function($row){$row.id = $$.outputs."true".value})[$$.outputs.start]';
+     const result = renamed(returning(source));
+     expect(expressionOf(result.definition)).toBe(expected);
+-    expect(result.repairedReferences).toBe(2);
++    expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
+     expect(result.warnings).toEqual([
+       expect.objectContaining({ code: 'NODE_REFERENCE_UNCERTAIN', path: 'config.returns' }),
+     ]);
+@@ -565,7 +565,7 @@ describe('reference scopes and source boundaries', () => {
+       '[$lookup(outputs, vars.key), outputs[$picked], $eval("outputs.start"), trigger.nodeId = "start"]';
+     const result = renamed(returning(source));
+     expect(expressionOf(result.definition)).toBe(source);
+-    expect(result.repairedReferences).toBe(1);
++    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
+     expect(result.warnings).toEqual([
+       expect.objectContaining({
+         code: 'NODE_REFERENCE_UNCERTAIN',
+@@ -719,7 +719,7 @@ describe('reference scopes and source boundaries', () => {
+       { source: '/counters/nodeVisits/fresh-id', target: '/vars/start' },
+       { path: '/vars/start' },
+     ]);
+-    expect(result.repairedReferences).toBe(4);
++    expect(result).toMatchObject({ repairedSources: 3, repairedEndpoints: 1 });
+     expect(result.warnings).toEqual([]);
+   });
+ 
+@@ -787,6 +787,7 @@ describe('reference scopes and source boundaries', () => {
+     expect(result.definition.nodes.at(-1)).toMatchObject({
+       config: { mode: 'signal', name: '', filter: '$thread.counters.nodeVisits.changed' },
+     });
++    expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1, warnings: [] });
+   });
+ 
+   it('warns on a Liquid loop else which can fall back to a shadowed global', async () => {
+@@ -815,11 +816,15 @@ describe('reference scopes and source boundaries', () => {
+ 
+   it('returns refusal without mutating invalid identity, and retains syntax issues for malformed source', () => {
+     const definition = returning('outputs.start +');
++    const original = structuredClone(definition);
+     expect(renameLoopNode(definition, 'absent', 'new')).toEqual({ kind: 'missing-node' });
+     expect(renameLoopNode(definition, 'start', 'start')).toEqual({ kind: 'unchanged' });
+     expect(renameLoopNode(definition, 'start', 'not valid')).toEqual({ kind: 'invalid-id' });
+     expect(renameLoopNode(definition, 'start', 'done')).toEqual({ kind: 'duplicate-id' });
++    expect(definition).toEqual(original);
+     const result = renamed(definition, 'working');
++    // The malformed source is left as authored; only the connection end moves.
++    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
+     expect(result.warnings).toContainEqual(expect.objectContaining({ nodeId: 'done' }));
+     expect(validateLoop(LoopDefinitionSchema.parse(result.definition))).toMatchObject([
+       { code: 'EXPRESSION_INVALID', severity: 'error' },
+@@ -828,3 +833,146 @@ describe('reference scopes and source boundaries', () => {
+     expect(renameLoopNode(definition, 'start', 'new')).toEqual({ kind: 'ambiguous-node' });
+   });
+ });
++
++describe('rename repair counts', () => {
++  type Edge = LoopDefinitionInput['edges'][number];
++  const edge = (id: string, from: string, to: string, port = 'out'): Edge => ({
++    id,
++    from: { node: from, port },
++    to: { node: to },
++  });
++
++  /** Start, an inference step `work` and an exit that may read it, joined by `edges`. */
++  function graph(returns: string | undefined, edges: Edge[]): LoopDefinitionInput {
++    return {
++      ...minimalLoop(),
++      nodes: [
++        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++        { id: 'work', kind: 'inference', label: 'Work', config: { prompt: { template: 'Do.' } } },
++        {
++          id: 'done',
++          kind: 'exit',
++          label: 'Done',
++          config: returns === undefined ? {} : { returns },
++        },
++      ],
++      edges,
++    };
++  }
++
++  const reads = '[outputs.work.value, counters.nodeVisits.work, "outputs.work"]';
++  const into = edge('into', 'start', 'work');
++  const out = edge('out', 'work', 'done');
++  const self = edge('self', 'work', 'work');
++
++  it.each([
++    ['no source or connection', undefined, [], 0, 0, 0],
++    ['connections only', undefined, [into, out], 0, 2, 2],
++    ['sources only', reads, [], 2, 0, 0],
++    ['a self-edge only', undefined, [self], 0, 1, 2],
++    ['sources, connections and a self-edge', reads, [into, self, out], 2, 3, 4],
++  ] as const)(
++    'counts sources, connections and edge ends separately for %s',
++    (_, returns, stored, sources, connections, endpoints) => {
++      const edges: Edge[] = [...stored];
++      const definition = graph(returns, edges);
++      const original = structuredClone(definition);
++      const result = renameLoopNode(definition, 'work', 'draft');
++      expect(result).toMatchObject({
++        kind: 'renamed',
++        repairedSources: sources,
++        repairedConnections: connections,
++        repairedEndpoints: endpoints,
++        warnings: [],
++      });
++      if (result.kind !== 'renamed') throw new Error(result.kind);
++      expect(definition).toEqual(original);
++      expect(result.definition.edges.map((e) => [e.id, e.from.node, e.to.node])).toEqual(
++        edges.map(({ id, from, to }) => [
++          id,
++          from.node === 'work' ? 'draft' : from.node,
++          to.node === 'work' ? 'draft' : to.node,
++        ]),
++      );
++      const exit = result.definition.nodes.find((node) => node.kind === 'exit');
++      expect(exit?.config.returns).toBe(
++        returns && '[outputs.draft.value, counters.nodeVisits.draft, "outputs.work"]',
++      );
++    },
++  );
++
++  it('counts a repeat self-edge as one connection with two ends, and each rewritten span once', () => {
++    const definition: LoopDefinitionInput = {
++      ...minimalLoop(),
++      nodes: [
++        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
++        {
++          id: 'gate',
++          kind: 'decision',
++          label: 'Gate',
++          config: {
++            kind: 'expression',
++            jsonata: 'counters.nodeVisits.gate > 2 ? "stop" : "again"',
++            routes: [
++              { id: 'again', label: 'Again', repeat: true },
++              { id: 'stop', label: 'Stop' },
++            ],
++            maxPasses: 3,
++          },
++        },
++        {
++          id: 'done',
++          kind: 'exit',
++          label: 'Done',
++          config: { returns: '[gates.gate.passes, gates.gate.passes]' },
++        },
++      ],
++      edges: [
++        edge('in', 'start', 'gate'),
++        edge('again', 'gate', 'gate', 'again'),
++        edge('stop', 'gate', 'done', 'stop'),
++        edge('limit', 'gate', 'done', 'limit-reached'),
++      ],
++    };
++    const result = renameLoopNode(definition, 'gate', 'check');
++    if (result.kind !== 'renamed') throw new Error(result.kind);
++    // Three separate counts, and no combined one.
++    expect(Object.keys(result).sort()).toEqual([
++      'definition',
++      'kind',
++      'repairedConnections',
++      'repairedEndpoints',
++      'repairedSources',
++      'warnings',
++    ]);
++    // The visit count once, and each of the exit's two reads once: three spans in two fields.
++    expect(result.repairedSources).toBe(3);
++    // Each changed edge once: in, stop, limit, and the self-edge `again` although both ends move.
++    expect(result.repairedConnections).toBe(4);
++    // One end each for in, stop and limit, and both ends of the self-edge again.
++    expect(result.repairedEndpoints).toBe(5);
++    expect(result.warnings).toEqual([]);
++    expect(result.definition.edges.map((e) => [e.id, e.from.node, e.to.node])).toEqual([
++      ['in', 'start', 'check'],
++      ['again', 'check', 'check'],
++      ['stop', 'check', 'done'],
++      ['limit', 'check', 'done'],
++    ]);
++    expect(result.definition.nodes.map((node) => node.config)).toMatchObject([
++      {},
++      { jsonata: 'counters.nodeVisits.check > 2 ? "stop" : "again"' },
++      { returns: '[gates.check.passes, gates.check.passes]' },
++    ]);
++    expect(validateLoop(LoopDefinitionSchema.parse(result.definition))).toEqual([]);
++  });
++
++  it('returns no counts for a no-op or a refused rename', () => {
++    const definition = graph(reads, [into, self, out]);
++    expect(renameLoopNode(definition, 'work', 'work')).toEqual({ kind: 'unchanged' });
++    expect(renameLoopNode(definition, 'work', '9lives')).toEqual({ kind: 'invalid-id' });
++    expect(renameLoopNode(definition, 'work', 'done')).toEqual({ kind: 'duplicate-id' });
++    expect(renameLoopNode(definition, 'gone', 'draft')).toEqual({ kind: 'missing-node' });
++    definition.nodes.push({ ...definition.nodes[1]!, label: 'Copy' });
++    expect(renameLoopNode(definition, 'work', 'draft')).toEqual({ kind: 'ambiguous-node' });
++  });
++});
+diff --git a/packages/domain/src/node-references.ts b/packages/domain/src/node-references.ts
+index 8fda3d72c217909aaf087f5403dbb9d05de18dfe..d11238b1e7308ed766ae1a5f9f111878570b41d1 100644
+--- a/packages/domain/src/node-references.ts
++++ b/packages/domain/src/node-references.ts
+@@ -33,7 +33,12 @@ export type NodeRenameResult =
+   | {
+       kind: 'renamed';
+       definition: LoopDefinitionInput;
+-      repairedReferences: number;
++      /** Rewritten reference spans in expressions, templates and mutation pointers, each once. */
++      repairedSources: number;
++      /** Edges with an end moved to the new id: one per edge, so a self-edge counts one. */
++      repairedConnections: number;
++      /** Edge ends moved to the new id: one per end, so a self-edge counts two. */
++      repairedEndpoints: number;
+       warnings: ValidationIssue[];
+     };
+ 
+@@ -245,7 +250,9 @@ export function renameLoopNode(
+   const sourceFields = fields(definition);
+   const customKeys = authoredOutputKeys(sourceFields);
+   const outputMayBeCustom = customKeys.has('') || customKeys.has(oldId) || customKeys.has(nextId);
+-  let repairedReferences = 0;
++  let repairedSources = 0;
++  let repairedConnections = 0;
++  let repairedEndpoints = 0;
+   let updated = definition;
+   const warnings: ValidationIssue[] = [];
+   for (const field of sourceFields) {
+@@ -281,13 +288,15 @@ export function renameLoopNode(
+       'replace',
+       text,
+     ) as LoopDefinitionInput;
+-    repairedReferences += new Set(patchable.map(({ span }) => span.start)).size;
++    repairedSources += new Set(patchable.map(({ span }) => span.start)).size;
+   }
+   const nodes = updated.nodes.map((node) => (node.id === oldId ? { ...node, id: nextId } : node));
+   const edges = updated.edges.map((edge) => {
+     const from = edge.from.node === oldId;
+     const to = edge.to.node === oldId;
+-    repairedReferences += Number(from) + Number(to);
++    // The edge changes once however many of its ends move; each moved end is an endpoint.
++    repairedConnections += Number(from || to);
++    repairedEndpoints += Number(from) + Number(to);
+     return from || to
+       ? {
+           ...edge,
+@@ -310,7 +319,9 @@ export function renameLoopNode(
+   return {
+     kind: 'renamed',
+     definition: { ...updated, nodes, edges },
+-    repairedReferences,
++    repairedSources,
++    repairedConnections,
++    repairedEndpoints,
+     warnings,
+   };
+ }
+diff --git a/packages/domain/src/syntax.test.ts b/packages/domain/src/syntax.test.ts
+index b1013d05b5e1d838dad75504f2d3dccb4c76fba5..039257003ae3a59a9f7a46c990f242f1f2346066 100644
+--- a/packages/domain/src/syntax.test.ts
++++ b/packages/domain/src/syntax.test.ts
+@@ -1,13 +1,15 @@
+-import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
+-import { describe, expect, it } from 'vitest';
++import { describe, expect, it, vi } from 'vitest';
+ import {
++  CURRENT_DEFINITION_FORMAT,
+   LoopDefinitionSchema,
+   NodeConfigSchemas,
++  type LoopDefinition,
+   type LoopDefinitionInput,
+ } from '@graphgoblin/contracts';
+ import { kitchenSinkLoop } from '@graphgoblin/contracts/testing';
+ import { validateLoop } from './graph.js';
+-import { findAuthoredSources, syntaxIssues } from './syntax.js';
++import { authoredFields, findAuthoredSources } from './syntax.js';
++import * as template from './template.js';
+ 
+ function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInput['settings']) {
+   return LoopDefinitionSchema.parse({
+@@ -23,7 +25,17 @@ function loop(nodes: LoopDefinitionInput['nodes'], settings?: LoopDefinitionInpu
+   });
+ }
+ 
+-describe('syntax checks', () => {
++const SOURCE_CODES: ReadonlySet<string> = new Set(['TEMPLATE_INVALID', 'EXPRESSION_INVALID']);
++
++/** Graph validation's diagnostics for authored sources, apart from every other issue. */
++function sourceDiagnostics(def: LoopDefinition) {
++  return validateLoop(def).filter((issue) => SOURCE_CODES.has(issue.code));
++}
++
++/** The parser's own words after a diagnostic's location. */
++const problem = (message: string) => message.slice(message.indexOf(': ') + 2);
++
++describe('authored source diagnostics in graph validation', () => {
+   it.each(['', ' '])('allows empty and whitespace required templates (%j)', (source) => {
+     const def = loop([
+       {
+@@ -55,8 +67,7 @@ describe('syntax checks', () => {
+         },
+       },
+     ]);
+-    expect(syntaxIssues(def)).toEqual([]);
+-    expect(validateLoop(def).filter((issue) => issue.code === 'TEMPLATE_INVALID')).toEqual([]);
++    expect(sourceDiagnostics(def)).toEqual([]);
+   });
+ 
+   it('rejects a whitespace required expression with an expression-specific message', () => {
+@@ -72,12 +83,20 @@ describe('syntax checks', () => {
+         },
+       },
+     ]);
+-    expect(syntaxIssues(def)[0]?.message).toContain(
+-      'expression is required; a blank expression is not valid',
+-    );
++    expect(sourceDiagnostics(def)).toEqual([
++      {
++        code: 'EXPRESSION_INVALID',
++        severity: 'error',
++        message:
++          'expression at node "note" operations.0.value.jsonata: ' +
++          'expression is required; a blank expression is not valid',
++        nodeId: 'note',
++        path: 'config.operations.0.value.jsonata',
++      },
++    ]);
+   });
+ 
+-  it.each([' ', '\t\n', '\u00a0'])(
++  it.each([' ', '\t\n', ' '])(
+     'rejects blank expressions before execution (%j), without changing contracts parsing',
+     (source) => {
+       const def = loop([
+@@ -89,20 +108,23 @@ describe('syntax checks', () => {
+         },
+         { id: 'ask', kind: 'inference', label: 'Ask', config: { prompt: { template: source } } },
+       ]);
+-      expect(syntaxIssues(def)).toEqual([
+-        expect.objectContaining({
++      expect(sourceDiagnostics(def)).toEqual([
++        {
+           code: 'EXPRESSION_INVALID',
++          severity: 'error',
++          message:
++            'expression at node "beat" until: ' +
++            'expression is required; a blank expression is not valid',
+           nodeId: 'beat',
+-          message: expect.stringContaining('required'),
+-        }),
++          path: 'config.until',
++        },
+       ]);
+-      expect(validateLoop(def).filter((issue) => issue.code.endsWith('_INVALID'))).toHaveLength(1);
+     },
+   );
+ 
+   it('finds no problems in the kitchen-sink loop', () => {
+     const def = LoopDefinitionSchema.parse(kitchenSinkLoop());
+-    expect(syntaxIssues(def)).toEqual([]);
++    expect(sourceDiagnostics(def)).toEqual([]);
+   });
+ 
+   it('reports templates and expressions that do not parse, wherever they are nested', () => {
+@@ -168,7 +190,7 @@ describe('syntax checks', () => {
+       ],
+       { workingDirectory: { kind: 'template', template: '{% endif %}' } },
+     );
+-    const issues = syntaxIssues(def);
++    const issues = sourceDiagnostics(def);
+     expect(issues.map((i) => [i.code, i.nodeId])).toEqual([
+       ['TEMPLATE_INVALID', undefined],
+       ['TEMPLATE_INVALID', 'ask'],
+@@ -178,6 +200,9 @@ describe('syntax checks', () => {
+       ['EXPRESSION_INVALID', 'sub'],
+       ['TEMPLATE_INVALID', 'note'],
+     ]);
++    // Each blocks publication.
++    expect(issues.map((i) => i.severity)).toEqual(Array(7).fill('error'));
++    expect(issues[0]).not.toHaveProperty('nodeId');
+     expect(issues[1]?.message).toMatch(/^template at node "ask" prompt\.template: /);
+     // Each names its field, so the editor can count and focus it.
+     expect(issues.map((i) => i.path)).toEqual([
+@@ -189,13 +214,166 @@ describe('syntax checks', () => {
+       'config.input.vars.a',
+       'config.operations.0.content',
+     ]);
+-    expect(issues[0]?.message).toMatch(/^template at loop settings workingDirectory\.template/);
+-    expect(issues[4]?.message).toContain('args.1');
+-    expect(issues[5]?.message).toContain('input.vars.a');
+-    // validateLoop includes them, so publish refuses the loop.
+-    expect(validateLoop(def).filter((i) => i.code.endsWith('_INVALID'))).toHaveLength(7);
++    expect(issues[0]?.message).toMatch(/^template at loop settings workingDirectory\.template: /);
++    expect(issues[4]?.message).toMatch(/^template at node "run" args\.1: /);
++    expect(issues[5]?.message).toMatch(/^expression at node "sub" input\.vars\.a: /);
++  });
++
++  it('reads the branch each discriminant selects, at its nested path, also beside an invalid sibling', () => {
++    const def = loop([
++      {
++        id: 'wait',
++        kind: 'wait',
++        label: 'Wait',
++        config: { mode: 'signal', name: 'ready', filter: '1 +' },
++      },
++      {
++        id: 'beat',
++        kind: 'heartbeat',
++        label: 'Beat',
++        config: {
++          intervalSeconds: 5,
++          maxBeats: 1,
++          probe: {
++            kind: 'http',
++            url: 'https://example.com/{{',
++            headers: { Fine: '{{ vars.token }}', Trace: '{% endif %}' },
++          },
++          until: 'probe.status = 200',
++        },
++      },
++      {
++        id: 'note',
++        kind: 'mutate',
++        label: 'Note',
++        config: {
++          operations: [
++            { op: 'append-message', role: 'note', content: 'Fine {{ vars.value }}' },
++            { op: 'set', path: '/vars/value', value: { kind: 'template', template: '{{' } },
++            { op: 'set', path: '/vars/other', value: { kind: 'expression', jsonata: '$x(' } },
++            { op: 'set', path: '/vars/fine', value: { kind: 'expression', jsonata: 'vars.value' } },
++          ],
++        },
++      },
++    ]);
++    const located = () =>
++      sourceDiagnostics(def).map(({ code, nodeId, path, message }) => [
++        code,
++        nodeId,
++        path,
++        message.slice(0, message.indexOf(': ')),
++      ]);
++    const expected = [
++      ['EXPRESSION_INVALID', 'wait', 'config.filter', 'expression at node "wait" filter'],
++      ['TEMPLATE_INVALID', 'beat', 'config.probe.url', 'template at node "beat" probe.url'],
++      [
++        'TEMPLATE_INVALID',
++        'beat',
++        'config.probe.headers.Trace',
++        'template at node "beat" probe.headers.Trace',
++      ],
++      [
++        'TEMPLATE_INVALID',
++        'note',
++        'config.operations.1.value.template',
++        'template at node "note" operations.1.value.template',
++      ],
++      [
++        'EXPRESSION_INVALID',
++        'note',
++        'config.operations.2.value.jsonata',
++        'expression at node "note" operations.2.value.jsonata',
++      ],
++    ];
++    expect(located()).toEqual(expected);
++
++    // A draft can hold a sibling that does not parse yet. The discriminant alone still selects
++    // the branch, so its typed source is neither hidden nor moved.
++    const wait = def.nodes.find((node) => node.id === 'wait');
++    if (wait?.kind !== 'wait' || wait.config.mode !== 'signal') throw new Error('missing wait');
++    wait.config.name = '';
++    expect(LoopDefinitionSchema.safeParse(def).success).toBe(false);
++    expect(located()).toEqual(expected);
++  });
++
++  it('analyzes an unchanged source once and reports it at each place it appears', () => {
++    const parse = vi.spyOn(template, 'parseAuthoredTemplate');
++    try {
++      const source = 'Cache identity {% if unclosed %}';
++      const def = loop(
++        [{ id: 'ask', kind: 'inference', label: 'Ask', config: { prompt: { template: source } } }],
++        { workingDirectory: { kind: 'template', template: source } },
++      );
++      const first = sourceDiagnostics(def);
++      expect(first.map(({ code, nodeId, path }) => [code, nodeId, path])).toEqual([
++        ['TEMPLATE_INVALID', undefined, 'settings.workingDirectory.template'],
++        ['TEMPLATE_INVALID', 'ask', 'config.prompt.template'],
++      ]);
++      expect(parse).toHaveBeenCalledTimes(1);
++      expect(problem(first[1]!.message)).toBe(problem(first[0]!.message));
++
++      // Validating an equal draft again reuses the facts and gives the same diagnostics.
++      expect(sourceDiagnostics(structuredClone(def))).toEqual(first);
++      expect(parse).toHaveBeenCalledTimes(1);
++    } finally {
++      parse.mockRestore();
++    }
+   });
+ 
++  it('reports one problem for a source in fields with different reference scopes', () => {
++    const source = '$cacheScope(';
++    const def = loop([
++      {
++        id: 'hook',
++        kind: 'trigger',
++        label: 'Hook',
++        config: { type: 'event', eventType: 'work', dedupeKey: source },
++      },
++      {
++        id: 'beat',
++        kind: 'heartbeat',
++        label: 'Beat',
++        config: { intervalSeconds: 5, until: source },
++      },
++      {
++        id: 'note',
++        kind: 'mutate',
++        label: 'Note',
++        config: { operations: [{ op: 'drop', target: 'messages', where: source }] },
++      },
++    ]);
++    const issues = sourceDiagnostics(def);
++    // A trigger's source has no reference scope; the others have their own.
++    expect(issues.map(({ code, nodeId, path }) => [code, nodeId, path])).toEqual([
++      ['EXPRESSION_INVALID', 'hook', 'config.dedupeKey'],
++      ['EXPRESSION_INVALID', 'beat', 'config.until'],
++      ['EXPRESSION_INVALID', 'note', 'config.operations.0.where'],
++    ]);
++    expect(new Set(issues.map(({ message }) => problem(message))).size).toBe(1);
++  });
++});
++
++describe('the authored field walker that validation and renaming share', () => {
++  it.each([
++    [
++      'an invalid sibling',
++      { mode: 'signal', name: '', filter: '1 +' },
++      [{ kind: 'expression', source: '1 +', segments: ['filter'] }],
++    ],
++    [
++      'an invalid sibling in another branch',
++      { mode: 'input', prompt: '{{', exposeTo: [] },
++      [{ kind: 'template', source: '{{', segments: ['prompt'] }],
++    ],
++    ['an unknown discriminant', { mode: 'later', name: 'ready', filter: '1 +' }, []],
++    ['a discriminant of another type', { mode: 1, name: 'ready', filter: '1 +' }, []],
++    ['no discriminant', { name: 'ready', filter: '1 +', prompt: '{{' }, []],
++  ])('selects a branch by its discriminant alone, given %s', (_, config, found) => {
++    expect(authoredFields(NodeConfigSchemas.wait, config)).toEqual(found);
++  });
++});
++
++describe('authored source discovery', () => {
+   it('skips absent values and union branches that do not match', () => {
+     expect(findAuthoredSources(NodeConfigSchemas.exit, null)).toEqual([]);
+     expect(
+diff --git a/packages/domain/src/syntax.ts b/packages/domain/src/syntax.ts
+index 7f4aeef7191a8fd996f6b56a6579b437c361511a..3ecfbe773305444b1a1b507b4e23d7b7cc60b7bf 100644
+--- a/packages/domain/src/syntax.ts
++++ b/packages/domain/src/syntax.ts
+@@ -1,17 +1,16 @@
+ /**
+  * Locate typed authored sources without parsing or materializing defaults in the draft.
+- * Metadata copies retain their marker's identity through sameSchema.
++ * Metadata copies retain their marker's identity through sameSchema. The diagnostics for sources
++ * that do not parse come from graph validation (`authoredSourceIssues` in node-references.ts),
++ * which walks with authoredFields and renders each through syntaxIssue.
+  */
+ import {
+   ExpressionSchema,
+   JsonPointerSchema,
+-  LoopSettingsSchema,
+-  NodeConfigSchemas,
+   TemplateSchema,
+   sameSchema,
+-  type NodeKind,
+ } from '@graphgoblin/contracts';
+-import { sourceAnalysis, type SourceKind } from './source-analysis.js';
++import type { SourceKind } from './source-analysis.js';
+ 
+ interface SyntaxIssue {
+   code: 'TEMPLATE_INVALID' | 'EXPRESSION_INVALID';
+@@ -124,7 +123,7 @@ export function authoredFields(
+   return found;
+ }
+ 
+-/** Render the same diagnostics for standalone syntax checks and combined graph validation. */
++/** Render graph validation's diagnostic for a template or expression that does not parse. */
+ export function syntaxIssue(
+   { kind, path }: Pick<Found, 'kind' | 'path'>,
+   problem: string,
+@@ -139,26 +138,3 @@ export function syntaxIssue(
+     path: [nodeId ? 'config' : 'settings', path].filter(Boolean).join('.'),
+   };
+ }
+-
+-/** One error per template that does not parse and per expression that does not compile. */
+-export function syntaxIssues(
+-  def: { settings: unknown; nodes: readonly { id: string; kind: NodeKind; config: unknown }[] },
+-  schemas: SourceSchemas & { settings: unknown; nodes: Record<NodeKind, unknown> } = {
+-    ...currentSources,
+-    settings: LoopSettingsSchema,
+-    nodes: NodeConfigSchemas,
+-  },
+-): SyntaxIssue[] {
+-  const issues: SyntaxIssue[] = [];
+-  const report = (item: Found, nodeId?: string) => {
+-    const { problem } = sourceAnalysis(item.kind, item.source);
+-    if (problem !== null) issues.push(syntaxIssue(item, problem, nodeId));
+-  };
+-  for (const item of findAuthoredSources(schemas.settings, def.settings, schemas)) report(item);
+-  for (const node of def.nodes) {
+-    for (const item of findAuthoredSources(schemas.nodes[node.kind], node.config, schemas)) {
+-      report(item, node.id);
+-    }
+-  }
+-  return issues;
+-}

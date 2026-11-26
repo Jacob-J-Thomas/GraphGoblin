@@ -1,0 +1,38 @@
+{
+  "cases": [
+    {
+      "scenario": "template",
+      "exactDiagnostic": {
+        "code": "TEMPLATE_INVALID",
+        "severity": "error",
+        "message": "template at loop settings workingDirectory.template: tag \"endif\" not found, line:1, col:1",
+        "path": "settings.workingDirectory.template"
+      },
+      "validateStatus": 200,
+      "publishRefusal": {
+        "status": 422,
+        "code": "LOOP_INVALID"
+      },
+      "originalPublishedVersionPreserved": true,
+      "repairedPublishStatus": 200
+    },
+    {
+      "scenario": "expression",
+      "exactDiagnostic": {
+        "code": "EXPRESSION_INVALID",
+        "severity": "error",
+        "message": "expression at node \"done\" returns: expression failed to compile: Unexpected end of expression",
+        "nodeId": "done",
+        "path": "config.returns"
+      },
+      "validateStatus": 200,
+      "publishRefusal": {
+        "status": 422,
+        "code": "LOOP_INVALID"
+      },
+      "originalPublishedVersionPreserved": true,
+      "repairedPublishStatus": 200
+    }
+  ],
+  "boundary": "Public Fastify request injection in createTestApp; owned in-memory store, fake providers, no listener."
+}

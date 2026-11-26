@@ -1,0 +1,459 @@
+{
+  "observedAt": "2026-11-25T06:13:27.349Z",
+  "evidenceTier": "owned native loopback HTTP: production buildApp routes and separate provider serializer fixture",
+  "cases": 24,
+  "isolatedProductAddress": "http://127.0.0.1:54073",
+  "ollamaEnabled": false,
+  "observations": [
+    {
+      "label": "ordinary",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/name",
+            "message": "Invalid input: expected string, received number"
+          }
+        ]
+      }
+    },
+    {
+      "label": "array index",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/nodes/1/config/prompt/template",
+            "message": "Invalid input: expected string, received number"
+          }
+        ]
+      }
+    },
+    {
+      "label": "record key \"literal/~\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/variables/literal~1~0",
+            "message": "Invalid key in record"
+          }
+        ]
+      }
+    },
+    {
+      "label": "record key \"~1/~0\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/variables/~01~1~00",
+            "message": "Invalid key in record"
+          }
+        ]
+      }
+    },
+    {
+      "label": "record key \"\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/variables/",
+            "message": "Invalid key in record"
+          }
+        ]
+      }
+    },
+    {
+      "label": "record key \"0\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/variables/0",
+            "message": "Invalid key in record"
+          }
+        ]
+      }
+    },
+    {
+      "label": "record key \"雪~/😀\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/variables/雪~0~1😀",
+            "message": "Invalid key in record"
+          }
+        ]
+      }
+    },
+    {
+      "label": "record key \"slash//tilde~~\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/variables/slash~1~1tilde~0~0",
+            "message": "Invalid key in record"
+          }
+        ]
+      }
+    },
+    {
+      "label": "root fallback",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/",
+            "message": "Invalid input: expected object, received array"
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown root \"root/~\"",
+      "method": "PATCH",
+      "url": "/model-catalog/codex/gpt-6-luna",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/root~1~0",
+            "message": "Unrecognized key \"root/~\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown nested \"root/~\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/settings/defaults/root~1~0",
+            "message": "Unrecognized key \"root/~\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown root \"~1/~0\"",
+      "method": "PATCH",
+      "url": "/model-catalog/codex/gpt-6-luna",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/~01~1~00",
+            "message": "Unrecognized key \"~1/~0\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown nested \"~1/~0\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/settings/defaults/~01~1~00",
+            "message": "Unrecognized key \"~1/~0\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown root \"\"",
+      "method": "PATCH",
+      "url": "/model-catalog/codex/gpt-6-luna",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/",
+            "message": "Unrecognized key \"\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown nested \"\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/settings/defaults/",
+            "message": "Unrecognized key \"\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown root \"0\"",
+      "method": "PATCH",
+      "url": "/model-catalog/codex/gpt-6-luna",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/0",
+            "message": "Unrecognized key \"0\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown nested \"0\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/settings/defaults/0",
+            "message": "Unrecognized key \"0\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown root \"雪~/😀\"",
+      "method": "PATCH",
+      "url": "/model-catalog/codex/gpt-6-luna",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/雪~0~1😀",
+            "message": "Unrecognized key \"雪~/😀\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown nested \"雪~/😀\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/settings/defaults/雪~0~1😀",
+            "message": "Unrecognized key \"雪~/😀\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown root \"slash//tilde~~\"",
+      "method": "PATCH",
+      "url": "/model-catalog/codex/gpt-6-luna",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/slash~1~1tilde~0~0",
+            "message": "Unrecognized key \"slash//tilde~~\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "unknown nested \"slash//tilde~~\"",
+      "method": "POST",
+      "url": "/loops",
+      "status": 400,
+      "contentType": "application/problem+json; charset=utf-8",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/validation-failed",
+        "title": "validation failed",
+        "status": 400,
+        "code": "VALIDATION_FAILED",
+        "detail": "the request did not match the schema",
+        "errors": [
+          {
+            "path": "/definition/settings/defaults/slash~1~1tilde~0~0",
+            "message": "Unrecognized key \"slash//tilde~~\""
+          }
+        ]
+      }
+    },
+    {
+      "label": "malformed JSON",
+      "status": 400,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/malformed-body",
+        "title": "malformed body",
+        "status": 400,
+        "code": "MALFORMED_BODY",
+        "detail": "Body is not valid JSON but content-type is set to 'application/json'"
+      }
+    },
+    {
+      "label": "parsed valid input",
+      "status": 201,
+      "parsedDefault": {
+        "kind": "temp"
+      },
+      "noHarnessStarted": true
+    },
+    {
+      "label": "active provider response serializer control",
+      "status": 500,
+      "body": {
+        "type": "https://graphgoblin.dev/problems/response-invalid",
+        "title": "response invalid",
+        "status": 500,
+        "code": "RESPONSE_INVALID",
+        "detail": "the server produced a response that does not match its schema"
+      }
+    }
+  ]
+}
