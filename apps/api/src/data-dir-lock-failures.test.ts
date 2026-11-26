@@ -968,6 +968,24 @@ describe("this caller's own Windows guard release (#542)", () => {
     expect(await actual.readdir(directory)).toEqual([]);
   });
 
+  it('keeps its missing outcome without touching the guard when its own marker is already gone', async () => {
+    const probe = stubLiveWindowsIdentity();
+    vi.mocked(fs.readFile).mockImplementation(async (...args) => {
+      if (typeof args[0] === 'string' && dirname(args[0]) === guard) {
+        await actual.unlink(args[0]);
+        throw failure('synthetic vanished marker', 'ENOENT');
+      }
+      return actual.readFile(...args);
+    });
+    const lock = await acquireDataDirLock(directory);
+    // The release found nothing of its own: no removal, no classification, the main lock stays.
+    expect(guardRemovals()).toEqual([]);
+    expect(probe).not.toHaveBeenCalled();
+    expect(await actual.readdir(guard)).toEqual([]);
+    expect(JSON.parse(await actual.readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+    await expect(lock.release()).resolves.toBe('removed');
+  });
+
   it.each(['ENOENT', 'ENOTEMPTY'])(
     'keeps its existing release outcome for %s without classifying a successor',
     async (code) => {
@@ -1321,6 +1339,32 @@ describe('exclusive main record setup failures (#560)', () => {
       else expect(state).toEqual({ state: 'free' });
     },
   );
+
+  it('treats a partial record already gone before its proof lookup as settled', async () => {
+    const { calls, errors } = faultMainRecord(['write'], {
+      afterClose: () => actual.unlink(path),
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toBe(errors.write);
+    expect(calls).toEqual(['write', 'stat', 'close', 'lookup']);
+    expect(await actual.readdir(directory)).toEqual([]);
+    await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+  });
+
+  it('treats a proven record that disappears during its single unlink as settled', async () => {
+    const { calls, errors } = faultMainRecord(['write']);
+    vi.mocked(fs.unlink).mockImplementation(async (target) => {
+      if (target === path) {
+        calls.push('unlink');
+        await actual.unlink(target);
+        throw failure('synthetic concurrent removal', 'ENOENT');
+      }
+      await actual.unlink(target);
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toBe(errors.write);
+    expect(calls).toEqual(['write', 'stat', 'close', 'lookup', 'unlink']);
+    expect(await actual.readdir(directory)).toEqual([]);
+    await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+  });
 
   it('preserves a foreign file that replaced a partial record and ends only the local reservation', async () => {
     const { calls, errors } = faultMainRecord(['write'], {
