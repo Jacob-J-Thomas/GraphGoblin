@@ -779,14 +779,25 @@ describe('a current store with pending migrations (#546)', () => {
       if (state === 'corrupt') {
         await writeFile(dbFile, Buffer.alloc(4096, 'x'));
       } else {
-        await fixture(dbFile);
-        const writer = openDatabase({ url: pathToFileURL(dbFile).href });
+        // Downgrade a private store, then copy only its checkpointed main DB to the unused
+        // `dbFile`: as in `stagedStore`, no fixture writer opens the inspected path.
+        const setup = join(await mkdtemp(join(dir, 'fixture-writer-')), basename(dbFile));
+        await fixture(setup);
+        const writer = openDatabase({ url: pathToFileURL(setup).href });
         try {
           await writer.client.execute('UPDATE gg_upgrade_state SET format_version = 3');
-          await writer.client.execute('PRAGMA wal_checkpoint(TRUNCATE)');
+          const [checkpoint] = (await writer.client.execute('PRAGMA wal_checkpoint(TRUNCATE)'))
+            .rows;
+          // A busy or partial checkpoint, or a non-WAL store (-1), fails before copying.
+          expect({
+            busy: checkpoint?.['busy'],
+            log: checkpoint?.['log'],
+            checkpointed: checkpoint?.['checkpointed'],
+          }).toEqual({ busy: 0, log: 0, checkpointed: 0 });
         } finally {
           writer.close();
         }
+        await copyFile(setup, dbFile, constants.COPYFILE_EXCL);
       }
       const environment = env(dbFile, {
         byHarness: {
