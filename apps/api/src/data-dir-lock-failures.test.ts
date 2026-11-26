@@ -3,7 +3,7 @@ import type { BigIntStats } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { inspect } from 'node:util';
+import { formatWithOptions, inspect } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   acquireDataDirLock,
@@ -860,7 +860,8 @@ describe("this caller's own Windows guard release (#542)", () => {
       vi.mocked(fs.lstat).mockRejectedValueOnce(lookup);
       return Promise.resolve();
     });
-    await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+    const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+    expect(error).toMatchObject({
       message: expect.stringContaining('rolled back'),
       cause: {
         ...directoryFailure(refusal),
@@ -869,6 +870,41 @@ describe("this caller's own Windows guard release (#542)", () => {
     });
     expect(probe).not.toHaveBeenCalled();
     expect(guardRemovals()).toHaveLength(1);
+    // The shell prints this unknown failure as console.error does. Its evidence sits in the cause,
+    // below the default inspect depth, yet the label and code print; the probe's text does not.
+    expect(shellFailureOutput(error)).toBe(error);
+    const printed = formatWithOptions({}, shellFailureOutput(error));
+    expect(printed).toContain(
+      "probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ]",
+    );
+    expect(printed).not.toContain('[Object]');
+    expect(printed).not.toContain('synthetic guard lookup refusal');
+  });
+
+  it('prints the probe label and code even when the main lock rollback also fails', async () => {
+    stubLiveWindowsIdentity();
+    const lookup = failure('synthetic guard lookup refusal', 'EACCES');
+    const refusal = refuseOwnRelease(() => {
+      vi.mocked(fs.lstat).mockRejectedValueOnce(lookup);
+      return Promise.resolve();
+    });
+    vi.mocked(fs.unlink).mockImplementation(async (target) => {
+      if (target === path) throw failure('synthetic rollback refusal', 'EACCES');
+      await actual.unlink(target);
+    });
+    const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(AggregateError);
+    expect(error).toMatchObject({
+      message: expect.stringContaining('ownership remains held'),
+      errors: [{ ...directoryFailure(refusal), probeFailures: [{ code: 'EACCES' }] }, {}],
+    });
+    // The evidence is inside an aggregate entry, two levels below the printed error.
+    const printed = formatWithOptions({}, shellFailureOutput(error));
+    expect(printed).toContain(
+      "probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ]",
+    );
+    expect(printed).not.toContain('synthetic guard lookup refusal');
+    expect(JSON.parse(await actual.readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
   });
 
   const staging = (target: string) => target.endsWith('.tmp');

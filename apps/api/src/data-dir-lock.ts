@@ -13,6 +13,7 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
+import { inspect, type InspectOptions } from 'node:util';
 import { canonicalPath } from './canonical-path.js';
 import {
   cleanupStep,
@@ -221,6 +222,18 @@ const probeFailure = (
   Object.defineProperty({ operation, code, cause }, 'cause', { enumerable: false });
 
 /**
+ * Probe evidence whose labels and codes print in full however deeply the failure is nested: a
+ * rollback's cause or an aggregate entry lies below `util.inspect`'s default depth, where entries
+ * would otherwise print as `[Object]`. Raw causes stay non-enumerable and are never printed.
+ */
+function printableEvidence(probes: readonly RecoveryProbeFailure[]): RecoveryProbeFailure[] {
+  const shown = probes.map(({ operation, code }) => ({ operation, code }));
+  return Object.defineProperty([...probes], inspect.custom, {
+    value: (_depth: number, options: InspectOptions) => inspect(shown, { ...options, depth: null }),
+  });
+}
+
+/**
  * A labelled filesystem failure: the original error is its cause, `code` is vetted, and the marker
  * token comes from the operated path's own name (its original provenance). Probe failures that
  * could not resolve a directory-removal failure are attached as secondary evidence.
@@ -238,7 +251,7 @@ function filesystemFailure(
       code,
       operation,
       markerToken: markerPattern.exec(basename(path))?.[1] ?? null,
-      ...(probes.length ? { probeFailures: probes } : {}),
+      ...(probes.length ? { probeFailures: printableEvidence(probes) } : {}),
     },
   );
 }

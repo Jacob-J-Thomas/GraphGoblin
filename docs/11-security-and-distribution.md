@@ -184,7 +184,8 @@ the filesystem error and takes the rollback above; other platforms and the exist
 `ENOTEMPTY` and `EEXIST` release outcomes are unchanged. During either check, a failed read-only
 probe is attached to that `recovery-directory-remove` error as `probeFailures`, each entry with a
 closed label (`recovery-directory-lookup`, `successor-inspection`, `successor-liveness` or
-`successor-identity`) and a vetted code; the probe's own text is not printed. A credible
+`successor-identity`) and a vetted code. Printed output shows each entry's label and code wherever
+the error is nested, including inside a rollback's cause, but never the probe's own text. A credible
 mismatch, such as a different creation identity, is a decision rather than a failed probe and adds
 no entry. These checks are observations, not an atomic compare-and-delete. Each observed removal
 opportunity gets one `rmdir` attempt, and a successor is protected by its nonempty guard with an
