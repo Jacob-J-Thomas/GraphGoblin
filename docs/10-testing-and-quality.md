@@ -157,11 +157,32 @@ admitted creation besides itself, and a final probe must still observe refusals.
 calibration, an observer failure or a fixture failure fails the case and leaves the no-attempt
 gate open; warm success alone never passes it. The limited job is kill-on-close, so a stopped
 fixture takes its members with it. This is headless gateway reuse; PWA window behavior under a
-limit needs its own shell evidence. The directory-symbolic-link checkout case needs a host that
-permits symbolic-link creation; a refusal there fails that case and is never counted as passing.
+limit needs its own shell evidence.
 The focused native entry `native Windows warm review1 owned fixture and handoff regressions` runs
 the owned-cleanup, owned-control, cancellation, store-identity, sanitized-environment and
 window-deadline regressions on their own, with two pooled loopback ports.
+
+The checkout-alias case, `native Windows launcher accepts junction and directory symlink checkout
+paths` (#493), runs one subtest through a genuine Windows junction to the checkout and one through
+a directory symbolic link. They are distinct controls: success with one link type does not
+establish the other. Each alias must read back natively as a directory reparse point of the
+requested type whose canonical target is the checkout, and the direct and aliased enrollments must
+give the same launch digest from different recorded inputs. Run through the alias, the built
+helper must print the direct spelling's identity and a free store state, and importing it with an
+invalid `GG_PORT` must print nothing and exit successfully; the store must still be empty. Each
+spelling in turn then cold-starts the gateway, and launches through both spellings reuse that same
+verified owner. Enrollments naming a different store or different settings are refused as a
+mismatched gateway, with the owner unchanged, no gateway log of their own and the other store
+still empty. Each round drains only its verified owner, and the fixture confirms that the alias
+is still the same link to the checkout before unlinking it; an alias whose release was not
+verified is kept. The directory-symbolic-link subtest needs a Windows venue whose test account can
+already create directory symbolic links, such as the hosted `windows-latest` runner. Elsewhere
+`symlink` fails at the `create-alias` stage (EPERM), before any helper or launch assertion. That is
+a failed prerequisite of a required case, never a pass or a skip: run it on a capable venue rather
+than changing host privileges or security policy, skipping it or substituting a junction. Hosted
+CI run 43790735875 passed both link types at `6f383da7`, before the #566/#544 warm discovery, and a
+later local run on a host without the capability failed the symbolic-link subtest at
+`create-alias` with EPERM. Neither is native acceptance of the current source.
 
 The installer case runs the shipped script in hidden, no-profile Windows PowerShell 5.1 on its
 disposable fixture, as named subtests before the case's only gateway start (#498, #532, #520). A
