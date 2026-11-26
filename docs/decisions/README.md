@@ -111,3 +111,5 @@ reclamation after PID reuse and shared launcher/API ownership checks.
 [ADR-0087 - Shorten the pinned Codex SDK schema-directory prefix](ADR-0087-short-codex-schema-temp-prefix.md) extends the existing managed SDK patch with a shorter native `mkdtemp` prefix, retaining schema enforcement and cleanup at the measured Windows temp-root boundary (#363).
 
 [ADR-0089 - Bound optional Claude start-refusal diagnosis](ADR-0089-bounded-claude-refusal-diagnosis.md) gives post-refusal metadata a private monotonic deadline, retaining timely facts and returning the known refusal with unknown cause when optional diagnosis expires (#364).
+
+[ADR-0091 - Bounded startup ownership cleanup](ADR-0091-bounded-startup-ownership-cleanup.md) keeps the original startup failure first in a tagged cleanup error, retains both store leases after an unconfirmed SQLite close, removes a failed lock record once only with handle-identity or exact-record proof, and lets a Windows release keep its main lock only for a verified live successor (#542, #537, #560).
