@@ -1,14 +1,17 @@
 import { randomUUID } from 'node:crypto';
+import type { BigIntStats } from 'node:fs';
 import * as fs from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { dirname, join } from 'node:path';
+import { formatWithOptions, inspect } from 'node:util';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   acquireDataDirLock,
   dataDirLockState,
   StoreOwnershipRefusedError,
 } from './data-dir-lock.js';
 import { shellFailureOutput, startupFailureCause } from './serve.js';
+import { StartupCleanupError } from './startup-cleanup.js';
 import * as identity from './windows-process-identity.js';
 
 vi.mock('node:fs/promises', async (original) => {
@@ -20,6 +23,8 @@ vi.mock('node:fs/promises', async (original) => {
     rmdir: vi.fn(actual.rmdir),
     rename: vi.fn(actual.rename),
     lstat: vi.fn(actual.lstat),
+    open: vi.fn(actual.open),
+    readdir: vi.fn(actual.readdir),
   };
 });
 const actual = await vi.importActual<typeof fs>('node:fs/promises');
@@ -45,6 +50,8 @@ afterEach(async () => {
   vi.mocked(fs.rmdir).mockReset();
   vi.mocked(fs.rename).mockReset();
   vi.mocked(fs.lstat).mockReset();
+  vi.mocked(fs.open).mockReset();
+  vi.mocked(fs.readdir).mockReset();
   await fs.rm(directory, { recursive: true, force: true });
 });
 
@@ -102,10 +109,57 @@ function directoryFailure(cause: Error) {
   return { cause, code: 'EPERM', operation: 'recovery-directory-remove', markerToken: null };
 }
 
-async function expectSuccessorIntact(successor: Awaited<ReturnType<typeof stageSuccessor>>) {
+async function expectSuccessorIntact(
+  successor: Awaited<ReturnType<typeof stageSuccessor>>,
+  entries = ['graphgoblin.lock.reclaim'],
+) {
   expect(await actual.readFile(successor.marker, 'utf8')).toBe(successor.record);
-  expect(await fs.readdir(directory)).toEqual(['graphgoblin.lock.reclaim']);
+  expect((await actual.readdir(directory)).sort()).toEqual([...entries].sort());
   expect(vi.mocked(fs.unlink).mock.calls.map(([target]) => target)).not.toContain(successor.marker);
+}
+
+const failure = (message: string, code: unknown) => Object.assign(new Error(message), { code });
+const exists = (target: string) =>
+  actual.lstat(target).then(
+    () => true,
+    () => false,
+  );
+const guardRemovals = () => vi.mocked(fs.rmdir).mock.calls.filter(([target]) => target === guard);
+
+/**
+ * A precisely controlled observation: the next `count` successful bigint lstat calls of a matching
+ * path return `control` applied to the real result. Every other call is real.
+ */
+function controlLstat(
+  matches: (target: string) => boolean,
+  control: (stats: BigIntStats) => BigIntStats,
+  count = 1,
+) {
+  let remaining = count;
+  vi.mocked(fs.lstat).mockImplementation((async (
+    target: string,
+    options?: { bigint?: boolean },
+  ) => {
+    if (!options?.bigint || remaining === 0 || !matches(target))
+      return actual.lstat(target, options);
+    const stats = await actual.lstat(target, { bigint: true });
+    remaining--;
+    return control(stats);
+  }) as typeof fs.lstat);
+  return { consumed: () => remaining === 0 };
+}
+
+/** The same observation with a different physical inode. */
+const otherInode = (stats: BigIntStats) => Object.assign(stats, { ino: stats.ino + 1n });
+
+/** The mocked calls' first arguments made after a given invocation order. */
+function targetsAfter(
+  mocked: { mock: { calls: unknown[][]; invocationCallOrder: number[] } },
+  order: number,
+): string[] {
+  return mocked.mock.calls
+    .filter((_, index) => mocked.mock.invocationCallOrder[index]! > order)
+    .map(([target]) => String(target));
 }
 
 it('publishes after observing absence without trying to remove the shared guard first', async () => {
@@ -284,14 +338,69 @@ it('reports uncertainty after seven marker read losses and a final lost stale-ma
   expect(startupFailureCause('store', refusal)).toBe('store-ownership-unverified');
 });
 
-it('preserves a refused read when the recovery marker still exists', async () => {
+it.each([
+  ['win32', 'EPERM', 'EPERM'],
+  ['linux', 'EACCES', 'EACCES'],
+  ['win32', 'not a vetted\ncode', 'UNKNOWN'],
+  ['linux', 7, 'UNKNOWN'],
+] as const)(
+  'labels a refused %s recovery marker read (%j) that still exists, keeping its original cause',
+  async (venue, raw, code) => {
+    Object.defineProperty(process, 'platform', { value: venue });
+    const marker = await seed();
+    const token = marker.slice(-41, -5);
+    const original = await actual.readFile(marker);
+    const refusal = failure('synthetic marker read refusal', raw);
+    vi.mocked(fs.readFile).mockRejectedValueOnce(refusal);
+    const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+    expect(error).toMatchObject({
+      message: `Store ownership observed-marker-read failed (${code}): ${marker}`,
+      operation: 'observed-marker-read',
+      code,
+      markerToken: token,
+      cause: refusal,
+    });
+    expect(error).not.toBeInstanceOf(StoreOwnershipRefusedError);
+    expect(shellFailureOutput(error)).toBe(error);
+    expect(startupFailureCause('store', error)).toBe('store-unavailable');
+    expect(await actual.readFile(marker)).toEqual(original);
+    expect(vi.mocked(fs.rmdir).mock.calls.map(([target]) => target)).not.toContain(guard);
+  },
+);
+
+it('labels a refused marker read in the read-only ownership check without changing anything', async () => {
   Object.defineProperty(process, 'platform', { value: 'win32' });
   const marker = await seed();
-  const original = await actual.readFile(marker);
   const refusal = denied();
   vi.mocked(fs.readFile).mockRejectedValueOnce(refusal);
-  await expect(acquireDataDirLock(directory)).rejects.toBe(refusal);
-  expect(await actual.readFile(marker)).toEqual(original);
+  await expect(dataDirLockState(directory)).rejects.toMatchObject({
+    operation: 'observed-marker-read',
+    code: 'EPERM',
+    markerToken: marker.slice(-41, -5),
+    cause: refusal,
+  });
+  expect(await actual.readdir(guard)).toEqual([marker.slice(-41)]);
+  expect(vi.mocked(fs.unlink).mock.calls).toEqual([]);
+});
+
+it('labels a refused read of its own recovery marker and rolls back its main lock', async () => {
+  const refusal = failure('synthetic own marker read refusal', 'EACCES');
+  vi.mocked(fs.readFile).mockImplementation(async (...args) => {
+    if (typeof args[0] === 'string' && dirname(args[0]) === guard) throw refusal;
+    return actual.readFile(...args);
+  });
+  const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+  expect(error).toMatchObject({
+    message: expect.stringContaining('rolled back'),
+    cause: { operation: 'recovery-marker-read', code: 'EACCES', cause: refusal },
+  });
+  const [marker] = await actual.readdir(guard);
+  expect((error as Error & { cause: { markerToken: string } }).cause.markerToken).toBe(
+    marker?.slice(0, -5),
+  );
+  await expect(actual.lstat(path)).rejects.toMatchObject({ code: 'ENOENT' });
+  // The unread marker stays, and so does this process's fail-closed hold of its guard.
+  expect(await dataDirLockState(directory)).toMatchObject({ state: 'held', path: guard });
 });
 
 it('preserves a refused main owner record read even when its path is absent', async () => {
@@ -371,6 +480,13 @@ it('reports an ordinary held refusal when Windows directory EPERM exposes a veri
   });
   await expect(acquisition).rejects.not.toHaveProperty('code');
   await expect(acquisition).rejects.not.toHaveProperty('operation');
+  await expect(acquisition).rejects.not.toHaveProperty('cause');
+  const refusal = await acquisition.catch((error: unknown) => error);
+  // Exactly the ordinary held(path) refusal: one line, store-held.
+  expect(shellFailureOutput(refusal)).toBe(
+    `another GraphGoblin process holds ${guard}; check its port/configuration; wait for the owning process to finish or stop it before retrying`,
+  );
+  expect(startupFailureCause('store', refusal)).toBe('store-held');
   expect(probe).toHaveBeenCalledExactlyOnceWith(foreignPid);
   expect(vi.mocked(fs.rmdir).mock.calls.filter(([target]) => target === guard)).toHaveLength(1);
   await expect(fs.lstat(stale)).rejects.toMatchObject({ code: 'ENOENT' });
@@ -430,26 +546,84 @@ it.each([
   },
 );
 
-it.each([{ reason: 'WMI probe denied' }, { identity: '134388256826197771' }])(
+it.each([
+  [{ reason: 'WMI probe denied' }, [{ operation: 'successor-identity', code: 'UNKNOWN' }]],
+  // A different creation identity is a credible mismatch, not a failed probe.
+  [{ identity: '134388256826197771' }, undefined],
+])(
   'keeps Windows directory EPERM when the successor creation identity is unverified (%j)',
-  async (result) => {
-    stubLiveWindowsIdentity().mockResolvedValueOnce(result);
+  async (result, probeFailures) => {
+    const probe = stubLiveWindowsIdentity().mockResolvedValueOnce(result);
     await seed();
     const successor = await stageSuccessor();
     const refusal = refuseWithSuccessor(successor);
-    await expect(acquireDataDirLock(directory)).rejects.toMatchObject(directoryFailure(refusal));
+    const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+    expect(error).toMatchObject(directoryFailure(refusal));
+    expect(probe).toHaveBeenCalledExactlyOnceWith(foreignPid);
+    if (probeFailures) {
+      expect(error).toMatchObject({ probeFailures });
+      expect((error as { probeFailures: { cause: unknown }[] }).probeFailures[0]!.cause).toBe(
+        'WMI probe denied',
+      );
+      // The bounded label and code are printed; the probe's own text is not.
+      expect(inspect(error)).toContain("operation: 'successor-identity'");
+      expect(inspect(error)).not.toContain('WMI probe denied');
+    } else expect(error).not.toHaveProperty('probeFailures');
+    expect(shellFailureOutput(error)).toBe(error);
+    expect(startupFailureCause('store', error)).toBe('store-unavailable');
+    expect(guardRemovals()).toHaveLength(1);
     await expectSuccessorIntact(successor);
   },
 );
+
+it('reports a failed successor liveness probe as secondary evidence on the original denial', async () => {
+  const probe = stubLiveWindowsIdentity();
+  const unknownLiveness = failure('synthetic liveness refusal', 'EPERM');
+  vi.mocked(process.kill).mockImplementationOnce(() => {
+    throw unknownLiveness;
+  });
+  await seed();
+  const successor = await stageSuccessor();
+  const refusal = refuseWithSuccessor(successor);
+  const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+  expect(error).toMatchObject({
+    ...directoryFailure(refusal),
+    probeFailures: [{ operation: 'successor-liveness', code: 'EPERM', cause: unknownLiveness }],
+  });
+  expect(probe).not.toHaveBeenCalled();
+  await expectSuccessorIntact(successor);
+});
+
+it('reports a failed successor inspection as secondary evidence on the original denial', async () => {
+  const probe = stubLiveWindowsIdentity();
+  await seed();
+  const successor = await stageSuccessor();
+  const inspection = failure('synthetic successor listing refusal', 'EACCES');
+  const refusal = refuseWithSuccessor(successor, () => {
+    vi.mocked(fs.readdir).mockRejectedValueOnce(inspection);
+  });
+  const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+  expect(error).toMatchObject({
+    ...directoryFailure(refusal),
+    probeFailures: [{ operation: 'successor-inspection', code: 'EACCES', cause: inspection }],
+  });
+  expect(probe).not.toHaveBeenCalled();
+  expect(inspect(error)).not.toContain('synthetic successor listing refusal');
+  await expectSuccessorIntact(successor);
+});
 
 it('preserves a live successor and the original denial when the directory recheck is inaccessible', async () => {
   const probe = stubLiveWindowsIdentity();
   await seed();
   const successor = await stageSuccessor();
+  const lookup = denied();
   const refusal = refuseWithSuccessor(successor, () => {
-    vi.mocked(fs.lstat).mockRejectedValueOnce(denied());
+    vi.mocked(fs.lstat).mockRejectedValueOnce(lookup);
   });
-  await expect(acquireDataDirLock(directory)).rejects.toMatchObject(directoryFailure(refusal));
+  await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+    ...directoryFailure(refusal),
+    probeFailures: [{ operation: 'recovery-directory-lookup', code: 'EPERM', cause: lookup }],
+  });
   expect(probe).not.toHaveBeenCalled();
   await expectSuccessorIntact(successor);
 });
@@ -513,7 +687,73 @@ it('preserves the original denial when a physical successor is replaced during t
     return { identity: creationTime };
   });
   await expect(acquireDataDirLock(directory)).rejects.toMatchObject(directoryFailure(refusal));
+  expect(probe).toHaveBeenCalledExactlyOnceWith(foreignPid);
   await expectSuccessorIntact(successor);
+});
+
+describe('post-probe rechecks after a positive foreign identity lookup (FUP084)', () => {
+  it('rejects a successor whose sole marker was replaced in place while its directory stayed', async () => {
+    const probe = stubLiveWindowsIdentity();
+    await seed();
+    const successor = await stageSuccessor();
+    const refusal = refuseWithSuccessor(successor);
+    let directoryAtProbe: BigIntStats | undefined;
+    probe.mockImplementationOnce(async () => {
+      directoryAtProbe = await actual.lstat(guard, { bigint: true });
+      // Same name, token and bytes; a new marker object. Its replacement exists before the old
+      // one is gone, so the filesystem cannot reuse the old inode.
+      const replacement = join(guard, 'replacement.tmp');
+      await actual.writeFile(replacement, successor.record);
+      await actual.rename(replacement, successor.marker);
+      return { identity: creationTime };
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toMatchObject(directoryFailure(refusal));
+    expect(probe).toHaveBeenCalledExactlyOnceWith(foreignPid);
+    // The directory itself never changed: only the marker predicate can have refused.
+    const after = await actual.lstat(guard, { bigint: true });
+    expect([after.dev, after.ino]).toEqual([directoryAtProbe!.dev, directoryAtProbe!.ino]);
+    // After the probe: the final listing passed, the marker recheck ran, and the final directory
+    // identity check was never reached; the only later guard lstat is the disappearance probe.
+    const order = probe.mock.invocationCallOrder[0]!;
+    expect(targetsAfter(vi.mocked(fs.readdir), order)).toEqual([guard]);
+    expect(targetsAfter(vi.mocked(fs.lstat), order)).toEqual([successor.marker, guard]);
+    expect(guardRemovals()).toHaveLength(1);
+    await expectSuccessorIntact(successor);
+  });
+
+  it('rejects a successor whose final directory identity differs while its marker is unchanged', async () => {
+    const probe = stubLiveWindowsIdentity();
+    await seed();
+    const successor = await stageSuccessor();
+    const refusal = refuseWithSuccessor(successor);
+    let markerAtProbe: BigIntStats | undefined;
+    let control: { consumed(): boolean } | undefined;
+    probe.mockImplementationOnce(async () => {
+      markerAtProbe = await actual.lstat(successor.marker, { bigint: true });
+      // Controlled observation: only the next bigint lstat of the guard path (the final directory
+      // identity check) reports a different inode. Nothing on disk changes.
+      control = controlLstat((target) => target === guard, otherInode);
+      return { identity: creationTime };
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toMatchObject(directoryFailure(refusal));
+    expect(probe).toHaveBeenCalledExactlyOnceWith(foreignPid);
+    expect(control?.consumed()).toBe(true);
+    // The marker's identity, times, bytes and token stayed the same across every read.
+    const marker = await actual.lstat(successor.marker, { bigint: true });
+    expect([marker.dev, marker.ino, marker.mtimeNs, marker.ctimeNs]).toEqual([
+      markerAtProbe!.dev,
+      markerAtProbe!.ino,
+      markerAtProbe!.mtimeNs,
+      markerAtProbe!.ctimeNs,
+    ]);
+    // After the probe: marker recheck, the controlled final directory identity, then the real
+    // disappearance probe. The directory predicate alone refused.
+    const order = probe.mock.invocationCallOrder[0]!;
+    expect(targetsAfter(vi.mocked(fs.readdir), order)).toEqual([guard]);
+    expect(targetsAfter(vi.mocked(fs.lstat), order)).toEqual([successor.marker, guard, guard]);
+    expect(guardRemovals()).toHaveLength(1);
+    await expectSuccessorIntact(successor);
+  });
 });
 
 it('preserves non-Windows directory EPERM even when a verified live successor is present', async () => {
@@ -527,20 +767,293 @@ it('preserves non-Windows directory EPERM even when a verified live successor is
   await expectSuccessorIntact(successor);
 });
 
-it('rolls back the main lock when Windows guard release fails while a successor is present', async () => {
-  const probe = stubLiveWindowsIdentity();
-  const successor = await stageSuccessor();
-  const refusal = refuseGuardRemoval(async () => {
-    expect(JSON.parse(await actual.readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+describe("this caller's own Windows guard release (#542)", () => {
+  /** Refuse removal of the guard only once the main lock exists: this caller's own release. */
+  function refuseOwnRelease(beforeRefusal: () => Promise<unknown> = () => Promise.resolve()) {
+    const refusal = denied();
+    vi.mocked(fs.rmdir).mockImplementation(async (target) => {
+      if (target === guard && (await exists(path))) {
+        expect(JSON.parse(await actual.readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+        await beforeRefusal();
+        throw refusal;
+      }
+      await actual.rmdir(target);
+    });
+    return refusal;
+  }
+
+  const publishSuccessor = (successor: Awaited<ReturnType<typeof stageSuccessor>>) => async () => {
     await actual.rmdir(guard);
     await actual.rename(successor.staging, guard);
+  };
+
+  it.each([false, true])(
+    'keeps its main lock and claims nothing more when the denial exposes a verified live successor (stale guard first: %s)',
+    async (staleGuard) => {
+      const probe = stubLiveWindowsIdentity();
+      if (staleGuard) await seed();
+      const successor = await stageSuccessor();
+      refuseOwnRelease(publishSuccessor(successor));
+      const lock = await acquireDataDirLock(directory);
+      expect(lock.reclaimed).toEqual({ file: false, guard: staleGuard });
+      expect(probe).toHaveBeenCalledExactlyOnceWith(foreignPid);
+      expect(guardRemovals()).toHaveLength(staleGuard ? 2 : 1);
+      // The exclusive main record stays this caller's; the successor keeps its own guard.
+      expect(JSON.parse(await actual.readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+      await expectSuccessorIntact(successor, ['graphgoblin.lock', 'graphgoblin.lock.reclaim']);
+      await expect(acquireDataDirLock(directory)).rejects.toThrow(
+        `another GraphGoblin process holds ${path}`,
+      );
+      await expect(lock.release()).resolves.toBe('removed');
+      await expectSuccessorIntact(successor);
+    },
+  );
+
+  it.each<[string, () => Promise<unknown>]>([
+    ['an unchanged guard', () => Promise.resolve()],
+    [
+      'a changed but empty guard',
+      async () => {
+        await actual.rmdir(guard);
+        await actual.mkdir(guard);
+      },
+    ],
+  ])('rolls back its main lock on a persistent denial with %s', async (_name, change) => {
+    const probe = stubLiveWindowsIdentity();
+    const refusal = refuseOwnRelease(change);
+    await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+      message: `Store acquisition rolled back because reclamation cleanup failed: ${path}`,
+      cause: directoryFailure(refusal),
+    });
+    expect(probe).not.toHaveBeenCalled();
+    expect(guardRemovals()).toHaveLength(1);
+    await expect(actual.lstat(path)).rejects.toMatchObject({ code: 'ENOENT' });
+    expect(await actual.readdir(guard)).toEqual([]);
+    expect(await dataDirLockState(directory)).toMatchObject({ state: 'held', path: guard });
   });
-  await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
-    message: expect.stringContaining('rolled back'),
-    cause: directoryFailure(refusal),
+
+  it.each([
+    ['a mismatched UUID record', (token: string) => liveRecord(token, { token: randomUUID() }), 0],
+    ['an unverifiable identity', liveRecord, 1],
+  ] as const)(
+    'rolls back its main lock when a successor has %s',
+    async (_name, contents, lookups) => {
+      const probe = stubLiveWindowsIdentity();
+      probe.mockResolvedValueOnce({ reason: 'WMI probe denied' });
+      const successor = await stageSuccessor(contents);
+      const refusal = refuseOwnRelease(publishSuccessor(successor));
+      await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+        message: expect.stringContaining('rolled back'),
+        cause: directoryFailure(refusal),
+      });
+      expect(probe).toHaveBeenCalledTimes(lookups);
+      expect(guardRemovals()).toHaveLength(1);
+      await expect(actual.lstat(path)).rejects.toMatchObject({ code: 'ENOENT' });
+      await expectSuccessorIntact(successor);
+    },
+  );
+
+  it('reports a failed post-denial lookup of its guard as evidence and rolls back', async () => {
+    const probe = stubLiveWindowsIdentity();
+    const lookup = failure('synthetic guard lookup refusal', 'EACCES');
+    const refusal = refuseOwnRelease(() => {
+      vi.mocked(fs.lstat).mockRejectedValueOnce(lookup);
+      return Promise.resolve();
+    });
+    const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+    expect(error).toMatchObject({
+      message: expect.stringContaining('rolled back'),
+      cause: {
+        ...directoryFailure(refusal),
+        probeFailures: [{ operation: 'recovery-directory-lookup', code: 'EACCES', cause: lookup }],
+      },
+    });
+    expect(probe).not.toHaveBeenCalled();
+    expect(guardRemovals()).toHaveLength(1);
+    // The shell prints this unknown failure as console.error does. Its evidence sits in the cause,
+    // below the default inspect depth, yet the label and code print; the probe's text does not.
+    expect(shellFailureOutput(error)).toBe(error);
+    const printed = formatWithOptions({}, shellFailureOutput(error));
+    expect(printed).toContain(
+      "probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ]",
+    );
+    expect(printed).not.toContain('[Object]');
+    expect(printed).not.toContain('synthetic guard lookup refusal');
   });
-  expect(probe).not.toHaveBeenCalled();
-  await expectSuccessorIntact(successor);
+
+  it('prints the probe label and code even when the main lock rollback also fails', async () => {
+    stubLiveWindowsIdentity();
+    const lookup = failure('synthetic guard lookup refusal', 'EACCES');
+    const refusal = refuseOwnRelease(() => {
+      vi.mocked(fs.lstat).mockRejectedValueOnce(lookup);
+      return Promise.resolve();
+    });
+    vi.mocked(fs.unlink).mockImplementation(async (target) => {
+      if (target === path) throw failure('synthetic rollback refusal', 'EACCES');
+      await actual.unlink(target);
+    });
+    const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+    expect(error).toBeInstanceOf(AggregateError);
+    expect(error).toMatchObject({
+      message: expect.stringContaining('ownership remains held'),
+      errors: [{ ...directoryFailure(refusal), probeFailures: [{ code: 'EACCES' }] }, {}],
+    });
+    // The evidence is inside an aggregate entry, two levels below the printed error.
+    const printed = formatWithOptions({}, shellFailureOutput(error));
+    expect(printed).toContain(
+      "probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ]",
+    );
+    expect(printed).not.toContain('synthetic guard lookup refusal');
+    expect(JSON.parse(await actual.readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+  });
+
+  const staging = (target: string) => target.endsWith('.tmp');
+  it.each([
+    [
+      'its staged identity is unavailable',
+      () =>
+        controlLstat(staging, () => {
+          throw denied();
+        }),
+    ],
+    ['its staged identity differs', () => controlLstat(staging, otherInode)],
+    [
+      'its published identity is unknown (inode 0)',
+      () =>
+        controlLstat(
+          (target) => target === guard,
+          (stats) => Object.assign(stats, { ino: 0n }),
+        ),
+    ],
+    [
+      'its published identity is unstable',
+      () => {
+        // The capture's second guard lstat reports a different inode than its first.
+        let observations = 0;
+        return controlLstat(
+          (target) => target === guard,
+          (stats) => (++observations === 2 ? otherInode(stats) : stats),
+          2,
+        );
+      },
+    ],
+    [
+      'its published guard does not list exactly its own marker',
+      () => {
+        // The capture's listing is the first directory listing of a fresh acquisition.
+        let listed = false;
+        vi.mocked(fs.readdir).mockImplementationOnce((async (target: string) => {
+          listed = true;
+          return [...(await actual.readdir(target)), 'unexpected.json'];
+        }) as typeof fs.readdir);
+        return { consumed: () => listed };
+      },
+    ],
+    [
+      'its published guard cannot be listed',
+      () => {
+        vi.mocked(fs.readdir).mockRejectedValueOnce(denied());
+        return { consumed: () => vi.mocked(fs.readdir).mock.calls.length > 0 };
+      },
+    ],
+  ] as const)('cannot prove a successor and rolls back when %s', async (_name, arm) => {
+    const probe = stubLiveWindowsIdentity();
+    const successor = await stageSuccessor();
+    const control = arm();
+    const refusal = refuseOwnRelease(publishSuccessor(successor));
+    await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+      message: expect.stringContaining('rolled back'),
+      cause: directoryFailure(refusal),
+    });
+    expect(control.consumed()).toBe(true);
+    expect(probe).not.toHaveBeenCalled();
+    expect(guardRemovals()).toHaveLength(1);
+    await expectSuccessorIntact(successor);
+  });
+
+  it('does not classify a successor when its own marker was already gone at removal', async () => {
+    const probe = stubLiveWindowsIdentity();
+    const successor = await stageSuccessor();
+    vi.mocked(fs.unlink).mockImplementation(async (target) => {
+      await actual.unlink(target);
+      // Its exact record was read, but this release did not itself remove the marker.
+      if (typeof target === 'string' && dirname(target) === guard)
+        throw failure('synthetic concurrent removal', 'ENOENT');
+    });
+    const refusal = refuseOwnRelease(publishSuccessor(successor));
+    await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+      message: expect.stringContaining('rolled back'),
+      cause: directoryFailure(refusal),
+    });
+    expect(probe).not.toHaveBeenCalled();
+    expect(guardRemovals()).toHaveLength(1);
+    await expectSuccessorIntact(successor);
+  });
+
+  it('publishes and releases normally when its guard identity cannot be captured', async () => {
+    Object.defineProperty(process, 'platform', { value: 'win32' });
+    const control = controlLstat(
+      (target) => target.endsWith('.tmp'),
+      () => {
+        throw denied();
+      },
+    );
+    const lock = await acquireDataDirLock(directory);
+    expect(control.consumed()).toBe(true);
+    await expect(lock.release()).resolves.toBe('removed');
+    expect(await actual.readdir(directory)).toEqual([]);
+  });
+
+  it('keeps its missing outcome without touching the guard when its own marker is already gone', async () => {
+    const probe = stubLiveWindowsIdentity();
+    vi.mocked(fs.readFile).mockImplementation(async (...args) => {
+      if (typeof args[0] === 'string' && dirname(args[0]) === guard) {
+        await actual.unlink(args[0]);
+        throw failure('synthetic vanished marker', 'ENOENT');
+      }
+      return actual.readFile(...args);
+    });
+    const lock = await acquireDataDirLock(directory);
+    // The release found nothing of its own: no removal, no classification, the main lock stays.
+    expect(guardRemovals()).toEqual([]);
+    expect(probe).not.toHaveBeenCalled();
+    expect(await actual.readdir(guard)).toEqual([]);
+    expect(JSON.parse(await actual.readFile(path, 'utf8'))).toMatchObject({ pid: process.pid });
+    await expect(lock.release()).resolves.toBe('removed');
+  });
+
+  it.each(['ENOENT', 'ENOTEMPTY'])(
+    'keeps its existing release outcome for %s without classifying a successor',
+    async (code) => {
+      const probe = stubLiveWindowsIdentity();
+      vi.mocked(fs.rmdir).mockImplementation(async (target) => {
+        if (target === guard && (await exists(path))) {
+          if (code === 'ENOENT') await actual.rmdir(guard);
+          throw failure(`synthetic ${code}`, code);
+        }
+        await actual.rmdir(target);
+      });
+      const lock = await acquireDataDirLock(directory);
+      expect(probe).not.toHaveBeenCalled();
+      const release = vi.mocked(fs.rmdir).mock.calls.findIndex(([target]) => target === guard);
+      const order = vi.mocked(fs.rmdir).mock.invocationCallOrder[release]!;
+      expect(targetsAfter(vi.mocked(fs.lstat), order)).not.toContain(guard);
+      await expect(lock.release()).resolves.toBe('removed');
+    },
+  );
+
+  it('preserves non-Windows rollback even when a verified live successor is present', async () => {
+    const probe = stubLiveWindowsIdentity();
+    Object.defineProperty(process, 'platform', { value: 'linux' });
+    const successor = await stageSuccessor();
+    const refusal = refuseOwnRelease(publishSuccessor(successor));
+    await expect(acquireDataDirLock(directory)).rejects.toMatchObject({
+      message: expect.stringContaining('rolled back'),
+      cause: directoryFailure(refusal),
+    });
+    expect(probe).not.toHaveBeenCalled();
+    await expectSuccessorIntact(successor);
+  });
 });
 
 it('retains a genuine guard-directory removal failure and rolls back its main lock', async () => {
@@ -655,4 +1168,294 @@ it('retains an acquisition refusal when unpublished staging cleanup also fails',
   expect(String(error)).toContain('Store ownership could not be verified');
   expect(String(error)).toContain('staging cleanup also failed');
   expect(await fs.readFile(`${path}.reclaim`, 'utf8')).toBe('preserve old file guard');
+});
+
+describe('exclusive main record setup failures (#560)', () => {
+  type Fault = 'write' | 'stat' | 'close' | 'unlink' | 'lookup';
+  const codes: Record<Fault, string> = {
+    write: 'ENOSPC',
+    stat: 'EIO',
+    close: 'EIO',
+    unlink: 'EACCES',
+    lookup: 'EACCES',
+  };
+  const steps: Record<Exclude<Fault, 'write'>, string> = {
+    stat: 'main-record-identity',
+    close: 'main-record-close',
+    unlink: 'main-record-unlink',
+    lookup: 'main-record-lookup',
+  };
+  /** A PID no supported platform assigns: a record naming it is stale. */
+  const deadPid = 2147483644;
+
+  /**
+   * Faults on the exclusively created main record's real handle and path. The handle really
+   * writes (partially for a write fault) and really closes before an injected close failure.
+   */
+  function faultMainRecord(
+    faults: readonly Fault[],
+    options: { guard?: boolean; afterClose?: () => Promise<void> } = {},
+  ) {
+    const refusal = (fault: Fault) =>
+      failure(`synthetic main record ${fault} refusal`, codes[fault]);
+    const errors: Record<Fault, Error> = {
+      write: refusal('write'),
+      stat: refusal('stat'),
+      close: refusal('close'),
+      unlink: refusal('unlink'),
+      lookup: refusal('lookup'),
+    };
+    const calls: string[] = [];
+    vi.mocked(fs.open).mockImplementation(async (target, flags, mode) => {
+      const handle = await actual.open(target, flags, mode);
+      if (target !== path || flags !== 'wx') return handle;
+      return new Proxy(handle, {
+        get(real, key) {
+          if (key === 'writeFile')
+            return async (data: string, encoding: BufferEncoding) => {
+              calls.push('write');
+              if (!faults.includes('write')) return real.writeFile(data, encoding);
+              await real.writeFile('{"pid":');
+              throw errors.write;
+            };
+          if (key === 'stat')
+            return async (statOptions: { bigint: true }) => {
+              calls.push('stat');
+              if (faults.includes('stat')) throw errors.stat;
+              return real.stat(statOptions);
+            };
+          if (key === 'close')
+            return async () => {
+              calls.push('close');
+              await real.close();
+              await options.afterClose?.();
+              if (faults.includes('close')) throw errors.close;
+            };
+          const value: unknown = Reflect.get(real, key, real);
+          const forwarded: unknown = typeof value === 'function' ? value.bind(real) : value;
+          return forwarded;
+        },
+      });
+    });
+    vi.mocked(fs.unlink).mockImplementation(async (target) => {
+      if (target === path) {
+        calls.push('unlink');
+        if (faults.includes('unlink')) throw errors.unlink;
+      }
+      // This caller's own guard marker: its release fails.
+      if (options.guard && dirname(String(target)) === guard) throw denied();
+      await actual.unlink(target);
+    });
+    vi.mocked(fs.lstat).mockImplementation((async (target: string, statOptions?: object) => {
+      if (target === path) {
+        calls.push('lookup');
+        if (faults.includes('lookup')) throw errors.lookup;
+      }
+      return actual.lstat(target, statOptions);
+    }) as typeof fs.lstat);
+    return { calls, errors };
+  }
+
+  const proven = ['write', 'stat', 'close', 'lookup', 'unlink'];
+  const cases = [
+    { faults: ['write'], cleanup: [], retained: false, calls: proven },
+    { faults: ['write', 'close'], cleanup: ['close'], retained: false, calls: proven },
+    { faults: ['write', 'unlink'], cleanup: ['unlink'], retained: true, calls: proven },
+    {
+      faults: ['write', 'close', 'unlink'],
+      cleanup: ['close', 'unlink'],
+      retained: true,
+      calls: proven,
+    },
+    {
+      faults: ['write', 'stat'],
+      cleanup: ['stat'],
+      retained: true,
+      calls: ['write', 'stat', 'close'],
+    },
+    {
+      faults: ['write', 'stat', 'close'],
+      cleanup: ['stat', 'close'],
+      retained: true,
+      calls: ['write', 'stat', 'close'],
+    },
+    {
+      faults: ['write', 'lookup'],
+      cleanup: ['lookup'],
+      retained: true,
+      calls: ['write', 'stat', 'close', 'lookup'],
+    },
+    {
+      faults: ['close'],
+      cleanup: [],
+      retained: false,
+      calls: ['write', 'close', 'lookup', 'unlink'],
+    },
+    {
+      faults: ['close', 'unlink'],
+      cleanup: ['unlink'],
+      retained: true,
+      calls: ['write', 'close', 'lookup', 'unlink'],
+    },
+  ] as const;
+
+  it.each(cases.flatMap((entry) => [false, true].map((guardFails) => ({ ...entry, guardFails }))))(
+    'keeps the first failure among $faults ahead of its cleanup (guard release also fails: $guardFails)',
+    async ({ faults: armed, cleanup, retained, calls: expectedCalls, guardFails }) => {
+      const faults: readonly Fault[] = armed;
+      const { calls, errors } = faultMainRecord(faults, { guard: guardFails });
+      const error = await acquireDataDirLock(directory).catch((caught: unknown) => caught);
+      const primary = errors[faults[0]!];
+      // One close in every case, and at most one cleanup unlink after a proof check.
+      expect(calls).toEqual(expectedCalls);
+      const expectedSteps = [
+        ...cleanup.map((fault) => [steps[fault], codes[fault]]),
+        ...(guardFails ? [['recovery-release', 'EPERM']] : []),
+      ];
+      if (!expectedSteps.length && !retained) {
+        expect(error).toBe(primary);
+        expect(shellFailureOutput(error)).toBe(error);
+      } else {
+        expect(error).toBeInstanceOf(StartupCleanupError);
+        expect(error).toBeInstanceOf(AggregateError);
+        const tagged = error as StartupCleanupError;
+        expect(tagged.primary).toBe(primary);
+        expect(tagged.errors[0]).toBe(primary);
+        expect(tagged.cause).toBe(primary);
+        expect(tagged.cleanup.map(({ operation, code }) => [operation, code])).toEqual(
+          expectedSteps,
+        );
+        expect(tagged.errors.slice(1)).toHaveLength(tagged.cleanup.length);
+        tagged.cleanup.forEach(({ error: secondary }, index) =>
+          expect(tagged.errors[index + 1]).toBe(secondary),
+        );
+        cleanup.forEach((fault, index) => expect(tagged.cleanup[index]!.error).toBe(errors[fault]));
+        if (guardFails)
+          expect(tagged.cleanup.at(-1)!.error).toMatchObject({
+            operation: 'recovery-marker-unlink',
+            code: 'EPERM',
+          });
+        expect(tagged.retained).toEqual(retained ? [{ resource: 'lock-record', path }] : []);
+        const detail = [
+          ...(expectedSteps.length
+            ? [
+                `cleanup also failed: ${expectedSteps.map(([step, code]) => `${step} (${code})`).join(', ')}`,
+              ]
+            : []),
+          ...(retained ? [`ownership retained: lock record ${path}`] : []),
+        ].join('; ');
+        expect(tagged.detail).toBe(detail);
+        expect(tagged.message).toBe(`${primary.message}; ${detail}`);
+        // The primary keeps its usual diagnostic; one bounded line follows it.
+        const output = shellFailureOutput(error) as string;
+        expect(output.split('\n').at(-1)).toBe(detail);
+        expect(output).toContain(primary.message);
+        for (const { error: secondary } of tagged.cleanup)
+          expect(output).not.toContain((secondary as Error).message);
+        expect(startupFailureCause('store', error)).toBe('store-unavailable');
+      }
+      if (retained) {
+        const bytes = await actual.readFile(path, 'utf8');
+        if (faults.includes('write')) expect(bytes).toBe('{"pid":');
+        else expect(JSON.parse(bytes)).toMatchObject({ pid: process.pid });
+        // The unresolved record keeps this process's reservation.
+        await expect(acquireDataDirLock(directory)).rejects.toThrow(
+          `another GraphGoblin process holds ${path}`,
+        );
+      } else await expect(actual.lstat(path)).rejects.toMatchObject({ code: 'ENOENT' });
+      expect(await exists(guard)).toBe(guardFails);
+      const state = await dataDirLockState(directory);
+      if (guardFails) expect(state).toMatchObject({ state: 'held', path: guard });
+      else if (retained)
+        expect(state).toMatchObject({
+          state: 'held',
+          path,
+          detail: expect.stringContaining('another GraphGoblin process holds this store'),
+        });
+      else expect(state).toEqual({ state: 'free' });
+    },
+  );
+
+  it('treats a partial record already gone before its proof lookup as settled', async () => {
+    const { calls, errors } = faultMainRecord(['write'], {
+      afterClose: () => actual.unlink(path),
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toBe(errors.write);
+    expect(calls).toEqual(['write', 'stat', 'close', 'lookup']);
+    expect(await actual.readdir(directory)).toEqual([]);
+    await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+  });
+
+  it('treats a proven record that disappears during its single unlink as settled', async () => {
+    const { calls, errors } = faultMainRecord(['write']);
+    vi.mocked(fs.unlink).mockImplementation(async (target) => {
+      if (target === path) {
+        calls.push('unlink');
+        await actual.unlink(target);
+        throw failure('synthetic concurrent removal', 'ENOENT');
+      }
+      await actual.unlink(target);
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toBe(errors.write);
+    expect(calls).toEqual(['write', 'stat', 'close', 'lookup', 'unlink']);
+    expect(await actual.readdir(directory)).toEqual([]);
+    await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+  });
+
+  it('preserves a foreign file that replaced a partial record and ends only the local reservation', async () => {
+    const { calls, errors } = faultMainRecord(['write'], {
+      afterClose: async () => {
+        // The replacement exists before the original is gone: its identity cannot be reused.
+        await actual.writeFile(`${path}.foreign`, 'foreign bytes');
+        await actual.rename(`${path}.foreign`, path);
+      },
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toBe(errors.write);
+    expect(calls).toEqual(['write', 'stat', 'close', 'lookup']);
+    expect(await actual.readFile(path, 'utf8')).toBe('foreign bytes');
+    // Read from the file, not from an in-process reservation.
+    await expect(dataDirLockState(directory)).resolves.toMatchObject({
+      state: 'held',
+      path,
+      detail: expect.stringContaining('Store ownership could not be verified'),
+    });
+    expect(await exists(guard)).toBe(false);
+  });
+
+  it('preserves a different record that replaced a complete one before a failed close', async () => {
+    const foreign = JSON.stringify({ pid: deadPid, token: randomUUID() });
+    const { calls, errors } = faultMainRecord(['close'], {
+      afterClose: async () => {
+        await actual.writeFile(`${path}.foreign`, foreign);
+        await actual.rename(`${path}.foreign`, path);
+      },
+    });
+    await expect(acquireDataDirLock(directory)).rejects.toBe(errors.close);
+    expect(calls).toEqual(['write', 'close', 'lookup']);
+    expect(await actual.readFile(path, 'utf8')).toBe(foreign);
+    // A stale foreign record, read from disk: no in-process reservation remains.
+    await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+  });
+
+  it('removes a complete attested record after its attestation fails and keeps that failure', async () => {
+    const { calls, errors } = faultMainRecord(['stat']);
+    await expect(
+      acquireDataDirLock(directory, undefined, { attestLocalArtifact: true }),
+    ).rejects.toBe(errors.stat);
+    expect(calls).toEqual(['write', 'stat', 'close', 'lookup', 'unlink']);
+    expect(await actual.readdir(directory)).toEqual([]);
+    await expect(dataDirLockState(directory)).resolves.toEqual({ state: 'free' });
+  });
+
+  it('keeps attested acquisition and refuses its proof once release starts', async () => {
+    const lock = await acquireDataDirLock(directory, undefined, { attestLocalArtifact: true });
+    const { dev, ino } = await actual.lstat(path, { bigint: true });
+    expect(await lock.verifyOwnedArtifact()).toEqual(
+      process.geteuid ? { path, dev, ino } : undefined,
+    );
+    const releasing = lock.release();
+    expect(await lock.verifyOwnedArtifact()).toBeUndefined();
+    await expect(releasing).resolves.toBe('removed');
+    expect(await actual.readdir(directory)).toEqual([]);
+  });
 });

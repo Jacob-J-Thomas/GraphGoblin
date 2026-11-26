@@ -82,6 +82,12 @@ import { ClaudeHarness } from '@graphgoblin/infrastructure/claude';
 import { UlidIds } from './ids.js';
 import { loadMasterKey } from './master-key.js';
 import { macosDatabaseFile, requireMacosLocalKey } from './macos-local-key.js';
+import {
+  cleanupStep,
+  withStartupCleanup,
+  type RetainedOwnership,
+  type StartupCleanupFailure,
+} from './startup-cleanup.js';
 import { explainStoreRefusal } from './store-refusal.js';
 import { PollTriggers } from './triggers/poll.js';
 import { TriggerService } from './triggers/trigger-service.js';
@@ -196,7 +202,10 @@ export async function createContainer(
       : undefined;
   const lock = macosLease ?? (await acquireDataDirLock(config.dataDir));
   let databaseLock: DataDirLock | undefined;
+  let databaseLockFile: string | undefined;
   let opened: DatabaseHandle | undefined;
+  // A failed read-only close, and whether it is the startup failure itself.
+  let readonlyClose: { failure: unknown; primary: boolean } | undefined;
   try {
     const logger = overrides.logger ?? silentLogger;
     const clock = overrides.clock ?? { now: () => new Date() };
@@ -214,6 +223,7 @@ export async function createContainer(
       const file = await macosDatabaseFile(config.dataDir, config.dbUrl, dbFile);
       const lease = await acquireDatabaseLock(file, attest);
       databaseLock = lease;
+      databaseLockFile = file;
       await requireMacosLocalKey(
         config.dataDir,
         macosLease,
@@ -222,6 +232,7 @@ export async function createContainer(
       );
     } else if (dbFile) {
       databaseLock = await acquireDatabaseLock(dbFile);
+      databaseLockFile = dbFile;
     }
     // An unsupported store stops startup with the data directory, the found and required formats
     // and the explicit reset command; nothing is converted or removed (ADR-0042).
@@ -234,6 +245,7 @@ export async function createContainer(
     let startupReadiness: 'fresh' | 'current' | undefined;
     if (dbFile && existsSync(dbFile)) {
       const readonlyClient = openReadOnlyDatabaseClient(dbFile);
+      let inspected = false;
       try {
         const state = await guardCurrentStore(readonlyClient).catch(refuseStore);
         startupReadiness = state;
@@ -241,9 +253,16 @@ export async function createContainer(
           const stored = await readPreMigrationModelCatalog(databaseView(readonlyClient));
           startupCatalog = projectStartupModelCatalog(stored);
         }
+        inspected = true;
       } finally {
-        readonlyClient.close();
+        // A close failure never displaces a guard or catalog failure already propagating.
+        try {
+          readonlyClient.close();
+        } catch (error) {
+          readonlyClose = { failure: error, primary: inspected };
+        }
       }
+      if (readonlyClose) throw readonlyClose.failure;
     }
     validateProcessDefaults(config.defaults, startupCatalog);
     if (dbFile) await mkdir(dirname(dbFile), { recursive: true });
@@ -613,17 +632,68 @@ export async function createContainer(
       stop,
     };
   } catch (error) {
-    try {
-      opened?.close();
-    } finally {
-      try {
-        await databaseLock?.release();
-      } finally {
-        await lock.release();
-      }
-    }
-    throw error;
+    throw await settleFailedSetup(error, {
+      lock,
+      dataDir: config.dataDir,
+      ...(databaseLock && databaseLockFile
+        ? { databaseLock: { lease: databaseLock, file: databaseLockFile } }
+        : {}),
+      opened,
+      readonlyClose,
+    });
   }
+}
+
+/**
+ * Cleanup after createContainer setup failed (#560). The original failure stays first. A SQLite
+ * close that did not confirm may leave a connection open, so both acquired leases are then kept
+ * and reported. Otherwise the database lease and then the directory lease are each released once,
+ * even if the first release fails. With nothing to report, the original object is returned.
+ */
+async function settleFailedSetup(
+  primary: unknown,
+  setup: {
+    lock: DataDirLock;
+    dataDir: string;
+    databaseLock?: { lease: DataDirLock; file: string };
+    opened: DatabaseHandle | undefined;
+    readonlyClose: { failure: unknown; primary: boolean } | undefined;
+  },
+): Promise<unknown> {
+  const cleanup: StartupCleanupFailure[] = [];
+  const retained: RetainedOwnership[] = [];
+  let closed = true;
+  if (setup.readonlyClose) {
+    closed = false;
+    if (!setup.readonlyClose.primary)
+      cleanup.push(cleanupStep('readonly-database-close', setup.readonlyClose.failure));
+  }
+  if (setup.opened) {
+    try {
+      setup.opened.close();
+    } catch (error) {
+      closed = false;
+      cleanup.push(cleanupStep('database-close', error));
+    }
+  }
+  const { databaseLock } = setup;
+  const directoryLease: RetainedOwnership = { resource: 'directory-lease', path: setup.dataDir };
+  if (!closed) {
+    // Never release ownership while an unconfirmed connection may still be open.
+    if (databaseLock) retained.push({ resource: 'database-lease', path: databaseLock.file });
+    retained.push(directoryLease);
+    return withStartupCleanup(primary, cleanup, retained);
+  }
+  if (databaseLock)
+    await databaseLock.lease.release().catch((error: unknown) => {
+      cleanup.push(cleanupStep('database-lease-release', error));
+      retained.push({ resource: 'database-lease', path: databaseLock.file });
+    });
+  await setup.lock.release().catch((error: unknown) => {
+    cleanup.push(cleanupStep('directory-lease-release', error));
+    retained.push(directoryLease);
+  });
+  return withStartupCleanup(primary, cleanup, retained);
 }
 
 function validateProcessDefaults(

@@ -1,4 +1,5 @@
 import { ShutdownSignals } from './shutdown-signals.js';
+import { inspect } from 'node:util';
 import type { DestinationStream } from 'pino';
 import { buildApp } from './app.js';
 import { bundledGoblinDist, bundledWebDist, loadConfig } from './config.js';
@@ -8,6 +9,7 @@ import { ProcessDefaultsRefusedError } from './defaults-refusal.js';
 import { createGatewayLogger, managedClientErrorHandler } from './gateway-logger.js';
 import { StoreRefusedError } from './store-refusal.js';
 import { MacosKeySourceError } from './macos-local-key.js';
+import { StartupCleanupError } from './startup-cleanup.js';
 import type { StartupCause, StartupStage } from './managed-log/guard.js';
 
 export interface ServeResult {
@@ -156,9 +158,11 @@ function hasCode(error: unknown, ...codes: string[]): boolean {
 
 /**
  * Closed cause for a managed startup failure at a reached stage. Recognizes only error classes,
- * Node codes and fixed message prefixes; the error text itself never leaves this function.
+ * Node codes and fixed message prefixes; the error text itself never leaves this function. A
+ * failure whose startup cleanup also failed is classified by its tagged primary alone.
  */
-export function startupFailureCause(stage: StartupStage, error: unknown): StartupCause {
+export function startupFailureCause(stage: StartupStage, failure: unknown): StartupCause {
+  const error = failure instanceof StartupCleanupError ? failure.primary : failure;
   if (error instanceof StoreRefusedError) return 'store-refused';
   if (error instanceof MacosKeySourceError) return 'key-source-unavailable';
   if (error instanceof ProcessDefaultsRefusedError) return 'defaults-refused';
@@ -194,8 +198,15 @@ const escapeDisplayControls = (message: string): string =>
 /**
  * Store, ownership, hard-linked database and GG_DEFAULTS refusals carry complete operator
  * explanations. Only these error classes qualify; matching text alone keeps the error object.
+ * When startup cleanup also failed, the primary keeps its usual rendering (an explanation, or the
+ * inspected error) and one escaped line adds the cleanup labels, codes and retained ownership.
+ * Secondary error messages are never printed; they stay on the tagged error.
  */
 export function shellFailureOutput(error: unknown): unknown {
+  if (error instanceof StartupCleanupError) {
+    const primary = shellFailureOutput(error.primary);
+    return `${typeof primary === 'string' ? primary : inspect(primary)}\n${escapeDisplayControls(error.detail)}`;
+  }
   // Both name a configured filesystem path, which can contain controls.
   if (
     error instanceof StoreOwnershipRefusedError ||

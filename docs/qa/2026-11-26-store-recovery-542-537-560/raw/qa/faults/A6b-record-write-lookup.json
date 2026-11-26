@@ -1,0 +1,110 @@
+{
+  "name": "A6b-record-write-lookup",
+  "issue": "#560",
+  "system": "data-directory lock record via shell startup",
+  "faults": [
+    "write",
+    "lookup"
+  ],
+  "checks": [
+    {
+      "what": "exit code 1, never listened",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "what": "primary failure printed first",
+      "ok": true,
+      "detail": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:"
+    },
+    {
+      "what": "exactly one close and the expected single-attempt sequence",
+      "ok": true,
+      "detail": [
+        "main-open",
+        "main-write",
+        "main-stat",
+        "main-close",
+        "main-lookup"
+      ]
+    },
+    {
+      "what": "no cleanup error message printed",
+      "ok": true
+    },
+    {
+      "what": "last stderr line is the one escaped detail line",
+      "ok": true,
+      "detail": {
+        "last": "cleanup also failed: main-record-lookup (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6b-record-write-lookup\\data\\graphgoblin.lock",
+        "expected": "cleanup also failed: main-record-lookup (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6b-record-write-lookup\\data\\graphgoblin.lock"
+      }
+    },
+    {
+      "what": "detail appears exactly once",
+      "ok": true
+    },
+    {
+      "what": "no raw control or line-separator characters in stderr",
+      "ok": true
+    },
+    {
+      "what": "unproven record kept on disk",
+      "ok": true
+    },
+    {
+      "what": "kept record holds the partial bytes",
+      "ok": true
+    },
+    {
+      "what": "recovery guard released",
+      "ok": true
+    },
+    {
+      "what": "no database lock or staging left",
+      "ok": true
+    },
+    {
+      "what": "next ordinary start refuses on the retained partial record (fail closed, one line)",
+      "ok": true,
+      "detail": "Store ownership could not be verified (malformed or incomplete owner record): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6b-record-write-lookup\\data\\graphgoblin.lock; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying"
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n    at Proxy.<anonymous> (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:40:21)\n    at async acquireFile (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:556:9)\n    at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:656:25)\n    at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'ENOSPC'\n}\ncleanup also failed: main-record-lookup (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6b-record-write-lookup\\data\\graphgoblin.lock\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "main-open",
+      "main-write",
+      "main-stat",
+      "main-close",
+      "main-lookup",
+      "unlink:ea9971cd-49d3-4b09-ba39-1e7844c3f36b.json",
+      "rmdir:graphgoblin.lock.reclaim"
+    ]
+  },
+  "retainedRecord": "{\"pid\":",
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock",
+      "type": "file",
+      "size": 7,
+      "text": "{\"pid\":"
+    }
+  ],
+  "nextOrdinaryStart": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Store ownership could not be verified (malformed or incomplete owner record): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6b-record-write-lookup\\data\\graphgoblin.lock; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying\n",
+    "stdoutLines": 1,
+    "stdoutTail": ""
+  },
+  "ms": 16473,
+  "pass": true
+}

@@ -1,0 +1,45 @@
+{
+  "name": "A9-attestation-failure-module-level",
+  "issue": "#560",
+  "system": "attested acquisition (Mac-only startup path) exercised through the exported lock API with the same fixture",
+  "checks": [
+    {
+      "what": "attestation failure thrown unchanged (cleanup settled)",
+      "ok": true,
+      "detail": {
+        "error": {
+          "name": "Error",
+          "message": "rq fixture main record stat refusal",
+          "code": "EIO",
+          "isTagged": "Error"
+        }
+      }
+    },
+    {
+      "what": "complete record proven by exact bytes and removed once after one close",
+      "ok": true,
+      "detail": [
+        "main-write",
+        "main-stat",
+        "main-close",
+        "main-lookup",
+        "main-unlink"
+      ]
+    },
+    {
+      "what": "store clean",
+      "ok": true
+    }
+  ],
+  "stdout": "{\"error\":{\"name\":\"Error\",\"message\":\"rq fixture main record stat refusal\",\"code\":\"EIO\",\"isTagged\":\"Error\"}}\n",
+  "stderr": "",
+  "faultLog": [
+    "main-write",
+    "main-stat",
+    "main-close",
+    "main-lookup",
+    "main-unlink"
+  ],
+  "ms": 876,
+  "pass": true
+}

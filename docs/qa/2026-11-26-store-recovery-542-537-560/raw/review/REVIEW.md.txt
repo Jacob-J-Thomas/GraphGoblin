@@ -1,0 +1,145 @@
+READY FOR OPPOSITE-FAMILY REVIEW (interim Claude review: no P0-P2 and no FIX-IN-PR finding; two P3 DEFER-ISSUE)
+
+# Interim review: #542 / #537 / #560 store-recovery residual
+
+Reviewer: Claude Opus 5.5 (xhigh), independent of the author, Claude-only window 2026-11-26.
+Procedure: `claude-orchestration-20261125/RQ-TEMPLATE.md` under `COMMON-RULES.md`; review policy
+`run-agentic-pr-pipeline/references/review-policy.md`. This review does not replace the
+opposite-family GPT review or the fresh Astra MAX final.
+
+## Bound source
+
+| Item | Value |
+| --- | --- |
+| Worktree / branch | `G:/ggq/gg-r542/GraphGoblin`, `codex/gg-fu-store-recovery-residual-20261125` |
+| Base | `f0dac0158c475c1bd43c779a744ee8e3c89b8c2e` (#533 typed hard-link component on main `4e1037c9`) |
+| Reviewed range | `git diff f0dac015 6c86acea` = `8ffe5c0b` (implementation, tests, docs) + `6c86acea` (three added tests) |
+| HEAD | `6c86acea5db1725795c3e02fcc00dff521aacc7e`, worktree clean |
+| Paths | exactly the 11 admitted paths (`data-dir-lock.ts`, `container.ts`, `serve.ts`, new `startup-cleanup.ts`, `data-dir-lock-failures.test.ts`, new `container-startup-cleanup.test.ts`, `serve-failure-output.test.ts`, `docs/11-security-and-distribution.md`, `CHANGELOG.md`, new ADR-0091, `docs/decisions/README.md`); no protected path from `EXPECTED-SOURCE-FILES.json` changed |
+
+Contract read: issues #542, #537, #560 (bodies); PR #582 post-merge Claude (7161089177) and Astra MAX
+(7161089667) reports; `AUTHOR-PROMPT.md`, `ARCHITECTURE-BRIDGE.md`, `HANDOFF.md`,
+`ARCHITECTURE-ADJUDICATION.md` (FUP044 six points), FUP-084 and FUP091 in
+`OWNER-REVIEW-DELTA.working.md`; author report `claude-window-author-04/AUTHOR-REPORT.md`.
+
+## Verdict by review focus
+
+**Ownership proof before any removal.** `removeOwnRecord` removes a failed main record only after a
+non-following `lstat` at the configured path matches either the handle identity read before the
+single close (partial record: `dev`/`ino`/`birthtimeNs`, regular file, `ino != 0`) or the exact
+random-token bytes (complete record). Absent → settled; non-file or different identity/bytes →
+treated as foreign, kept untouched, reservation dropped; identity unavailable, lookup failure or
+unlink failure → file and `heldPaths` reservation kept and reported as `lock-record` retained.
+One unlink at most, no reattempt. Guard removal: own release calls the classifier only when this
+release read its exact record and itself unlinked its marker (`removed && own`), with an identity
+captured by the lstat → sole-own-marker listing → lstat sandwich, consistent with the staged
+identity. Absent → success; unchanged, empty, unknown or unverifiable → original
+`recovery-directory-remove` failure and the existing rollback. No path removes a file or guard
+without proof. Confirmed natively in QA (A1–A8, D1–D5).
+
+**Leases kept on failed closes.** `settleFailedSetup` sets `closed = false` on a failed read-only
+close (whether primary or secondary) or a failed mutable close and then returns without calling
+either `release()`, listing the database lease (when acquired) and the directory lease as retained.
+Otherwise the database lease and then the directory lease are released once each, with `.catch`
+so the first failure cannot suppress the second. Confirmed natively (B1, B1b: no lock unlink
+attempted, both lock files left; B4/B5: both releases attempted in order).
+
+**Primary error preserved; cleanup errors never printed raw.** `withStartupCleanup` returns the
+exact primary when nothing needs reporting and otherwise builds one `StartupCleanupError` with the
+primary as `primary`, `errors[0]` and `cause`, ordered `{operation, code, error}` steps with closed
+labels and vetted codes, and retained ownership; a tagged primary is flattened in causal order.
+`shellFailureOutput` prints the primary's usual rendering (known refusals: their explanation;
+unknown: `util.inspect(primary)`) plus one `escapeDisplayControls`-escaped detail line; it never
+prints secondary messages. `startupFailureCause` unwraps only `StartupCleanupError`. Probe failures
+keep their raw cause non-enumerable, so `inspect` shows the label and code only (when within the
+default inspect depth; see R2). Confirmed natively, including a data directory containing U+2028
+(escaped as `\u2028` in the detail line).
+
+**Windows guard identity/successor check vs #582 criteria.** The own-release path reuses
+`hasLiveRecoverySuccessor` unchanged in its decisions: different physical directory, sole regular
+single-link UUID marker not own token/name, descriptor/lstat match, record token, foreign live PID,
+valid creation identity equal to the native lookup, liveness after lookup, final listing, marker
+identity/times recheck and final directory identity. The only helper delta is the optional
+`report` callback (failed lstat, liveness, identity lookup, inspection exception) and passing the
+`ObservedGuard` shape. Win32-only gating is kept (`removeEmptyRecovery` and capture). Natively, D1
+reached positive verification against a real live helper process's CIM creation time and kept the
+main lock; D3 (recorded creation identity off by one) took the rollback with no probe entry.
+
+**No behaviour change on the verified-successor `held(path)` path (FUP091).** Acquisition passes
+`successor: 'held'` and throws `held(path)` exactly when verified; probe entries are discarded on
+that path. Unit test pins no `code`/`operation`/`cause`, one shell line and `store-held`; native D4
+printed exactly the ordinary one-line refusal and D4m recorded `store-held`.
+
+**New error type and reporting shape.** `StartupCleanupError extends AggregateError` in a leaf
+module with no API imports (no cycles). No change to the managed envelope, lock formats, reset
+manifest or writer protocol. The pre-open generic `cleanupFailure` paths and the post-acquisition
+rollback reporting are unchanged, as the contract requires.
+
+**Docs / ADR-0091 accuracy.** docs/11, CHANGELOG and ADR-0091 match the code on every point
+checked: one close, proof rules, non-atomic check/unlink wording, retained leases "until the process
+exits", tagged-error shape, shell/managed reporting, win32-only capture and classification, closed
+probe labels, unchanged verified acquisition refusal, explicitly excluded lifecycle paths, and the
+evidence limit (controlled faults do not establish #471's cause or frequency). FUP-084's changelog
+sentence (eighth unsettled read, final lost stale-marker unlink, read-only status guard) is present
+in the #581 entry. ADR index entry added; ADR-0090 is absent from this base (number chosen by the
+held contract).
+
+## Findings
+
+| ID | Severity | Disposition | Finding |
+| --- | --- | --- | --- |
+| R1 | P3 | DEFER-ISSUE | `apps/api/src/create-api-key.ts` keeps the pre-#560 nested-`finally` cleanup: `handle.close()` in an inner `finally` can replace the primary failure, and the outer `finally` releases the database and directory leases even after that close failed. This is the same root cause ADR-0091 fixes for `createContainer` (and the decision "never release after an unconfirmed close"), on a short-lived command that holds both leases. It is outside the 11 admitted paths and not named by #560, and the docs/ADR list only returned-container disposal, shutdown and `serve` stop as excluded neighbours. Suggested follow-up: apply the tagged cleanup and lease-retention rule to `--create-api-key`, or record it explicitly as an excluded neighbouring path in docs/11 and ADR-0091. Duplicate check not performed by this reviewer. |
+
+| R2 | P3 | DEFER-ISSUE (orchestrator may choose FIX-IN-PR; `serve.ts` is in scope) | Found in QA (case D3b). On the main new #542 path, an own-release `EPERM` whose probe failed, the shell prints the rollback error via `util.inspect` and the attached probe evidence sits one level deeper (`[cause].probeFailures`), so default inspect depth renders it as `probeFailures: [ [Object] ]`: the closed label and code are not visible to an operator. The evidence is correctly attached (labelled module-level diagnostic: `{operation: 'recovery-directory-lookup', code: 'EACCES'}`, raw cause non-enumerable), and on the acquisition path (D5) the entry is visible. docs/11 says the entries are attached, not that the shell prints them, so this is a visibility gap rather than a contract breach. Unit tests assert the object, not the shell rendering. Outcome wanted: the own-release rollback's probe labels and codes are readable in shell output without printing probe text. |
+
+No P0–P2 finding. No FIX-IN-PR finding.
+
+## Tests: do they prove what they claim?
+
+- Focused selection run independently on HEAD: 6 files, 194 passed, 18 skipped (the existing
+  `geteuid`-gated Mac attestation cases), exit 0 (`focused-tests.log`).
+- The #560 matrix asserts the exact call sequence (`write, stat, close, lookup, unlink`), so a second
+  close, a skipped proof or a repeated unlink fails it; it asserts primary identity, `errors` order,
+  detail text, retained state and next-acquisition refusal. The own-release cases assert the main
+  record is present at the refused `rmdir` (so the path really is release), exactly one guard
+  `rmdir`, one expected-PID lookup and successor bytes. FUP-084 controls prove which late predicate
+  refused through post-probe `lstat`/`readdir` target order.
+- The author's 18 single-predicate mutants (`mutation-check.mjs`) cover the key predicates; I did
+  not repeat them (the brief forbids modifying source under test). The two inverted pre-existing
+  expectations (labelled resident marker read; own-release verified successor now completes) are
+  intended behaviour changes.
+- No test weakened, no threshold or exclusion changed, no `any` cast added.
+
+## Author's calls for review
+
+1. Detail wording `cleanup also failed: … ; ownership retained: …` without "startup": accept; the
+   lock module also serves `--reset` and `--create-api-key`.
+2. Retained leases name the protected resource (data directory, database file) and a retained record
+   names the lock file: accept; documented that way. Operators derive the lock file names.
+3. A failed lease release is listed as retained: accept; `release()` throws before
+   `heldPaths.delete` and the record stays on disk (native B4/B5 show the files remain).
+4. Complete record with different bytes treated as foreign (kept, reservation dropped): accept; it
+   matches `release()`'s existing `kept` treatment, the file is never deleted, and only the
+   in-process reservation of a failing process is affected.
+5. Capture and staged identity win32-only; an unreadable staged identity makes the capture unknown:
+   accept (fail-closed to the existing rollback).
+6. `filesystemFailure` vets every code: accept; real Node codes pass unchanged (native C1 kept
+   `EPERM`).
+7. Unknown primary rendered with `util.inspect` plus the detail line: accept; same text as
+   `console.error(primary)` apart from TTY colour.
+8. Operation and probe labels: accept; closed unions, documented in docs/11.
+9. Rename `try` narrowed with `continue`: accept; the statements moved out cannot throw, loop
+   semantics are identical.
+
+Coverage: the author could not confirm the API ≥90% gate locally (venue faults). This review did
+not run package coverage (the brief assigns it to hosted CI); it remains open.
+
+## Residual limits (not findings)
+
+- Own-release unverified outcomes do not say which observation failed (unchanged guard versus changed
+  but unverifiable directory both give the same rollback with the original `EPERM`); only failed
+  probes are itemised. This is the contract's chosen shape (FUP044 point 4, bridge).
+- A retained record whose handle identity was unusable (`ino 0`, non-file) is reported as retained
+  without a cleanup step naming why.
+- `serve()`'s own startup `catch` and returned-container disposal remain outside the slice
+  (documented).

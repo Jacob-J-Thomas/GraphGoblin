@@ -150,8 +150,11 @@ checks re-observe the guard within their attempt limits. This distinguishes a su
 directory, a successor and a guard already removed by another contender. If the marker disappears
 during a read or removal on the final acquisition attempt, ownership remains unverified. If the
 read reports `EPERM` on Windows, a separate `lstat` must establish that the exact UUID path is
-absent before re-observing. An unreadable marker that still exists keeps its original error.
-Reads of the main owner record keep their errors.
+absent before re-observing. An unreadable marker that still exists fails as
+`observed-marker-read`, and an unreadable own marker during release as `recovery-marker-read`
+(#537). Each such failure names the marker path, its UUID as `markerToken`, a vetted Node error
+code or `UNKNOWN`, and keeps the original error as its cause. Reads of the main owner record keep
+their errors unchanged.
 
 Concurrent Windows deletion can report `EPERM` after another contender has removed the same
 stale UUID marker or empty guard directory. A separate `lstat` can establish that the exact path
@@ -166,6 +169,50 @@ is retried. If releasing the recovery guard fails after the main lock was acquir
 rolls back the main lock and reports the cleanup failure.
 A failed rollback explicitly reports retained ownership. Failed releases keep their in-process
 holds, and additional cleanup failures retain the original refusal rather than replacing it.
+
+Releasing this process's own guard makes the same distinction once (#542). Right after
+publication, while the guard holds only this process's marker, a Windows acquisition captures the
+guard's physical identity: `lstat`, a listing that shows only its own marker, and `lstat` again,
+consistent with the staged directory it renamed. A capture failure changes nothing else. Only if
+this release removed its own exact marker, and removing the emptied guard then reports `EPERM`,
+does it check whether a different physical directory now holds a verified live successor by the
+criteria above. If so, the release completes: the main lock stays this process's, the successor
+keeps its guard, and no extra reclamation is counted. The main lock's exclusive record, not the
+released guard, keeps another writer out meanwhile. An unknown, unstable or inconsistent
+captured identity, an unchanged or empty directory, or a successor that cannot be verified keeps
+the filesystem error and takes the rollback above; other platforms and the existing `ENOENT`,
+`ENOTEMPTY` and `EEXIST` release outcomes are unchanged. During either check, a failed read-only
+probe is attached to that `recovery-directory-remove` error as `probeFailures`, each entry with a
+closed label (`recovery-directory-lookup`, `successor-inspection`, `successor-liveness` or
+`successor-identity`) and a vetted code. Printed output shows each entry's label and code wherever
+the error is nested, including inside a rollback's cause, but never the probe's own text. A credible
+mismatch, such as a different creation identity, is a decision rather than a failed probe and adds
+no entry. These checks are observations, not an atomic compare-and-delete. Each observed removal
+opportunity gets one `rmdir` attempt, and a successor is protected by its nonempty guard with an
+immutable UUID marker, not by any promise against arbitrary concurrent changes to the path.
+
+Startup keeps its original failure first when cleanup also fails (#560,
+[ADR-0091](decisions/ADR-0091-bounded-startup-ownership-cleanup.md)). If writing, attesting or
+closing a newly created lock record fails, its handle closes once, and the record is removed once,
+only after it is proven to be this acquisition's own at the configured path without following
+links: a partial record by the identity its handle reported before closing, a complete one by its
+exact random-token bytes. That check and removal are not atomic; the held recovery guard and the
+exclusive creation keep conforming writers off the path. An absent or foreign file ends only the
+in-process reservation, and a foreign file is kept. A record that cannot be proven or removed is
+kept with its reservation, and the error names it as retained. In container setup, a failed
+read-only or mutable SQLite close keeps both acquired store leases until the process exits,
+because the connection may still be open, and a read-only close failure no longer replaces a
+store-format, guard or catalog refusal. Otherwise the database lease and then the data-directory
+lease are each released once, even if the first release fails. When cleanup leaves something to
+report, startup fails with one tagged error holding the original failure, each failed cleanup
+step with its label and vetted code, and the ownership it kept. Shell startup prints the original
+failure as it would alone, then one escaped line such as `cleanup also failed:
+database-close (EIO); ownership retained: database lease <file>, data-directory lease <dir>`;
+cleanup error messages are not printed. The launcher's managed record keeps the original failure's
+closed cause. When cleanup settles, the original error is thrown unchanged. Disposal of a returned
+container, shutdown and `serve` stop keep their existing cleanup. Controlled filesystem faults
+establish these decisions; they do not establish the cause or frequency of earlier Windows
+recovery failures.
 
 `scripts/install.ps1` (Windows PowerShell 5.1 or PowerShell 7) and `scripts/install.sh` (bash, including Git Bash on Windows) check Node 22 LTS (22.x only) and pnpm, print Codex login status, run `pnpm install --frozen-lockfile` and `pnpm build`, create the data directory (`GG_DATA_DIR`, default `~/.graphgoblin`), run `node apps/api/dist/main.js --preflight` against it, and print the start command, UI URL, and `--create-api-key` command. Claude Code remains separately installed by the owner; its missing or logged-out state is a warning while no Claude defaults are configured, and becomes a failure when a Claude default is selected. Their summary reports whether `GG_JEV_API_KEY` and `JEV_API_KEY` are present or absent/empty, never their values. They are idempotent, need no elevation, and exit non-zero when a prerequisite is missing, a step fails, or a preflight check fails.
 

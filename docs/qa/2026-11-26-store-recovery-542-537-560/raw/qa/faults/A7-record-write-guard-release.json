@@ -1,0 +1,94 @@
+{
+  "name": "A7-record-write-guard-release",
+  "issue": "#560",
+  "system": "record cleanup plus recovery-guard release failure via shell startup",
+  "checks": [
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "primary first",
+      "ok": true,
+      "detail": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp"
+    },
+    {
+      "what": "detail: recovery-release behind record cleanup",
+      "ok": true,
+      "detail": "cleanup also failed: recovery-release (EPERM)"
+    },
+    {
+      "what": "guard release error text not printed",
+      "ok": true
+    },
+    {
+      "what": "own record removed after identity proof",
+      "ok": true
+    },
+    {
+      "what": "guard kept with its own marker",
+      "ok": true,
+      "detail": [
+        "5e40d120-9d59-4189-8869-a793f32cf7cc.json"
+      ]
+    },
+    {
+      "what": "next ordinary start reclaims the exited guard and shuts down cleanly",
+      "ok": true,
+      "detail": {
+        "code": 0,
+        "stderr": ""
+      }
+    },
+    {
+      "what": "store clean after shutdown",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n    at Proxy.<anonymous> (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:40:21)\n    at async acquireFile (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:556:9)\n    at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:656:25)\n    at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'ENOSPC'\n}\ncleanup also failed: recovery-release (EPERM)\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "main-open",
+      "main-write",
+      "main-stat",
+      "main-close",
+      "main-lookup",
+      "unlink:graphgoblin.lock",
+      "main-unlink",
+      "unlink:5e40d120-9d59-4189-8869-a793f32cf7cc.json",
+      "own-marker-unlink-fault"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock.reclaim",
+      "type": "dir"
+    },
+    {
+      "path": "graphgoblin.lock.reclaim\\5e40d120-9d59-4189-8869-a793f32cf7cc.json",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":66324,\"startedAt\":\"2026-11-26T09:34:50.447Z\",\"windowsCreationTime\":\"134401592811653100\",\"token\":\"5e40d120-9d59-4189-8869-a793f32cf7cc\"}"
+    }
+  ],
+  "nextOrdinaryStart": {
+    "code": 0,
+    "signal": null,
+    "listened": true,
+    "control": {
+      "getStatus": 200,
+      "postStatus": 202
+    },
+    "stderr": "",
+    "stdoutLines": 6,
+    "stdoutTail": "g request\"}\n{\"level\":30,\"time\":1795685707139,\"pid\":64988,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":170.34009999999944,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795685707143,\"pid\":64988,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:49996\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":62825},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795685707150,\"pid\":64988,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":6.499899999998888,\"msg\":\"request completed\"}\n"
+  },
+  "ms": 26591,
+  "pass": true
+}

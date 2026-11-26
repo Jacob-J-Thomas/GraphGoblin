@@ -1,0 +1,66 @@
+{
+  "name": "D5-acquisition-persistent-lookup-failure",
+  "issue": "#537",
+  "system": "acquisition-side guard EPERM, guard unchanged, post-denial lookup fails",
+  "checks": [
+    {
+      "what": "stale marker removed",
+      "ok": true
+    },
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "labelled recovery-directory-remove EPERM first",
+      "ok": true,
+      "detail": "Error: Store ownership recovery-directory-remove failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D5-acquisition-persistent-lookup-fail"
+    },
+    {
+      "what": "probe failure label and code attached",
+      "ok": true,
+      "detail": "Error: Store ownership recovery-directory-remove failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D5-acquisition-persistent-lookup-failure\\data\\graphgoblin.lock.reclaim\n    at filesystemFailure (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:134:26)\n    at removeEmptyRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:313:15)\n    at async acquireRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:377:21)\n    at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:655:26)\n    ... 2 lines matching cause stack trace ...\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'EPERM',\n  operation: 'recovery-directory-remove',\n  markerToken: null,\n  probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ],\n  [cause]: Error: rq fixture guard removal refusal\n      at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n      at Object.rmdir (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:121:13)\n      at rmdir (data:text/javascript,export%20*%20from%20'node%3Afs%2Fpromises'%3B%0Aexport%20const%20open%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.open(...a)%3B%0Aexport%20const%20readFile%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.readFile(...a)%3B%0Aexport%20const%20unlink%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.unlink(...a)%3B%0Aexport%20const%20lstat%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.lstat(...a)%3B%0Aexport%20const%20rmdir%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.rmdir(...a)%3B:6:58)\n      at removeEmptyRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:285:15)\n      at acquireRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:377:27)\n      at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:655:26)\n      at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n      at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n      at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n    code: 'EPERM'\n  }\n}\n"
+    },
+    {
+      "what": "probe text not printed",
+      "ok": true
+    },
+    {
+      "what": "original EPERM cause kept",
+      "ok": true
+    },
+    {
+      "what": "one rmdir attempt",
+      "ok": true
+    },
+    {
+      "what": "emptied guard left, nothing else",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: Store ownership recovery-directory-remove failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D5-acquisition-persistent-lookup-failure\\data\\graphgoblin.lock.reclaim\n    at filesystemFailure (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:134:26)\n    at removeEmptyRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:313:15)\n    at async acquireRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:377:21)\n    at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:655:26)\n    ... 2 lines matching cause stack trace ...\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'EPERM',\n  operation: 'recovery-directory-remove',\n  markerToken: null,\n  probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ],\n  [cause]: Error: rq fixture guard removal refusal\n      at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n      at Object.rmdir (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:121:13)\n      at rmdir (data:text/javascript,export%20*%20from%20'node%3Afs%2Fpromises'%3B%0Aexport%20const%20open%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.open(...a)%3B%0Aexport%20const%20readFile%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.readFile(...a)%3B%0Aexport%20const%20unlink%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.unlink(...a)%3B%0Aexport%20const%20lstat%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.lstat(...a)%3B%0Aexport%20const%20rmdir%20%3D%20(...a)%20%3D%3E%20globalThis.__rqFixture.fs.rmdir(...a)%3B:6:58)\n      at removeEmptyRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:285:15)\n      at acquireRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:377:27)\n      at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:655:26)\n      at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n      at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n      at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n    code: 'EPERM'\n  }\n}\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:480106fe-8815-4702-a98c-ee139d0f5eff.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "guard-rmdir-fault:same",
+      "guard-lookup-fault",
+      "unlink:f5d89fa6-a8b0-45a9-8e5e-a21cb55e0abd.json",
+      "rmdir:graphgoblin.lock.reclaim.f5d89fa6-a8b0-45a9-8e5e-a21cb55e0abd.tmp"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock.reclaim",
+      "type": "dir"
+    }
+  ],
+  "ms": 2755,
+  "pass": true
+}

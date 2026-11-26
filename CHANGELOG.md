@@ -4,6 +4,37 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- API startup keeps its original failure when lock or container cleanup also fails (#560), and
+  Windows store recovery reports two more situations precisely (#542, #537). A failed write,
+  attestation or close of a newly created lock record now closes its handle once and removes the
+  record once, only after proving it is this acquisition's own: a partial record by the identity
+  its handle reported before closing, a complete one by its exact random-token bytes, at the
+  configured path without following links. A foreign or already removed file is left alone; a
+  record that cannot be proven or removed is kept with this process's reservation and named in
+  the error. If closing the read-only or mutable SQLite connection fails during container setup,
+  both store leases are kept until the process exits, because the connection may still be open;
+  otherwise the database lease and then the data-directory lease are each released once, even if
+  the first release fails. When cleanup leaves anything to report, the original failure stays
+  first in one tagged error with each failed step's label and code and the ownership kept. Shell
+  startup prints the original failure as before plus one line such as
+  `cleanup also failed: database-close (EIO); ownership retained: ...`, without cleanup
+  error messages; the launcher's managed record keeps the original failure's closed cause, and a
+  fully settled cleanup throws the original error unchanged. On Windows, when removing this
+  process's own emptied recovery guard is denied and a different directory now holds a verified
+  live successor (one new UUID marker, a live foreign PID with a matching creation identity,
+  unchanged after the identity check), startup keeps its main lock instead of rolling back and
+  claims no extra reclamation; an unknown captured guard identity or any unverified state keeps
+  the existing rollback. Failed reads of a recovery marker that still exists are labelled
+  `observed-marker-read` or `recovery-marker-read` with the marker's UUID, a vetted code and the
+  original error as the cause, and failed read-only probes made while classifying a guard-removal
+  denial are attached to that error as bounded `probeFailures`. The verified-successor
+  acquisition refusal, main owner record reads, reset accounting, the lock formats and the
+  managed record format are unchanged, as are returned-container disposal, shutdown and `serve`
+  stop. Controlled filesystem faults establish these decisions; they do not identify the cause
+  or frequency of earlier Windows recovery failures. See
+  [Security and distribution](docs/11-security-and-distribution.md) and
+  [ADR-0091](docs/decisions/ADR-0091-bounded-startup-ownership-cleanup.md).
+
 - API startup now prints a refused hard-linked SQLite database as one stack-free line with exit
   code 1 (#533), as it already does for held or unverifiable ownership. Under any of the file's
   names the line names its canonical path and keeps the existing guidance to use one ordinary
@@ -89,7 +120,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   shared removal when the guard is absent and checks it again if another process removed the
   observed stale marker during a read or deletion. If the empty guard survives and this caller
   removes it, confirmed reset counts that reclamation. A denial with unverified ownership retains
-  its filesystem diagnostic.
+  its filesystem diagnostic. These rechecks are bounded: if the marker disappears during the
+  eighth acquisition attempt's read, or the stale-marker unlink on that final attempt finds it
+  already gone, startup reports that store ownership could not be verified at the acquisition
+  attempt limit (managed cause `store-ownership-unverified`) rather than naming a live owner. The
+  read-only status check used by `--reset` and the launcher likewise reports the guard as held,
+  with that uncertainty, after eight unsettled observations.
 
 - The run inspector treats its event stream's transport failure as an outage of the run it shows
   from that moment (#575). Previously a run read already in flight when the API listener

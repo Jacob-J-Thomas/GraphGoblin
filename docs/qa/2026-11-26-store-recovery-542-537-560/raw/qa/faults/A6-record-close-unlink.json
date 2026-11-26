@@ -1,0 +1,115 @@
+{
+  "name": "A6-record-close-unlink",
+  "issue": "#560",
+  "system": "data-directory lock record via shell startup",
+  "faults": [
+    "close",
+    "unlink"
+  ],
+  "checks": [
+    {
+      "what": "exit code 1, never listened",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "what": "primary failure printed first",
+      "ok": true,
+      "detail": "Error: rq fixture main record close refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:"
+    },
+    {
+      "what": "exactly one close and the expected single-attempt sequence",
+      "ok": true,
+      "detail": [
+        "main-open",
+        "main-write",
+        "main-close",
+        "main-lookup",
+        "main-unlink"
+      ]
+    },
+    {
+      "what": "no cleanup error message printed",
+      "ok": true
+    },
+    {
+      "what": "last stderr line is the one escaped detail line",
+      "ok": true,
+      "detail": {
+        "last": "cleanup also failed: main-record-unlink (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6-record-close-unlink\\data\\graphgoblin.lock",
+        "expected": "cleanup also failed: main-record-unlink (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6-record-close-unlink\\data\\graphgoblin.lock"
+      }
+    },
+    {
+      "what": "detail appears exactly once",
+      "ok": true
+    },
+    {
+      "what": "no raw control or line-separator characters in stderr",
+      "ok": true
+    },
+    {
+      "what": "unproven record kept on disk",
+      "ok": true
+    },
+    {
+      "what": "kept record is the complete own record",
+      "ok": true
+    },
+    {
+      "what": "recovery guard released",
+      "ok": true
+    },
+    {
+      "what": "no database lock or staging left",
+      "ok": true
+    },
+    {
+      "what": "next ordinary start reclaims the retained complete record of the exited process",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: rq fixture main record close refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n    at Proxy.<anonymous> (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:57:23)\n    at async acquireFile (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:576:9)\n    at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:656:25)\n    at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'EIO'\n}\ncleanup also failed: main-record-unlink (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A6-record-close-unlink\\data\\graphgoblin.lock\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "main-open",
+      "main-write",
+      "main-close",
+      "main-lookup",
+      "unlink:graphgoblin.lock",
+      "main-unlink",
+      "unlink:07e98e97-51d7-4d6d-acc6-21af33e4a754.json",
+      "rmdir:graphgoblin.lock.reclaim"
+    ]
+  },
+  "retainedRecord": "{\"pid\":66244,\"startedAt\":\"2026-11-26T09:34:13.157Z\",\"windowsCreationTime\":\"134401592485081560\",\"token\":\"07e98e97-51d7-4d6d-acc6-21af33e4a754\"}",
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":66244,\"startedAt\":\"2026-11-26T09:34:13.157Z\",\"windowsCreationTime\":\"134401592485081560\",\"token\":\"07e98e97-51d7-4d6d-acc6-21af33e4a754\"}"
+    }
+  ],
+  "nextOrdinaryStart": {
+    "code": 0,
+    "signal": null,
+    "listened": true,
+    "control": {
+      "getStatus": 200,
+      "postStatus": 202
+    },
+    "stderr": "",
+    "stdoutLines": 6,
+    "stdoutTail": "ng request\"}\n{\"level\":30,\"time\":1795685664508,\"pid\":60824,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":8.346799999999348,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795685664524,\"pid\":60824,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:54446\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":54449},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795685664531,\"pid\":60824,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":6.632200000000012,\"msg\":\"request completed\"}\n"
+  },
+  "ms": 16180,
+  "pass": true
+}
