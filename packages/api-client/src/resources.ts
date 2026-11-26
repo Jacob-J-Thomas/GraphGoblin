@@ -1,11 +1,24 @@
 import type { RecoveryCommand } from '@graphgoblin/contracts';
+import type { Client, MethodResponse } from 'openapi-fetch';
+import { readJson } from './body.js';
 /**
  * Thin convenience wrappers over the typed client, grouped by resource. Every function takes the
  * client first, returns the response body, and throws `GraphGoblinApiError` on a non-2xx response.
  * Argument and return types come from the generated OpenAPI schema.
+ *
+ * Only `runs.get` and `runs.observation` also classify a successful GET body cut short after its
+ * headers (`RESPONSE_INTERRUPTED`, status 0; see `readJson`). Every other wrapper, raw
+ * `client.GET` and every write still surface such a body failure as the native error.
  */
 import type { GraphGoblinClient, paths } from './client.js';
 import { unwrap } from './errors.js';
+
+/** The typed 2xx JSON body of a GET, as openapi-fetch would parse it. */
+type GetJson<P extends '/runs/{id}' | '/runs/{id}/observation'> = MethodResponse<
+  Client<paths>,
+  'get',
+  P
+>;
 
 export const cron = {
   preview: async (
@@ -143,7 +156,11 @@ export const runs = {
     options: { signal?: AbortSignal } = {},
   ) => unwrap(await client.GET('/runs', { params: { query }, ...options })),
   get: async (client: GraphGoblinClient, runId: string, options: { signal?: AbortSignal } = {}) =>
-    unwrap(await client.GET('/runs/{id}', { ...id(runId), ...options })),
+    readJson<GetJson<'/runs/{id}'>>(
+      'GET',
+      await client.GET('/runs/{id}', { ...id(runId), ...options, parseAs: 'stream' }),
+      options.signal,
+    ),
   thread: async (
     client: GraphGoblinClient,
     runId: string,
@@ -157,7 +174,12 @@ export const runs = {
     client: GraphGoblinClient,
     runId: string,
     options: { signal?: AbortSignal } = {},
-  ) => unwrap(await client.GET('/runs/{id}/observation', { ...id(runId), ...options })),
+  ) =>
+    readJson<GetJson<'/runs/{id}/observation'>>(
+      'GET',
+      await client.GET('/runs/{id}/observation', { ...id(runId), ...options, parseAs: 'stream' }),
+      options.signal,
+    ),
   /** Forward replay uses `after`; browsing seeks `around` then passes opaque older/newer cursors unchanged. Use `subscribeRunEvents` for a live tail. */
   events: async (
     client: GraphGoblinClient,

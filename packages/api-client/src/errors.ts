@@ -10,8 +10,19 @@ export interface ProblemDetails {
   [extension: string]: unknown;
 }
 
-/** `status` used for failures where no HTTP response arrived (DNS, refused connection, reset). */
+/**
+ * `status` used when no usable HTTP response arrived. The client maps a `fetch` rejection before
+ * any response headers (DNS, refused connection, reset) to it with code `NETWORK_ERROR`, and
+ * `runs.get` and `runs.observation` map a successful GET body that the connection cut short to it
+ * with code `RESPONSE_INTERRUPTED`. Nothing else maps a failure after headers: raw `client.GET`,
+ * other resource wrappers, writes, `parseAs: 'stream'` callers and the SSE helper surface the
+ * native body error unchanged.
+ */
 export const NETWORK_ERROR_STATUS = 0;
+
+function describeCause(cause: unknown): string {
+  return cause instanceof Error ? cause.message : String(cause);
+}
 
 function isProblemDetails(value: unknown): value is ProblemDetails {
   return (
@@ -23,8 +34,9 @@ function isProblemDetails(value: unknown): value is ProblemDetails {
 }
 
 /**
- * An API call that did not succeed. For HTTP failures it carries the server's problem details;
- * for transport failures `status` is 0 and `code` is `NETWORK_ERROR`.
+ * An API call that did not succeed. For HTTP failures it carries the server's problem details.
+ * `status` 0 means no usable response arrived: `code` is `NETWORK_ERROR` when `fetch` itself
+ * failed, or `RESPONSE_INTERRUPTED` when `runs.get` or `runs.observation` lost a successful body.
  */
 export class GraphGoblinApiError extends Error {
   override readonly name = 'GraphGoblinApiError';
@@ -63,14 +75,22 @@ export class GraphGoblinApiError extends Error {
     );
   }
 
-  /** Wrap a transport failure thrown by `fetch`. */
+  /** Wrap a transport failure thrown by `fetch` before any response headers arrived. */
   static network(cause: unknown): GraphGoblinApiError {
     return new GraphGoblinApiError(
-      {
-        status: NETWORK_ERROR_STATUS,
-        code: 'NETWORK_ERROR',
-        detail: cause instanceof Error ? cause.message : String(cause),
-      },
+      { status: NETWORK_ERROR_STATUS, code: 'NETWORK_ERROR', detail: describeCause(cause) },
+      { cause, serverSent: false },
+    );
+  }
+
+  /**
+   * Wrap the native read failure of a successful GET body that ended before it was complete. The
+   * 2xx headers arrived but no usable answer did, so `status` is 0 like {@link network}; the
+   * distinct code says where it failed and `cause` is the original native error.
+   */
+  static interrupted(cause: unknown): GraphGoblinApiError {
+    return new GraphGoblinApiError(
+      { status: NETWORK_ERROR_STATUS, code: 'RESPONSE_INTERRUPTED', detail: describeCause(cause) },
       { cause, serverSent: false },
     );
   }
