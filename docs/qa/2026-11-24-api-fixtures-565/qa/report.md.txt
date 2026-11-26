@@ -1,0 +1,54 @@
+# Independent QA for #565 on the frozen Windows candidate
+
+**Verdict: PASS locally on this Windows host.** All five checks exited 0. Every receipt shows patch SHA-256 `ead99e8961455f4bb1a620721df86a555d0c57d2ccc6960d456e6e7a4d87fc02` and `sourceUnchanged: true`. I made no source, Git index or publication changes. I ran format and diff in the same tool call, but their timestamps show format finished before diff started.
+
+## Commands and receipts
+
+| Wrapper | Command it ran | Result | Receipts (sha256 prefix) |
+|---|---|---|---|
+| `run-check.py build` | `pnpm build --filter=@graphgoblin/api --force` | exit 0; 7/7 tasks, 0 cached | `build.stdout.log` b3bc6989288a409a, `build.stderr.log` 9ea460d15e6e42ec (52 B) |
+| `run-check.py api` | `pnpm --filter @graphgoblin/api test src/main.test.ts src/testing/provider-isolation.test.ts --reporter=verbose` | exit 0; 2 files; **18 passed, 0 failed, 5 skipped (23)** | `api.stdout.log` a0ae4f916cfb8498, `api.stderr.log` b1d6316b0a00e198 (88 B) |
+| `run-check.py workflow` | `pnpm --filter @graphgoblin/tooling test scripts/windows-launcher-evidence.test.mjs --reporter=verbose` | exit 0; **40 passed, 0 failed, 0 skipped** | `workflow.stdout.log` a440ab9149ba5c15, `workflow.stderr.log` bb35ffea96a86230 (75 B) |
+| `run-check.py format` | `pnpm exec prettier --check` on the 7 changed files | exit 0; "All matched files use Prettier code style!" | `format.stdout.log` 17aa973d3f004560, `format.stderr.log` empty |
+| `run-check.py diff` | `git --no-pager diff --check` | exit 0, no output | `diff.stdout.log` and `diff.stderr.log` both empty |
+
+## Criteria
+
+1. **PASS:** In the built-entry child with the default setting, the test passed in 5391 ms. The authenticated `GET /harness/ollama/connection` returned 200 with exactly `{enabled:false, baseUrl:<owned origin>, revision:1}` and `idle`, and the test-owned listener's request list was `[]`. Because `baseUrl` equals the owned origin, a discovery request would have reached the listener and been recorded, so the zero count is a meaningful check.
+2. **PASS:** In-process `main()` with the default passed in 12837 ms with the same assertions.
+3. **PASS:** With explicit opt-in, the child test passed in 5243 ms and in-process `main()` passed in 5079 ms. Each reached `ready`, and the listener's request list was exactly `['GET /api/tags']`. No chat or generate call reached it, and it listed no models. The ephemeral loopback port comes from the code (`listen(0, '127.0.0.1')`). No test checks the port number.
+4. **PASS (assertions and cleanup are separate evidence):**
+   - **Assertions that ran:**
+     - Both venues stub `JEV_API_KEY` to a synthetic placeholder value.
+     - In-process: `config.jevApiKey` was `undefined`. This is a real check: the fixture's empty `GG_JEV_API_KEY` must resolve to `undefined`, so the config falls back to `JEV_API_KEY`. That would return the placeholder if the clearing had failed.
+     - Child: stdout did not contain `seeded jev-api-key`. This is weaker, because the packet doesn't show the product's actual seed log text. The stronger support is the code: the fixture's environment filter drops `JEV_API_KEY`.
+   - **Supported by observed teardown and code, not by assertions:**
+     - All 4 cases passed. Their `afterEach` collects cleanup errors and rethrows them, so the app close, container stop, fixture dispose and listener close all completed without error.
+     - Restoring the stubs is done by `vi.unstubAllEnvs()` in that hook, but no test checks that the environment matches its earlier state.
+     - The wrapper's environment is clean, so the branch that clears inherited `GG_*` variables probably had nothing to clear except preserved `GG_TEST_*` variables. Only the `JEV_API_KEY` clearing is clearly exercised.
+     - Store removal is best-effort, so a passing teardown doesn't prove the temporary store was deleted.
+5. **PASS:** The Windows-only test `logs only to the private pair, refuses an unsafe folder (71) and a second owner (70)` ran and passed in 6638 ms.
+   - `main.test.ts`: 14 passed, 0 failed, 5 skipped.
+   - `provider-isolation.test.ts`: 4 passed, 0 failed, 0 skipped.
+   - The 5 skips are expected on Windows: the non-Windows variant of the launcher-variable test, the POSIX-only literal `*` asset test, and three Linux-only signal tests.
+6. **PASS (simulation only):** The workflow test `the Windows job runs the exact native command after a successful build whatever evidence preparation does` passed in 65 ms. It checks:
+   - The API entry command and its condition (`!cancelled() && steps.build.outcome == 'success'`) match `ci.yml` exactly, the step is last, and no step uses `continue-on-error`.
+   - If evidence preparation fails, native and API entry still run, nothing is finalized or uploaded, the job fails, and the suite gets no evidence folder.
+   - If native fails, the API entry still runs; if the run is cancelled, it is skipped. In both cases the evidence is finalized and uploaded with status `native-failed`.
+   - If the API entry fails, the job fails, the earlier steps' outcomes are unchanged and the finalize environment is identical.
+   - If install or build fails, the API entry is skipped and the run is uploaded as `not-run`.
+
+   **Simulator limits:** It is a hand-written expression evaluator over the parsed workflow, with step outcomes and outputs injected (for example `paths: 'x'`). It runs no real pnpm commands, actions or upload. It models cancellation as an earlier step outcome, not a real run-level cancel or the 20-minute job timeout. It is not GitHub's runner. Integration with Mac #501 and hosted Windows CI are still separate gates.
+7. **PASS (limited to the supplied source):** The docs (lines 356–395) match the code:
+   - Fixture ports come from a cooperative range (default 5600–5699), and the bind probes on Windows and macOS check `127.0.0.1`, `0.0.0.0` and `::`.
+   - The docs say these are point-in-time checks, not an OS hold, and that the stand-in Ollama binds port 0 instead.
+   - The environment filter and `GG_OLLAMA_ENABLED=false` match `api-subprocess.ts`.
+
+   I couldn't check the docs' 5760–5769 range, the "available dual-stack" wording, or "probe listeners close" (the packet omits `hasConflictingBind` and the Vitest config). `CHANGELOG.md` was format-checked only, not read. Coverage for the full API package wasn't run and is still a CI gate.
+
+## Evidence limits
+- **Hosted CI won't repeat the provider-isolation tests on Windows.** The CI step runs only `src/main.test.ts`, so criteria 1–4 on Windows are proven only by this local run. It's your call whether that is acceptable.
+- **The zero-request and one-request checks are taken at the end of each test.** A request arriving later, such as from a refresh timer, wouldn't be caught. There was no network capture, so calls to other endpoints (for example 11434) are ruled out only because every case points `GG_OLLAMA_URL` at the owned listener.
+- **I didn't read the non-empty stderr logs** (build 52 B, API 88 B, workflow 75 B). None of the five allowed commands displays them, and all exits were 0.
+- The build took 3.1 s even with `--force`, which looks like incremental `tsc -b`. The test `emits the exact protocol declaration` passing confirms the built `dist/main.js` was present.
+- This was not hosted Windows CI, full-package coverage, broad API tests, publication approval or wider application QA.

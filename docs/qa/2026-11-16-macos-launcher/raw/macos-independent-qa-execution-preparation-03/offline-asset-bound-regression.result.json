@@ -1,0 +1,242 @@
+{
+  "schema": "gg456-asset-bound-offline-regression/1",
+  "node": "v22.23.4",
+  "platform": "win32-x64",
+  "guard": {
+    "d02Sha256": "1e5e4b03403cac63b3ecbcb3a84cce15ebacf266929324a570e40cbe5f485148",
+    "d03Sha256": "9be9a517754877ab3f68b72e74f476d0ced04f34216e10e12d48e7685927736f",
+    "restIdentical": true,
+    "replaced": {
+      "d02": [
+        "// Preparation 02: copy of preparation 01 with the harness corrections listed in correction-handoff.md.",
+        "const CAP = { stream: 64 * 1024, probe: 4 * 1024 * 1024, http: 2 * 1024 * 1024, excerpt: 256 * 1024, evidence: 96 * 1024 * 1024 };",
+        "      const servedAsset = await http(port, asset);"
+      ],
+      "d03": [
+        "// Preparation 03: copy of preparation 02 with the built-asset response bound listed in correction-handoff.md.",
+        "const CAP = { stream: 64 * 1024, probe: 4 * 1024 * 1024, http: 2 * 1024 * 1024, asset: 4 * 1024 * 1024, excerpt: 256 * 1024, evidence: 96 * 1024 * 1024 };",
+        "      // The served asset is capped at its exact built length, which must itself stay within the fixed CAP.asset.",
+        "      if (builtAsset.length > CAP.asset) throw new Stop(`built asset ${asset} has ${builtAsset.length} bytes, above the ${CAP.asset}-byte QA asset bound`);",
+        "      const servedAsset = await http(port, asset, { cap: builtAsset.length });"
+      ]
+    },
+    "healthCapUnchanged": true,
+    "shellFetchUnchanged": true
+  },
+  "constants": {
+    "d02": {
+      "http": 2097152,
+      "asset": null
+    },
+    "d03": {
+      "http": 2097152,
+      "asset": 4194304
+    }
+  },
+  "real": {
+    "matchedBuild04": true,
+    "appAssetBytes": 2132126,
+    "used": true
+  },
+  "cases": [
+    {
+      "id": "R1-driver02-legit-oversized-asset",
+      "ok": true,
+      "meaning": "driver 02 reproduces the QA03 stop on a legitimate 2,132,126-byte built asset",
+      "outcome": "threw",
+      "stop": false,
+      "message": "response exceeded the QA cap",
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-QA.js": 1
+      }
+    },
+    {
+      "id": "R2-driver03-legit-oversized-asset",
+      "ok": true,
+      "meaning": "driver 03 accepts the same legitimate asset: HTTP 200 and exact bytes for both shells and both assets",
+      "outcome": "returned",
+      "served": [
+        {
+          "route": "/app/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/app/assets/index-QA.js",
+          "assetMatch": true
+        },
+        {
+          "route": "/goblin/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/goblin/assets/index-QA.js",
+          "assetMatch": true
+        }
+      ],
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-QA.js": 1,
+        "/goblin/": 1,
+        "/goblin/assets/index-QA.js": 1
+      }
+    },
+    {
+      "id": "R3-driver02-real-build04-bytes",
+      "ok": true,
+      "meaning": "driver 02 stops on the actual build04 /app/ entry bytes",
+      "outcome": "threw",
+      "stop": false,
+      "message": "response exceeded the QA cap",
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-C5U89dQm.js": 1
+      }
+    },
+    {
+      "id": "R4-driver03-real-build04-bytes",
+      "ok": true,
+      "meaning": "driver 03 accepts the actual build04 shells and assets",
+      "outcome": "returned",
+      "served": [
+        {
+          "route": "/app/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/app/assets/index-C5U89dQm.js",
+          "assetMatch": true
+        },
+        {
+          "route": "/goblin/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/goblin/assets/index-DWjcCYh1.js",
+          "assetMatch": true
+        }
+      ],
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-C5U89dQm.js": 1,
+        "/goblin/": 1,
+        "/goblin/assets/index-DWjcCYh1.js": 1
+      }
+    },
+    {
+      "id": "N1-driver03-same-length-one-byte-differs",
+      "ok": true,
+      "meaning": "a mismatching asset of the expected length is not a match",
+      "outcome": "returned",
+      "served": [
+        {
+          "route": "/app/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/app/assets/index-QA.js",
+          "assetMatch": false
+        },
+        {
+          "route": "/goblin/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/goblin/assets/index-QA.js",
+          "assetMatch": true
+        }
+      ],
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-QA.js": 1,
+        "/goblin/": 1,
+        "/goblin/assets/index-QA.js": 1
+      }
+    },
+    {
+      "id": "N2-driver03-overlong-by-one-byte",
+      "ok": true,
+      "meaning": "one byte beyond the exact built length exceeds the cap",
+      "outcome": "threw",
+      "stop": false,
+      "message": "response exceeded the QA cap",
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-QA.js": 1
+      }
+    },
+    {
+      "id": "N3-driver03-short-by-one-byte",
+      "ok": true,
+      "meaning": "a truncated asset is not a match",
+      "outcome": "returned",
+      "served": [
+        {
+          "route": "/app/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/app/assets/index-QA.js",
+          "assetMatch": false
+        },
+        {
+          "route": "/goblin/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/goblin/assets/index-QA.js",
+          "assetMatch": true
+        }
+      ],
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-QA.js": 1,
+        "/goblin/": 1,
+        "/goblin/assets/index-QA.js": 1
+      }
+    },
+    {
+      "id": "N4-driver03-exact-bytes-non-200",
+      "ok": true,
+      "meaning": "exact bytes with HTTP 404 are not a match (HTTP 200 retained)",
+      "outcome": "returned",
+      "served": [
+        {
+          "route": "/app/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/app/assets/index-QA.js",
+          "assetMatch": false
+        },
+        {
+          "route": "/goblin/",
+          "status": 200,
+          "shellMatch": true,
+          "asset": "/goblin/assets/index-QA.js",
+          "assetMatch": true
+        }
+      ],
+      "hits": {
+        "/app/": 1,
+        "/app/assets/index-QA.js": 1,
+        "/goblin/": 1,
+        "/goblin/assets/index-QA.js": 1
+      }
+    },
+    {
+      "id": "N5-driver03-built-asset-above-fixed-bound",
+      "ok": true,
+      "meaning": "a built asset above the fixed 4 MiB bound stops before it is fetched",
+      "outcome": "threw",
+      "stop": true,
+      "message": "built asset /app/assets/index-QA.js has 4194305 bytes, above the 4194304-byte QA asset bound",
+      "hits": {
+        "/app/": 1
+      }
+    },
+    {
+      "id": "N6-driver03-shell-above-unchanged-http-cap",
+      "ok": true,
+      "meaning": "the shell response keeps the unchanged 2 MiB CAP.http",
+      "outcome": "threw",
+      "stop": false,
+      "message": "response exceeded the QA cap",
+      "hits": {
+        "/app/": 1
+      }
+    }
+  ],
+  "pass": true
+}

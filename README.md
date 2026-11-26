@@ -58,6 +58,16 @@ The installer creates its own **GraphGoblin** shortcuts on the Desktop and in th
 
 If the window is already open, a taskbar click focuses it. To start a stopped gateway again, use the Desktop shortcut or the taskbar’s **Open new window** action. [Launcher troubleshooting](docs/guide/07-troubleshooting.md#windows-launcher)
 
+### Optional macOS Finder and Dock launcher
+
+On Apple Silicon running macOS 15 or later, use an already built checkout, native Node 22.22.2 or later within major 22, and Swift 6 from Xcode or the Command Line Tools. From that checkout, run:
+
+```bash
+bash scripts/install-macos-launcher.sh --node "$(command -v node)"
+```
+
+The installer creates `~/Applications/GraphGoblin.app`. Open it in Finder or keep it in the Dock. The launcher starts or reuses the matching gateway and opens your default browser. [macOS launcher setup and options](docs/guide/01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)
+
 ### Docker Compose
 
 With Git, Docker Compose and a host Codex login, clone the repository as shown above. From its root, start the service.

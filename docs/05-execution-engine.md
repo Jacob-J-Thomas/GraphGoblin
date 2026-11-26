@@ -28,7 +28,7 @@ type NodeContext<K> = {
   previousWait?: WaitSpec; // what this node recorded when it parked
   signal: AbortSignal; // cancellation
   ports: EnginePorts;
-  services: HandlerServices; // render, record events, resolve model, start child, read events, working directory, ids, clock
+  services: HandlerServices; // record events, resolve model, start child, read events, working directory, ids, clock
 };
 
 type NodeResult =
@@ -479,7 +479,7 @@ Resiliency is built into the engine. Users do not model it. The executor disting
 | Authored field           | Liquid templates, JSONata fields, selectors, inference transforms and parent subloop mappings                                                                           | The run records a bounded field, cause and correction. Resume is unavailable for these pinned fields. At these newly typed JSONata sites the evaluator's message is neither published nor logged.                                                                              |
 | Bug                      | A handler throws anything else                                                                                                                                          | Run moves to `failed` with the safe `INTERNAL_ERROR` message, node when known, and existing resumability. Raw diagnostics go to server logs correlated by run and node when available; historical rows and events retain their earlier content. Fix the defect in GraphGoblin. |
 
-For a newly recognized authored failure, the failure message identifies the field and the one-based position when a particular item failed. Details carry the fixed `boundary`, zero-based indices and a `cause` with a code and corrective message. A map or header ordinal follows the order of its own enumerable string keys. Liquid can identify a line and column. JSONata reports syntax or regex safety for a failure compiling the pinned source, or a limit that the current evaluation reached. Other evaluation rejections, including a failed dynamic `$eval`, give a fixed direction for checking the input and mapping. These projections use the existing `TEMPLATE_ERROR`, `EXPRESSION_ERROR` and `MUTATION_ERROR` codes. [ADR-0088](decisions/ADR-0088-authored-execution-failures.md)
+For a newly recognized authored failure, the failure message identifies the field and the one-based position when a particular item failed. Details carry the fixed `boundary`, zero-based indices and a `cause` with a code and corrective message. A map or header ordinal follows the order of its own enumerable string keys. Liquid can identify a line and column. JSONata reports syntax or regex safety for a failure compiling the pinned source, or a limit that the current evaluation reached. Other evaluation rejections, including a failed dynamic `$eval`, give a fixed direction for checking the input and mapping. These projections use the existing `TEMPLATE_ERROR`, `EXPRESSION_ERROR` and `MUTATION_ERROR` codes. The identifiers are listed under [Authored boundary identifiers](#authored-boundary-identifiers). [ADR-0088](decisions/ADR-0088-authored-execution-failures.md)
 
 A parent subloop evaluates its seed before child creation and maps its output after observing the child's terminal sequence. A failed parent mapping keeps that completion in the event log. The parent owns the error and the child retains its actual status. When a child itself fails, the existing child link leads to its authoritative failure and any inference submission evidence.
 
@@ -488,6 +488,36 @@ An unexpected failure rerendering a canonical system prompt retains its diagnost
 Provider exceptions from decision evaluation use a shared fixed summary instead of raw diagnostics. The catch-all also sanitizes errors carrying `DECIDER_*`: it stores a recognized code and the selected strategy when available, without provider messages or stacks. Engine provider warnings contain only safe name, code, numeric HTTP status, and run/node/strategy identifiers. Newly recorded ordinary internal defects expose the safe `INTERNAL_ERROR` message; their raw diagnostics are in server logs correlated by run and node when available. Historical rows and events retain their earlier content.
 
 Resuming a failed run re-executes the failed node using the crash-recovery rules above. A failure that came from a subloop child carries the child's class and resumability; resuming the parent resumes that child in place (see "Child failures follow the inline rules").
+
+### Authored boundary identifiers
+
+API and MCP clients read an authored failure's field from `failure.details.boundary` on the run record and its `run.failed` event. A parent failing because its child failed nests the child's details, boundary included, under `details.childDetails`. The contract types `failure.details` as JSON, so this list is the reference; its source is the `fields` map in `packages/engine/src/authored-failure.ts`. Each identifier names a pinned field, never its source text or value.
+
+| `details.boundary`                                                | Node                           | Location fields beside it                                                            |
+| ----------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
+| `script.args`                                                     | Script                         | `argumentIndex`                                                                      |
+| `heartbeat.probe.headers`                                         | Heartbeat                      | `headerIndex`                                                                        |
+| `heartbeat.probe.url`, `heartbeat.probe.body`                     | Heartbeat                      | none                                                                                 |
+| `heartbeat.probe.args`                                            | Heartbeat                      | `argumentIndex`                                                                      |
+| `heartbeat.until`, `heartbeat.deadline`                           | Heartbeat                      | `beat`                                                                               |
+| `subloop.input.messages.where`, `subloop.input.artifacts.where`   | Subloop                        | `itemIndex`                                                                          |
+| `subloop.input.vars`, `subloop.output.vars`                       | Subloop                        | `mapIndex`                                                                           |
+| `subloop.input.inject.content`                                    | Subloop                        | `messageIndex`                                                                       |
+| `subloop.input.trigger.payload`, `subloop.output.custom.patch`    | Subloop                        | none                                                                                 |
+| `subloop.output.messages.where`, `subloop.output.artifacts.where` | Subloop                        | `itemIndex`                                                                          |
+| `inference.input`                                                 | Inference                      | `operationIndex`, `operationKind`, `itemIndex` when an item failed                   |
+| `inference.contextFiles.template`                                 | Inference                      | `fileIndex`                                                                          |
+| `inference.prompt.template`                                       | Inference                      | none                                                                                 |
+| `inference.output.schema.repair.prompt`                           | Inference                      | `attempt`, `phase: "after-result"`                                                   |
+| `inference.output.transforms`                                     | Inference                      | `operationIndex`, `operationKind`, `itemIndex` when an item failed, `phase` as above |
+| `decision.instructions`, `decision.question`                      | Decision                       | none                                                                                 |
+| `decision.context.messages.where`                                 | Decision                       | `itemIndex`                                                                          |
+| `wait.prompt`, `wait.timestamp`                                   | Wait                           | none                                                                                 |
+| `settings.workingDirectory.template`                              | Script, heartbeat or inference | none                                                                                 |
+
+The boundary says which field failed; the other fields say where in it. The indices are zero-based. `itemIndex` counts the items a selector tested, or the messages of an `inject` operation. `beat` is the heartbeat's one-based beat and `attempt` the one-based schema-repair attempt. `cause` holds only a code and the corrective message chosen for that failure, with a Liquid line and column when known. These details never carry the evaluator's own message, the source text or a runtime value.
+
+Other failures carry no `boundary`. A Context mutation node reports `operationIndex`, `operationKind` and `cause` itself ([node catalog](04-node-catalog.md)). A `coerce` schema that does not compile is reported as a validation error and goes through the operation's repair policy. No value can satisfy it, so `fail-run` ends with `OUTPUT_SCHEMA_MISMATCH` and `continue-raw` writes the unvalidated value. A terminal file return whose working directory template fails records only the message in its `return.failed` event.
 
 ### Deliberate script recovery (#321)
 

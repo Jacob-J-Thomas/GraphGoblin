@@ -1,0 +1,139 @@
+"""Source-bound #525 retry. Run only the browser wrapper, with a retained native evidence read."""
+
+from datetime import datetime, timezone
+from hashlib import sha256
+from importlib.util import module_from_spec, spec_from_file_location
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+sys.dont_write_bytecode = True
+QA = Path(__file__).resolve().parent
+OLD = QA.parent / "independent-qa-01"
+PREPARATION = QA.parent / "independent-qa-preparation"
+SHARED = QA.parents[2] / "scope-preparation-01"
+WORKTREE = Path("G:/ggq/gg-fu-snapshot-validation-20261124/GraphGoblin")
+RESET = datetime.fromisoformat("2026-11-25T05:10:20+00:00")
+IMAGES = ("omitted-overview.png", "omitted-definition.png", "materialized-overview.png", "materialized-definition.png")
+
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+
+def digest(path):
+    return sha256(path.read_bytes()).hexdigest()
+
+
+def save(path, data):
+    path.write_bytes((json.dumps(data, ensure_ascii=True, indent=2) + "\n").encode("utf-8"))
+
+
+def load_module(name, path):
+    spec = spec_from_file_location(name, path)
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def build_directory_hash(root):
+    files = sorted(p for p in root.rglob("*") if p.is_file())
+    if not files or len(files) > 20000:
+        raise RuntimeError(f"Unexpected build directory file count: {root.name}")
+    h = sha256()
+    for p in files:
+        h.update(p.relative_to(root).as_posix().encode("utf-8") + b"\0")
+        h.update(digest(p).encode("ascii") + b"\0")
+    return {"files": len(files), "treeSha256": h.hexdigest()}
+
+
+def verify():
+    contract = read(QA / "BINDING.json")
+    if contract["role"] != "independent-qa-browser-continuation" or contract["browserAttempts"] != 1:
+        raise RuntimeError("QA02_SCOPE_CHANGED")
+    for section, root in (("newFiles", QA), ("retainedFiles", OLD), ("preparationFiles", PREPARATION)):
+        for name, expected in contract[section].items():
+            assert digest(root / name) == expected, (section, name)
+    assert digest(SHARED / "prepare-scope.py") == contract["sharedHelperSha256"]
+    old_binding = load_module("qa01_frozen_binding", OLD / "binding.py")
+    candidate = old_binding.verify()
+    assert candidate == contract["candidate"], "QA candidate or index changed"
+    for name, expected in contract["qa01BuiltHashes"].items():
+        assert digest(WORKTREE / name) == expected, name
+    for name, expected in contract["observedBuildDirectories"].items():
+        assert build_directory_hash(WORKTREE / name) == expected, name
+    edge = Path(contract["browserExecutable"]["path"])
+    assert edge.is_file() and digest(edge) == contract["browserExecutable"]["sha256"], "Bound installed Edge changed"
+    return contract
+
+
+def environment():
+    shared = load_module("qa02_subscription_helper", SHARED / "prepare-scope.py")
+    env = shared.subscription_environment()
+    env.update(GIT_OPTIONAL_LOCKS="0", GIT_TERMINAL_PROMPT="0", PYTHONIOENCODING="utf-8")
+    return shared, env
+
+
+def browser():
+    if datetime.now(timezone.utc) < RESET:
+        raise RuntimeError("MAX_RESET_NOT_REACHED")
+    before = verify()
+    _, env = environment()
+    if (QA / "browser").exists():
+        raise RuntimeError("Browser attempt already exists; preserve the original")
+    driver = QA / "browser-driver.py"
+    command = [
+        sys.executable, str(driver), str(WORKTREE), str(QA / "browser"),
+        "independent Claude QA02", before["browserExecutable"]["path"],
+    ]
+    result = None
+    try:
+        with (QA / "browser.stdout.log").open("xb") as out, (QA / "browser.stderr.log").open("xb") as err:
+            result = subprocess.run(command, cwd=QA, env=env, stdout=out, stderr=err,
+                                    timeout=300, creationflags=subprocess.CREATE_NO_WINDOW)
+    finally:
+        after = verify()
+        browser_result = QA / "browser" / "BROWSER-RESULT.json"
+        browser_evidence = read(browser_result) if browser_result.exists() else None
+        screenshots = [QA / "browser/output/playwright" / name for name in IMAGES]
+        succeeded = (
+            result is not None and result.returncode == 0 and before == after
+            and browser_evidence is not None and browser_evidence["success"] is True
+            and browser_evidence["browserOpened"] is True and browser_evidence["browserClosed"] is True
+            and browser_evidence["fixtureExitCode"] == 0 and browser_evidence["fixtureClosed"]["finalized"] is True
+            and all(p.is_file() and p.read_bytes().startswith(b"\x89PNG\r\n\x1a\n") for p in screenshots)
+        )
+        receipt = {
+            "success": succeeded,
+            "commandExit": None if result is None else result.returncode,
+            "sourceAndIndexUnchanged": before == after,
+            "candidate": before["candidate"],
+            "retainedNativeReceiptSha256": before["newFiles"]["RETAINED-NATIVE.json"],
+            "browser": browser_evidence,
+            "visualArtifacts": {str(p): digest(p) for p in screenshots if p.is_file()},
+        }
+        save(QA / "BROWSER-RESULT.json", receipt)
+        print(json.dumps({
+            "success": succeeded, "sourceAndIndexUnchanged": before == after,
+            "receipt": "BROWSER-RESULT.json", "visualArtifacts": list(receipt["visualArtifacts"]),
+        }, ensure_ascii=True))
+    return 0 if succeeded else 1
+
+
+def main():
+    if sys.argv[1:] == ["--check-contract"]:
+        checked = verify()
+        print(json.dumps({
+            "validated": True, "candidate": checked["candidate"], "browserAttempt": 1,
+            "buildReused": True, "nativeReused": True, "driverInvoked": False, "providerInvoked": False,
+        }, ensure_ascii=True))
+        return 0
+    if sys.argv[1:] != ["browser"]:
+        raise SystemExit("Use browser or --check-contract")
+    return browser()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

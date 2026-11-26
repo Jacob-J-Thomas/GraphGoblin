@@ -1,0 +1,47 @@
+I've implemented the #524 correction in the three authorized files, all unstaged. A Prettier failure on one page now fails just that page with a path-named diagnostic, the remaining pages are still checked, and the run exits 1 instead of 2. Every required check passed on the final code.
+
+## What changed
+
+**`tooling/scripts/check-qa-packet.mjs`**
+- **Containment:** only the `prettier.check` call is wrapped. A rejection records the page as an error with Prettier's message as its CLI prints it, and the loop continues. Config resolution, file-info lookup, Git, selection and argument handling are unchanged, so unusable arguments, repositories, bases or history still give exit 2 with no partial report. The checker doesn't guess whether a failure is a syntax error: any rejection counts as an error. It is never reported as retained, ignored, unavailable or unformatted.
+- **Report row:** the page is listed as `CHECK-ERROR` with the note `Prettier stopped with an error; not checked, see its detail below`. It counts as a problem, so the exit code is 1.
+- **Detail:** under the rows, a line `CHECK-ERROR detail for <path>:` is followed by Prettier's message, position and code frame. Each detail line starts with `    | ` so a frame line can't be mistaken for a path row. Terminal colour codes are removed.
+- **Summary line:** a ` + Prettier errors N` term appears only when N > 0. Reports without a Prettier error are unchanged, word for word. The Markdown sub-count includes only pages whose check completed.
+- **Result line:** the wording is unchanged, but "not checked" now counts Prettier errors as well as unavailable paths. A new `CHECK-ERROR:` fix line is added, and the UNAVAILABLE recovery guidance is kept.
+
+**`tooling/scripts/check-qa-packet.test.mjs`:** one new test in the existing suite, using its disposable repository fixtures. Three selected paths: `docs/qa/hidden/README.md`, a malformed `docs/qa/visible/bad.html` (`<main><section>Hello</main>`), and `docs/qa/visible/good.html`, which sorts after it.
+- **Prettier control:** Prettier's own `--check` exits 2 on the bad page with `SyntaxError: Unexpected closing tag "main". … (1:21)` and a code frame. The report must carry that message and frame word for word under the path. The frame includes a line, `  2 |`, that would read as a path row without the bar.
+- **Full checkout:** exit 1, all three paths listed, the good page still checked as formatted, and the counts correct.
+- **Sparse checkout:** the test first confirms the README is missing from disk, is a skip-worktree index entry (`S …`), and shows no change in `git status`, so it is not a deletion. Result: exit 1, the README unavailable, the error reported, the good page formatted, and 2 of 3 paths not checked.
+- **HTML repaired (still sparse):** exit 1 with only the missing README failing, in the old wording.
+- **Sparse checkout disabled:** exit 0 on the same fixture.
+- **Bytes:** `.git/index` and the selected files are byte-identical before and after every run.
+
+**`docs/10-testing-and-quality.md`:** the Coverage and Exit codes bullets, plus the paragraph listing what the test file covers. I didn't change CHANGELOG or docs/15; neither contradicts the new behaviour.
+
+## Check results, in order
+1. **Test file, attempt 1:** all 12 tests failed. The module wouldn't load (`SyntaxError: Invalid regular expression: missing /`, line 56). This was my editing mistake: the `\u2028\u2029` escapes in the line-break regex were written into the file as raw characters, which JavaScript treats as line breaks. I replaced them with `\p{Zl}\p{Zp}` and confirmed both script files contain only ASCII.
+2. **Test file, attempt 2:** 12 of 12 passed.
+3. **Negative control:** I temporarily removed only the new containment. The new test then failed with exit 2 instead of 1, and stderr showed the parser message and frame with no path, matching the audit. The other 11 passed. I then restored the code.
+4. **Final runs:**
+   - Prettier `--check` on the three paths: clean (no `--write` was needed).
+   - Test file: 12 of 12 passed.
+   - Focused coverage of the checker: 100% statements (105/105), branches (57/57), functions (18/18) and lines (91/91).
+   - Tooling lint: clean.
+   - `git diff --check`: clean.
+   - `git status`: only the three files modified.
+
+## Remaining risks and gaps
+- A failure in Prettier's config resolution or file-info lookup (for example a broken `.prettierrc` inside `docs/qa`) still exits 2 without naming a path. I left this out of scope on purpose, to keep global setup unchanged.
+- A failing Markdown page is handled by the same code but isn't tested. Neither is the Markdown sub-count excluding it, nor line breaks other than `\n` inside a Prettier message.
+- If Prettier ever rejected with something that isn't an Error and can't be turned into text, the run would exit 2. Prettier does reject with Errors.
+- Diagnostics aren't truncated, the same as Prettier's own CLI. Control characters other than colour escapes in the source are passed through. A path containing a newline would still break the line layout, an issue that already existed.
+- The Prettier control depends on Prettier 3.9.9's CLI error format, which the lockfile pins.
+- I ran everything on Windows only; Linux CI isn't verified.
+
+## Deviations
+- I couldn't confirm that HEAD is `7ee3e20a32e9a0c024bc63431e715c919c442dcb`: no authorized command shows it, and reading `.git` was denied. The worktree was clean when I started.
+- I ran one command that wasn't on the authorized list: a read-only `wc -l eslint.config.js && grep … | head -40`. It changed nothing; after that I used only the read and search tools.
+- The negative control meant briefly editing and then restoring the checker, within the authorized path. The final test, coverage and format runs above are on the restored code.
+
+Nothing was staged, committed, stashed or pushed.

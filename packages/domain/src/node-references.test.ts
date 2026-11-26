@@ -184,7 +184,7 @@ describe('reference scopes and source boundaries', () => {
       const result = renamed(returning(before));
       const expression = expressionOf(result.definition);
       expect(expression).toBe(after);
-      expect(result.repairedReferences).toBe(2);
+      expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
       expect(result.warnings).toMatchObject([
         { code: 'NODE_REFERENCE_UNCERTAIN', nodeId: 'done', path: 'config.returns' },
       ]);
@@ -238,7 +238,7 @@ describe('reference scopes and source boundaries', () => {
     ]);
     const result = renamed(definition);
     expect(expressionOf(result.definition)).toBe(source);
-    expect(result.repairedReferences).toBe(1);
+    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
     expect(await evaluateExpression(source, { outputs: { choice: { value: 'chosen' } } })).toBe(
       'chosen',
     );
@@ -258,7 +258,7 @@ describe('reference scopes and source boundaries', () => {
     ]);
     const result = renamed(definition);
     expect(expressionOf(result.definition)).toBe(source);
-    expect(result.repairedReferences).toBe(1);
+    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
     expect(
       await evaluateExpression(source, {
         outputs: { start: { value: 'chosen' } },
@@ -297,7 +297,7 @@ describe('reference scopes and source boundaries', () => {
           },
         },
       });
-      expect(result.repairedReferences).toBe(2);
+      expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
       expect(result.warnings).toEqual([]);
       const parsed = LoopDefinitionSchema.parse(result.definition);
       expect(validateLoop(parsed).filter((issue) => issue.severity === 'error')).toEqual(
@@ -354,7 +354,7 @@ describe('reference scopes and source boundaries', () => {
         },
       },
     });
-    expect(result.repairedReferences).toBe(4);
+    expect(result).toMatchObject({ repairedSources: 3, repairedEndpoints: 1 });
     expect(result.warnings).toEqual([]);
     expect(referenceIssues(result.definition)).toEqual([
       expect.objectContaining({
@@ -400,7 +400,7 @@ describe('reference scopes and source boundaries', () => {
         },
       },
     ]);
-    expect(result.repairedReferences).toBe(5);
+    expect(result).toMatchObject({ repairedSources: 4, repairedEndpoints: 1 });
     expect(result.warnings).toEqual([]);
     expect(referenceIssues(result.definition)).toEqual([]);
   });
@@ -457,7 +457,7 @@ describe('reference scopes and source boundaries', () => {
       ];
       const result = renamed(returning(before));
       expect(expressionOf(result.definition)).toBe(after);
-      expect(result.repairedReferences).toBe(2);
+      expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
       expect(result.warnings).toEqual([]);
       expect(await evaluateExpression(before, { rows, outputs: { start: { value: 2 } } })).toEqual(
         value,
@@ -501,7 +501,7 @@ describe('reference scopes and source boundaries', () => {
     const definition = returning(source);
     const result = renamed(definition);
     expect(expressionOf(result.definition)).toBe(source);
-    expect(result.repairedReferences).toBe(1);
+    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
     const issue = expect.objectContaining({
       code: 'NODE_REFERENCE_UNCERTAIN',
       nodeId: 'done',
@@ -529,7 +529,7 @@ describe('reference scopes and source boundaries', () => {
       expect(referenceIssues(definition)).toEqual([issue]);
       const result = renamed(definition);
       expect(expressionOf(result.definition)).toBe(source);
-      expect(result.repairedReferences).toBe(1);
+      expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
       expect(result.warnings).toEqual([issue]);
     },
   );
@@ -541,7 +541,7 @@ describe('reference scopes and source boundaries', () => {
       'rows ~> $filter(function($row){$row.id = $$.outputs."true".value})[$$.outputs.start]';
     const result = renamed(returning(source));
     expect(expressionOf(result.definition)).toBe(expected);
-    expect(result.repairedReferences).toBe(2);
+    expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1 });
     expect(result.warnings).toEqual([
       expect.objectContaining({ code: 'NODE_REFERENCE_UNCERTAIN', path: 'config.returns' }),
     ]);
@@ -565,7 +565,7 @@ describe('reference scopes and source boundaries', () => {
       '[$lookup(outputs, vars.key), outputs[$picked], $eval("outputs.start"), trigger.nodeId = "start"]';
     const result = renamed(returning(source));
     expect(expressionOf(result.definition)).toBe(source);
-    expect(result.repairedReferences).toBe(1);
+    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
     expect(result.warnings).toEqual([
       expect.objectContaining({
         code: 'NODE_REFERENCE_UNCERTAIN',
@@ -719,7 +719,7 @@ describe('reference scopes and source boundaries', () => {
       { source: '/counters/nodeVisits/fresh-id', target: '/vars/start' },
       { path: '/vars/start' },
     ]);
-    expect(result.repairedReferences).toBe(4);
+    expect(result).toMatchObject({ repairedSources: 3, repairedEndpoints: 1 });
     expect(result.warnings).toEqual([]);
   });
 
@@ -787,6 +787,7 @@ describe('reference scopes and source boundaries', () => {
     expect(result.definition.nodes.at(-1)).toMatchObject({
       config: { mode: 'signal', name: '', filter: '$thread.counters.nodeVisits.changed' },
     });
+    expect(result).toMatchObject({ repairedSources: 1, repairedEndpoints: 1, warnings: [] });
   });
 
   it('warns on a Liquid loop else which can fall back to a shadowed global', async () => {
@@ -815,16 +816,163 @@ describe('reference scopes and source boundaries', () => {
 
   it('returns refusal without mutating invalid identity, and retains syntax issues for malformed source', () => {
     const definition = returning('outputs.start +');
+    const original = structuredClone(definition);
     expect(renameLoopNode(definition, 'absent', 'new')).toEqual({ kind: 'missing-node' });
     expect(renameLoopNode(definition, 'start', 'start')).toEqual({ kind: 'unchanged' });
     expect(renameLoopNode(definition, 'start', 'not valid')).toEqual({ kind: 'invalid-id' });
     expect(renameLoopNode(definition, 'start', 'done')).toEqual({ kind: 'duplicate-id' });
+    expect(definition).toEqual(original);
     const result = renamed(definition, 'working');
+    // The malformed source is left as authored; only the connection end moves.
+    expect(result).toMatchObject({ repairedSources: 0, repairedEndpoints: 1 });
     expect(result.warnings).toContainEqual(expect.objectContaining({ nodeId: 'done' }));
     expect(validateLoop(LoopDefinitionSchema.parse(result.definition))).toMatchObject([
       { code: 'EXPRESSION_INVALID', severity: 'error' },
     ]);
     definition.nodes.push(definition.nodes[0]!);
     expect(renameLoopNode(definition, 'start', 'new')).toEqual({ kind: 'ambiguous-node' });
+  });
+});
+
+describe('rename repair counts', () => {
+  type Edge = LoopDefinitionInput['edges'][number];
+  const edge = (id: string, from: string, to: string, port = 'out'): Edge => ({
+    id,
+    from: { node: from, port },
+    to: { node: to },
+  });
+
+  /** Start, an inference step `work` and an exit that may read it, joined by `edges`. */
+  function graph(returns: string | undefined, edges: Edge[]): LoopDefinitionInput {
+    return {
+      ...minimalLoop(),
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+        { id: 'work', kind: 'inference', label: 'Work', config: { prompt: { template: 'Do.' } } },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: returns === undefined ? {} : { returns },
+        },
+      ],
+      edges,
+    };
+  }
+
+  const reads = '[outputs.work.value, counters.nodeVisits.work, "outputs.work"]';
+  const into = edge('into', 'start', 'work');
+  const out = edge('out', 'work', 'done');
+  const self = edge('self', 'work', 'work');
+
+  it.each([
+    ['no source or connection', undefined, [], 0, 0, 0],
+    ['connections only', undefined, [into, out], 0, 2, 2],
+    ['sources only', reads, [], 2, 0, 0],
+    ['a self-edge only', undefined, [self], 0, 1, 2],
+    ['sources, connections and a self-edge', reads, [into, self, out], 2, 3, 4],
+  ] as const)(
+    'counts sources, connections and edge ends separately for %s',
+    (_, returns, stored, sources, connections, endpoints) => {
+      const edges: Edge[] = [...stored];
+      const definition = graph(returns, edges);
+      const original = structuredClone(definition);
+      const result = renameLoopNode(definition, 'work', 'draft');
+      expect(result).toMatchObject({
+        kind: 'renamed',
+        repairedSources: sources,
+        repairedConnections: connections,
+        repairedEndpoints: endpoints,
+        warnings: [],
+      });
+      if (result.kind !== 'renamed') throw new Error(result.kind);
+      expect(definition).toEqual(original);
+      expect(result.definition.edges.map((e) => [e.id, e.from.node, e.to.node])).toEqual(
+        edges.map(({ id, from, to }) => [
+          id,
+          from.node === 'work' ? 'draft' : from.node,
+          to.node === 'work' ? 'draft' : to.node,
+        ]),
+      );
+      const exit = result.definition.nodes.find((node) => node.kind === 'exit');
+      expect(exit?.config.returns).toBe(
+        returns && '[outputs.draft.value, counters.nodeVisits.draft, "outputs.work"]',
+      );
+    },
+  );
+
+  it('counts a repeat self-edge as one connection with two ends, and each rewritten span once', () => {
+    const definition: LoopDefinitionInput = {
+      ...minimalLoop(),
+      nodes: [
+        { id: 'start', kind: 'trigger', label: 'Start', config: { type: 'manual' } },
+        {
+          id: 'gate',
+          kind: 'decision',
+          label: 'Gate',
+          config: {
+            kind: 'expression',
+            jsonata: 'counters.nodeVisits.gate > 2 ? "stop" : "again"',
+            routes: [
+              { id: 'again', label: 'Again', repeat: true },
+              { id: 'stop', label: 'Stop' },
+            ],
+            maxPasses: 3,
+          },
+        },
+        {
+          id: 'done',
+          kind: 'exit',
+          label: 'Done',
+          config: { returns: '[gates.gate.passes, gates.gate.passes]' },
+        },
+      ],
+      edges: [
+        edge('in', 'start', 'gate'),
+        edge('again', 'gate', 'gate', 'again'),
+        edge('stop', 'gate', 'done', 'stop'),
+        edge('limit', 'gate', 'done', 'limit-reached'),
+      ],
+    };
+    const result = renameLoopNode(definition, 'gate', 'check');
+    if (result.kind !== 'renamed') throw new Error(result.kind);
+    // Three separate counts, and no combined one.
+    expect(Object.keys(result).sort()).toEqual([
+      'definition',
+      'kind',
+      'repairedConnections',
+      'repairedEndpoints',
+      'repairedSources',
+      'warnings',
+    ]);
+    // The visit count once, and each of the exit's two reads once: three spans in two fields.
+    expect(result.repairedSources).toBe(3);
+    // Each changed edge once: in, stop, limit, and the self-edge `again` although both ends move.
+    expect(result.repairedConnections).toBe(4);
+    // One end each for in, stop and limit, and both ends of the self-edge again.
+    expect(result.repairedEndpoints).toBe(5);
+    expect(result.warnings).toEqual([]);
+    expect(result.definition.edges.map((e) => [e.id, e.from.node, e.to.node])).toEqual([
+      ['in', 'start', 'check'],
+      ['again', 'check', 'check'],
+      ['stop', 'check', 'done'],
+      ['limit', 'check', 'done'],
+    ]);
+    expect(result.definition.nodes.map((node) => node.config)).toMatchObject([
+      {},
+      { jsonata: 'counters.nodeVisits.check > 2 ? "stop" : "again"' },
+      { returns: '[gates.check.passes, gates.check.passes]' },
+    ]);
+    expect(validateLoop(LoopDefinitionSchema.parse(result.definition))).toEqual([]);
+  });
+
+  it('returns no counts for a no-op or a refused rename', () => {
+    const definition = graph(reads, [into, self, out]);
+    expect(renameLoopNode(definition, 'work', 'work')).toEqual({ kind: 'unchanged' });
+    expect(renameLoopNode(definition, 'work', '9lives')).toEqual({ kind: 'invalid-id' });
+    expect(renameLoopNode(definition, 'work', 'done')).toEqual({ kind: 'duplicate-id' });
+    expect(renameLoopNode(definition, 'gone', 'draft')).toEqual({ kind: 'missing-node' });
+    definition.nodes.push({ ...definition.nodes[1]!, label: 'Copy' });
+    expect(renameLoopNode(definition, 'work', 'draft')).toEqual({ kind: 'ambiguous-node' });
   });
 });

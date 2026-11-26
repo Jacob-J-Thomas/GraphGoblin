@@ -1,0 +1,400 @@
+{
+  "reviewedAtUtc": "2026-11-25T08:39:02.419590+00:00",
+  "repository": "Jacob-J-Thomas/GraphGoblin",
+  "issue": 581,
+  "pr": 582,
+  "mode": "independent final architecture and QA review",
+  "round": 3,
+  "roundLimit": 3,
+  "decision": "REQUEST_CHANGES",
+  "requestCommentId": 7157111691,
+  "requestUrl": "https://github.com/Jacob-J-Thomas/GraphGoblin/pull/582#issuecomment-7157111691",
+  "reviewer": {
+    "agent": "/root/windows_reclaim_review_r3",
+    "configured": {
+      "model": "gpt-6.2-astra",
+      "effort": "xhigh",
+      "freshContext": true
+    },
+    "independentOfImplementation": true,
+    "observedServingModel": null,
+    "observedServingReasoning": null
+  },
+  "implementation": {
+    "configuredModel": "gpt-6.2-sol",
+    "configuredEffort": "high",
+    "reason": "Disclosed actual-Claude subscription-limit fallback until 10:10 UTC; broader implementation was primarily actual Claude."
+  },
+  "head": "ffdd2c860f2690bb903768ae0216e607c817dd4e",
+  "tree": "b9ec4a78d6e828ddc7ae799cd6eddb3970bc551c",
+  "base": "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+  "parent": "0af9b8a41367f4e90152333e02c687f4b7ba1185",
+  "effectiveDiff": {
+    "bytes": 761102,
+    "sha256": "0fc0fb8eeed6da13577e980532bfe894546a389edaf7911eb37e710a3eee491e",
+    "files": 134
+  },
+  "roundDelta": {
+    "bytes": 347538,
+    "sha256": "823af222315998c9d9149a6fde3bbd5c0d7c07bb4964c793c46f938beeb94e4c",
+    "files": 52
+  },
+  "priorRounds": [
+    {
+      "round": 1,
+      "request": 7156368988,
+      "head": "3f80820ff2982614a750cd6bd8dce488714a3752",
+      "decision": "REQUEST_CHANGES",
+      "id": "R1-F1",
+      "disposition": "FIX-IN-PR",
+      "state": "VERIFIED_FIXED",
+      "evidence": [
+        "r1-three-schedules.json",
+        "r1-reset.json"
+      ]
+    },
+    {
+      "round": 2,
+      "request": 7156803019,
+      "head": "0af9b8a41367f4e90152333e02c687f4b7ba1185",
+      "decision": "REQUEST_CHANGES",
+      "id": "R2-F1",
+      "disposition": "FIX-IN-PR",
+      "state": "VERIFIED_FIXED",
+      "evidence": [
+        "eight-read-acquire.json",
+        "eight-read-observe.json"
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "id": "R3-F1",
+      "severity": "P2",
+      "confidence": "high",
+      "blocking": true,
+      "disposition": "FIX-IN-PR",
+      "title": "Last lost stale-marker unlink produces false active-owner diagnosis.",
+      "paths": [
+        "apps/api/src/data-dir-lock.ts:407",
+        "apps/api/src/data-dir-lock.ts:451",
+        "apps/api/src/serve.ts:166",
+        "docs/11-security-and-distribution.md:149"
+      ],
+      "trigger": "Seven real native ENOENT marker reads; eighth reads a genuine dead holder record. Third public caller reclaims/releases and exits immediately before first caller receives native ENOENT unlink.",
+      "outcome": {
+        "state": "refused",
+        "type": "StoreOwnershipRefusedError",
+        "message": "another GraphGoblin process holds <fixture>/graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+        "startupCause": "store-held"
+      },
+      "finiteCorrection": "When the final allowed stale-marker unlink reports the observed marker already gone, return typed ownership uncertainty with guard path. Preserve earlier retries, eight attempts, terminal read and publication conditions, cleanup, and reset credits. Add a mixed seven-read-loss/eighth-lost-unlink test asserting correct typed message, path, structured store-ownership-unverified, no stop instruction, no extra attempt or publication, and empty/free cleanup.",
+      "evidence": [
+        "final-unlink-loss.mjs",
+        "mixed-base.json",
+        "mixed-parent.json",
+        "mixed-head.json"
+      ]
+    }
+  ],
+  "execution": {
+    "os": "macOS 26.6.2 (25G83)",
+    "arch": "arm64",
+    "node": "v22.22.2",
+    "mainEntry": "acquireDataDirLock",
+    "managedCauseAndShellFormatterExecuted": true,
+    "threeProcessesPrivateOnly": true,
+    "osErrorInjectionInMixedSchedule": false,
+    "controlledProcessExitAfterEighthPublishedGuard": 23,
+    "reviewerRanFullSuite": false
+  },
+  "localValidation": {
+    "build": "passed (integration)",
+    "apiTypecheck": "passed",
+    "changedFileLint": "passed",
+    "format": "passed",
+    "focusedPassed": 87,
+    "baselineFocusedFailed": 1,
+    "baselineFocusedPassed": 86,
+    "fullApi": {
+      "passed": 2292,
+      "skipped": 37,
+      "filesPassed": 144,
+      "filesSkipped": 5,
+      "seconds": 79.19,
+      "coverage": {
+        "statements": 93.78,
+        "branches": 91.04,
+        "functions": 90.21,
+        "lines": 95.19
+      },
+      "rawPrivateLogSha256": "86917f3570a4f8f1a1bf0878ac496d20f0b7a259835196e3d7f1255003cf2044"
+    }
+  },
+  "nativeAndHosted": {
+    "run": 45576761584,
+    "attempt": 1,
+    "event": "pull_request",
+    "synthetic": "a0439b8127fdf4181cd4796253c6f0f66ac6c473",
+    "tree": "b9ec4a78d6e828ddc7ae799cd6eddb3970bc551c",
+    "parents": [
+      "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+      "ffdd2c860f2690bb903768ae0216e607c817dd4e"
+    ],
+    "signedCommitVerifiedByGitHub": true,
+    "windows": {
+      "jobId": 139076529003,
+      "artifactId": 15003783943,
+      "zipBytes": 9091,
+      "zipSha256": "121dc21deb3ffca4dc58bee449ab82ab6d53f8e004a11934091665678d5205c5",
+      "binding": {
+        "unavailable": [],
+        "repository": "Jacob-J-Thomas/GraphGoblin",
+        "workflowRef": "Jacob-J-Thomas/GraphGoblin/.github/workflows/ci.yml@refs/pull/582/merge",
+        "job": "windows-launcher",
+        "runId": "45576761584",
+        "runAttempt": "1",
+        "event": "pull_request",
+        "ref": "refs/pull/582/merge",
+        "sha": "a0439b8127fdf4181cd4796253c6f0f66ac6c473",
+        "eventHead": "ffdd2c860f2690bb903768ae0216e607c817dd4e",
+        "eventBase": "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+        "runnerOs": "Windows",
+        "runnerArch": "X64",
+        "imageVersion": "20261116.315.1",
+        "checkout": {
+          "state": "observed",
+          "head": "a0439b8127fdf4181cd4796253c6f0f66ac6c473",
+          "tree": "b9ec4a78d6e828ddc7ae799cd6eddb3970bc551c",
+          "parents": [
+            "da01ebc7575b9b05f87d4b89993e6c46b8de194b",
+            "ffdd2c860f2690bb903768ae0216e607c817dd4e"
+          ],
+          "matchesSha": true,
+          "headMatchesEventHead": null,
+          "baseParentMatchesEventBase": true,
+          "headParentMatchesEventHead": true
+        },
+        "node": "v22.23.5"
+      },
+      "result": "complete",
+      "nativeCaseGroups": {
+        "installer": "pass",
+        "launcher": "pass",
+        "checkout-alias": "pass",
+        "lock-contention": "pass",
+        "bounded-logs": "pass"
+      },
+      "completedCases": 27,
+      "observations": {
+        "state": "valid",
+        "reason": null,
+        "bytes": 91615,
+        "records": 338,
+        "closed": true,
+        "rejected": 0,
+        "omittedRecords": 0,
+        "omittedBytes": 0,
+        "byType": {
+          "recorder-open": 1,
+          "case-start": 27,
+          "fixture": 9,
+          "child": 219,
+          "cleanup": 15,
+          "case-end": 27,
+          "alias-round": 4,
+          "alias": 2,
+          "ownership-result": 15,
+          "contention": 3,
+          "ownership-check": 3,
+          "ownership-cleanup": 3,
+          "fixture-state": 9,
+          "recorder-closed": 1
+        }
+      },
+      "trials": [
+        {
+          "trial": 1,
+          "recordedOwnerMatched": true,
+          "live": 1,
+          "acquired": 1,
+          "refusedStoreHeld": 4,
+          "release": 1,
+          "main": "absent",
+          "guard": "absent",
+          "staging": 0,
+          "unrelatedIntact": true
+        },
+        {
+          "trial": 2,
+          "recordedOwnerMatched": true,
+          "live": 1,
+          "acquired": 1,
+          "refusedStoreHeld": 4,
+          "release": 1,
+          "main": "absent",
+          "guard": "absent",
+          "staging": 0,
+          "unrelatedIntact": true
+        },
+        {
+          "trial": 3,
+          "recordedOwnerMatched": true,
+          "live": 1,
+          "acquired": 1,
+          "refusedStoreHeld": 4,
+          "release": 1,
+          "main": "absent",
+          "guard": "absent",
+          "staging": 0,
+          "unrelatedIntact": true
+        }
+      ],
+      "filesSha256": {
+        "result.json": "a5f89b0f94a4c8babb8c112c6886e7c0da0e07263a509481b309095c8ca49aa9",
+        "observations.ndjson": "e243ec44c109b159ee122d8ba51f1feeefcfc24bada0e16ca1defe0dd887b5cd",
+        "manifest.json": "81d0fb053138fbf7c60e027d8bd8ad030d625dffc20d25a16933c3d09585689c"
+      }
+    },
+    "macOS": {
+      "jobId": 139076528753,
+      "artifactId": 15003799001,
+      "zipBytes": 384641,
+      "zipSha256": "d8321e91cb9675f3c948aae820e2b2ae911418f7f842d0da7dcdd81fc6eed80f",
+      "binding": {
+        "commit": "a0439b8127fdf4181cd4796253c6f0f66ac6c473",
+        "tree": "b9ec4a78d6e828ddc7ae799cd6eddb3970bc551c",
+        "authority": "local Git checkout",
+        "main": "77340d74ad07bebe5875984fee0c92cbeac57afff13585a9bbe7fb3ab62c219c",
+        "helper": "e8a04bf57d544d1cf62bc34f9694cd836f936dd2e24429df06da54e9abcddb29",
+        "driver": "8afb4f26504451d22cf1e137d1f932898e7df4c1c5ff3f5ef02395eba69de791",
+        "node": "v22.23.5",
+        "platform": "darwin",
+        "arch": "arm64",
+        "imageOS": "macos15",
+        "imageVersion": "20261118.0550.1"
+      },
+      "outcome": "passed",
+      "cases": 9,
+      "processes": 30,
+      "timedOut": 0,
+      "truncated": 0,
+      "cleanup": "verified disposable bundle, receipt, logs and store removed; evidence retained",
+      "coverage": {
+        "lines": {
+          "count": 3782,
+          "covered": 3645
+        },
+        "regions": {
+          "count": 2140,
+          "covered": 1953
+        },
+        "branches": {
+          "count": 0,
+          "covered": 0
+        }
+      },
+      "filesSha256": {
+        "macos-launcher-acceptance/manifest.json": "e49b0b56ec72c661c1223da805b9f9ea12c90dcf15861bdd504a3525953eeb8b",
+        "macos-launcher-coverage/coverage-summary.json": "f8fdd6506bc41fe1b49a146edd013118ec4c7810afc54d73c596a16b64298c71",
+        "macos-launcher-toolchain/versions.txt": "c305fef25168715955f69713efeca1f9601c82bccd97c85aeeb8a6c97337ee7e"
+      }
+    },
+    "latestJobs": {
+      "at": "2026-11-25 08:37:35 UTC",
+      "run": 45576761584,
+      "attempt": 1,
+      "method": "gh api repos/Jacob-J-Thomas/GraphGoblin/actions/runs/45576761584/jobs",
+      "jobs": [
+        {
+          "conclusion": null,
+          "id": 139076528538,
+          "name": "Repository checks",
+          "status": "in_progress"
+        },
+        {
+          "conclusion": "success",
+          "id": 139076528753,
+          "name": "macOS launcher",
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "id": 139076528952,
+          "name": "Template image",
+          "status": "completed"
+        },
+        {
+          "conclusion": null,
+          "id": 139076528956,
+          "name": "Browser",
+          "status": "in_progress"
+        },
+        {
+          "conclusion": "success",
+          "id": 139076529003,
+          "name": "Windows launcher",
+          "status": "completed"
+        },
+        {
+          "conclusion": null,
+          "id": 139076529058,
+          "name": "Coverage",
+          "status": "in_progress"
+        }
+      ],
+      "aggregate": "not yet returned"
+    },
+    "allSevenGreenVerified": false,
+    "originalWindowsFailure": {
+      "run": 45566702222,
+      "trial": 2,
+      "operation": "recovery-directory-remove",
+      "error": "EPERM",
+      "exactWin32Interleaving": "unknown"
+    },
+    "priorRunOnly": {
+      "run": 45571609471,
+      "head": "3f80820ff2982614a750cd6bd8dce488714a3752",
+      "sixLanesPassed": true,
+      "failedLane": "Browser (PWA unresolved voice other-tab update timeout after 60 s)"
+    }
+  },
+  "remaining": [
+    "R3-F1 prescribed finite correction and full regression evidence",
+    "fresh full CI on final candidate",
+    "orchestrator final-delta accounting and applicable repository-specific review-rule check",
+    "separate combined device A\u2013E and actual Claude assessment",
+    "separate owner QA"
+  ],
+  "cap": {
+    "consumed": 3,
+    "limit": 3,
+    "additionalReviewsRequested": 0,
+    "lastIndependentlyReviewed": "ffdd2c860f2690bb903768ae0216e607c817dd4e",
+    "finalRepairedHead": null,
+    "otherLineages": "PR 501 closed at 3/3 and issue 575 remains at 1/3"
+  },
+  "evidenceSha256": {
+    "0af9b8a41367f4e90152333e02c687f4b7ba1185.ts": "0745da764fb5acf239fb18191096ad0f946988bc8075a1acc812be8fd7689947",
+    "da01ebc7575b9b05f87d4b89993e6c46b8de194b.ts": "9ac7ee4116896e18de4db3942bc8798aa354e82f478fe5374289fbb05a11c3cc",
+    "eight-read-acquire.json": "575cfa8e4d45faf80fb92a0093a287c5375b7ff688428ff2cf3de9e14e0798aa",
+    "eight-read-observe.json": "ed5bdb13ec15ce8b318571c1deaa081a4f7b55d08f0a46f16592195ce46031b4",
+    "ffdd2c860f2690bb903768ae0216e607c817dd4e.ts": "7bb2cc4d537ede26cfcc600003163acfede4a2529d3adca59da9e10217f942fa",
+    "final-unlink-loss.mjs": "d5a1cfec6ac9dd20abf5683ac0c3fdbf00c7389cba95c137057978d5b4c941fb",
+    "hosted-jobs-snapshot.json": "24e06c016bf4e78cb3d43d2b6bc02af6a5e5d1af4237bb9c747ddf890dcb5b80",
+    "macos-evidence.json": "88a95491ec014a0da22a8bd90a19d3d96b78bf094cc515fa0474e84ce82e31e5",
+    "marker-churn-release-ledger.mjs": "cda5ccd808b9b9201ce5c392ec1e4d013b8418a7dc9fe68b208f2aef586cdfcf",
+    "marker-read-schedule.mjs": "d333c83fe416c7fdc26f31ba71a0cc1b88ad6e8152092f36902b89dabd609248",
+    "mixed-base.json": "673fef43e3b63d7ee561b1a5664fffa51b32f12eda2b0212f1de03fac9a26d05",
+    "mixed-head.json": "7cf1c5daa9fcccf5ba34b356654062d0345d6ba61b5455aa7b538a3d4931ccf4",
+    "mixed-parent.json": "d5f60a2debfece292d853b4002829de840e71d000c03a1d5c382421c3c260fc2",
+    "r1-reset.json": "6b30e79d95f7567d172852b892b8a84666a712ea100b5cd39945cb66cf9b5726",
+    "r1-three-schedules.json": "72a264279dfc863a105cf216288e75861607cff74b1fe123d0556b2990f5fb36",
+    "reset-manifest-schedule.mjs": "af6a275346519605e61e8680efa81fa2f2de4ef4e136d4f123ba80ffb1cee7a7",
+    "review.md": "80e5341bf417391f0423da5d8127d11634497ed2d29cb149c6f9db219b0884fe",
+    "root-assignment.json": "49042ee8f7a3a5f6e6d89a1eda0b627a12d4f132910c30e953588cbb9360fa89",
+    "source-validation.json": "47178e48eaa1c77b213b50643a01bb89116454138583b59893be0f20ec2db712",
+    "windows-evidence.json": "457aa79f0b0955597199d8347a319bcfa744f22c2f38bcf02de4f9d2d7a8715e"
+  }
+}

@@ -4,6 +4,41 @@ This build reads only the current format, format 4: its data store, loop exports
 
 The offline `graphgoblin-upgrade` tool and the automatic conversion of old imports and device drafts were retired on 2026-10-18. Builds up to `cfae696` still include them, if you need to bring an old export forward once (this page keeps its old file name so older links land here).
 
+A change in which file the default configuration selects for a format-4 store is not a format change and is never fixed by a reset; see [Same-format upgrade: default database location](#same-format-upgrade-default-database-location).
+
+## Same-format upgrade: default database location
+
+This applies when `GG_DB_URL` is unset and the data directory path contains `%`, as in a shell start (`node apps/api/dist/main.js` or `pnpm start`) with such a `GG_DATA_DIR`. The store stays format 4; nothing is converted or rewritten, and a reset is not the fix. This build uses an explicit `GG_DB_URL` exactly as given.
+
+Earlier builds put the data directory path into the default database URL without escaping it, and SQLite decodes percent escapes in that URL. With `GG_DATA_DIR='/example/active %41'`, an earlier build therefore kept its database at `/example/active A/graphgoblin.db`, while `master.key`, `artifacts/` and the rest of the store were in `/example/active %41`. This build escapes the path, so the same setting selects `/example/active %41/graphgoblin.db`. Only this percent-escape case is described here. If the path contains another character with a meaning in URLs, such as `#` or `?`, also confirm where the earlier database is before starting this build.
+
+Startup does not look for the earlier file. If the newly selected file is absent, this build creates an empty format-4 database in the data directory, beside the original `master.key`: loops, runs and secrets seem to be gone, and new work is written to the new file while the earlier database stays as it was. If both files already exist, the new default selects the literal path's file. This path correction does not remove the earlier database.
+
+### Before the first start of this build
+
+1. Find the earlier database from evidence, never by guessing a nearby path: the database file the earlier gateway has open, a configuration or record you kept that names the physical file, or a backup and known stored content confirming which file that gateway used. A file merely existing at the decoded path is not enough. This build's `node apps/api/dist/main.js --preflight`, run with the server's environment, checks the selected local database without creating a missing one. It also probes directory writability and configured harnesses; it is not a zero-side-effect command. If its **Master key** check is `ok` but **Database** says the database does not exist yet, the selected path is missing; this does not identify or validate the earlier database.
+2. [Stop the gateway safely](01-install-and-first-run.md#stop-and-restart-safely) and confirm its process has exited. Do not copy a database that a gateway still has open.
+3. [Back up](06-settings-and-secrets.md#back-up-and-restore) the whole data directory, including `master.key` and `artifacts/`, and the earlier database together with any `-wal` and `-shm` files beside it. Its secrets are readable only with that `master.key`, so keep them together. Do not delete or rename sidecar or lock files. When asking for help, share paths and check results, never `master.key`, `GG_MASTER_KEY` or API keys.
+
+If this build has already started and there are two databases, stop every gateway that uses either file and back up both databases with their sidecars, as well as the data directory. Decide which store you mean to keep using before starting again. GraphGoblin has no tool to merge them; work recorded in the other file stays only there, so keep its backup.
+
+### Keep using the earlier database from a shell
+
+Keep `GG_DATA_DIR` as it was, so `master.key`, `artifacts/` and workspaces are still found there, and set `GG_DB_URL` to a `file:` URL for the verified earlier database. This build uses an explicit `GG_DB_URL` verbatim and decodes it as SQLite does, so the URL must be escaped. Let Node build it from the absolute path, passed as one quoted argument, rather than escaping it by hand:
+
+```bash
+export GG_DATA_DIR='/example/active %41'
+GG_DB_URL="$(node -p 'require("node:url").pathToFileURL(process.argv[1]).href' '/example/active A/graphgoblin.db')"
+export GG_DB_URL
+echo "$GG_DB_URL"
+```
+
+It prints `file:///example/active%20A/graphgoblin.db`. Run `node apps/api/dist/main.js --preflight` with this environment: **Database** should now say `reachable and migrated`, or name pending migrations, instead of saying that the database does not exist yet. Then start as usual. Keep both variables in every environment that starts this gateway or runs a command on its store, such as `--preflight`, `--create-api-key` or a service definition, and record the database location with your backups.
+
+### macOS launcher
+
+The macOS launcher opens only `<data-directory>/graphgoblin.db` beside its own `master.key` and does not support an external database override, so the shell workaround above is not available there. To use an earlier database found elsewhere with the launcher, stop its gateway and back up as above. Then, following [Back up and restore](06-settings-and-secrets.md#back-up-and-restore), restore into a new, empty directory: the verified earlier `graphgoblin.db` with its own `-wal` and `-shm` files, plus the associated original data directory's `master.key`, artifacts, workspaces and other contents. Exclude any other database and its sidecars from this restored copy; never mix one database's sidecars with another's. Keep both source copies and backups intact. Select the restored directory with `--data-dir` when you rerun the installer ([Optional macOS Finder and Dock launcher](01-install-and-first-run.md#optional-macos-finder-and-dock-launcher)).
+
 ## When GraphGoblin refuses to start
 
 Startup checks the store before it writes anything. A store this build cannot open stops startup with exit code 1 and an explanation, for example:

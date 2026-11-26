@@ -1,0 +1,899 @@
+﻿2026-11-16T19:43:01.2392330Z Current runner version: '2.338.2'
+2026-11-16T19:43:01.2413980Z ##[group]Runner Image Provisioner
+2026-11-16T19:43:01.2414770Z Hosted Compute Agent
+2026-11-16T19:43:01.2415450Z Version: 20261103.629
+2026-11-16T19:43:01.2416020Z Commit: 15dbd9ccb5dbf34fae002b6ed1a2670f52df37bc
+2026-11-16T19:43:01.2416660Z Build Date: 2026-11-03T17:26:59Z
+2026-11-16T19:43:01.2417190Z Worker ID: {51f6c3b6-5709-4bb5-a99b-80ff3cf01849}
+2026-11-16T19:43:01.2417870Z Region: westus
+2026-11-16T19:43:01.2418430Z Cloud: MacCloud
+2026-11-16T19:43:01.2418970Z ##[endgroup]
+2026-11-16T19:43:01.2420300Z ##[group]Operating System
+2026-11-16T19:43:01.2420910Z macOS
+2026-11-16T19:43:01.2421370Z 15.8.2
+2026-11-16T19:43:01.2421780Z 24H232
+2026-11-16T19:43:01.2422260Z ##[endgroup]
+2026-11-16T19:43:01.2422830Z ##[group]Runner Image
+2026-11-16T19:43:01.2423410Z Image: macos-15-arm64
+2026-11-16T19:43:01.2423960Z Version: 20261112.0539.3
+2026-11-16T19:43:01.2425140Z Included Software: https://github.com/actions/runner-images/blob/macos-15-arm64/20261112.0539/images/macos/macos-15-arm64-Readme.md
+2026-11-16T19:43:01.2426480Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-15-arm64%2F20261112.0539
+2026-11-16T19:43:01.2427310Z ##[endgroup]
+2026-11-16T19:43:01.2428390Z ##[group]GITHUB_TOKEN Permissions
+2026-11-16T19:43:01.2429950Z Contents: read
+2026-11-16T19:43:01.2430380Z Metadata: read
+2026-11-16T19:43:01.2430820Z Packages: read
+2026-11-16T19:43:01.2431400Z ##[endgroup]
+2026-11-16T19:43:01.2433060Z Secret source: Actions
+2026-11-16T19:43:01.2433870Z Cache mode: write
+2026-11-16T19:43:01.2434480Z Prepare workflow directory
+2026-11-16T19:43:01.2949410Z Prepare all required actions
+2026-11-16T19:43:01.2986290Z Getting action download info
+2026-11-16T19:43:01.8277840Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-11-16T19:43:02.0974050Z Download action repository 'pnpm/action-setup@v4' (SHA:b906affcce14559ad1aafd4ab0e942779e9f58b1)
+2026-11-16T19:43:02.6639490Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+2026-11-16T19:43:02.8623470Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-11-16T19:43:03.0384850Z Complete job name: macOS launcher
+2026-11-16T19:43:03.0899830Z ##[group]Run actions/checkout@v4
+2026-11-16T19:43:03.0900450Z with:
+2026-11-16T19:43:03.0900850Z   repository: Jacob-J-Thomas/GraphGoblin
+2026-11-16T19:43:03.0903940Z   token: ***
+2026-11-16T19:43:03.0904310Z   ssh-strict: true
+2026-11-16T19:43:03.0904680Z   ssh-user: git
+2026-11-16T19:43:03.0905100Z   persist-credentials: true
+2026-11-16T19:43:03.0905560Z   clean: true
+2026-11-16T19:43:03.0906040Z   sparse-checkout-cone-mode: true
+2026-11-16T19:43:03.0906470Z   fetch-depth: 1
+2026-11-16T19:43:03.0906840Z   fetch-tags: false
+2026-11-16T19:43:03.0907220Z   show-progress: true
+2026-11-16T19:43:03.0907600Z   lfs: false
+2026-11-16T19:43:03.0907960Z   submodules: false
+2026-11-16T19:43:03.0908400Z   set-safe-directory: true
+2026-11-16T19:43:03.0908890Z   allow-unsafe-pr-checkout: false
+2026-11-16T19:43:03.0909450Z env:
+2026-11-16T19:43:03.0909800Z   LIVE: 0
+2026-11-16T19:43:03.0910490Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:43:03.0911250Z ##[endgroup]
+2026-11-16T19:43:03.4696960Z Syncing repository: Jacob-J-Thomas/GraphGoblin
+2026-11-16T19:43:03.4699640Z ##[group]Getting Git version info
+2026-11-16T19:43:03.4700970Z Working directory is '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-16T19:43:03.4702430Z [command]/opt/homebrew/bin/git version
+2026-11-16T19:43:03.5022870Z git version 2.56.1
+2026-11-16T19:43:03.5025860Z ##[endgroup]
+2026-11-16T19:43:03.5031020Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/fae5a477-b8fe-43b2-88f8-a7ae938cc415/.gitconfig'
+2026-11-16T19:43:03.5032510Z Temporarily overriding HOME='/Users/runner/work/_temp/fae5a477-b8fe-43b2-88f8-a7ae938cc415' before making global git config changes
+2026-11-16T19:43:03.5034280Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-16T19:43:03.5035470Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T19:43:03.5124330Z Deleting the contents of '/Users/runner/work/GraphGoblin/GraphGoblin'
+2026-11-16T19:43:03.5128170Z ##[group]Initializing the repository
+2026-11-16T19:43:03.5131160Z [command]/opt/homebrew/bin/git init /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T19:43:03.5367700Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-11-16T19:43:03.5369370Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-11-16T19:43:03.5370170Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-11-16T19:43:03.5371280Z hint: call:
+2026-11-16T19:43:03.5371690Z hint:
+2026-11-16T19:43:03.5372190Z hint: 	git config --global init.defaultBranch <name>
+2026-11-16T19:43:03.5372750Z hint:
+2026-11-16T19:43:03.5373250Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-11-16T19:43:03.5374370Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-11-16T19:43:03.5375060Z hint:
+2026-11-16T19:43:03.5375500Z hint: 	git branch -m <name>
+2026-11-16T19:43:03.5375910Z hint:
+2026-11-16T19:43:03.5376460Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-11-16T19:43:03.5377570Z Initialized empty Git repository in /Users/runner/work/GraphGoblin/GraphGoblin/.git/
+2026-11-16T19:43:03.5384850Z [command]/opt/homebrew/bin/git remote add origin https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-16T19:43:03.5459590Z ##[endgroup]
+2026-11-16T19:43:03.5461590Z ##[group]Disabling automatic garbage collection
+2026-11-16T19:43:03.5463400Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-11-16T19:43:03.5524510Z ##[endgroup]
+2026-11-16T19:43:03.5526400Z ##[group]Setting up auth
+2026-11-16T19:43:03.5528270Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-16T19:43:03.5598840Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-16T19:43:03.6536740Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-16T19:43:03.6649260Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-16T19:43:03.8094800Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-16T19:43:03.8106120Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-16T19:43:03.9402950Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-11-16T19:43:03.9409550Z ##[endgroup]
+2026-11-16T19:43:03.9410620Z ##[group]Fetching the repository
+2026-11-16T19:43:03.9418430Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +532791c53dedf95d66f0b34f218df5fd6ef5d136:refs/remotes/pull/501/merge
+2026-11-16T19:43:18.7944280Z From https://github.com/Jacob-J-Thomas/GraphGoblin
+2026-11-16T19:43:18.7956790Z  * [new ref]           532791c53dedf95d66f0b34f218df5fd6ef5d136 -> pull/501/merge
+2026-11-16T19:43:18.7963500Z ##[endgroup]
+2026-11-16T19:43:18.7964810Z ##[group]Determining the checkout info
+2026-11-16T19:43:18.7970180Z ##[endgroup]
+2026-11-16T19:43:18.7982610Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-11-16T19:43:18.8080990Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-11-16T19:43:18.8178690Z ##[group]Checking out the ref
+2026-11-16T19:43:18.8189410Z [command]/opt/homebrew/bin/git checkout --progress --force refs/remotes/pull/501/merge
+2026-11-16T19:43:20.1129780Z Updating files:   4% (1350/30709)
+2026-11-16T19:43:20.4908790Z Updating files:   5% (1536/30709)
+2026-11-16T19:43:20.8626430Z Updating files:   6% (1843/30709)
+2026-11-16T19:43:21.2229020Z Updating files:   6% (2026/30709)
+2026-11-16T19:43:21.5386610Z Updating files:   7% (2150/30709)
+2026-11-16T19:43:21.6067260Z Updating files:   8% (2457/30709)
+2026-11-16T19:43:21.6531180Z Updating files:   9% (2764/30709)
+2026-11-16T19:43:21.7528570Z Updating files:  10% (3071/30709)
+2026-11-16T19:43:21.8239980Z Updating files:  11% (3378/30709)
+2026-11-16T19:43:21.8649590Z Updating files:  12% (3686/30709)
+2026-11-16T19:43:21.8948740Z Updating files:  12% (3830/30709)
+2026-11-16T19:43:21.9524960Z Updating files:  13% (3993/30709)
+2026-11-16T19:43:22.0703400Z Updating files:  14% (4300/30709)
+2026-11-16T19:43:22.1959350Z Updating files:  15% (4607/30709)
+2026-11-16T19:43:22.3793510Z Updating files:  16% (4914/30709)
+2026-11-16T19:43:22.4568010Z Updating files:  17% (5221/30709)
+2026-11-16T19:43:22.5269970Z Updating files:  18% (5528/30709)
+2026-11-16T19:43:22.5776520Z Updating files:  19% (5835/30709)
+2026-11-16T19:43:22.6282340Z Updating files:  20% (6142/30709)
+2026-11-16T19:43:22.6896280Z Updating files:  21% (6449/30709)
+2026-11-16T19:43:22.7662270Z Updating files:  22% (6756/30709)
+2026-11-16T19:43:22.8164550Z Updating files:  23% (7064/30709)
+2026-11-16T19:43:22.8571910Z Updating files:  24% (7371/30709)
+2026-11-16T19:43:22.8660670Z Updating files:  24% (7660/30709)
+2026-11-16T19:43:22.9627060Z Updating files:  25% (7678/30709)
+2026-11-16T19:43:23.0027590Z Updating files:  26% (7985/30709)
+2026-11-16T19:43:23.0582040Z Updating files:  27% (8292/30709)
+2026-11-16T19:43:23.1337770Z Updating files:  28% (8599/30709)
+2026-11-16T19:43:23.1952760Z Updating files:  29% (8906/30709)
+2026-11-16T19:43:23.2468750Z Updating files:  30% (9213/30709)
+2026-11-16T19:43:23.3175330Z Updating files:  31% (9520/30709)
+2026-11-16T19:43:23.5123160Z Updating files:  32% (9827/30709)
+2026-11-16T19:43:23.6112340Z Updating files:  33% (10134/30709)
+2026-11-16T19:43:23.7502950Z Updating files:  34% (10442/30709)
+2026-11-16T19:43:23.8118190Z Updating files:  35% (10749/30709)
+2026-11-16T19:43:23.8606890Z Updating files:  36% (11056/30709)
+2026-11-16T19:43:23.9034040Z Updating files:  36% (11082/30709)
+2026-11-16T19:43:23.9763320Z Updating files:  37% (11363/30709)
+2026-11-16T19:43:24.0862050Z Updating files:  38% (11670/30709)
+2026-11-16T19:43:24.1648800Z Updating files:  39% (11977/30709)
+2026-11-16T19:43:24.2335680Z Updating files:  40% (12284/30709)
+2026-11-16T19:43:24.3814370Z Updating files:  41% (12591/30709)
+2026-11-16T19:43:24.5328150Z Updating files:  42% (12898/30709)
+2026-11-16T19:43:24.5950980Z Updating files:  43% (13205/30709)
+2026-11-16T19:43:24.6498220Z Updating files:  44% (13512/30709)
+2026-11-16T19:43:24.6939570Z Updating files:  45% (13820/30709)
+2026-11-16T19:43:24.7594290Z Updating files:  46% (14127/30709)
+2026-11-16T19:43:24.8140610Z Updating files:  47% (14434/30709)
+2026-11-16T19:43:24.8591760Z Updating files:  48% (14741/30709)
+2026-11-16T19:43:24.8754090Z Updating files:  48% (14941/30709)
+2026-11-16T19:43:24.9257840Z Updating files:  49% (15048/30709)
+2026-11-16T19:43:25.0057360Z Updating files:  50% (15355/30709)
+2026-11-16T19:43:25.1739720Z Updating files:  51% (15662/30709)
+2026-11-16T19:43:25.2836840Z Updating files:  52% (15969/30709)
+2026-11-16T19:43:25.4023790Z Updating files:  53% (16276/30709)
+2026-11-16T19:43:25.4635330Z Updating files:  54% (16583/30709)
+2026-11-16T19:43:25.5069860Z Updating files:  55% (16890/30709)
+2026-11-16T19:43:25.5910530Z Updating files:  56% (17198/30709)
+2026-11-16T19:43:25.6561970Z Updating files:  57% (17505/30709)
+2026-11-16T19:43:25.7933350Z Updating files:  58% (17812/30709)
+2026-11-16T19:43:25.8632420Z Updating files:  59% (18119/30709)
+2026-11-16T19:43:25.9946120Z Updating files:  59% (18231/30709)
+2026-11-16T19:43:26.1171960Z Updating files:  60% (18426/30709)
+2026-11-16T19:43:26.1981980Z Updating files:  61% (18733/30709)
+2026-11-16T19:43:26.3209490Z Updating files:  62% (19040/30709)
+2026-11-16T19:43:26.3762040Z Updating files:  63% (19347/30709)
+2026-11-16T19:43:26.4679090Z Updating files:  64% (19654/30709)
+2026-11-16T19:43:26.5484730Z Updating files:  65% (19961/30709)
+2026-11-16T19:43:26.6962570Z Updating files:  66% (20268/30709)
+2026-11-16T19:43:26.7640360Z Updating files:  67% (20576/30709)
+2026-11-16T19:43:26.8430170Z Updating files:  68% (20883/30709)
+2026-11-16T19:43:26.8586990Z Updating files:  69% (21190/30709)
+2026-11-16T19:43:26.9152910Z Updating files:  69% (21280/30709)
+2026-11-16T19:43:27.0120900Z Updating files:  70% (21497/30709)
+2026-11-16T19:43:27.0942320Z Updating files:  71% (21804/30709)
+2026-11-16T19:43:27.1814150Z Updating files:  72% (22111/30709)
+2026-11-16T19:43:27.2644270Z Updating files:  73% (22418/30709)
+2026-11-16T19:43:27.4141300Z Updating files:  74% (22725/30709)
+2026-11-16T19:43:27.5604060Z Updating files:  75% (23032/30709)
+2026-11-16T19:43:27.6679570Z Updating files:  76% (23339/30709)
+2026-11-16T19:43:27.7275560Z Updating files:  77% (23646/30709)
+2026-11-16T19:43:27.8056170Z Updating files:  78% (23954/30709)
+2026-11-16T19:43:27.8595630Z Updating files:  79% (24261/30709)
+2026-11-16T19:43:27.8863970Z Updating files:  79% (24459/30709)
+2026-11-16T19:43:27.9472650Z Updating files:  80% (24568/30709)
+2026-11-16T19:43:28.0347980Z Updating files:  81% (24875/30709)
+2026-11-16T19:43:28.1440500Z Updating files:  82% (25182/30709)
+2026-11-16T19:43:28.1999300Z Updating files:  83% (25489/30709)
+2026-11-16T19:43:28.2687340Z Updating files:  84% (25796/30709)
+2026-11-16T19:43:28.3279760Z Updating files:  85% (26103/30709)
+2026-11-16T19:43:28.3643950Z Updating files:  86% (26410/30709)
+2026-11-16T19:43:28.4060810Z Updating files:  87% (26717/30709)
+2026-11-16T19:43:28.4652900Z Updating files:  88% (27024/30709)
+2026-11-16T19:43:28.5097900Z Updating files:  89% (27332/30709)
+2026-11-16T19:43:28.5656480Z Updating files:  90% (27639/30709)
+2026-11-16T19:43:28.6530520Z Updating files:  91% (27946/30709)
+2026-11-16T19:43:28.7117530Z Updating files:  92% (28253/30709)
+2026-11-16T19:43:28.7730740Z Updating files:  93% (28560/30709)
+2026-11-16T19:43:28.8615340Z Updating files:  94% (28867/30709)
+2026-11-16T19:43:28.8788560Z Updating files:  94% (29105/30709)
+2026-11-16T19:43:28.9278680Z Updating files:  95% (29174/30709)
+2026-11-16T19:43:28.9621100Z Updating files:  96% (29481/30709)
+2026-11-16T19:43:29.0002110Z Updating files:  97% (29788/30709)
+2026-11-16T19:43:29.0393200Z Updating files:  98% (30095/30709)
+2026-11-16T19:43:29.0943810Z Updating files:  99% (30402/30709)
+2026-11-16T19:43:29.0980810Z Updating files: 100% (30709/30709)
+2026-11-16T19:43:29.1013760Z Updating files: 100% (30709/30709), done.
+2026-11-16T19:43:29.1442000Z HEAD is now at 532791c5 Merge 14fd41d3b0a58b0f4dfb4e614c2067d861c29129 into 6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1
+2026-11-16T19:43:29.1634130Z ##[endgroup]
+2026-11-16T19:43:29.1840750Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-11-16T19:43:29.1949990Z 532791c53dedf95d66f0b34f218df5fd6ef5d136
+2026-11-16T19:43:29.2260350Z ##[group]Run pnpm/action-setup@v4
+2026-11-16T19:43:29.2260580Z with:
+2026-11-16T19:43:29.2260870Z   dest: ~/setup-pnpm
+2026-11-16T19:43:29.2261100Z   run_install: null
+2026-11-16T19:43:29.2261350Z   cache: false
+2026-11-16T19:43:29.2261630Z   cache_dependency_path: pnpm-lock.yaml
+2026-11-16T19:43:29.2261930Z   package_json_file: package.json
+2026-11-16T19:43:29.2262280Z   standalone: false
+2026-11-16T19:43:29.2262470Z env:
+2026-11-16T19:43:29.2262640Z   LIVE: 0
+2026-11-16T19:43:29.2263050Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:43:29.2263560Z ##[endgroup]
+2026-11-16T19:43:29.4866370Z ##[group]Running self-installer...
+2026-11-16T19:43:29.8721820Z (node:1292) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-16T19:43:29.8732030Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T19:43:30.0957660Z Progress: resolved 1, reused 0, downloaded 0, added 0
+2026-11-16T19:43:30.2190360Z Packages: +2
+2026-11-16T19:43:30.2260860Z ++
+2026-11-16T19:43:30.8652090Z Progress: resolved 15, reused 0, downloaded 2, added 2, done
+2026-11-16T19:43:30.9063930Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall$ node install.js
+2026-11-16T19:43:31.9979860Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm preinstall: Done
+2026-11-16T19:43:31.9983810Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall$ node install.js
+2026-11-16T19:43:32.1138850Z .../.pnpm/pnpm@12.8.1/node_modules/pnpm postinstall: Done
+2026-11-16T19:43:33.5210760Z 
+2026-11-16T19:43:33.5212230Z dependencies:
+2026-11-16T19:43:33.5213490Z + pnpm 12.8.1 (12.21.0 is available)
+2026-11-16T19:43:33.5215070Z 
+2026-11-16T19:43:33.5264300Z Done in 3.8s
+2026-11-16T19:43:33.5822920Z ##[endgroup]
+2026-11-16T19:43:33.5827760Z Installation Completed!
+2026-11-16T19:43:33.6315960Z ##[group]Run actions/setup-node@v4
+2026-11-16T19:43:33.6316280Z with:
+2026-11-16T19:43:33.6316540Z   node-version-file: .nvmrc
+2026-11-16T19:43:33.6316860Z   cache: pnpm
+2026-11-16T19:43:33.6317020Z   always-auth: false
+2026-11-16T19:43:33.6320140Z   check-latest: false
+2026-11-16T19:43:33.6323720Z   token: ***
+2026-11-16T19:43:33.6324010Z env:
+2026-11-16T19:43:33.6324250Z   LIVE: 0
+2026-11-16T19:43:33.6324610Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:43:33.6325120Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T19:43:33.6325380Z ##[endgroup]
+2026-11-16T19:43:33.8554930Z Resolved .nvmrc as 22
+2026-11-16T19:43:33.8588540Z Found in cache @ /Users/runner/hostedtoolcache/node/22.23.5/arm64
+2026-11-16T19:43:33.8593050Z (node:1343) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-16T19:43:33.8594840Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T19:43:33.8599020Z ##[group]Environment details
+2026-11-16T19:43:35.8270350Z node: v22.23.5
+2026-11-16T19:43:35.8270660Z npm: 10.9.9
+2026-11-16T19:43:35.8270920Z yarn: 1.22.22
+2026-11-16T19:43:35.8271530Z ##[endgroup]
+2026-11-16T19:43:35.8287080Z [command]/Users/runner/setup-pnpm/node_modules/.bin/pnpm store path --silent
+2026-11-16T19:43:35.8569560Z /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-16T19:43:36.1619370Z pnpm cache is not found
+2026-11-16T19:43:36.1760930Z ##[group]Run mkdir -p .tmp/macos-launcher-toolchain
+2026-11-16T19:43:36.1761330Z [36;1mmkdir -p .tmp/macos-launcher-toolchain[0m
+2026-11-16T19:43:36.1761590Z [36;1m{[0m
+2026-11-16T19:43:36.1761770Z [36;1m  git rev-parse HEAD 'HEAD^{tree}'[0m
+2026-11-16T19:43:36.1762010Z [36;1m  sw_vers[0m
+2026-11-16T19:43:36.1762190Z [36;1m  uname -m[0m
+2026-11-16T19:43:36.1762390Z [36;1m  xcode-select -p[0m
+2026-11-16T19:43:36.1762630Z [36;1m  xcrun --sdk macosx --show-sdk-version[0m
+2026-11-16T19:43:36.1762910Z [36;1m  xcrun --sdk macosx swift --version[0m
+2026-11-16T19:43:36.1763150Z [36;1m  node --version[0m
+2026-11-16T19:43:36.1763350Z [36;1m  pnpm --version[0m
+2026-11-16T19:43:36.1763600Z [36;1m} > .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-16T19:43:36.1763920Z [36;1mcat .tmp/macos-launcher-toolchain/versions.txt[0m
+2026-11-16T19:43:36.1764240Z [36;1mtest "$(uname -m)" = arm64[0m
+2026-11-16T19:43:36.2498890Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-16T19:43:36.2499190Z env:
+2026-11-16T19:43:36.2499360Z   LIVE: 0
+2026-11-16T19:43:36.2499790Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:43:36.2500270Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T19:43:36.2500560Z ##[endgroup]
+2026-11-16T19:43:39.2507550Z 532791c53dedf95d66f0b34f218df5fd6ef5d136
+2026-11-16T19:43:39.2508570Z 426f38727cbd3b5f0df8d79bc2dfb93e749d089b
+2026-11-16T19:43:39.2508850Z ProductName:		macOS
+2026-11-16T19:43:39.2509070Z ProductVersion:		15.8.2
+2026-11-16T19:43:39.2509300Z BuildVersion:		24H232
+2026-11-16T19:43:39.2509480Z arm64
+2026-11-16T19:43:39.2509770Z /Applications/Xcode_16.4.app/Contents/Developer
+2026-11-16T19:43:39.2510060Z 15.5
+2026-11-16T19:43:39.2510420Z Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)
+2026-11-16T19:43:39.2510880Z Target: arm64-apple-macosx15.0
+2026-11-16T19:43:39.2511100Z v22.23.5
+2026-11-16T19:43:39.2511270Z 12.8.1
+2026-11-16T19:43:39.2522740Z swift-driver version: 1.120.5 
+2026-11-16T19:43:39.2563850Z ##[group]Run pnpm install --frozen-lockfile
+2026-11-16T19:43:39.2564160Z [36;1mpnpm install --frozen-lockfile[0m
+2026-11-16T19:43:39.2593010Z shell: /bin/bash -e {0}
+2026-11-16T19:43:39.2593400Z env:
+2026-11-16T19:43:39.2593560Z   LIVE: 0
+2026-11-16T19:43:39.2594020Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:43:39.2594530Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T19:43:39.2594790Z ##[endgroup]
+2026-11-16T19:43:39.3332960Z Scope: all 14 workspace projects
+2026-11-16T19:43:39.4042280Z ? Verifying lockfile against supply-chain policies (931 entries)...
+2026-11-16T19:43:39.6498100Z Packages are cloned from the content-addressable store to the virtual store.
+2026-11-16T19:43:39.6622600Z   Content-addressable store is at: /Users/runner/setup-pnpm/node_modules/.bin/store/v11
+2026-11-16T19:43:39.6750080Z   Virtual store is at:             node_modules/.pnpm
+2026-11-16T19:43:39.7459860Z Downloading @rolldown/binding-darwin-arm64@1.2.12: 0.00 B/7.32 MB
+2026-11-16T19:43:40.8618290Z Progress: resolved 801, reused 0, downloaded 165, added 160
+2026-11-16T19:43:41.8777130Z Progress: resolved 801, reused 0, downloaded 289, added 288
+2026-11-16T19:43:42.8873640Z Progress: resolved 801, reused 0, downloaded 346, added 329
+2026-11-16T19:43:43.8495050Z Downloading @openai/codex@0.160.0-darwin-arm64: 0.00 B/134.31 MB
+2026-11-16T19:43:43.9001370Z Downloading @turbo/darwin-arm64@2.11.6: 0.00 B/15.85 MB
+2026-11-16T19:43:44.9011650Z Progress: resolved 801, reused 0, downloaded 493, added 480
+2026-11-16T19:43:45.9117970Z Progress: resolved 801, reused 0, downloaded 549, added 544
+2026-11-16T19:43:46.7129190Z ✓ Lockfile passes supply-chain policies (931 entries in 7.3s)
+2026-11-16T19:43:46.7209640Z Lockfile is up to date, resolution step is skipped
+2026-11-16T19:43:47.7095490Z Progress: resolved 801, reused 0, downloaded 620, added 608
+2026-11-16T19:43:48.7202200Z Progress: resolved 801, reused 0, downloaded 674, added 672
+2026-11-16T19:43:49.7608880Z Progress: resolved 801, reused 0, downloaded 787, added 768
+2026-11-16T19:43:51.0901010Z Downloading @openai/codex@0.160.0-darwin-arm64: 117.11 MB/134.31 MB
+2026-11-16T19:43:51.3512650Z Packages: +801
+2026-11-16T19:43:51.3513630Z ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+2026-11-16T19:43:51.5161680Z Progress: resolved 801, reused 0, downloaded 793, added 801, done
+2026-11-16T19:43:51.5367600Z .../esbuild@0.25.12/node_modules/esbuild postinstall$ node install.js
+2026-11-16T19:43:51.5369000Z .../esbuild@0.28.2/node_modules/esbuild postinstall$ node install.js
+2026-11-16T19:43:51.7112840Z .../esbuild@0.25.12/node_modules/esbuild postinstall: Done
+2026-11-16T19:43:51.7336420Z .../esbuild@0.28.2/node_modules/esbuild postinstall: Done
+2026-11-16T19:43:51.9685400Z 
+2026-11-16T19:43:51.9687050Z devDependencies:
+2026-11-16T19:43:51.9688090Z + @eslint-react/eslint-plugin 5.23.3
+2026-11-16T19:43:51.9688860Z + @eslint/js 10.0.1
+2026-11-16T19:43:51.9689600Z + @vitest/coverage-v8 5.0.3
+2026-11-16T19:43:51.9690530Z + dependency-cruiser 18.5.0
+2026-11-16T19:43:51.9692660Z + eslint 10.11.0
+2026-11-16T19:43:51.9693470Z + eslint-config-prettier 10.1.8
+2026-11-16T19:43:51.9694330Z + eslint-plugin-react-hooks 7.1.1
+2026-11-16T19:43:51.9695040Z + prettier 3.9.9
+2026-11-16T19:43:51.9695590Z + turbo 2.11.6
+2026-11-16T19:43:51.9702270Z + typescript 6.0.3
+2026-11-16T19:43:51.9704030Z + typescript-eslint 8.71.0
+2026-11-16T19:43:51.9704980Z + vitest 5.0.3
+2026-11-16T19:43:51.9705180Z 
+2026-11-16T19:43:52.0034520Z Done in 12.7s using pnpm v12.8.1
+2026-11-16T19:43:52.0195290Z ##[group]Run pnpm build
+2026-11-16T19:43:52.0196200Z [36;1mpnpm build[0m
+2026-11-16T19:43:52.2237480Z shell: /bin/bash -e {0}
+2026-11-16T19:43:52.2238080Z env:
+2026-11-16T19:43:52.2238560Z   LIVE: 0
+2026-11-16T19:43:52.2239620Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:43:52.2241150Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T19:43:52.2241520Z ##[endgroup]
+2026-11-16T19:43:52.3389080Z $ turbo run build
+2026-11-16T19:43:52.5104460Z 
+2026-11-16T19:43:52.5105350Z Attention:
+2026-11-16T19:43:52.5107040Z Turborepo now collects completely anonymous telemetry regarding usage.
+2026-11-16T19:43:52.5108600Z This information is used to shape the Turborepo roadmap and prioritize features.
+2026-11-16T19:43:52.5110590Z You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+2026-11-16T19:43:52.5111530Z https://turborepo.dev/docs/telemetry
+2026-11-16T19:43:52.5111840Z 
+2026-11-16T19:43:53.9188870Z 
+2026-11-16T19:43:53.9194800Z    • Packages in scope: @graphgoblin/adapter-codex, @graphgoblin/adapter-jev, @graphgoblin/api, @graphgoblin/api-client, @graphgoblin/contracts, @graphgoblin/domain, @graphgoblin/engine, @graphgoblin/infrastructure, @graphgoblin/mcp, @graphgoblin/plugin-claude, @graphgoblin/plugin-codex, @graphgoblin/tooling, @graphgoblin/web
+2026-11-16T19:43:53.9197600Z    • Running build in 13 packages
+2026-11-16T19:43:53.9275940Z    • Remote caching disabled
+2026-11-16T19:43:53.9276120Z 
+2026-11-16T19:43:56.8012620Z ##[group]@graphgoblin/contracts:build
+2026-11-16T19:43:56.8014210Z cache miss, executing edb6b84daf0e61d8
+2026-11-16T19:43:56.8015090Z $ tsc -b tsconfig.build.json
+2026-11-16T19:43:56.8016450Z ##[endgroup]
+2026-11-16T19:44:00.3968010Z ##[group]@graphgoblin/domain:build
+2026-11-16T19:44:00.3970710Z cache miss, executing 257bf8299a399f1e
+2026-11-16T19:44:00.3971750Z $ tsc -b tsconfig.build.json
+2026-11-16T19:44:00.3972980Z ##[endgroup]
+2026-11-16T19:44:06.2306050Z ##[group]@graphgoblin/engine:build
+2026-11-16T19:44:06.2309360Z cache miss, executing d8dee2c4f8190e5d
+2026-11-16T19:44:06.2310790Z $ tsc -b tsconfig.build.json
+2026-11-16T19:44:06.2312650Z ##[endgroup]
+2026-11-16T19:44:09.0417050Z ##[group]@graphgoblin/adapter-jev:build
+2026-11-16T19:44:09.0423230Z cache miss, executing 4a76088cefb8a25a
+2026-11-16T19:44:09.0425040Z $ tsc -b tsconfig.build.json
+2026-11-16T19:44:09.0427920Z ##[endgroup]
+2026-11-16T19:44:09.7063850Z ##[group]@graphgoblin/adapter-codex:build
+2026-11-16T19:44:09.7066960Z cache miss, executing 47ab09735f08537b
+2026-11-16T19:44:09.7071800Z $ tsc -b tsconfig.build.json
+2026-11-16T19:44:09.7073920Z ##[endgroup]
+2026-11-16T19:44:15.7519110Z ##[group]@graphgoblin/infrastructure:build
+2026-11-16T19:44:15.7522190Z cache miss, executing 643fd0819c88ab59
+2026-11-16T19:44:15.7525610Z $ tsc -b tsconfig.build.json
+2026-11-16T19:44:15.7527930Z ##[endgroup]
+2026-11-16T19:44:23.3371790Z ##[group]@graphgoblin/api:build
+2026-11-16T19:44:23.3377250Z cache miss, executing 7ea09b15d3df0b6b
+2026-11-16T19:44:23.3379650Z $ tsc -b tsconfig.build.json && node dist/templates/copy-catalog.js
+2026-11-16T19:44:23.3383370Z ##[endgroup]
+2026-11-16T19:44:25.5796810Z ##[group]@graphgoblin/api-client:build
+2026-11-16T19:44:25.5798810Z cache miss, executing 58db5ece117bdc0a
+2026-11-16T19:44:25.5799960Z $ tsc -b tsconfig.build.json
+2026-11-16T19:44:25.5801400Z ##[endgroup]
+2026-11-16T19:44:29.1258940Z ##[group]@graphgoblin/mcp:build
+2026-11-16T19:44:29.1263010Z cache miss, executing a40226a8dbda97d3
+2026-11-16T19:44:29.1264270Z $ tsc -b tsconfig.build.json
+2026-11-16T19:44:29.1266130Z ##[endgroup]
+2026-11-16T19:44:30.7225460Z ##[group]@graphgoblin/plugin-claude:build
+2026-11-16T19:44:30.7237400Z cache bypass, force executing 3c82add0433aa64f
+2026-11-16T19:44:30.7242850Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-16T19:44:30.7249300Z Assembled GraphGoblin for Claude Code. Load with claude --plugin-dir "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-claude/dist/plugin/graphgoblin"
+2026-11-16T19:44:30.7268120Z ##[endgroup]
+2026-11-16T19:44:30.9759380Z ##[group]@graphgoblin/plugin-codex:build
+2026-11-16T19:44:30.9759960Z cache bypass, force executing 12e49ffd032d588a
+2026-11-16T19:44:30.9762150Z $ tsc -b tsconfig.build.json && node dist/cli.js
+2026-11-16T19:44:30.9764450Z Assembled graphgoblin@graphgoblin-local with skills design-loop, inspect-run, run-loop.
+2026-11-16T19:44:30.9767680Z Install: codex plugin marketplace add "/Users/runner/work/GraphGoblin/GraphGoblin/apps/plugin-codex/dist/marketplace"
+2026-11-16T19:44:30.9768560Z          codex plugin add graphgoblin@graphgoblin-local
+2026-11-16T19:44:30.9769920Z ##[endgroup]
+2026-11-16T19:44:33.9519910Z ##[group]@graphgoblin/web:build
+2026-11-16T19:44:33.9520690Z cache miss, executing c08ecd9f802c4b0c
+2026-11-16T19:44:33.9521210Z $ vite build && vite build --config vite.goblin.config.ts
+2026-11-16T19:44:33.9523220Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-16T19:44:33.9523880Z transforming...
+2026-11-16T19:44:33.9524330Z ✓ 779 modules transformed.
+2026-11-16T19:44:33.9524660Z rendering chunks...
+2026-11-16T19:44:33.9524890Z computing gzip size...
+2026-11-16T19:44:33.9525260Z dist/manifest.webmanifest           0.47 kB
+2026-11-16T19:44:33.9525850Z dist/index.html                     2.40 kB │ gzip:   1.09 kB
+2026-11-16T19:44:33.9526760Z dist/assets/index-Dalx85ma.css     93.16 kB │ gzip:  17.77 kB
+2026-11-16T19:44:33.9527890Z dist/assets/index-C5U89dQm.js   2,132.12 kB │ gzip: 665.09 kB │ map: 9,491.07 kB
+2026-11-16T19:44:33.9528230Z 
+2026-11-16T19:44:33.9529880Z [32m✓ built in 2.61s[39m
+2026-11-16T19:44:33.9530160Z 
+2026-11-16T19:44:33.9530360Z [36mPWA v1.3.0[39m
+2026-11-16T19:44:33.9530740Z mode      [35mgenerateSW[39m
+2026-11-16T19:44:33.9531560Z precache  [32m21 entries[39m [2m(2650.99 KiB)[22m
+2026-11-16T19:44:33.9532070Z files generated
+2026-11-16T19:44:33.9532490Z   [2mdist/sw.js.map[22m
+2026-11-16T19:44:33.9534190Z   [2mdist/sw.js[22m
+2026-11-16T19:44:33.9535460Z   [2mdist/workbox-2fbc6a65.js.map[22m
+2026-11-16T19:44:33.9536180Z   [2mdist/workbox-2fbc6a65.js[22m
+2026-11-16T19:44:33.9537510Z [36mvite v8.3.4 [32mbuilding client environment for production...[36m[39m
+2026-11-16T19:44:33.9537960Z transforming...
+2026-11-16T19:44:33.9538350Z ✓ 284 modules transformed.
+2026-11-16T19:44:33.9538670Z rendering chunks...
+2026-11-16T19:44:33.9539380Z computing gzip size...
+2026-11-16T19:44:33.9539730Z dist-goblin/manifest.webmanifest         0.46 kB
+2026-11-16T19:44:33.9540570Z dist-goblin/index.html                   2.16 kB │ gzip:   0.96 kB
+2026-11-16T19:44:33.9542890Z dist-goblin/assets/index-qiUpaS1w.css   77.78 kB │ gzip:  15.54 kB
+2026-11-16T19:44:33.9545620Z dist-goblin/assets/index-DWjcCYh1.js   446.18 kB │ gzip: 134.33 kB │ map: 2,065.40 kB
+2026-11-16T19:44:33.9546320Z 
+2026-11-16T19:44:33.9546570Z [32m✓ built in 402ms[39m
+2026-11-16T19:44:33.9546740Z 
+2026-11-16T19:44:33.9546850Z [36mPWA v1.3.0[39m
+2026-11-16T19:44:33.9547310Z mode      [35mgenerateSW[39m
+2026-11-16T19:44:33.9550720Z precache  [32m21 entries[39m [2m(989.31 KiB)[22m
+2026-11-16T19:44:33.9552130Z files generated
+2026-11-16T19:44:33.9553040Z   [2m../dist-goblin/sw.js.map[22m
+2026-11-16T19:44:33.9553410Z   [2m../dist-goblin/sw.js[22m
+2026-11-16T19:44:33.9553760Z   [2m../dist-goblin/workbox-5f44db27.js.map[22m
+2026-11-16T19:44:33.9555110Z   [2m../dist-goblin/workbox-5f44db27.js[22m
+2026-11-16T19:44:33.9555770Z ##[endgroup]
+2026-11-16T19:44:33.9556250Z 
+2026-11-16T19:44:33.9567340Z  Tasks:    12 successful, 12 total
+2026-11-16T19:44:33.9568570Z Cached:    0 cached, 12 total
+2026-11-16T19:44:33.9569360Z   Time:    41.437s 
+2026-11-16T19:44:33.9570540Z 
+2026-11-16T19:44:34.0525240Z ##[group]Run pnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts
+2026-11-16T19:44:34.0527750Z [36;1mpnpm --filter @graphgoblin/api exec vitest run src/main.test.ts src/main-entry.test.ts src/macos-local-key.test.ts src/database-ownership.test.ts src/data-dir-lock.test.ts src/serve.test.ts src/gateway-logger.test.ts src/windows-log/guard.test.ts src/managed-log/gateway-log-writer.test.ts src/macos-log/guard.test.ts[0m
+2026-11-16T19:44:34.1024760Z shell: /bin/bash -e {0}
+2026-11-16T19:44:34.1025100Z env:
+2026-11-16T19:44:34.1025340Z   LIVE: 0
+2026-11-16T19:44:34.1025840Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:44:34.1026560Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T19:44:34.1026900Z ##[endgroup]
+2026-11-16T19:44:34.5414280Z 
+2026-11-16T19:44:34.5416070Z [1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90m/Users/runner/work/GraphGoblin/GraphGoblin/apps/api[39m
+2026-11-16T19:44:34.5416720Z 
+2026-11-16T19:44:35.3989630Z  [32m✓[39m src/windows-log/guard.test.ts [2m([22m[2m16 tests[22m[2m | [22m[33m2 skipped[39m[2m)[22m[33m 565[2mms[22m[39m
+2026-11-16T19:44:35.6151280Z  [32m✓[39m src/managed-log/gateway-log-writer.test.ts [2m([22m[2m27 tests[22m[2m | [22m[33m1 skipped[39m[2m)[22m[33m 797[2mms[22m[39m
+2026-11-16T19:44:35.6254640Z    [32m✓[39m gateway log queue, faults and acknowledgment [2m(13)[22m
+2026-11-16T19:44:35.6357430Z      [33m[2m✓[22m[39m acknowledges only the specific completed record and bounds the exit wait at 250 ms[33m 514[2mms[22m[39m
+2026-11-16T19:44:37.1209010Z  [32m✓[39m src/data-dir-lock.test.ts [2m([22m[2m47 tests[22m[2m)[22m[33m 1502[2mms[22m[39m
+2026-11-16T19:44:41.5930400Z  [32m✓[39m src/serve.test.ts [2m([22m[2m21 tests[22m[2m)[22m[33m 1567[2mms[22m[39m
+2026-11-16T19:44:41.6047210Z    [32m✓[39m serve with the managed destination [2m(5)[22m
+2026-11-16T19:44:41.6151030Z      [33m[2m✓[22m[39m keeps serving while every log write is stalled, within the pending-byte bound[33m 637[2mms[22m[39m
+2026-11-16T19:44:41.6376270Z {"level":30,"time":1794858281636,"pid":2637,"hostname":"sjc20-bb711-54443c4d-b9fe-4b8f-b3cb-9cd0b32a75e3-B667A96E64A3.local","msg":"Server listening at http://127.0.0.1:5674"}
+2026-11-16T19:44:41.6479590Z {"level":30,"time":1794858281636,"pid":2637,"hostname":"sjc20-bb711-54443c4d-b9fe-4b8f-b3cb-9cd0b32a75e3-B667A96E64A3.local","host":"127.0.0.1","port":5674,"dataDir":"/var/folders/9d/l02zfgrs7c16twd3wbpdmhkc0000gn/T/gg-api-process-055zkl","requireApiKey":true,"msg":"GraphGoblin API listening"}
+2026-11-16T19:44:41.6487300Z {"level":30,"time":1794858281644,"pid":2637,"hostname":"sjc20-bb711-54443c4d-b9fe-4b8f-b3cb-9cd0b32a75e3-B667A96E64A3.local","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+2026-11-16T19:44:41.6519810Z {"level":30,"time":1794858281648,"pid":2637,"hostname":"sjc20-bb711-54443c4d-b9fe-4b8f-b3cb-9cd0b32a75e3-B667A96E64A3.local","reqId":"req-1","res":{"statusCode":200},"responseTime":4.0109999999995125,"msg":"request completed"}
+2026-11-16T19:44:41.8163840Z  [32m✓[39m src/macos-log/guard.test.ts [2m([22m[2m42 tests[22m[2m)[22m[32m 27[2mms[22m[39m
+2026-11-16T19:44:43.4167380Z  [32m✓[39m src/gateway-logger.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 484[2mms[22m[39m
+2026-11-16T19:44:43.4271280Z    [33m[2m✓[22m[39m keeps the correlated private #381 diagnostic and narrows real access records to method, route and status[33m 468[2mms[22m[39m
+2026-11-16T19:44:44.7869580Z  [32m✓[39m src/macos-local-key.test.ts [2m([22m[2m19 tests[22m[2m)[22m[32m 182[2mms[22m[39m
+2026-11-16T19:44:47.8070860Z  [32m✓[39m src/database-ownership.test.ts [2m([22m[2m9 tests[22m[2m)[22m[33m 1821[2mms[22m[39m
+2026-11-16T19:44:47.8187920Z    [33m[2m✓[22m[39m rechecks catalog created by a writer before database ownership is acquired[33m 1185[2mms[22m[39m
+2026-11-16T19:44:47.8291850Z    [33m[2m✓[22m[39m locks the same external SQLite file across data directories and refuses an offline key writer[33m 509[2mms[22m[39m
+2026-11-16T19:44:48.8237320Z  [32m✓[39m src/main-entry.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+2026-11-16T19:44:53.3879880Z  [32m✓[39m src/main.test.ts [2m([22m[2m15 tests[22m[2m | [22m[33m5 skipped[39m[2m)[22m[33m 17541[2mms[22m[39m
+2026-11-16T19:44:53.3881340Z    [32m✓[39m built entry and the reserved Windows launcher variable (#438) [2m(4)[22m
+2026-11-16T19:44:53.3884860Z      [33m[2m✓[22m[39m consumes the variable for CLI commands, which keep their ordinary output[33m 1860[2mms[22m[39m
+2026-11-16T19:44:53.3886310Z      [33m[2m✓[22m[39m ignores the Windows-only variable elsewhere and keeps shell logging[33m 2390[2mms[22m[39m
+2026-11-16T19:44:53.3887380Z    [32m✓[39m built API entry and startup failures [2m(6)[22m
+2026-11-16T19:44:53.3888200Z      [33m[2m✓[22m[39m holds ownership while listening and releases it on supported HTTP close[33m 1476[2mms[22m[39m
+2026-11-16T19:44:53.3891470Z      [33m[2m✓[22m[39m serves authenticated requests using a binary-created key and refuses a competing process[33m 3284[2mms[22m[39m
+2026-11-16T19:44:53.3895350Z      [33m[2m✓[22m[39m dispatches the API-key and preflight CLIs with their real exit codes[33m 3552[2mms[22m[39m
+2026-11-16T19:44:53.3897540Z      [33m[2m✓[22m[39m releases ownership on a real corrupt-database startup fault before HTTP setup[33m 1511[2mms[22m[39m
+2026-11-16T19:44:53.3901910Z      [33m[2m✓[22m[39m releases ownership after a real occupied-port listen failure[33m 1583[2mms[22m[39m
+2026-11-16T19:44:53.3903900Z      [33m[2m✓[22m[39m releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)[33m 1768[2mms[22m[39m
+2026-11-16T19:44:53.3957960Z 
+2026-11-16T19:44:53.3964510Z [2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+2026-11-16T19:44:53.3967890Z [2m      Tests [22m [1m[32m203 passed[39m[22m[2m | [22m[33m8 skipped[39m[90m (211)[39m
+2026-11-16T19:44:53.3968760Z [2m   Start at [22m 19:44:34
+2026-11-16T19:44:53.3970110Z [2m   Duration [22m 18.83s[2m (tests 77%, import 16%, transform 7%)[22m
+2026-11-16T19:44:53.3985530Z 
+2026-11-16T19:44:53.4759260Z ##[group]Run mkdir -p .tmp/macos-launcher-swift
+2026-11-16T19:44:53.4759840Z [36;1mmkdir -p .tmp/macos-launcher-swift[0m
+2026-11-16T19:44:53.4760310Z [36;1mset +e[0m
+2026-11-16T19:44:53.4760670Z [36;1mxcrun --sdk macosx swift test --package-path apps/macos-launcher \[0m
+2026-11-16T19:44:53.4761340Z [36;1m  --scratch-path .tmp/macos-swift-test --arch arm64 --enable-code-coverage \[0m
+2026-11-16T19:44:53.4761920Z [36;1m  > .tmp/macos-launcher-swift/stdout.log 2> .tmp/macos-launcher-swift/stderr.log[0m
+2026-11-16T19:44:53.4762420Z [36;1mresult=$?[0m
+2026-11-16T19:44:53.4762730Z [36;1mprintf '%s\n' "$result" > .tmp/macos-launcher-swift/exit.txt[0m
+2026-11-16T19:44:53.4763180Z [36;1mcat .tmp/macos-launcher-swift/stdout.log[0m
+2026-11-16T19:44:53.4763650Z [36;1mcat .tmp/macos-launcher-swift/stderr.log >&2[0m
+2026-11-16T19:44:53.4764120Z [36;1mexit "$result"[0m
+2026-11-16T19:44:53.4826220Z shell: /bin/bash --noprofile --norc -e -o pipefail {0}
+2026-11-16T19:44:53.4826900Z env:
+2026-11-16T19:44:53.4827190Z   LIVE: 0
+2026-11-16T19:44:53.4827620Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:44:53.4828230Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T19:44:53.4828620Z ##[endgroup]
+2026-11-16T19:45:05.7425550Z Building for debugging...
+2026-11-16T19:45:05.7427410Z [0/22] /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-swift-test/arm64-apple-macosx/debug/GraphGoblinMacLauncherPackageTests.derived/runner.swift
+2026-11-16T19:45:05.7461280Z [0/22] Write sources
+2026-11-16T19:45:05.7461780Z [11/22] Write GraphGoblinLauncherInstaller-entitlement.plist
+2026-11-16T19:45:05.7462230Z [12/22] Write GraphGoblin-entitlement.plist
+2026-11-16T19:45:05.7462790Z [13/22] Write swift-version--79AA4F9932D1E87A.txt
+2026-11-16T19:45:05.7463230Z [15/24] Emitting module LaunchContract
+2026-11-16T19:45:05.7463750Z [16/24] Compiling LaunchContract LaunchContract.swift
+2026-11-16T19:45:05.7464490Z [17/40] Emitting module LauncherEngine
+2026-11-16T19:45:05.7465000Z [18/40] Compiling LauncherPresentation AppKitSupport.swift
+2026-11-16T19:45:05.7466110Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift:209:89: error: passing non-escaping parameter 'quitting' to function expecting an @escaping closure
+2026-11-16T19:45:05.7467010Z 204 | package func captureReadOnly(
+2026-11-16T19:45:05.7467660Z 205 |     executable: String, arguments: [String], cwd: String, environment: [String: String],
+2026-11-16T19:45:05.7468600Z 206 |     time: AttemptTime, quitting: () -> Bool = { false }, requireExitZero: Bool = true
+2026-11-16T19:45:05.7469150Z     |                        `- note: parameter 'quitting' is implicitly non-escaping
+2026-11-16T19:45:05.7469760Z 207 | ) throws -> CapturedOutput {
+2026-11-16T19:45:05.7470300Z 208 |     // Reserve a small part of the same deadline to terminate and reap only this helper.
+2026-11-16T19:45:05.7471100Z 209 |     let limit = OperationLimit(time: AttemptTime(end: time.end - 40_000_000), quitting: quitting)
+2026-11-16T19:45:05.7472100Z     |                                                                                         `- error: passing non-escaping parameter 'quitting' to function expecting an @escaping closure
+2026-11-16T19:45:05.7472690Z 210 |     try limit.check()
+2026-11-16T19:45:05.7473440Z 211 |     let command = SpawnCommand(executable: executable, arguments: arguments, cwd: cwd, environment: environment)
+2026-11-16T19:45:05.7474010Z 
+2026-11-16T19:45:05.7474800Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:40: error: static member 'open' cannot be used on instance of type 'LogDirectory'
+2026-11-16T19:45:05.7475740Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7476550Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7478210Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7479130Z     |                                        `- error: static member 'open' cannot be used on instance of type 'LogDirectory'
+2026-11-16T19:45:05.7480000Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7480580Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7480870Z 
+2026-11-16T19:45:05.7481660Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:44: error: missing argument labels 'for:create:' in call
+2026-11-16T19:45:05.7482480Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7483230Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7484110Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7484900Z     |                                            `- error: missing argument labels 'for:create:' in call
+2026-11-16T19:45:05.7485640Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7486260Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7486530Z 
+2026-11-16T19:45:05.7487400Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:52: error: cannot convert value of type 'String' to expected argument type 'VerifiedInstallation'
+2026-11-16T19:45:05.7488770Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7489470Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7490250Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7491160Z     |                                                    `- error: cannot convert value of type 'String' to expected argument type 'VerifiedInstallation'
+2026-11-16T19:45:05.7492100Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7492810Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7493100Z 
+2026-11-16T19:45:05.7494010Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:40: error: cannot convert value of type 'LogDirectory' to expected argument type 'Int32'
+2026-11-16T19:45:05.7495390Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7496180Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7497160Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7497970Z     |                                        `- error: cannot convert value of type 'LogDirectory' to expected argument type 'Int32'
+2026-11-16T19:45:05.7498850Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7499430Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7499730Z 
+2026-11-16T19:45:05.7500420Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:94: error: type 'Int32' cannot be used as a boolean; test for '!= 0' instead
+2026-11-16T19:45:05.7501390Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7502130Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7502960Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7504550Z     |                                                                                              `- error: type 'Int32' cannot be used as a boolean; test for '!= 0' instead
+2026-11-16T19:45:05.7505560Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7506110Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7506640Z [19/40] Compiling LauncherPresentation AppKitSurface.swift
+2026-11-16T19:45:05.7507890Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift:209:89: error: passing non-escaping parameter 'quitting' to function expecting an @escaping closure
+2026-11-16T19:45:05.7509280Z 204 | package func captureReadOnly(
+2026-11-16T19:45:05.7509950Z 205 |     executable: String, arguments: [String], cwd: String, environment: [String: String],
+2026-11-16T19:45:05.7510680Z 206 |     time: AttemptTime, quitting: () -> Bool = { false }, requireExitZero: Bool = true
+2026-11-16T19:45:05.7511500Z     |                        `- note: parameter 'quitting' is implicitly non-escaping
+2026-11-16T19:45:05.7512110Z 207 | ) throws -> CapturedOutput {
+2026-11-16T19:45:05.7517540Z 208 |     // Reserve a small part of the same deadline to terminate and reap only this helper.
+2026-11-16T19:45:05.7518550Z 209 |     let limit = OperationLimit(time: AttemptTime(end: time.end - 40_000_000), quitting: quitting)
+2026-11-16T19:45:05.7519520Z     |                                                                                         `- error: passing non-escaping parameter 'quitting' to function expecting an @escaping closure
+2026-11-16T19:45:05.7520830Z 210 |     try limit.check()
+2026-11-16T19:45:05.7521570Z 211 |     let command = SpawnCommand(executable: executable, arguments: arguments, cwd: cwd, environment: environment)
+2026-11-16T19:45:05.7521940Z 
+2026-11-16T19:45:05.7522710Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:40: error: static member 'open' cannot be used on instance of type 'LogDirectory'
+2026-11-16T19:45:05.7523760Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7524470Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7525340Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7526150Z     |                                        `- error: static member 'open' cannot be used on instance of type 'LogDirectory'
+2026-11-16T19:45:05.7527000Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7527780Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7563080Z 
+2026-11-16T19:45:05.7563950Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:44: error: missing argument labels 'for:create:' in call
+2026-11-16T19:45:05.7564920Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7565690Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7566550Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7567780Z     |                                            `- error: missing argument labels 'for:create:' in call
+2026-11-16T19:45:05.7568650Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7569300Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7569550Z 
+2026-11-16T19:45:05.7570560Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:52: error: cannot convert value of type 'String' to expected argument type 'VerifiedInstallation'
+2026-11-16T19:45:05.7571490Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7572810Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7573670Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7574470Z     |                                                    `- error: cannot convert value of type 'String' to expected argument type 'VerifiedInstallation'
+2026-11-16T19:45:05.7575320Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7575820Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7575990Z 
+2026-11-16T19:45:05.7576720Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:40: error: cannot convert value of type 'LogDirectory' to expected argument type 'Int32'
+2026-11-16T19:45:05.7577620Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7578390Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7579130Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7579930Z     |                                        `- error: cannot convert value of type 'LogDirectory' to expected argument type 'Int32'
+2026-11-16T19:45:05.7580880Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7581710Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7582620Z 
+2026-11-16T19:45:05.7583680Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:94: error: type 'Int32' cannot be used as a boolean; test for '!= 0' instead
+2026-11-16T19:45:05.7584630Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7585280Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7586160Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7586870Z     |                                                                                              `- error: type 'Int32' cannot be used as a boolean; test for '!= 0' instead
+2026-11-16T19:45:05.7588550Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7589190Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7589690Z [20/40] Compiling LauncherPresentation FailurePanel.swift
+2026-11-16T19:45:05.7590770Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/ChildProcess.swift:209:89: error: passing non-escaping parameter 'quitting' to function expecting an @escaping closure
+2026-11-16T19:45:05.7591660Z 204 | package func captureReadOnly(
+2026-11-16T19:45:05.7592360Z 205 |     executable: String, arguments: [String], cwd: String, environment: [String: String],
+2026-11-16T19:45:05.7594850Z 206 |     time: AttemptTime, quitting: () -> Bool = { false }, requireExitZero: Bool = true
+2026-11-16T19:45:05.7595430Z     |                        `- note: parameter 'quitting' is implicitly non-escaping
+2026-11-16T19:45:05.7595800Z 207 | ) throws -> CapturedOutput {
+2026-11-16T19:45:05.7596430Z 208 |     // Reserve a small part of the same deadline to terminate and reap only this helper.
+2026-11-16T19:45:05.7597290Z 209 |     let limit = OperationLimit(time: AttemptTime(end: time.end - 40_000_000), quitting: quitting)
+2026-11-16T19:45:05.7598280Z     |                                                                                         `- error: passing non-escaping parameter 'quitting' to function expecting an @escaping closure
+2026-11-16T19:45:05.7598890Z 210 |     try limit.check()
+2026-11-16T19:45:05.7600010Z 211 |     let command = SpawnCommand(executable: executable, arguments: arguments, cwd: cwd, environment: environment)
+2026-11-16T19:45:05.7600450Z 
+2026-11-16T19:45:05.7601130Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:40: error: static member 'open' cannot be used on instance of type 'LogDirectory'
+2026-11-16T19:45:05.7602070Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7602780Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7603530Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7604370Z     |                                        `- error: static member 'open' cannot be used on instance of type 'LogDirectory'
+2026-11-16T19:45:05.7605270Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7605830Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7606090Z 
+2026-11-16T19:45:05.7606750Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:44: error: missing argument labels 'for:create:' in call
+2026-11-16T19:45:05.7607470Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7608120Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7609220Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7609870Z     |                                            `- error: missing argument labels 'for:create:' in call
+2026-11-16T19:45:05.7610580Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7611060Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7611270Z 
+2026-11-16T19:45:05.7612280Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:52: error: cannot convert value of type 'String' to expected argument type 'VerifiedInstallation'
+2026-11-16T19:45:05.7613190Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7613840Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7614600Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7615480Z     |                                                    `- error: cannot convert value of type 'String' to expected argument type 'VerifiedInstallation'
+2026-11-16T19:45:05.7616300Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7616940Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7617180Z 
+2026-11-16T19:45:05.7617930Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:40: error: cannot convert value of type 'LogDirectory' to expected argument type 'Int32'
+2026-11-16T19:45:05.7618890Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7619580Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7620680Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7621420Z     |                                        `- error: cannot convert value of type 'LogDirectory' to expected argument type 'Int32'
+2026-11-16T19:45:05.7622210Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7622880Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7623210Z 
+2026-11-16T19:45:05.7624410Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Diagnostics.swift:176:94: error: type 'Int32' cannot be used as a boolean; test for '!= 0' instead
+2026-11-16T19:45:05.7625280Z 174 |         guard record.count <= 4_096 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7626040Z 175 |         // Open independently so this serialization never shares the gateway's root lock.
+2026-11-16T19:45:05.7626790Z 176 |         let lock = try OwnedDescriptor(open(parent.path, O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC))
+2026-11-16T19:45:05.7627660Z     |                                                                                              `- error: type 'Int32' cannot be used as a boolean; test for '!= 0' instead
+2026-11-16T19:45:05.7629920Z 177 |         guard FileIdentity(try lock.metadata()) == parent.identity, flock(lock.fd, LOCK_EX | LOCK_NB) == 0
+2026-11-16T19:45:05.7630660Z 178 |         else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7631500Z [21/40] Compiling LauncherPresentation HandoffArbiter.swift
+2026-11-16T19:45:05.7632660Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift:53:63: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7633460Z  51 |     let resolved = try canonicalPath(path)
+2026-11-16T19:45:05.7633860Z  52 |     var metadata = stat()
+2026-11-16T19:45:05.7634260Z  53 |     guard lstat(resolved, &metadata) == 0, fileKind(metadata, S_IFREG),
+2026-11-16T19:45:05.7635490Z     |                                                               `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7636330Z  54 |           access(resolved, X_OK) == 0 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7636700Z  55 |     return resolved
+2026-11-16T19:45:05.7636910Z 
+2026-11-16T19:45:05.7637720Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:111:34: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7638490Z 109 |             var info = stat()
+2026-11-16T19:45:05.7639140Z 110 |             guard try canonicalPath(path) == path, lstat(path, &info) == 0,
+2026-11-16T19:45:05.7639900Z 111 |                   fileKind(info, S_IFREG), info.st_size > 0, access(path, R_OK) == 0 else {
+2026-11-16T19:45:05.7640860Z     |                                  `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7641500Z 112 |                 throw FileRefusal.invalid
+2026-11-16T19:45:05.7641760Z 113 |             }
+2026-11-16T19:45:05.7641870Z 
+2026-11-16T19:45:05.7642790Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:138:39: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7643540Z 136 |             try directory.requireOwnedDirectory()
+2026-11-16T19:45:05.7643960Z 137 |             if let entry = try directory.named("graphgoblin.db") {
+2026-11-16T19:45:05.7644530Z 138 |                 guard fileKind(entry, S_IFREG), entry.st_uid == geteuid(), entry.st_nlink == 1 else {
+2026-11-16T19:45:05.7645240Z     |                                       `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7645910Z 139 |                     throw FileRefusal.invalid
+2026-11-16T19:45:05.7646230Z 140 |                 }
+2026-11-16T19:45:05.7646400Z 
+2026-11-16T19:45:05.7647240Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:147:40: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7647990Z 145 |                 ))
+2026-11-16T19:45:05.7648340Z 146 |                 let actual = try handle.metadata()
+2026-11-16T19:45:05.7648780Z 147 |                 guard fileKind(actual, S_IFREG), actual.st_uid == geteuid(),
+2026-11-16T19:45:05.7649770Z     |                                        `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7650410Z 148 |                       FileIdentity(actual) == FileIdentity(key),
+2026-11-16T19:45:05.7651000Z 149 |                       try directory.named("master.key").map(FileIdentity.init) == FileIdentity(actual) else {
+2026-11-16T19:45:05.7651600Z [22/40] Compiling LauncherPresentation LaunchPresentationController.swift
+2026-11-16T19:45:05.7652700Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift:53:63: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7653420Z  51 |     let resolved = try canonicalPath(path)
+2026-11-16T19:45:05.7656770Z  52 |     var metadata = stat()
+2026-11-16T19:45:05.7657260Z  53 |     guard lstat(resolved, &metadata) == 0, fileKind(metadata, S_IFREG),
+2026-11-16T19:45:05.7657910Z     |                                                               `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7658480Z  54 |           access(resolved, X_OK) == 0 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7658780Z  55 |     return resolved
+2026-11-16T19:45:05.7658980Z 
+2026-11-16T19:45:05.7659740Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:111:34: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7660820Z 109 |             var info = stat()
+2026-11-16T19:45:05.7661290Z 110 |             guard try canonicalPath(path) == path, lstat(path, &info) == 0,
+2026-11-16T19:45:05.7662000Z 111 |                   fileKind(info, S_IFREG), info.st_size > 0, access(path, R_OK) == 0 else {
+2026-11-16T19:45:05.7662690Z     |                                  `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7663360Z 112 |                 throw FileRefusal.invalid
+2026-11-16T19:45:05.7663650Z 113 |             }
+2026-11-16T19:45:05.7663750Z 
+2026-11-16T19:45:05.7664500Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:138:39: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7665250Z 136 |             try directory.requireOwnedDirectory()
+2026-11-16T19:45:05.7665720Z 137 |             if let entry = try directory.named("graphgoblin.db") {
+2026-11-16T19:45:05.7666350Z 138 |                 guard fileKind(entry, S_IFREG), entry.st_uid == geteuid(), entry.st_nlink == 1 else {
+2026-11-16T19:45:05.7667230Z     |                                       `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7667830Z 139 |                     throw FileRefusal.invalid
+2026-11-16T19:45:05.7668200Z 140 |                 }
+2026-11-16T19:45:05.7668370Z 
+2026-11-16T19:45:05.7669220Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:147:40: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7670030Z 145 |                 ))
+2026-11-16T19:45:05.7670310Z 146 |                 let actual = try handle.metadata()
+2026-11-16T19:45:05.7670760Z 147 |                 guard fileKind(actual, S_IFREG), actual.st_uid == geteuid(),
+2026-11-16T19:45:05.7671500Z     |                                        `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7672120Z 148 |                       FileIdentity(actual) == FileIdentity(key),
+2026-11-16T19:45:05.7672780Z 149 |                       try directory.named("master.key").map(FileIdentity.init) == FileIdentity(actual) else {
+2026-11-16T19:45:05.7673450Z [23/40] Compiling LauncherPresentation LauncherAppDelegate.swift
+2026-11-16T19:45:05.7674790Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/Installation.swift:53:63: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7675490Z  51 |     let resolved = try canonicalPath(path)
+2026-11-16T19:45:05.7675760Z  52 |     var metadata = stat()
+2026-11-16T19:45:05.7676100Z  53 |     guard lstat(resolved, &metadata) == 0, fileKind(metadata, S_IFREG),
+2026-11-16T19:45:05.7676770Z     |                                                               `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7677490Z  54 |           access(resolved, X_OK) == 0 else { throw FileRefusal.invalid }
+2026-11-16T19:45:05.7677800Z  55 |     return resolved
+2026-11-16T19:45:05.7677920Z 
+2026-11-16T19:45:05.7678670Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:111:34: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7679370Z 109 |             var info = stat()
+2026-11-16T19:45:05.7679780Z 110 |             guard try canonicalPath(path) == path, lstat(path, &info) == 0,
+2026-11-16T19:45:05.7680340Z 111 |                   fileKind(info, S_IFREG), info.st_size > 0, access(path, R_OK) == 0 else {
+2026-11-16T19:45:05.7680960Z     |                                  `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7681720Z 112 |                 throw FileRefusal.invalid
+2026-11-16T19:45:05.7681970Z 113 |             }
+2026-11-16T19:45:05.7682070Z 
+2026-11-16T19:45:05.7683030Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:138:39: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7683790Z 136 |             try directory.requireOwnedDirectory()
+2026-11-16T19:45:05.7684240Z 137 |             if let entry = try directory.named("graphgoblin.db") {
+2026-11-16T19:45:05.7684900Z 138 |                 guard fileKind(entry, S_IFREG), entry.st_uid == geteuid(), entry.st_nlink == 1 else {
+2026-11-16T19:45:05.7685700Z     |                                       `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7686920Z 139 |                     throw FileRefusal.invalid
+2026-11-16T19:45:05.7687230Z 140 |                 }
+2026-11-16T19:45:05.7687390Z 
+2026-11-16T19:45:05.7688290Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/LaunchInputs.swift:147:40: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7689800Z 145 |                 ))
+2026-11-16T19:45:05.7690130Z 146 |                 let actual = try handle.metadata()
+2026-11-16T19:45:05.7690670Z 147 |                 guard fileKind(actual, S_IFREG), actual.st_uid == geteuid(),
+2026-11-16T19:45:05.7691390Z     |                                        `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7692000Z 148 |                       FileIdentity(actual) == FileIdentity(key),
+2026-11-16T19:45:05.7692640Z 149 |                       try directory.named("master.key").map(FileIdentity.init) == FileIdentity(actual) else {
+2026-11-16T19:45:05.7693140Z [24/42] Compiling LauncherEngine NativeFiles.swift
+2026-11-16T19:45:05.7694620Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift:52:24: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7695250Z  50 | 
+2026-11-16T19:45:05.7695570Z  51 | package func isOwnedFile(_ metadata: stat, privateMode: Bool) -> Bool {
+2026-11-16T19:45:05.7696100Z  52 |     fileKind(metadata, S_IFREG) && metadata.st_uid == geteuid() && metadata.st_nlink == 1
+2026-11-16T19:45:05.7697240Z     |                        `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7697790Z  53 |         && metadata.st_mode & mode_t(privateMode ? 0o077 : 0o022) == 0
+2026-11-16T19:45:05.7698080Z  54 | }
+2026-11-16T19:45:05.7698170Z 
+2026-11-16T19:45:05.7699010Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift:116:60: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7699630Z 114 | 
+2026-11-16T19:45:05.7699950Z 115 |     package func child(_ name: String) throws -> Directory {
+2026-11-16T19:45:05.7700420Z 116 |         guard let known = try named(name), fileKind(known, S_IFDIR) else {
+2026-11-16T19:45:05.7701050Z     |                                                            `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7701560Z 117 |             throw FileRefusal.invalid
+2026-11-16T19:45:05.7701780Z 118 |         }
+2026-11-16T19:45:05.7701890Z 
+2026-11-16T19:45:05.7702870Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift:129:34: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7704020Z 127 |     package func requireOwnedDirectory(privateMode: Bool = false) throws {
+2026-11-16T19:45:05.7704510Z 128 |         let metadata = try handle.metadata()
+2026-11-16T19:45:05.7704950Z 129 |         guard fileKind(metadata, S_IFDIR), metadata.st_uid == geteuid(),
+2026-11-16T19:45:05.7705950Z     |                                  `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7706610Z 130 |               metadata.st_mode & mode_t(privateMode ? 0o077 : 0o022) == 0 else {
+2026-11-16T19:45:05.7707180Z 131 |             throw FileRefusal.invalid
+2026-11-16T19:45:05.7707570Z [25/42] Compiling LauncherEngine NativeLaunchEngine.swift
+2026-11-16T19:45:05.7708530Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift:52:24: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7709170Z  50 | 
+2026-11-16T19:45:05.7709520Z  51 | package func isOwnedFile(_ metadata: stat, privateMode: Bool) -> Bool {
+2026-11-16T19:45:05.7710130Z  52 |     fileKind(metadata, S_IFREG) && metadata.st_uid == geteuid() && metadata.st_nlink == 1
+2026-11-16T19:45:05.7710810Z     |                        `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7711370Z  53 |         && metadata.st_mode & mode_t(privateMode ? 0o077 : 0o022) == 0
+2026-11-16T19:45:05.7711650Z  54 | }
+2026-11-16T19:45:05.7711730Z 
+2026-11-16T19:45:05.7712470Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift:116:60: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7713140Z 114 | 
+2026-11-16T19:45:05.7713500Z 115 |     package func child(_ name: String) throws -> Directory {
+2026-11-16T19:45:05.7713980Z 116 |         guard let known = try named(name), fileKind(known, S_IFDIR) else {
+2026-11-16T19:45:05.7714640Z     |                                                            `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7715150Z 117 |             throw FileRefusal.invalid
+2026-11-16T19:45:05.7715390Z 118 |         }
+2026-11-16T19:45:05.7715490Z 
+2026-11-16T19:45:05.7716260Z /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Engine/NativeFiles.swift:129:34: error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7717150Z 127 |     package func requireOwnedDirectory(privateMode: Bool = false) throws {
+2026-11-16T19:45:05.7717960Z 128 |         let metadata = try handle.metadata()
+2026-11-16T19:45:05.7718420Z 129 |         guard fileKind(metadata, S_IFDIR), metadata.st_uid == geteuid(),
+2026-11-16T19:45:05.7719570Z     |                                  `- error: cannot convert value of type 'mode_t' (aka 'UInt16') to expected argument type 'Int32'
+2026-11-16T19:45:05.7720210Z 130 |               metadata.st_mode & mode_t(privateMode ? 0o077 : 0o022) == 0 else {
+2026-11-16T19:45:05.7723230Z 131 |             throw FileRefusal.invalid
+2026-11-16T19:45:05.7724700Z error: fatalError
+2026-11-16T19:45:05.7847700Z ##[error]Process completed with exit code 1.
+2026-11-16T19:45:05.8215550Z ##[group]Run actions/upload-artifact@v4
+2026-11-16T19:45:05.8215830Z with:
+2026-11-16T19:45:05.8215980Z   name: macos-launcher
+2026-11-16T19:45:05.8216160Z   include-hidden-files: true
+2026-11-16T19:45:05.8216430Z   path: .tmp/macos-launcher-*/
+.tmp/macos-swift-test/**/codecov/**
+
+2026-11-16T19:45:05.8216720Z   if-no-files-found: error
+2026-11-16T19:45:05.8216900Z   retention-days: 7
+2026-11-16T19:45:05.8217060Z   compression-level: 6
+2026-11-16T19:45:05.8217240Z   overwrite: false
+2026-11-16T19:45:05.8217390Z env:
+2026-11-16T19:45:05.8217510Z   LIVE: 0
+2026-11-16T19:45:05.8217880Z   GG_MACOS_LAUNCHER_ARTIFACT_DIR: /Users/runner/work/GraphGoblin/GraphGoblin/.tmp/macos-launcher-acceptance
+2026-11-16T19:45:05.8218360Z   PNPM_HOME: /Users/runner/setup-pnpm/node_modules/.bin
+2026-11-16T19:45:05.8218600Z ##[endgroup]
+2026-11-16T19:45:06.2826370Z (node:3201) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-11-16T19:45:06.2827870Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-11-16T19:45:06.5093550Z With the provided path, there will be 4 files uploaded
+2026-11-16T19:45:06.5096460Z Artifact name is valid!
+2026-11-16T19:45:06.5096880Z Root directory input is valid!
+2026-11-16T19:45:06.9174460Z Beginning upload of artifact content to blob storage
+2026-11-16T19:45:06.9441550Z (node:3201) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-11-16T19:45:07.2180950Z Uploaded bytes 3155
+2026-11-16T19:45:07.2919380Z Finished uploading artifact content to blob storage!
+2026-11-16T19:45:07.2920220Z SHA256 digest of uploaded artifact zip is c76ee02f69687abe3cff731edaad2aab042942dee02767ae65cc7b1163aadf2e
+2026-11-16T19:45:07.2920800Z Finalizing artifact upload
+2026-11-16T19:45:07.7405290Z Artifact macos-launcher.zip successfully finalized. Artifact ID 14262918796
+2026-11-16T19:45:07.7406170Z Artifact macos-launcher has been successfully uploaded! Final size is 3155 bytes. Artifact ID is 14262918796
+2026-11-16T19:45:07.7413220Z Artifact download URL: https://github.com/Jacob-J-Thomas/GraphGoblin/actions/runs/43942201334/artifacts/14262918796
+2026-11-16T19:45:07.7569530Z Post job cleanup.
+2026-11-16T19:45:07.9147290Z Pruning is unnecessary.
+2026-11-16T19:45:07.9249510Z Post job cleanup.
+2026-11-16T19:45:08.0495950Z [command]/opt/homebrew/bin/git version
+2026-11-16T19:45:08.0611420Z git version 2.56.1
+2026-11-16T19:45:08.0669250Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/4aee5dc5-8d36-4973-a84f-371fd967983c/.gitconfig'
+2026-11-16T19:45:08.0670330Z Temporarily overriding HOME='/Users/runner/work/_temp/4aee5dc5-8d36-4973-a84f-371fd967983c' before making global git config changes
+2026-11-16T19:45:08.0671210Z Adding repository directory to the temporary git global config as a safe directory
+2026-11-16T19:45:08.0672050Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/GraphGoblin/GraphGoblin
+2026-11-16T19:45:08.0721970Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-11-16T19:45:08.0810880Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-11-16T19:45:08.2623010Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-11-16T19:45:08.2691880Z http.https://github.com/.extraheader
+2026-11-16T19:45:08.2699240Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-11-16T19:45:08.2997130Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-11-16T19:45:08.4105950Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-11-16T19:45:08.4168300Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-11-16T19:45:08.5653920Z Cleaning up orphan processes
+2026-11-16T19:45:09.6401260Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4, actions/upload-artifact@v4, pnpm/action-setup@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

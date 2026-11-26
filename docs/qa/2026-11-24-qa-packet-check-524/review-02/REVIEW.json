@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "issue": 524,
+  "review": "review-02",
+  "formalPass": 2,
+  "formalPassMaximum": 3,
+  "mode": "targeted correction delta",
+  "verdict": "CHANGES_REQUIRED",
+  "completedAtUtc": "2026-11-25T01:39:43.0302199Z",
+  "worktree": "G:\\ggq\\gg-fu-qa-packets-20261124\\GraphGoblin",
+  "base": "d2df8600c2c8574bec420947de686b936910b245",
+  "head": "04a74c51612c5f82da61844d58a58a6796b5a323",
+  "originalTree": "1419c3af0468e2ae919ac0f6cf99b503a15b0c2c",
+  "correctionPatchSha256": "dc3cd71b4b2748470a12de1e7b08d9bd7ee05636de049fa11d81e45cf2e35fc7",
+  "sourceBindings": [
+    {
+      "path": "CHANGELOG.md",
+      "expected": "1f994b8d71ba49c4c73ef4dacdbd75b1a6e91bd38afd1844479d4da3d0dbf518",
+      "actual": "1f994b8d71ba49c4c73ef4dacdbd75b1a6e91bd38afd1844479d4da3d0dbf518",
+      "matches": true,
+      "matchesAuthor": null
+    },
+    {
+      "path": "docs/10-testing-and-quality.md",
+      "expected": "1fea49d226417e76d8d71f60b90c839fa0a735dba0e88d2dd0e75feba3d2c34a",
+      "actual": "1fea49d226417e76d8d71f60b90c839fa0a735dba0e88d2dd0e75feba3d2c34a",
+      "matches": true,
+      "matchesAuthor": true
+    },
+    {
+      "path": "docs/15-issue-workflow.md",
+      "expected": "5ad0e447dfc44643e7cfde6c6d300f3dc97d856a6583d19515a20a1811633d1b",
+      "actual": "5ad0e447dfc44643e7cfde6c6d300f3dc97d856a6583d19515a20a1811633d1b",
+      "matches": true,
+      "matchesAuthor": null
+    },
+    {
+      "path": "package.json",
+      "expected": "b1a4aa7b76e8837973571f4c09346d5e9755135e1819d4811ee83ae3e53de7b8",
+      "actual": "b1a4aa7b76e8837973571f4c09346d5e9755135e1819d4811ee83ae3e53de7b8",
+      "matches": true,
+      "matchesAuthor": null
+    },
+    {
+      "path": "tooling/scripts/check-qa-packet.mjs",
+      "expected": "c51a9d32a115406b059da5b2869ea78921f0de8ab99b4b7e0c4b5ee1a6468009",
+      "actual": "c51a9d32a115406b059da5b2869ea78921f0de8ab99b4b7e0c4b5ee1a6468009",
+      "matches": true,
+      "matchesAuthor": true
+    },
+    {
+      "path": "tooling/scripts/check-qa-packet.test.mjs",
+      "expected": "71682cfb2e0a05adb6d66a9cde65b5384da790448c52ac55abc6e92a03bba789",
+      "actual": "71682cfb2e0a05adb6d66a9cde65b5384da790448c52ac55abc6e92a03bba789",
+      "matches": true,
+      "matchesAuthor": true
+    }
+  ],
+  "changedPaths": [
+    "docs/10-testing-and-quality.md",
+    "tooling/scripts/check-qa-packet.mjs",
+    "tooling/scripts/check-qa-packet.test.mjs"
+  ],
+  "stagedPaths": [],
+  "indexBefore": "42b41687b30e1af106c8575cf5b106bad5ab1b6d0db7e130cc043f4076c10f07",
+  "indexAfter": "42b41687b30e1af106c8575cf5b106bad5ab1b6d0db7e130cc043f4076c10f07",
+  "indexUnchanged": true,
+  "sourceMutationByReviewer": false,
+  "externalMutationByReviewer": false,
+  "checks": [
+    {
+      "name": "focused public-command tests",
+      "result": "PASSED",
+      "passed": 10,
+      "failed": 0,
+      "output": "FOCUSED-TESTS.log"
+    },
+    {
+      "name": "five-case Git selection controls",
+      "result": "FAILED at fifth autocrlf control; first four cases completed assertions",
+      "output": "CORRECTION-CONTROLS.log"
+    },
+    {
+      "name": "minimal actual-CLI normalized-equivalence reproduction",
+      "result": "CONFIRMED_CORRECTION_REGRESSION",
+      "output": "AUTOCRLF-CONFIRMED.json"
+    },
+    {
+      "name": "git diff --check HEAD",
+      "result": "PASSED"
+    }
+  ],
+  "rootCauseLedger": [
+    {
+      "signature": "qa-diff/auto-refresh-writes-index",
+      "severity": "P2",
+      "disposition": "FIX-IN-PR",
+      "state": "RESOLVED",
+      "resolution": "Command-local diff.autoRefreshIndex=false and deterministic byte-preservation regression"
+    },
+    {
+      "signature": "qa-diff/normalized-equivalent-size-selected",
+      "severity": "P2",
+      "disposition": "FIX-IN-PR",
+      "state": "UNRESOLVED",
+      "introducedByCorrection": true,
+      "file": "tooling/scripts/check-qa-packet.mjs",
+      "startLine": 127,
+      "endLine": 129,
+      "title": "Exclude Git-equivalent content when filtering unstaged paths",
+      "evidence": "AUTOCRLF-CONFIRMED.json",
+      "requiredOutcome": "Byte-identical index/source and exclusion of normalized-equivalent files under ordinary settings and repository EOL attributes with autocrlf, while selecting real changes",
+      "resolution": "Root accepted for next author correction"
+    }
+  ],
+  "discardedDiagnostic": "AUTOCRLF-DIAGNOSTIC-01.json wrongly scoped CLI; no finding depends on it",
+  "nextReview": "Reserved fresh Astra MAX final pass 3 covers next author correction; no extra targeted review requested",
+  "artifact": "REVIEW.md"
+}

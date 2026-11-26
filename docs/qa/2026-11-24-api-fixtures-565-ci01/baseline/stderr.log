@@ -1,0 +1,110 @@
+$ vitest run src/main.test.ts --reporter=verbose
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 5 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process
+AssertionError: expected 'another GraphGoblin process holds G:\…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+
+- Expected
++ Received
+
+- G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-alias-baseline\gg-api-process-nc7UFC\graphgoblin.lock
++ another GraphGoblin process holds G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-target-baseline\gg-api-process-nc7UFC\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying
++
+
+ ❯ src/main.test.ts:174:32
+    172|       expect(contender.stderr).toContain('another GraphGoblin process …
+    173|       expectOwnershipRefusal(contender.stderr);
+    174|       expect(contender.stderr).toContain(f.lockPath);
+       |                                ^
+    175|       expect(contender.stderr).toContain(
+    176|         'wait for the owning process to finish or stop it before retry…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > refuses a shared database in one line and leaves its existing owner serving
+AssertionError: expected 'another GraphGoblin process holds G:\…' to contain 'another GraphGoblin process holds G:\…'
+
+- Expected
++ Received
+
+- another GraphGoblin process holds G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-alias-baseline\gg-api-process-ssdZjd\shared.db.graphgoblin.lock
++ another GraphGoblin process holds G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-target-baseline\gg-api-process-ssdZjd\shared.db.graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying
++
+
+ ❯ src/main.test.ts:209:32
+    207|       expect(await contender.waitForExit()).toEqual({ code: 1, signal:…
+    208|       expectOwnershipRefusal(contender.stderr);
+    209|       expect(contender.stderr).toContain(`another GraphGoblin process …
+       |                                ^
+    210|       expect(contender.stdout).toBe('');
+    211|       expect(await readFile(f.lockPath, 'utf8')).toBe(directoryRecord);
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/5]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > explains uncertain data-directory ownership in one line and preserves the owner record
+AssertionError: expected 'Store ownership could not be verified…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+
+- Expected
++ Received
+
+- G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-alias-baseline\gg-api-process-4wIDQj\graphgoblin.lock
++ Store ownership could not be verified (malformed or incomplete owner record): G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-target-baseline\gg-api-process-4wIDQj\graphgoblin.lock; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying
++
+
+ ❯ src/main.test.ts:248:28
+    246|         'Store ownership could not be verified (malformed or incomplet…
+    247|       );
+    248|       expect(child.stderr).toContain(kind === 'reclamation' ? guard : …
+       |                            ^
+    249|       expect(child.stderr).toContain('inspect the owner record and run…
+    250|       expect(child.stdout).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/5]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > explains uncertain database ownership in one line and preserves the owner record
+AssertionError: expected 'Store ownership could not be verified…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+
+- Expected
++ Received
+
+- G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-alias-baseline\gg-api-process-c0ky9X\uncertain.db.graphgoblin.lock
++ Store ownership could not be verified (malformed or incomplete owner record): G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-target-baseline\gg-api-process-c0ky9X\uncertain.db.graphgoblin.lock; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying
++
+
+ ❯ src/main.test.ts:248:28
+    246|         'Store ownership could not be verified (malformed or incomplet…
+    247|       );
+    248|       expect(child.stderr).toContain(kind === 'reclamation' ? guard : …
+       |                            ^
+    249|       expect(child.stderr).toContain('inspect the owner record and run…
+    250|       expect(child.stdout).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/5]⎯
+
+ FAIL  src/main.test.ts > built API entry and startup failures > explains uncertain reclamation ownership in one line and preserves the owner record
+AssertionError: expected 'Store ownership could not be verified…' to contain 'G:\ggq\delivery-evidence\2026-11-24-f…'
+
+- Expected
++ Received
+
+- G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-alias-baseline\gg-api-process-RD0Pks\graphgoblin.lock.reclaim
++ Store ownership could not be verified (malformed or incomplete owner record): G:\ggq\delivery-evidence\2026-11-24-followups\api-fixtures-565\hosted-ci-01\temporary-target-baseline\gg-api-process-RD0Pks\graphgoblin.lock.reclaim; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying
++
+
+ ❯ src/main.test.ts:248:28
+    246|         'Store ownership could not be verified (malformed or incomplet…
+    247|       );
+    248|       expect(child.stderr).toContain(kind === 'reclamation' ? guard : …
+       |                            ^
+    249|       expect(child.stderr).toContain('inspect the owner record and run…
+    250|       expect(child.stdout).toBe('');
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/5]⎯
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-fu-api-fixtures-
+  │ 20261124\GraphGoblin\apps\api
+

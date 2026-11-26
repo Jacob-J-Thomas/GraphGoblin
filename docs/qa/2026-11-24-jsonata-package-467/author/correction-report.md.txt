@@ -1,0 +1,25 @@
+I replaced the inaccurate `isParallelCall` sentence in `docs/research/licenses.md`. That one sentence is the only change; the other three checkpoint files were not touched, and everything is left unstaged.
+
+**The edit** (line 71, "Siblings evaluated in turn" bullet):
+
+- Before: "It no longer sets `isParallelCall`; nothing in jsonata 2.2.2 reads that flag, and neither do GraphGoblin's hooks."
+- After: "It no longer sets `isParallelCall`. In jsonata 2.2.2, `createFrame` reads that flag only to copy it from the enclosing frame into each new frame; no evaluation logic acts on it, and GraphGoblin's hooks do not read it."
+
+**What the source shows:**
+- In the installed patched `jsonata.js`, the only remaining mention of `isParallelCall` is line 5341, inside `createFrame`. It copies the value from the enclosing frame, or uses `false` if there is none. Nothing else in that file reads it.
+- `patches/jsonata@2.2.2.patch` removes the two places that set it (the array and object constructors). These are the two removed lines in the patch.
+- The bundled `jsonata-es5.js` still sets it in both constructors and copies it in `createFrame`. That matches the doc's existing statement that those bundles stay as upstream code and are never loaded.
+- `packages/` has no references to `isParallelCall`, so GraphGoblin's hooks don't read it.
+
+**Checks run:**
+
+| Command | Result |
+|---|---|
+| `node --version` | `v22.23.4` (meets the ≥ 22.22.2 requirement) |
+| `pnpm exec prettier --check docs/research/licenses.md` | Passed: "All matched files use Prettier code style!" |
+| `git --no-pager diff --check` | No output, so no whitespace errors |
+| `git --no-optional-locks status --short` | Same four modified files as before, all unstaged |
+
+I didn't run `pnpm exec prettier --write`, because the check already passed. I first tried to set the project Node PATH inside the Bash command; that isn't on the allowed command list and was refused. The plain `node --version` already reported a valid Node 22.
+
+**Still open:** independent image QA, ordinary CI and a fresh final review of the exact head. I added no tests, as you asked, and needed no other paths or commands.

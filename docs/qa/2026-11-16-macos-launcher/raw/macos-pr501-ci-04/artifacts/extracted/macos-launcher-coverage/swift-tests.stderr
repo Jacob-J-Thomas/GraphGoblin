@@ -1,0 +1,52 @@
+Building for debugging...
+[0/27] /Users/runner/work/_temp/graphgoblin-coverage-aP1l1H/swift-test/arm64-apple-macosx/debug/GraphGoblinMacLauncherPackageTests.derived/runner.swift
+[1/27] Write sources
+[1/27] Write PresentationFixture-entitlement.plist
+[1/27] Write sources
+[10/27] Write GraphGoblinLauncherInstaller-entitlement.plist
+[14/27] Write GraphGoblin-entitlement.plist
+[15/27] Write swift-version--79AA4F9932D1E87A.txt
+[17/29] Emitting module LaunchContract
+[18/29] Compiling LaunchContract LaunchContract.swift
+[19/45] Compiling LauncherEngine ChildProcess.swift
+[20/45] Compiling LauncherEngine Diagnostics.swift
+[21/45] Compiling LauncherEngine Headless.swift
+[22/45] Emitting module LauncherEngine
+[23/45] Compiling LauncherPresentation LaunchPresentationController.swift
+[24/45] Compiling LauncherPresentation LauncherAppDelegate.swift
+[25/45] Compiling LauncherPresentation LauncherPresentationEntry.swift
+[26/47] Compiling LauncherEngine NativeFiles.swift
+[27/47] Compiling LauncherEngine NativeLaunchEngine.swift
+[28/56] Compiling LauncherEngineTests ACLTests.swift
+[29/56] Compiling LauncherEngineTests ChildTests.swift
+[30/56] Compiling LauncherEngineTests DiagnosticsTests.swift
+[31/56] Compiling LauncherEngineTests EngineContractsTests.swift
+[32/56] Emitting module LauncherPresentation
+[33/56] Compiling LauncherEngineTests InstalledEngineTests.swift
+[37/59] Compiling LauncherInstaller InstallerOptions.swift
+[38/60] Emitting module LauncherInstaller
+[39/60] Compiling LauncherInstaller BundlePublisher.swift
+[40/60] Compiling LauncherPresentation PresentationSeams.swift
+[41/60] Compiling LauncherPresentation ProgressPanel.swift
+[42/60] Compiling LauncherPresentation WorkspaceBrowserOpener.swift
+[43/60] Compiling LauncherInstaller LauncherInstaller.swift
+[44/77] Emitting module PresentationFixture
+[45/77] Compiling PresentationFixture PresentationFixture.swift
+[46/79] Emitting module LauncherEngineTests
+[47/81] Emitting module LauncherInstallerTests
+[48/81] Compiling LauncherInstallerTests PublisherTests.swift
+macro expansion #require:2:3: error: call can throw, but it is not marked with 'try' and the error is not handled
+`- /Users/runner/work/GraphGoblin/GraphGoblin/apps/macos-launcher/Tests/Installer/PublisherTests.swift:133:72: note: expanded code originates here
+131 |             try records.write(stable, replacing: nil)
+132 |             let filename = fixture.id + ".json"
+133 |             let before = try #require(fixture.receipts.named(filename))
+    +--- macro expansion #require --------------------------------------
+    |1 | Testing.__checkFunctionCall(fixture.receipts.self,calling: {
+    |2 |   $0.named($1)
+    |  |   `- error: call can throw, but it is not marked with 'try' and the error is not handled
+    |3 | },filename,expression: .__fromFunctionCall(.__fromSyntaxNode("fixture.receipts"),"named",(nil,.__fromSyntaxNode("filename"))),comments: [],isRequired: true,sourceLocation: Testing.SourceLocation.__here()).__required()
+    +-------------------------------------------------------------------
+134 |             let bytes = try stable.encode()
+135 | 
+[49/81] Emitting module LauncherPresentationTests
+error: fatalError

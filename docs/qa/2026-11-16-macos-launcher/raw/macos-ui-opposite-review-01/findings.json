@@ -1,0 +1,275 @@
+{
+  "schema": "graphgoblin.macos-launcher.ui-review.v1",
+  "pullRequest": 501,
+  "issue": 456,
+  "scan": 1,
+  "scanLimit": 3,
+  "review": "independent GPT review of Claude AppKit presentation",
+  "method": "source-only",
+  "verdict": "CHANGES_REQUIRED",
+  "checkout": "C:/Users/98jak/.codex/worktrees/gg-20261116-macos-launcher/GraphGoblin",
+  "sourceHead": "8bddb93aaa61ebb1b962385efa97a468a379929d",
+  "base": "6d7fcc9838d831fe1be3c3cf52c90a2f33e8f5b1",
+  "sourceTree": "d0f7b3eefda54c888e044715bd21ac30201003b3",
+  "previousHead": "14fd41d3b0a58b0f4dfb4e614c2067d861c29129",
+  "coverage": {
+    "presentationFiles": [
+      "apps/macos-launcher/Presentation/AppKitSupport.swift",
+      "apps/macos-launcher/Presentation/AppKitSurface.swift",
+      "apps/macos-launcher/Presentation/FailurePanel.swift",
+      "apps/macos-launcher/Presentation/HandoffArbiter.swift",
+      "apps/macos-launcher/Presentation/LaunchPresentationController.swift",
+      "apps/macos-launcher/Presentation/LauncherAppDelegate.swift",
+      "apps/macos-launcher/Presentation/LauncherPresentationEntry.swift",
+      "apps/macos-launcher/Presentation/PresentationCopy.swift",
+      "apps/macos-launcher/Presentation/PresentationSeams.swift",
+      "apps/macos-launcher/Presentation/ProgressPanel.swift",
+      "apps/macos-launcher/Presentation/WorkspaceBrowserOpener.swift"
+    ],
+    "tests": [
+      "apps/macos-launcher/Tests/Presentation/AppKitControlTests.swift",
+      "apps/macos-launcher/Tests/Presentation/AppKitWindowTests.swift",
+      "apps/macos-launcher/Tests/Presentation/AttemptLifecycleTests.swift",
+      "apps/macos-launcher/Tests/Presentation/BrowserHandoffTests.swift",
+      "apps/macos-launcher/Tests/Presentation/HandoffArbiterTests.swift",
+      "apps/macos-launcher/Tests/Presentation/OutcomeCopyTests.swift",
+      "apps/macos-launcher/Tests/Presentation/QuitTests.swift",
+      "apps/macos-launcher/Tests/Presentation/ShowLogTests.swift",
+      "apps/macos-launcher/Tests/Presentation/Support/Harness.swift",
+      "apps/macos-launcher/Tests/Presentation/Support/ManualClock.swift",
+      "apps/macos-launcher/Tests/Presentation/Support/Probes.swift",
+      "apps/macos-launcher/Tests/Presentation/Support/ScriptedBrowserOpener.swift",
+      "apps/macos-launcher/Tests/Presentation/Support/ScriptedLaunchEngine.swift",
+      "apps/macos-launcher/Tests/Presentation/Support/ScriptedResolver.swift",
+      "apps/macos-launcher/Tests/Presentation/Support/ScriptedSurface.swift"
+    ],
+    "shared": [
+      "apps/macos-launcher/LaunchContract.swift",
+      "apps/macos-launcher/Entry.swift",
+      "apps/macos-launcher/Package.swift"
+    ],
+    "seams": [
+      {
+        "path": "apps/macos-launcher/Engine/NativeLaunchEngine.swift",
+        "area": "Stage/outcome and show-log integration, attempt cancellation, spawn commitment"
+      },
+      {
+        "path": "apps/macos-launcher/Engine/LaunchInputs.swift",
+        "area": "Closed store-state decoding"
+      },
+      {
+        "path": "apps/macos-launcher/Engine/Diagnostics.swift",
+        "area": "Fixed validated log directory resolution"
+      },
+      {
+        "path": "apps/macos-launcher/Installer/Core/LauncherInstaller.swift",
+        "area": "Bundle property list"
+      },
+      {
+        "path": "apps/api/src/instance-identity.ts",
+        "area": "Read-only store-state helper"
+      },
+      {
+        "path": "apps/api/src/data-dir-lock.ts",
+        "area": "Store ownership interpretation"
+      },
+      {
+        "path": ".github/workflows/ci.yml",
+        "area": "Swift test and native acceptance invocations"
+      },
+      {
+        "path": "tooling/scripts/macos-launcher.acceptance.mjs",
+        "area": "Existing held-store headless acceptance case"
+      }
+    ],
+    "repositoryDocs": [
+      {
+        "path": "AGENTS.md",
+        "area": "Repository instructions"
+      },
+      {
+        "path": "docs/README.md",
+        "area": "Documentation index"
+      },
+      {
+        "path": "docs/15-issue-workflow.md",
+        "area": "Independent engineering gates"
+      },
+      {
+        "path": "docs/delivery/2026-11-13-four-intents-register.md",
+        "area": "First 75 lines"
+      },
+      {
+        "path": "docs/decisions/ADR-0082-macos-finder-dock-launcher.md",
+        "area": "AppKit and launch lifecycle"
+      },
+      {
+        "path": "docs/guide/01-install-and-first-run.md",
+        "area": "macOS Hide, Quit, and troubleshooting"
+      }
+    ],
+    "externalDocs": [
+      "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/macos-closed-contract-proposal.md",
+      "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/macos-native-layout-root-selection-01.md",
+      "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/ui-design-decisions.md",
+      "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/macos-presentation-implementation-01/full-report.md",
+      "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/macos-presentation-correction-01/full-report.md"
+    ],
+    "declaredTestFunctions": 83
+  },
+  "findings": [
+    {
+      "id": "MACUI-01",
+      "severity": "P2",
+      "title": "Quit guidance promises cancellation until after the actual cutoff",
+      "location": {
+        "path": "apps/macos-launcher/Presentation/PresentationCopy.swift",
+        "line": 121,
+        "endLine": 121
+      },
+      "trigger": "With progress visible, let the worker win AttemptState.commit. Deliver Quit before the worker invokes the native gateway spawn.",
+      "impact": "The progress window promises cancellation while GraphGoblin has yet to start. Startup can still proceed after Quit because the commit has already won. This includes the Starting stage, which the worker emits after commitment and before spawn.",
+      "correction": "Make the progress text reflect that Quit cancels a pending start and that an already committed start may still finish. Preserve the existing Hide and detached-gateway semantics. Update the fixed-copy expectation.",
+      "evidence": [
+        {
+          "path": "apps/macos-launcher/Engine/NativeLaunchEngine.swift",
+          "line": 26,
+          "endLine": 35
+        },
+        {
+          "path": "apps/macos-launcher/Engine/NativeLaunchEngine.swift",
+          "line": 301,
+          "endLine": 307
+        },
+        {
+          "path": "apps/macos-launcher/Presentation/LaunchPresentationController.swift",
+          "line": 154,
+          "endLine": 166
+        },
+        {
+          "path": "docs/guide/01-install-and-first-run.md",
+          "line": 155,
+          "endLine": 158
+        },
+        {
+          "path": "apps/macos-launcher/Tests/Presentation/OutcomeCopyTests.swift",
+          "line": 391,
+          "endLine": 405
+        }
+      ]
+    },
+    {
+      "id": "MACUI-02",
+      "severity": "P2",
+      "title": "Store-blocked guidance asserts an unverified live owner",
+      "location": {
+        "path": "apps/macos-launcher/Presentation/PresentationCopy.swift",
+        "line": 231,
+        "endLine": 234
+      },
+      "relatedLocations": [
+        {
+          "path": "apps/macos-launcher/Presentation/PresentationCopy.swift",
+          "line": 139,
+          "endLine": 140
+        }
+      ],
+      "trigger": "With no listener and a valid installation, leave a malformed graphgoblin.lock in the configured data directory through the launch budget. The same outcome also covers an owner whose identity cannot be verified.",
+      "impact": "The launcher reports that another process is using the data and advises closing it. A malformed ownership record can block launch with zero live owners. The progress line and failure title also present current use as established.",
+      "correction": "Describe store access as blocked or unconfirmed in both the waiting and failure text. Make any suggestion to close an existing GraphGoblin session conditional on the user recognizing one. Keep safe guidance for persistent blockage, the fixed log affordance, and the current sanitized outcome. Update the explicit copy expectations.",
+      "evidence": [
+        {
+          "path": "apps/api/src/data-dir-lock.ts",
+          "line": 63,
+          "endLine": 86
+        },
+        {
+          "path": "apps/api/src/data-dir-lock.ts",
+          "line": 92,
+          "endLine": 115
+        },
+        {
+          "path": "apps/api/src/data-dir-lock.ts",
+          "line": 243,
+          "endLine": 247
+        },
+        {
+          "path": "apps/api/src/instance-identity.ts",
+          "line": 47,
+          "endLine": 52
+        },
+        {
+          "path": "apps/macos-launcher/Engine/LaunchInputs.swift",
+          "line": 191,
+          "endLine": 201
+        },
+        {
+          "path": "apps/macos-launcher/Engine/NativeLaunchEngine.swift",
+          "line": 280,
+          "endLine": 286
+        },
+        {
+          "path": "apps/macos-launcher/Engine/NativeLaunchEngine.swift",
+          "line": 313,
+          "endLine": 316
+        },
+        {
+          "path": "apps/macos-launcher/Tests/Presentation/OutcomeCopyTests.swift",
+          "line": 119,
+          "endLine": 124
+        },
+        {
+          "path": "apps/macos-launcher/Tests/Presentation/OutcomeCopyTests.swift",
+          "line": 391,
+          "endLine": 405
+        }
+      ]
+    },
+    {
+      "id": "MACUI-03",
+      "severity": "P3",
+      "title": "A late Show Log resolution can win after the three-second cutoff",
+      "location": {
+        "path": "apps/macos-launcher/Presentation/LaunchPresentationController.swift",
+        "line": 337,
+        "endLine": 352
+      },
+      "trigger": "Enter preparingFailure, allow at least three monotonic seconds to elapse, and resume the resolver on the MainActor before its expired timer continuation runs.",
+      "impact": "The phase remains preparingFailure when the resolver resumes. It cancels the queued timer and presents Show Log despite the expired offer window. Which button set appears depends on continuation scheduling after expiry.",
+      "correction": "Use the same absolute monotonic deadline for both the timer and the resolver result. Discard a resolution at or beyond expiry even when the timer callback is still queued. Exercise the reverse completion order in a deterministic clock test.",
+      "evidence": [
+        {
+          "path": "apps/macos-launcher/Presentation/LaunchPresentationController.swift",
+          "line": 9,
+          "endLine": 10
+        },
+        {
+          "path": "apps/macos-launcher/Presentation/LaunchPresentationController.swift",
+          "line": 355,
+          "endLine": 359
+        },
+        {
+          "path": "apps/macos-launcher/Presentation/LaunchPresentationController.swift",
+          "line": 415,
+          "endLine": 429
+        },
+        {
+          "path": "apps/macos-launcher/Tests/Presentation/ShowLogTests.swift",
+          "line": 75,
+          "endLine": 97
+        }
+      ]
+    }
+  ],
+  "residualVerificationGaps": [
+    "Candidate-bound hosted Swift test execution, including identification of any GUI-session-gated skips.",
+    "Independent native process and installer QA, including repeated Quit during AppKit deferred termination, only-owned helper cleanup, and gateway survival after commitment.",
+    "Logged-in Finder, Finder alias and Dock reopen, foreground and inactive focus, native key delivery and VoiceOver, panel layout and Dark Mode, actual default-browser submission and acknowledgement, clipboard persistence, Show Log in Finder, and windowless lifecycle.",
+    "Separate native behavior QA, current-head CI, final Astra audit, and owner acceptance."
+  ],
+  "supportingEvidence": {
+    "releaseBuildReceipt": "C:/Users/98jak/graphgoblin-qa/2026-11-13-aidlc-batch/launcher/macos-product-build-transport-implementation-01/receipts/product-build-10efab60131d48aa8f38d3c260089e3b",
+    "appExitCode": 0,
+    "installerExitCode": 0
+  }
+}

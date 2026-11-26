@@ -1,4 +1,4 @@
-import type { QueryCache, QueryFunctionContext, QueryKey } from '@tanstack/react-query';
+import type { Query, QueryCache, QueryFunctionContext, QueryKey } from '@tanstack/react-query';
 import { useCallback, useSyncExternalStore } from 'react';
 import { useApiKeyStore } from '../api/api-key.js';
 import { isOfflineError } from '../lib/utils.js';
@@ -130,6 +130,52 @@ function monitor(cache: QueryCache): Set<() => void> {
 }
 
 /**
+ * The evidence of a query in the owner's cache for the owner and generation. Another owner or
+ * generation starts without any evidence.
+ */
+function own(owner: RunHeaderRegistry, query: Query, generation: number): Entry {
+  const existing = entries.get(query);
+  if (existing?.owner.deref() === owner && existing.generation === generation) return existing;
+  if (existing) endAttempt(existing);
+  const entry: Entry = {
+    owner: new WeakRef(owner),
+    listeners: monitor(owner.source.queryClient.getQueryCache()),
+    generation,
+    snapshot: empty,
+    dataCount: query.state.dataUpdateCount,
+    awaitingRecovery: false,
+    attempt: undefined,
+    body: undefined,
+  };
+  entries.set(query, entry);
+  return entry;
+}
+
+/**
+ * An established transport outage of a connection that follows this read, such as the run's event
+ * stream (#575), recorded at once in the receipts that `getInspectorRead` and every write gate
+ * consult. It fabricates no error and marks no cached value as read: committed evidence stays as
+ * last observed and a read in flight keeps its identity, but only a read started after this loss
+ * can end the outage. One unrecovered outage keeps its boundary, unless a read started since that
+ * boundary is still unanswered: it may have been answered before this loss, so a new boundary
+ * follows it. Recorded only on the owner's current physical query under accepted credentials;
+ * another owner or generation starts from this loss without evidence.
+ */
+export function markInspectorTransportLoss(
+  owner: RunHeaderRegistry | undefined,
+  queryKey: QueryKey,
+): void {
+  const { rejected, generation } = useApiKeyStore.getState();
+  if (!owner || rejected) return;
+  const query = owner.source.queryClient.getQueryCache().find({ queryKey, exact: true });
+  if (!query) return;
+  const entry = own(owner, query, generation);
+  if (entry.awaitingRecovery && !(entry.snapshot.pending > entry.snapshot.loss)) return;
+  entry.awaitingRecovery = true;
+  update(entry, { loss: markInspectorReadLoss() });
+}
+
+/**
  * Surround one real inspector GET. The caller keeps its ordinary response and error contract.
  * Eligibility only arms the current attempt. TanStack installs the body before notifying the
  * cache of a nonmanual success, including when structural sharing returns the previous object.
@@ -154,21 +200,7 @@ export async function trackInspectorRead<T>(
   )
     return read();
 
-  let entry = entries.get(query);
-  if (entry?.owner.deref() !== owner || entry.generation !== generation) {
-    if (entry) endAttempt(entry);
-    entry = {
-      owner: new WeakRef(owner),
-      listeners: monitor(cache),
-      generation,
-      snapshot: empty,
-      dataCount: query.state.dataUpdateCount,
-      awaitingRecovery: false,
-      attempt: undefined,
-      body: undefined,
-    };
-    entries.set(query, entry);
-  }
+  const entry = own(owner, query, generation);
   const attempt: Attempt = {
     start: ++position,
     signal,

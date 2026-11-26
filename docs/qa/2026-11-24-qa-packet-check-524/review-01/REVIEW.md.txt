@@ -1,0 +1,38 @@
+# Independent formal review 01: #524
+
+Verdict: **CHANGES REQUIRED**. One introduced P2 root cause violates the explicit read-only invariant and fails the candidate's existing test. No additional root cause admitted.
+
+Reviewed the complete six-file candidate, including the 222-line module and 368-line public-command tests, against the implementation brief, issue #524 readback, repository AGENTS.md, docs/README.md, docs/15-issue-workflow.md and the run-agentic-pr-pipeline review policy. This is independent opposite-family review of actual Claude's implementation; it is not author self-review, independent QA, CI or final approval.
+
+Bindings: source head `04a74c51612c5f82da61844d58a58a6796b5a323`, comparison base `d2df8600c2c8574bec420947de686b936910b245`, tree `1419c3af0468e2ae919ac0f6cf99b503a15b0c2c`. All six working-file SHA-256 values matched `FROZEN-CANDIDATE.json`. The review did not edit repository source, index or HEAD, publish, change GitHub, or operate owner services/data. Reproduction repositories and evidence are disposable and separate from the candidate.
+
+## Finding
+
+**[P2] Prevent the unstaged diff from refreshing the index** — `tooling/scripts/check-qa-packet.mjs:117` (Git helper at lines 58–67).
+
+The checker invokes ordinary `git diff` to find unstaged QA paths. On supported Windows Node 22.23.4 with Git 2.49.0.windows.1, a clean tracked file whose timestamp changed but whose contents did not causes that diff to write a refreshed `.git/index`, despite both `--no-optional-locks` and the helper's `GIT_OPTIONAL_LOCKS=0`. The frozen CLI then exits 0 and claims a successful read-only check. This violates the brief's read-only/index-byte invariant and the documentation's promise that no index stat refresh is written.
+
+This is the checker itself, not a test-side `git status` or post-check diagnostic side effect. The original public-command test failed 9/10 at `check-qa-packet.test.mjs:330`; a targeted repeat failed the same assertion. In an independent disposable reproduction, immediately reading `.git/index` before and after the actual frozen CLI shows SHA-256 changing from `31092e93271a6d35b70efd411aa2791f4ccfc1212c3d5ffc962dca481c1ebe3e` to `24d464cbea8d2016ade849b82bb04ef7c923648bbd98bde6187e7635940e9ad7`. No Git helper runs between those reads. Selected source bytes are unchanged.
+
+Sequential snapshots around the individual CLI Git commands isolate the mutation to the unstaged diff: its index SHA changes from `24d464cbea8d2016ade849b82bb04ef7c923648bbd98bde6187e7635940e9ad7` to `ff74d56826d553367313775de5bea2ef579c1c88fd19fe7eb35f532bd76f216d`; top-level resolution, base resolution, merge-base, cached diff and untracked listing leave it unchanged. The Git Trace2 events for the diff explicitly record `do_write_index` on `.git/index.lock`. A control with `-c diff.autoRefreshIndex=false` preserves the index hash after rewriting the same clean page with the same bytes. This supports disabling automatic index refresh (or another genuinely read-only selection strategy); the required outcome is unchanged source and index bytes while retaining the same selection.
+
+Disposition: **FIX-IN-PR**. P2 is appropriate: this does not change staged content or lose data in the reproduction, but it directly breaks an accepted authority invariant and an existing delivery test. Do not fix by relaxing the assertion or weakening the documented read-only contract.
+
+Minimal reproduction retained in `readonly-repro.mjs`: initialize a disposable repository, commit a clean historical `docs/qa` page, prepare the staged/unstaged/untracked publication changes, rewrite the clean historical page with identical bytes, snapshot `.git/index`, run the actual CLI with `--base main`, snapshot `.git/index` again. The script retains per-command binary snapshots, results and Trace2 data. The fixture remains at the path recorded in `readonly-repro-result.json` for inspection.
+
+## Coverage and evidence
+
+- First focused test command: `pnpm.cmd --filter @graphgoblin/tooling exec vitest run scripts/check-qa-packet.test.mjs`, Node v22.23.4: **9 passed / 1 failed**, exit 1. `FIRST-FAILURE.log` retains the first returned output as a labelled transcription; the original unified-exec result remains primary evidence in the review chat.
+- Diagnostic targeted command with `--testNamePattern 'committed, staged, unstaged and untracked'`: **1 failed / 9 skipped**, exit 1. Direct raw stdout/stderr capture is `targeted-readonly-run.log`. It is a reproduction, not retry-to-green evidence.
+- Independent actual-CLI/individual-command diagnosis: `readonly-repro-result.json`, `readonly-repro-git-trace.jsonl`, `*-index-before.bin`, `*-index-after.bin`. Disabling refresh control: `autorefresh-disabled-control.json`.
+- `git diff --check <base> <head>`: passed.
+- Source review covered merge-base selection, committed/staged/unstaged/untracked deduplication, ignored untracked exclusion versus tracked ignored inclusion, sparse unavailable paths versus genuine deletions, original-name boundary, opaque byte/hash retention, parser/config handling, filenames with spaces, CLI exits, test isolation and maintained formatting/coverage boundaries. Full `format:check`, mandatory broad gates and hosted CI are unchanged in the patch.
+- No broad API, browser, native-product or provider suite was run. This pass does not replace independent actual-Claude QA, exact-head/current-target CI or the fresh Astra MAX final review. Prior author coverage/lint/format reports remain their own evidence and do not override this observed test failure.
+
+## Root-cause ledger and pass budget
+
+| Signature | Severity | Disposition | First seen | Resolution | Required verification |
+| --- | --- | --- | --- | --- | --- |
+| `qa-diff/auto-refresh-writes-index` | P2 | FIX-IN-PR | Review 01, frozen 04a74c5 | Unresolved; author correction required | Preserve unchanged source/index bytes for stale clean stat data; existing ten tests pass; targeted review of the fix delta |
+
+One full formal review consumed (1 of maximum 3). Review 02 should examine the batched fix delta. A third pass remains exceptional under the review policy; no extra full review is requested. No external follow-up issue is requested for the admitted in-scope root cause.

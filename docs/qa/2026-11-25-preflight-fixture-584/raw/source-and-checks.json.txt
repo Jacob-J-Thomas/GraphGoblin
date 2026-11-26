@@ -1,0 +1,131 @@
+{
+  "issue": 584,
+  "base": "a7c2b4bb5c5834a20ec52d876a02fe0ede04f225",
+  "testFile": "apps/api/src/preflight-catalog.test.ts",
+  "baseTestBlob": "a187acae037ae928b67715fe2d83f8cc1538c84f",
+  "candidateTestBlob": "63decc9ea366a25a2767f28fa0f04be36f028c24",
+  "candidateTestSha256": "43796540e2aefb7e5df1ce1b3df43b74f4cb3a2f3b8efcd00e20f39acee94ae5",
+  "equalSourceSectionSha256": {
+    "storeBytes": "5314c42429248715fa2142928faba364fa9adce53e6313bb7938e072c9752231",
+    "expectStoreUnchanged": "1009debba810e9cad78d5e75c446562f00329008472973c5556a8ac4037dcdcb",
+    "storedCatalog": "9dd8f4c05213351e767c77208c866f976401d056517841c1f906be9c5792f155",
+    "storedMigrations": "1af4186d3120be8a94152beba5fd717a19adb7441617809632b578a353e53cde",
+    "env": "1de72e3ef40041162c8c2c038c6957e28290d58376cd22a06f335c7ae95e77cd",
+    "testBodies": "0b9f25d4a783e8001ef3a581abf0a4a3caa04645798f18c3cd9e48200f5162ad",
+    "cleanup": "e3ae3a82e6ccb8c5d30d68ee5646ddaf0efd32eade31a316bdc4cffcf61cc63b"
+  },
+  "unchangedContextFiles": {
+    "apps/api/src/preflight.ts": {
+      "baseBlob": "e3b8c9c5c3e89d95c8227ce6a5d7319332b99098",
+      "sha256": "32a82c387976a7885430ed5187a6068a482b98fc3e4ae6ec3678c4006b00d7e5"
+    },
+    "apps/api/src/container.ts": {
+      "baseBlob": "bf806804572d99fece1ce8356bcba39ecb882a9a",
+      "sha256": "b9f44c4bc8651f45073794c2f700585e006e27fcf26902e490014af63cd48e78"
+    },
+    "packages/infrastructure/src/sqlite/db.ts": {
+      "baseBlob": "7ec9624e86fee5edfbe32a34b379c009b37ef9de",
+      "sha256": "0f6917810b73cffe2f1aeef3bd018172145343f3a99b3aca1a39e84e886f44de"
+    },
+    "pnpm-lock.yaml": {
+      "baseBlob": "6bdbb2df675b633f9ed40ca9c9693f6e99a68bde",
+      "sha256": "bcc908d0f7aa32ba4a64302a9f74284c1a0679e2372ca1ba83176af5b5bbcce2"
+    }
+  },
+  "runtime": {
+    "node": "v22.22.2",
+    "pnpm": "12.8.1",
+    "platform": "darwin-arm64"
+  },
+  "originalCoverage": {
+    "exit": 1,
+    "sha256": "d877d7c5d1c610604fdddd9d496fb68721dbd03b6316dd90da17b533f7e4e32a",
+    "passed": 2292,
+    "failed": 1,
+    "skipped": 37
+  },
+  "originalCoverageFailure": "ENOENT while storeBytes opens the listed external store/gateway.db-wal after successful live preflight",
+  "verification": [
+    {
+      "name": "api-build",
+      "argv": [
+        "pnpm",
+        "--filter",
+        "@graphgoblin/api...",
+        "build"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "focused-preflight",
+      "argv": [
+        "pnpm",
+        "--filter",
+        "@graphgoblin/api",
+        "exec",
+        "vitest",
+        "run",
+        "src/preflight-catalog.test.ts",
+        "src/preflight.test.ts",
+        "src/preflight-ollama.test.ts"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "api-typecheck",
+      "argv": [
+        "pnpm",
+        "--filter",
+        "@graphgoblin/api",
+        "typecheck"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "api-lint",
+      "argv": [
+        "pnpm",
+        "--filter",
+        "@graphgoblin/api",
+        "lint"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "prettier",
+      "argv": [
+        "pnpm",
+        "exec",
+        "prettier",
+        "--check",
+        "apps/api/src/preflight-catalog.test.ts"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "diff-check",
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit": 0
+    }
+  ],
+  "focusedPreflight": {
+    "files": 3,
+    "passed": 73
+  },
+  "rawControlSha256": {
+    "checkpoint-shape.json.txt": "ca2e4ef62838e7f56a2d6e81bd0badbdfbffd103cf97117894c976e456ceae4a",
+    "lifecycle-exact-base.json.txt": "df03428dcc49fa71dbdf0d4b66d7db8339ef416d6ab28adcd87028cabefd2092",
+    "lifecycle-original.json.txt": "3325da32ff17438d587fba93982a825f4f765093cf5251d45582894b57229b53"
+  },
+  "localOriginalReceiptSha256": {
+    "baseline": "6922a7cfb2106de76502d690a8602f7b6173ca87a1d90d745eb4a3d1d5dd372c",
+    "candidate": "1824e28cb97ceb392cbbbb66c247a9d7e71267c0c0f5c9294360efafb63b1587",
+    "implementation": "1b261d497b0c1d6977977c4cec552769f60f39429614ddc3e34a17a36ecf21f1",
+    "implementationInit": "8ab418d88085e5e24aa7049f575874dc26994f10a5480dc3557db6e537f39eea",
+    "implementationResult": "85b13b3d1defd844dc3fe52733f90c2049c09876f10996caad580de12295ea07"
+  }
+}
