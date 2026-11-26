@@ -1,0 +1,382 @@
+diff --git a/apps/api/src/routes/thread-disconnect.test.ts b/apps/api/src/routes/thread-disconnect.test.ts
+index 50ab0ec0ee697355c8234ffa5f8c8dc20c1c1c8b..9b2dbe4602fa64df1ff1ef4a7d67294d07ceee5c 100644
+--- a/apps/api/src/routes/thread-disconnect.test.ts
++++ b/apps/api/src/routes/thread-disconnect.test.ts
+@@ -11,11 +11,13 @@ import type { EventDraft } from '@graphgoblin/engine';
+ import { registerAuth } from '../plugins/auth.js';
+ import { registerErrorHandler } from '../plugins/errors.js';
+ import { requestValidatorCompiler } from '../plugins/request-validation.js';
++import { historicalThread } from '../run-history.js';
+ import { createTestApp } from '../testing/test-app.js';
+ import { registerRunRoutes } from './runs.js';
+ import { registerSystemRoutes } from './system.js';
+ 
+-type Stage = 'before handler' | 'ownership' | 'initial' | 'checkpoint' | 'boundary' | 'page';
++type Stage =
++  'before handler' | 'ownership' | 'initial' | 'checkpoint' | 'boundary' | 'page' | 'yield';
+ type Headers = Record<string, string>;
+ 
+ function deferred<Value = void>() {
+@@ -208,16 +210,28 @@ describe('historical thread response lifetime', () => {
+     });
+     client.setTimeout(8_000, () => client.destroy(new Error(`Timed out waiting for ${stage}`)));
+     client.once('error', prematureResponse.reject);
++    // The client's timer cannot reject held reads, close or settlement, so the same 8 s budget
++    // bounds every wait here and a stalled response still reaches the callers' cleanup.
++    const expired = deferred<never>();
++    const deadline = setTimeout(
++      () => expired.reject(new Error(`Timed out holding ${stage}`)),
++      8_000,
++    );
++    const bounded = <Value>(wait: Promise<Value>) => Promise.race([wait, expired.promise]);
+     try {
+-      await Promise.race([observation.reached.promise, prematureResponse.promise]);
+-      await whileHeld?.();
+-      client.destroy();
+-      expect(await observation.closed.promise).toBe(false);
++      try {
++        await bounded(Promise.race([observation.reached.promise, prematureResponse.promise]));
++        if (whileHeld) await bounded(whileHeld());
++        client.destroy();
++        expect(await bounded(observation.closed.promise)).toBe(false);
++      } finally {
++        client.destroy();
++        observation.release.resolve();
++      }
++      expect(await bounded(observation.settled.promise)).toBe(0);
+     } finally {
+-      client.destroy();
+-      observation.release.resolve();
++      clearTimeout(deadline);
+     }
+-    expect(await observation.settled.promise).toBe(0);
+   }
+ 
+   it.each([
+@@ -249,6 +263,81 @@ describe('historical thread response lifetime', () => {
+     expect(observation.sends).toBe(0);
+   });
+ 
++  it('stops at an abandoned yield after a completed page while unrelated reads complete', async () => {
++    const { events } = test.container.repos;
++    const readEvents = events.read;
++    const scheduleImmediate = globalThis.setImmediate;
++    const control = observation;
++    const agent = new Agent();
++    const timeline: string[] = [];
++    let completedPages = 0;
++    let held = false;
++    void control.closed.promise.then((finished) => timeline.push(`closed finished=${finished}`));
++    void control.settled.promise.then(() => timeline.push('settled'));
++    events.read = async (...args) => {
++      const rows = await readEvents(...args);
++      if (args[0] === runId && control.operations.at(-1) === 'page') {
++        completedPages++;
++        timeline.push(`page ${rows.length} through ${rows.at(-1)?.seq}`);
++      }
++      return rows;
++    };
++    // Hold only the real setImmediate that historicalThread schedules after its first page;
++    // every other call, including unrelated requests while it is held, passes straight through.
++    globalThis.setImmediate = Object.assign(
++      <Args extends unknown[]>(callback: (...args: Args) => void, ...args: Args) => {
++        if (
++          held ||
++          completedPages !== 1 ||
++          !new Error().stack?.includes(`at ${historicalThread.name} (`)
++        )
++          return scheduleImmediate(callback, ...args);
++        held = true;
++        timeline.push('yield held');
++        control.reached.resolve();
++        return scheduleImmediate(() => {
++          void control.release.promise.then(() => {
++            timeline.push('yield released');
++            callback(...args);
++          });
++        });
++      },
++      { __promisify__: scheduleImmediate.__promisify__ },
++    );
++    try {
++      await abandon('yield', async () => {
++        const health = await read(base + '/healthz', {}, agent);
++        expect(health.status).toBe(200);
++        expect(JSON.parse(health.body)).toEqual({ status: 'ok' });
++        expect(await read(current, headers, agent)).toMatchObject({
++          status: 200,
++          body: currentBody,
++        });
++      });
++    } finally {
++      globalThis.setImmediate = scheduleImmediate;
++      events.read = readEvents;
++      control.release.resolve();
++      agent.destroy();
++    }
++    expect(timeline).toEqual([
++      `page 128 through ${checkpointSeq + 128}`,
++      'yield held',
++      'closed finished=false',
++      'yield released',
++      'settled',
++    ]);
++    expect(observation.operations).toEqual([
++      'ownership',
++      'initial',
++      'checkpoint',
++      'boundary',
++      'page',
++    ]);
++    expect(observation.sends).toBe(0);
++    expect(observation.errors).toEqual([]);
++  });
++
+   it.each(['connected', 'abandoned'] as const)(
+     'handles the same %s read rejection',
+     async (mode) => {
+diff --git a/apps/api/src/testing/api-port-platform.test.ts b/apps/api/src/testing/api-port-platform.test.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..969606eeef0fee7bdd2bef1e954e8af03e8abae3
+--- /dev/null
++++ b/apps/api/src/testing/api-port-platform.test.ts
+@@ -0,0 +1,121 @@
++import { mkdtemp, readdir, rm } from 'node:fs/promises';
++import { Server } from 'node:net';
++import { join } from 'node:path';
++import { afterEach, expect, inject, it, vi } from 'vitest';
++import { reserveApiPort, setApiPortRoot } from './api-port.js';
++
++// Controlled observations, not native OS evidence: process.platform is overridden in this worker
++// and every node:net listen is recorded, so these tests show which hosts the public reserveApiPort
++// asks canBind to probe for each reported platform. Unconflicted probes still bind through the
++// host's own network stack; native wildcard and listener behaviour stays with api-port.test.ts.
++const nativePlatform = Object.getOwnPropertyDescriptor(process, 'platform')!;
++const nativeListen = Server.prototype.listen;
++const probes = ['127.0.0.1', '0.0.0.0', '::'];
++const refusal = 'Ports are reserved by tests or in use';
++
++afterEach(() => {
++  // Each reservation restores its overrides itself; this verifies that none outlives a test.
++  expect(Object.getOwnPropertyDescriptor(process, 'platform')).toEqual(nativePlatform);
++  expect(Server.prototype.listen).toBe(nativeListen);
++});
++
++/**
++ * Reserve one known port while process.platform reports `platform`, recording each listen.
++ * A `conflict` host reports EADDRINUSE without reaching the network stack.
++ */
++async function reserveAs(platform: NodeJS.Platform, conflict?: string) {
++  // The shared reservation keeps cooperating workers off this port. An owned root lets the
++  // observed reservation claim and probe that same port exactly once.
++  const shared = inject('apiPortRoot');
++  // Each resource enters its own cleanup as soon as it is acquired, so a failure in a later setup
++  // step or in another teardown still attempts every acquired resource's teardown.
++  const root = await mkdtemp(join(shared, `platform-${platform}-`));
++  try {
++    const held = await reserveApiPort();
++    try {
++      const attempts: { port: unknown; host: unknown }[] = [];
++      const listen = vi.spyOn(Server.prototype, 'listen').mockImplementation(function (
++        this: Server,
++        ...args: unknown[]
++      ) {
++        const [port, host] = args;
++        attempts.push({ port, host });
++        if (host !== conflict) return Reflect.apply(nativeListen, this, args) as Server;
++        const error = Object.assign(new Error(`listen EADDRINUSE: simulated ${String(host)}`), {
++          code: 'EADDRINUSE',
++        });
++        process.nextTick(() => this.emit('error', error));
++        return this;
++      });
++      let outcome: PromiseSettledResult<Awaited<ReturnType<typeof reserveApiPort>>>;
++      setApiPortRoot(root);
++      Object.defineProperty(process, 'platform', { ...nativePlatform, value: platform });
++      try {
++        [outcome] = await Promise.allSettled([reserveApiPort(held.port, 1)]);
++      } finally {
++        Object.defineProperty(process, 'platform', nativePlatform);
++        listen.mockRestore();
++        setApiPortRoot(shared);
++      }
++
++      const slot = join(root, String(held.port));
++      const generation = join(slot, '1');
++      expect(await readdir(slot)).toEqual(['1']);
++      if (outcome.status === 'fulfilled') {
++        expect(outcome.value.port).toBe(held.port);
++        expect(await readdir(generation)).toHaveLength(1);
++        expect(await readdir(generation)).not.toContain('released');
++        await outcome.value.release();
++      }
++      // A refused probe releases its own claim; a granted claim is released by its owner above.
++      expect(await readdir(generation)).toEqual(['released']);
++      return {
++        port: held.port,
++        attempts,
++        error: outcome.status === 'rejected' ? (outcome.reason as Error) : undefined,
++      };
++    } finally {
++      await held.release();
++    }
++  } finally {
++    await rm(root, { recursive: true, force: true });
++  }
++}
++
++it.for(['win32', 'darwin'] as const)(
++  'probes 127.0.0.1, 0.0.0.0 and then :: when process.platform reports %s (controlled)',
++  async (platform) => {
++    const { port, attempts, error } = await reserveAs(platform);
++    expect(error).toBeUndefined();
++    expect(attempts).toEqual(probes.map((host) => ({ port, host })));
++  },
++);
++
++it('probes only 127.0.0.1 when process.platform reports linux (controlled non-wildcard control)', async () => {
++  const { port, attempts, error } = await reserveAs('linux');
++  expect(error).toBeUndefined();
++  expect(attempts).toEqual([{ port, host: '127.0.0.1' }]);
++});
++
++it.for([
++  ['win32', '0.0.0.0'],
++  ['win32', '::'],
++  ['darwin', '0.0.0.0'],
++  ['darwin', '::'],
++] as const)(
++  'refuses a port when process.platform reports %s and only its %s probe conflicts (controlled)',
++  async ([platform, conflict]) => {
++    const { port, attempts, error } = await reserveAs(platform, conflict);
++    expect(error).toBeInstanceOf(Error);
++    expect(error?.message).toContain(`No disposable API port is available in ${port}-${port}`);
++    expect(error?.message).toContain(refusal);
++    const probed = probes.slice(0, probes.indexOf(conflict) + 1);
++    expect(attempts).toEqual(probed.map((host) => ({ port, host })));
++  },
++);
++
++it('does not probe a wildcard conflict when process.platform reports linux (controlled control)', async () => {
++  const { port, attempts, error } = await reserveAs('linux', '0.0.0.0');
++  expect(error).toBeUndefined();
++  expect(attempts).toEqual([{ port, host: '127.0.0.1' }]);
++});
+diff --git a/apps/api/src/testing/api-port.test.ts b/apps/api/src/testing/api-port.test.ts
+index 6a994200e54616ad4200c5f26335948430ef916f..e118dbba1d8dbd2f423e45c660253a1e12b3aaee 100644
+--- a/apps/api/src/testing/api-port.test.ts
++++ b/apps/api/src/testing/api-port.test.ts
+@@ -1,8 +1,8 @@
+-import { access, readdir, rename } from 'node:fs/promises';
++import { access, mkdtemp, readdir, rename, rm } from 'node:fs/promises';
+ import { createServer } from 'node:http';
+ import { join } from 'node:path';
+ import { expect, inject, it, vi } from 'vitest';
+-import { reserveApiPort } from './api-port.js';
++import { reserveApiPort, setApiPortRoot } from './api-port.js';
+ import { createApiProcessFixture, listening } from './api-subprocess.js';
+ 
+ async function activeClaim(port: number) {
+@@ -14,6 +14,17 @@ async function activeClaim(port: number) {
+   return { owner: join(path, owner!), released: join(path, 'released'), path };
+ }
+ 
++/** Each generation's markers: a live owner marker, or the released marker its owner moved. */
++async function claimState(slot: string) {
++  const state: Record<string, string[]> = {};
++  for (const generation of await readdir(slot)) {
++    state[generation] = (await readdir(join(slot, generation))).map((marker) =>
++      marker === 'released' || !/^[0-9a-f-]{36}$/.test(marker) ? marker : 'owner',
++    );
++  }
++  return state;
++}
++
+ it.each([
+   [0, 1],
+   [65535, 2],
+@@ -36,7 +47,7 @@ it('keeps a port available to its fixture across an unbound interval and a faile
+     await expect(reserveApiPort(port, 1)).rejects.toThrow(
+       `No disposable API port is available in ${port}-${port}`,
+     );
+-    const failed = fixture.run([], { GG_PORT: 'invalid' });
++    const failed = fixture.run([], { GG_PORT: 'invalid', GG_OLLAMA_ENABLED: 'false' });
+     expect(await failed.waitForExit()).toEqual({ code: 1, signal: null });
+     expect(failed.stderr).toContain('invalid configuration');
+     await expect(reserveApiPort(port, 1)).rejects.toThrow('Ports are reserved by tests or in use');
+@@ -99,6 +110,75 @@ it('cannot release a replacement claim if the original ownership marker is gone'
+   }
+ });
+ 
++it('grants one of many simultaneous cooperating claims of a port until its owner releases it', async () => {
++  // The shared reservation keeps cooperating workers off this bindable port. An owned root gives
++  // the contenders a fresh slot, so every grant below comes from this test's own claims.
++  const shared = inject('apiPortRoot');
++  // Each resource enters its own cleanup as soon as it is acquired, so a failure in a later setup
++  // step or in another teardown still attempts every acquired resource's teardown.
++  let heldClaim: Awaited<ReturnType<typeof activeClaim>>;
++  let root: string;
++  const held = await reserveApiPort();
++  try {
++    heldClaim = await activeClaim(held.port);
++    root = await mkdtemp(join(shared, 'contended-'));
++    try {
++      const slot = join(root, String(held.port));
++      const contenders = 8;
++      const refusal = `No disposable API port is available in ${held.port}-${held.port}. Ports are reserved by tests or in use`;
++      // Every claim starts before any is awaited; exclusive directory creation must pick the winner.
++      const claimants = () =>
++        Array.from({ length: contenders }, () => reserveApiPort(held.port, 1));
++      const settle = async (attempts: ReturnType<typeof reserveApiPort>[]) => {
++        const granted: Awaited<ReturnType<typeof reserveApiPort>>[] = [];
++        for (const result of await Promise.allSettled(attempts)) {
++          if (result.status === 'fulfilled') granted.push(result.value);
++          else {
++            expect(result.reason).toBeInstanceOf(Error);
++            expect((result.reason as Error).message).toContain(refusal);
++          }
++        }
++        return granted;
++      };
++      const contend = async () => {
++        const granted = await settle(claimants());
++        expect(granted.map(({ port }) => port)).toEqual([held.port]);
++        return granted[0]!;
++      };
++      setApiPortRoot(root);
++      try {
++        const first = await contend();
++        expect(await claimState(slot)).toEqual({ 1: ['owner'] });
++        await expect(reserveApiPort(held.port, 1)).rejects.toThrow(refusal);
++
++        await first.release();
++        expect(await claimState(slot)).toEqual({ 1: ['released'] });
++        const second = await contend();
++        expect(await claimState(slot)).toEqual({ 1: ['released'], 2: ['owner'] });
++
++        // A stale release racing new claimants is idempotent and cannot free the replacement.
++        const [stale, blocked] = await Promise.all([first.release(), settle(claimants())]);
++        expect(stale).toBeUndefined();
++        expect(blocked).toEqual([]);
++        expect(await claimState(slot)).toEqual({ 1: ['released'], 2: ['owner'] });
++
++        await second.release();
++        await expect(second.release()).resolves.toBeUndefined();
++        expect(await claimState(slot)).toEqual({ 1: ['released'], 2: ['released'] });
++      } finally {
++        setApiPortRoot(shared);
++      }
++    } finally {
++      await rm(root, { recursive: true, force: true });
++    }
++  } finally {
++    await held.release();
++  }
++  await expect(access(root)).rejects.toMatchObject({ code: 'ENOENT' });
++  await expect(access(heldClaim.owner)).rejects.toMatchObject({ code: 'ENOENT' });
++  await expect(access(heldClaim.released)).resolves.toBeUndefined();
++});
++
+ it('honors the configured range and refuses a count that crosses the last TCP port', async () => {
+   vi.stubEnv('GG_TEST_PORT_START', '65535');
+   vi.stubEnv('GG_TEST_PORT_COUNT', '2');

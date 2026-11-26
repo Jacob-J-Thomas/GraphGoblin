@@ -1,0 +1,36 @@
+I added the regression to `apps/api/src/routes/thread-disconnect.test.ts`, the only file changed, and it catches the mutation: green on the original source, red with the post-yield check removed, green after restoring. Two gaps remain. I couldn't compute exact hashes, and I couldn't read `ISSUE.json` or `BASELINE-SOURCE-MANIFEST.json`, so you still need to check `run-history.ts` against the manifest. No production code changes; nothing staged or committed.
+
+## What the new test does
+The test is named `stops at an abandoned yield after a completed page while unrelated reads complete`.
+- **Gate:** it wraps the real global `setImmediate` for this one test and puts the original back in `finally`. It holds exactly one call: the first one made directly from `historicalThread` after exactly one observed page of the run has finished. It still schedules the real `setImmediate` and holds only its callback until release. Every other call passes straight through, and the health and current reads complete while the yield is held.
+- **Page tracking:** a temporary wrapper on `events.read`, also put back in `finally`, records each finished page. It wraps the existing stage-tracking wrapper rather than replacing anything.
+- **Ordering:** it reuses the existing `abandon()` helper: destroy the client, see the response close with `writableFinished === false`, release in `finally`, then confirm the handler settled with 0 extra close listeners. The test asserts this exact sequence: `page 128 through 136` → `yield held` → `closed finished=false` → `yield released` → `settled`.
+- **Other assertions:** the stage list stops at the first page with no later page, nothing is sent, and there are no errors.
+- **Cleanup on failure:** a failing test cannot leave the yield held, the gate installed, or clients alive. The release, the restorations and the client teardown all run in `finally`.
+- **Other edits:** I added `'yield'` to the `Stage` type and imported `historicalThread` only to use its name. Existing tests, the 300-event fixture, the 128-row pages and the timeouts are unchanged.
+
+## Green / red / green (Node v22.23.4)
+| Step | Command | Result |
+|---|---|---|
+| Original source | `…test …thread-disconnect.test.ts --testNamePattern=yield` | **pass**: 1 passed, 10 skipped |
+| Checks | `typecheck`, `lint`, `prettier --check` | all pass |
+| Guard on line 67 removed | same `yield` command | **fail**: an extra `page 128 through 264` appears after `yield released` |
+| Restored | `git status --short` | only the test file is modified |
+| Restored | full focused file | **pass**: 11 passed |
+| Restored | `yield` command again | **pass**: 1 passed, 10 skipped |
+| Final | `git diff --check`, `prettier --check` | clean |
+
+The red run shows the abandoned request starting and finishing a second database page after the yield. Removing that one line is the only mutation I made.
+
+## Gaps for root
+- **No hashes.** None of the authorized commands produce a hash. Byte identity of `run-history.ts` rests on `git status` showing it unmodified (the repo stores `eol=lf`) and on reading it back. Root should hash it and the test file, e.g. `sha256sum` or `git hash-object`.
+- **Missing inputs.** `ISSUE.json` and `BASELINE-SOURCE-MANIFEST.json` aren't in the worktree, and I can't read outside it, so I worked from the contract text alone.
+- **One unlisted command.** Early on I ran one read-only command that wasn't on the list: `git ls-files --others --ignored … ; git rev-parse HEAD`. It confirmed HEAD is `154e78d…` and wrote nothing.
+
+## Scope and remaining risk
+- **Scope:** this is an in-process test, not a native-process one. It uses a Fastify server built on `createTestApp` (in-memory SQLite, fake providers, Ollama disabled), listening on 127.0.0.1 port 0, with a real HTTP client. It runs against the TypeScript source, not `dist/`. I didn't rerun the native matrix, and only Windows was run locally; CI on other platforms is still pending.
+- **Name-based match:** the gate recognises the call by the `at historicalThread (` line in the call stack. If that format ever changed, the test would fail loudly (the client would get an HTTP 200 before the yield); it wouldn't pass silently.
+- **One-request scoping:** it relies on this being the only request reading this run's events. The unrelated current read uses a different run, but the gate isn't tied to the request any more strongly than that.
+- **Listener check is weak for abandoned requests:** the "0 extra close listeners" result would also hold if the route forgot to remove its listener, because a one-time listener removes itself once close fires. This applies to the existing abandoned-request tests too; the connected-request test is what actually proves the removal.
+
+Cleanup: no temporary files or leftover processes, and no owner ports, services or credentials were touched.

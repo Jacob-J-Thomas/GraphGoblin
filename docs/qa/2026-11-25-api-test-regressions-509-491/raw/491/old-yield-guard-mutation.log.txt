@@ -1,0 +1,46 @@
+Exit code 1
+$ vitest run src/routes/thread-disconnect.test.ts --testNamePattern=yield
+
+ RUN  v5.0.3 G:/ggq/gg-fu-491/GraphGoblin/apps/api
+
+ ❯ src/routes/thread-disconnect.test.ts (11 tests | 1 failed | 10 skipped) 1319ms
+   ❯ historical thread response lifetime (11)
+     × stops at an abandoned yield after a completed page while unrelated reads complete 43ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned yield after a completed page while unrelated reads complete
+AssertionError: expected [ 'page 128 through 136', …(5) ] to deeply equal [ 'page 128 through 136', …(4) ]
+
+- Expected
++ Received
+
+  [
+    "page 128 through 136",
+    "yield held",
+    "closed finished=false",
+    "yield released",
++   "page 128 through 264",
+    "settled",
+  ]
+
+ ❯ src/routes/thread-disconnect.test.ts:314:22
+    312|       agent.destroy();
+    313|     }
+    314|     expect(timeline).toEqual([
+       |                      ^
+    315|       `page 128 through ${checkpointSeq + 128}`,
+    316|       'yield held',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 10 skipped (11)
+   Start at  04:55:34
+   Duration  7.18s (import 52%, transform 29%, tests 19%, setup 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-fu-491\GraphGoblin\apps\api

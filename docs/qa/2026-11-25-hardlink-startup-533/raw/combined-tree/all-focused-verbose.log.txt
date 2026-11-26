@@ -1,0 +1,168 @@
+$ vitest run --reporter=verbose src/testing/api-port.test.ts src/testing/api-port-platform.test.ts src/routes/thread-disconnect.test.ts src/data-dir-lock.test.ts src/data-dir-lock-failures.test.ts src/serve-failure-output.test.ts src/main.test.ts
+
+ RUN  v5.0.3 G:/ggq/gg-t509/GraphGoblin/apps/api
+
+ ✓ src/testing/api-port-platform.test.ts > probes 127.0.0.1, 0.0.0.0 and then :: when process.platform reports win32 (controlled) 53ms
+ ✓ src/testing/api-port-platform.test.ts > probes 127.0.0.1, 0.0.0.0 and then :: when process.platform reports darwin (controlled) 39ms
+ ✓ src/testing/api-port.test.ts > refuses invalid port allocation 0 with count 1 5ms
+ ✓ src/testing/api-port.test.ts > refuses invalid port allocation 65535 with count 2 0ms
+ ✓ src/testing/api-port.test.ts > refuses invalid port allocation 5600 with count 0 0ms
+ ✓ src/testing/api-port.test.ts > refuses invalid port allocation 5600 with count -1 1ms
+ ✓ src/testing/api-port.test.ts > refuses invalid port allocation 5600.5 with count 1 0ms
+ ✓ src/testing/api-port.test.ts > refuses invalid port allocation 5600 with count 1.5 0ms
+ ✓ src/testing/api-port.test.ts > refuses invalid port allocation NaN with count 1 0ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a proven reused Windows PID in graphgoblin.lock without touching the unrelated process 71ms
+ ✓ src/testing/api-port-platform.test.ts > probes only 127.0.0.1 when process.platform reports linux (controlled non-wildcard control) 36ms
+ ✓ src/testing/api-port-platform.test.ts > refuses a port when process.platform reports win32 and only its 0.0.0.0 probe conflicts (controlled) 17ms
+ ✓ src/testing/api-port-platform.test.ts > refuses a port when process.platform reports win32 and only its :: probe conflicts (controlled) 42ms
+ ✓ src/testing/api-port-platform.test.ts > refuses a port when process.platform reports darwin and only its 0.0.0.0 probe conflicts (controlled) 22ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a proven reused Windows PID in graphgoblin.lock.reclaim without touching the unrelated process 45ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a proven reused Windows PID in external.db.graphgoblin.lock without touching the unrelated process 46ms
+ ✓ src/testing/api-port-platform.test.ts > refuses a port when process.platform reports darwin and only its :: probe conflicts (controlled) 32ms
+ ✓ src/testing/api-port-platform.test.ts > does not probe a wildcard conflict when process.platform reports linux (controlled control) 76ms
+ ✓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > emits the exact protocol declaration within 4 KiB beside the guard module 10ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > preserves a matching or uncheckable Windows identity (134388256826197750) 88ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > preserves a matching or uncheckable Windows identity (undefined) 64ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity undefined 29ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity null 49ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity 123 38ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity "" 29ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > never infers reuse from missing/malformed creation identity "invalid" 28ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > stores the OS identity and refuses acquisition when it cannot establish its own identity 62ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > creates an exclusive lock with this PID and start time and releases it 42ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: false) 33ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses its own PID while held in-process (path alias: true) 40ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims its own PID from a previous process without an in-process hold 35ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses another live PID without replacing its lock 38ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > replaces a stale lock from a process that exited 119ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EPERM 28ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with EACCES 29ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses when PID probing fails with UNKNOWN 29ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "" 34ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{" 33ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "null" 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "1" 33ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{}" 27ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":\"1\"}" 30ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":0}" 32ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":-1}" 35ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses unverifiable lock contents "{\"pid\":1.5}" 31ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > does not let a delayed repeated release remove a new acquisition 50ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > leaves a lock with a different ownership token intact on release 56ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > accepts a missing file during release 27ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a fresh lock 33ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale lock 149ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a own-pid lock 37ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > admits only one simultaneous contender for a stale-reclaim lock 42ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: false) 124ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with own PID (main lock exists: true) 163ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: false) 145ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims a sidecar with dead PID (main lock exists: true) 111ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reports nothing reclaimed when another acquisition reclaimed the stale entries first 62ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > takes the lock without claiming a reclamation when its holder releases it before it is read 31ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses a reclamation guard owned by another live PID 27ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > refuses an existing reclamation guard without deleting either file 28ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > cannot delete a successor guard after a delayed stale-owner probe 38ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > reclaims an empty guard, but refuses malformed or mismatched marker directories 50ms
+ ✓ src/data-dir-lock.test.ts > data-directory ownership > propagates filesystem errors instead of assuming a stale lock 15ms
+ ✓ src/data-dir-lock.test.ts > reading the lock state without acquiring it > reports a free directory, a stale lock and a malformed reclamation guard without touching them 103ms
+ ✓ src/testing/api-port.test.ts > keeps a port available to its fixture across an unbound interval and a failed startup 3180ms
+ ✓ src/testing/api-port.test.ts > preserves an existing 127.0.0.1 listener and refuses its otherwise unreserved port 42ms
+ ✓ src/testing/api-port.test.ts > preserves an existing 0.0.0.0 listener and refuses its otherwise unreserved port 19ms
+ ✓ src/testing/api-port.test.ts > preserves an existing :: listener and refuses its otherwise unreserved port 16ms
+ ✓ src/testing/api-port.test.ts > cannot release a replacement claim if the original ownership marker is gone 8ms
+ ✓ src/testing/api-port.test.ts > grants one of many simultaneous cooperating claims of a port until its owner releases it 41ms
+ ✓ src/testing/api-port.test.ts > honors the configured range and refuses a count that crosses the last TCP port 1ms
+ ✓ src/data-dir-lock.test.ts > reading the lock state without acquiring it > reports a live owner, and this process while it holds or acquires the lock 1115ms
+ ✓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > consumes the variable for CLI commands, which keep their ordinary output 3833ms
+ ↓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > ignores the Windows-only variable elsewhere and keeps shell logging
+ ✓ src/serve-failure-output.test.ts > renders typed store-held refusals while retaining the managed category 4ms
+ ✓ src/serve-failure-output.test.ts > renders typed store-ownership-unverified refusals while retaining the managed category 0ms
+ ✓ src/serve-failure-output.test.ts > escapes ownership display controls while preserving the original error message 1ms
+ ✓ src/serve-failure-output.test.ts > preserves process-identity diagnostics and their existing managed category 1ms
+ ✓ src/serve-failure-output.test.ts > renders a typed hard-linked database refusal as its complete message, keeping store-unavailable 4ms
+ ✓ src/serve-failure-output.test.ts > keeps store-unavailable when a refused database path contains ownership prefixes 0ms
+ ✓ src/serve-failure-output.test.ts > escapes hard-linked database display controls while preserving the original error message 1ms
+ ✓ src/serve-failure-output.test.ts > refuses both real hard-link spellings with the typed canonical refusal and leaves no lock 17ms
+ ✓ src/data-dir-lock-failures.test.ts > publishes after observing absence without trying to remove the shared guard first 25ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves a live guard published after observing absence and before atomic publication 27ms
+ ✓ src/data-dir-lock-failures.test.ts > credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: false) 21ms
+ ✓ src/data-dir-lock-failures.test.ts > credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: true) 18ms
+ ✓ src/data-dir-lock-failures.test.ts > recognizes a Windows recovery marker that disappeared before its owner could be read 17ms
+ ✓ src/data-dir-lock-failures.test.ts > finds a live successor in a read-only check after the original marker disappears 17ms
+ ✓ src/data-dir-lock-failures.test.ts > refuses read-only ownership after bounded rechecks of repeatedly disappearing markers 21ms
+ ✓ src/data-dir-lock-failures.test.ts > reports the final acquisition outcome after 8 marker read losses 26ms
+ ✓ src/data-dir-lock-failures.test.ts > reports the final acquisition outcome after 7 marker read losses 22ms
+ ✓ src/data-dir-lock-failures.test.ts > reports uncertainty after seven marker read losses and a final lost stale-marker unlink 30ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves a refused read when the recovery marker still exists 20ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves a refused main owner record read even when its path is absent 2ms
+ ✓ src/data-dir-lock-failures.test.ts > accepts Windows EPERM only after the exact stale UUID marker is independently absent 18ms
+ ✓ src/data-dir-lock-failures.test.ts > never retries a refused stale-marker deletion or touches a successor marker 21ms
+ ✓ src/data-dir-lock-failures.test.ts > continues after Windows rmdir EPERM when the guard directory is independently absent 16ms
+ ✓ src/data-dir-lock-failures.test.ts > reports an ordinary held refusal when Windows directory EPERM exposes a verified live successor 17ms
+ ✓ src/data-dir-lock-failures.test.ts > continues without taking reclamation credit for a successor that releases during the identity probe 16ms
+ ✓ src/data-dir-lock-failures.test.ts > retains the original Windows directory denial for a persistent empty guard 15ms
+ ✓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with malformed JSON 19ms
+ ✓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with mismatched UUID 17ms
+ ✓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with missing identity 19ms
+ ✓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with own unheld PID 18ms
+ ✓ src/data-dir-lock-failures.test.ts > keeps Windows directory EPERM when the successor creation identity is unverified ({"reason":"WMI probe denied"}) 17ms
+ ✓ src/data-dir-lock-failures.test.ts > keeps Windows directory EPERM when the successor creation identity is unverified ({"identity":"134388256826197771"}) 22ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves a live successor and the original denial when the directory recheck is inaccessible 16ms
+ ✓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM for an ambiguous successor directory 16ms
+ ✓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM when a link points to a valid successor directory 16ms
+ ✓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM when the sole valid-looking marker is a hard link 17ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves the original denial when a physical successor is replaced during the identity probe 19ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves non-Windows directory EPERM even when a verified live successor is present 14ms
+ ✓ src/data-dir-lock-failures.test.ts > rolls back the main lock when Windows guard release fails while a successor is present 17ms
+ ✓ src/data-dir-lock-failures.test.ts > retains a genuine guard-directory removal failure and rolls back its main lock 15ms
+ ✓ src/data-dir-lock-failures.test.ts > never removes a successor published before an absent-marker EPERM recheck 26ms
+ ✓ src/data-dir-lock-failures.test.ts > preserves non-Windows EPERM even when a stale marker disappeared 15ms
+ ✓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired ordinary main lock if its recovery marker cannot be released 19ms
+ ✓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired attested main lock if its recovery marker cannot be released 21ms
+ ✓ src/data-dir-lock-failures.test.ts > explicitly reports retained ownership if both recovery release and main rollback fail 18ms
+ ✓ src/data-dir-lock-failures.test.ts > retains the original ownership refusal alongside recovery cleanup failures 15ms
+ ✓ src/data-dir-lock-failures.test.ts > retains an acquisition refusal when unpublished staging cleanup also fails 14ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned before handler boundary 16ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned ownership boundary 6ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned initial boundary 8ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned checkpoint boundary 6ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned boundary boundary 8ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops after an abandoned page while unrelated health and current reads complete 26ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > stops at an abandoned yield after a completed page while unrelated reads complete 30ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > handles the same connected read rejection 6ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > handles the same abandoned read rejection 8ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > completes bodyless requests and reuses the connection after a full historical response 22ms
+ ✓ src/routes/thread-disconnect.test.ts > historical thread response lifetime > preserves missing-thread, validation and authorization errors 16ms
+ ✓ src/main.test.ts > built entry and the reserved Windows launcher variable (#438) > logs only to the private pair, refuses an unsafe folder (71) and a second owner (70) 7827ms
+ ↓ src/main.test.ts > physical Mac managed entry > rejects a malformed snapshot before loading the app or creating a store
+ ✓ src/main.test.ts > physical Mac managed entry > consumes the Mac variable and preserves ordinary shell startup elsewhere 6430ms
+{"level":30,"time":1795663948361,"pid":59064,"hostname":"DESKTOP-RQPA3QI","msg":"Server listening at http://127.0.0.1:5627"}
+{"level":30,"time":1795663948362,"pid":59064,"hostname":"DESKTOP-RQPA3QI","host":"127.0.0.1","port":5627,"dataDir":"G:\\ggq\\tmp\\b1-publication\\gg-api-process-XOMasM","requireApiKey":true,"msg":"GraphGoblin API listening"}
+{"level":30,"time":1795663948383,"pid":59064,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","req":{"method":"GET","url":"/healthz","host":"localhost:80","remoteAddress":"127.0.0.1"},"msg":"incoming request"}
+{"level":30,"time":1795663948389,"pid":59064,"hostname":"DESKTOP-RQPA3QI","reqId":"req-1","res":{"statusCode":200},"responseTime":4.520700000000943,"msg":"request completed"}
+ ✓ src/main.test.ts > built API entry and startup failures > holds ownership while listening and releases it on supported HTTP close 3075ms
+ ✓ src/main.test.ts > built API entry and startup failures > serves authenticated requests using a binary-created key and refuses a competing process 9279ms
+ ✓ src/main.test.ts > built API entry and startup failures > refuses a shared database in one line and leaves its existing owner serving 9549ms
+ ✓ src/main.test.ts > built API entry and startup failures > explains uncertain data-directory ownership in one line and preserves the owner record 2911ms
+ ✓ src/main.test.ts > built API entry and startup failures > explains uncertain database ownership in one line and preserves the owner record 2769ms
+ ✓ src/main.test.ts > built API entry and startup failures > explains uncertain reclamation ownership in one line and preserves the owner record 2755ms
+ ✓ src/main.test.ts > built API entry and startup failures > escapes controls in a configured ownership path without changing its record 2447ms
+ ✓ src/main.test.ts > built API entry and startup failures > retains diagnostics for a real data-directory filesystem failure 1899ms
+ ✓ src/main.test.ts > built API entry and startup failures > dispatches the API-key and preflight CLIs with their real exit codes 7165ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership on a real corrupt-database startup fault before HTTP setup 5618ms
+ ✓ src/main.test.ts > built API entry and startup failures > releases ownership after a real occupied-port listen failure 5296ms
+ ↓ src/main.test.ts > built API entry and startup failures > releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)
+ ✓ src/main.test.ts > hard-linked database startup refusal (#533) > refuses both hard-linked spellings in one stack-free line, then the ordinary file serves 17773ms
+ ✓ src/main.test.ts > hard-linked database startup refusal (#533) > keeps the stack for an unexpected database filesystem failure (not hard-linked) 2336ms
+ ✓ src/main.test.ts > hard-linked database startup refusal (#533) > records a hard-linked database for the managed launcher only as store/store-unavailable (74) 14517ms
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGINT
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGTERM
+ ↓ src/main.test.ts > native API shutdown: Linux CI; win32 force-kills children without JS handlers > handles a real signal before readiness, holds ownership through startup and shuts down once
+
+ Test Files  7 passed (7)
+      Tests  147 passed | 6 skipped (153)
+   Start at  21:32:06
+   Duration  106.43s (tests 83%, import 11%, transform 6%)
+
+exit=0
