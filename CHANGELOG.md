@@ -4,6 +4,51 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- A record's JSON Value in the structured editor, such as a declared variable's JSON Schema in
+  Variables, refuses an own member named `__proto__` at any depth instead of saving the value
+  without it (#527). The form's copy of a parsed value cannot keep that member, so the Value used
+  to accept the text and autosave the schema narrowed. It now holds the text exactly as typed,
+  marked invalid and described by
+  `<member path>: This member name cannot be saved. Rename or remove it.` (for example
+  `properties.__proto__` or `anyOf.1.__proto__`), beside its Discard button. The draft keeps the
+  entry's last complete value, neighbouring fields still save, and Publish is refused until the
+  member is renamed or removed or the text is discarded; Discard returns focus to the Value's
+  editor. `__proto__` inside a string and members named `constructor`, `prototype`, `__proto` or
+  `proto__` are ordinary and saved as entered. A rule the record's own schema gives, such as the
+  Codex override key rule (#429), still takes precedence with its own message. No stored, export
+  or device-draft format changes, and no stored value is rewritten.
+  [Schema-driven forms](docs/09-frontend-and-pwa.md#what-shipped-in-m5-first-pass-draft)
+
+- A schema error inside a committed JSON Value is shown on that Value (#521). A Codex override
+  whose Value nests a refused key, such as `{"outer":{"team docs":true}}`, used to leave the Value
+  without an inline message, invalid state or description, and its issue link could focus a valid
+  dotted sibling entry such as `example.outer` instead. The owning Value is now marked invalid and
+  described by `<path from the value>: <message>`, and the issue links in the node dialog and on
+  the canvas focus it. An error about the key itself stays on its Key, other rows stay clear, and
+  correcting the member clears the error and lets the draft save and publish.
+
+- A structured section opened with **Edit as JSON** shows the diagnostic for its committed content
+  at once (#522). Opening it over a refused value, such as an override key `bad key`, used to show
+  no rule and leave **Apply JSON** enabled until the text was edited. The opening text is now
+  checked by the same validator as typed text, parent rules included: refused content shows its
+  message inline from the first render, marks the editor invalid and disables Apply. The
+  diagnostic is passive: it holds no input, offers no discard, adds no undo step and changes no
+  save or publish state. It follows sibling changes, returns after **Cancel JSON** with focus kept
+  on Cancel, and valid opening content keeps its ordinary controls.
+
+- The editor header no longer reads **All changes saved** while a field holds input that exists
+  only in this window (#526). Unparsed or unapplied JSON, an incomplete number or schedule and a
+  refused Value (#527) are held apart from the draft, whose saves go on without them. While such
+  input exists the save status shows a second segment, **Field input kept in this window only**,
+  and the draft part names what was kept: **Draft saved** for a server copy, or **Draft saved on
+  this device only**, **Draft kept in this window only**, **Offline: draft saved on this device**
+  or **Offline: draft kept in this window only**. One polite announcement says **Field input kept
+  in this window only** as held input begins, inside the node dialog while it is open and on the
+  page otherwise, and nothing more is announced while typing continues. Correcting or discarding
+  the field returns the ordinary status, and a reload restores only the complete draft. The
+  indicator changes nothing in the save state, drafts, API or device storage, and other statuses
+  read as before.
+
 - The run inspector keeps the last run it read through an API or browser outage (#416). The run
   section used to disappear behind the offline message as soon as a refresh failed. It now keeps
   the record's status, failure, result, wait form and delivery or finalization state under
