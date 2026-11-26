@@ -1,11 +1,8 @@
 import Fastify from 'fastify';
-import {
-  serializerCompiler,
-  validatorCompiler,
-  type ZodTypeProvider,
-} from 'fastify-type-provider-zod';
+import { serializerCompiler, type ZodTypeProvider } from 'fastify-type-provider-zod';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { OllamaConnectionView } from '@graphgoblin/contracts';
+import { requestValidatorCompiler } from '../plugins/request-validation.js';
 import { registerOllamaRoutes } from './ollama.js';
 import type { ApiInstance } from '../types.js';
 
@@ -21,7 +18,7 @@ afterEach(async () => {
 function setup() {
   const app = Fastify().withTypeProvider<ZodTypeProvider>();
   apps.push(app);
-  app.setValidatorCompiler(validatorCompiler);
+  app.setValidatorCompiler(requestValidatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
   const ollama = {
     view: vi.fn().mockResolvedValue(view),

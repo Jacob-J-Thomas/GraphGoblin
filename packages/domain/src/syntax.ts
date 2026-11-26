@@ -1,17 +1,16 @@
 /**
  * Locate typed authored sources without parsing or materializing defaults in the draft.
- * Metadata copies retain their marker's identity through sameSchema.
+ * Metadata copies retain their marker's identity through sameSchema. The diagnostics for sources
+ * that do not parse come from graph validation (`authoredSourceIssues` in node-references.ts),
+ * which walks with authoredFields and renders each through syntaxIssue.
  */
 import {
   ExpressionSchema,
   JsonPointerSchema,
-  LoopSettingsSchema,
-  NodeConfigSchemas,
   TemplateSchema,
   sameSchema,
-  type NodeKind,
 } from '@graphgoblin/contracts';
-import { sourceAnalysis, type SourceKind } from './source-analysis.js';
+import type { SourceKind } from './source-analysis.js';
 
 interface SyntaxIssue {
   code: 'TEMPLATE_INVALID' | 'EXPRESSION_INVALID';
@@ -124,7 +123,7 @@ export function authoredFields(
   return found;
 }
 
-/** Render the same diagnostics for standalone syntax checks and combined graph validation. */
+/** Render graph validation's diagnostic for a template or expression that does not parse. */
 export function syntaxIssue(
   { kind, path }: Pick<Found, 'kind' | 'path'>,
   problem: string,
@@ -138,27 +137,4 @@ export function syntaxIssue(
     ...(nodeId ? { nodeId } : {}),
     path: [nodeId ? 'config' : 'settings', path].filter(Boolean).join('.'),
   };
-}
-
-/** One error per template that does not parse and per expression that does not compile. */
-export function syntaxIssues(
-  def: { settings: unknown; nodes: readonly { id: string; kind: NodeKind; config: unknown }[] },
-  schemas: SourceSchemas & { settings: unknown; nodes: Record<NodeKind, unknown> } = {
-    ...currentSources,
-    settings: LoopSettingsSchema,
-    nodes: NodeConfigSchemas,
-  },
-): SyntaxIssue[] {
-  const issues: SyntaxIssue[] = [];
-  const report = (item: Found, nodeId?: string) => {
-    const { problem } = sourceAnalysis(item.kind, item.source);
-    if (problem !== null) issues.push(syntaxIssue(item, problem, nodeId));
-  };
-  for (const item of findAuthoredSources(schemas.settings, def.settings, schemas)) report(item);
-  for (const node of def.nodes) {
-    for (const item of findAuthoredSources(schemas.nodes[node.kind], node.config, schemas)) {
-      report(item, node.id);
-    }
-  }
-  return issues;
 }

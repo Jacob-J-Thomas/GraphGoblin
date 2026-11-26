@@ -1,0 +1,34 @@
+**QA verdict: PASS on #516, #535 and #540** for frozen patch SHA-256 `a643bc6e90671367101495187a99e28909c5d27d030686532d52e4d0e864f596`. The limits are listed at the end.
+
+**My native check:** I ran `python run-check.py native` once. It passed, so I didn't retry it or edit the driver.
+- Compiler exit 0, `windowsNative: true`.
+- Shipped `apps/windows-launcher/Launcher.cs` SHA-256 `34eb6b2298446495ab6c353a92aca9d2f834d39f1a003f5a69b2e37f932022ce`. The source file didn't change during the run (`launcherSourceStable: true`).
+- Driver SHA-256 `77466906a94cb9b59ee05f6125e6c86d96bdb4cd5eb90d5e54d8e3e781983841`. This matches the hash recorded by the earlier session, so the driver is the same file and unedited.
+- Executable SHA-256 `83280b72735d13752754dee7e1698f24783583290efebfec3fb1127809c6bc43`.
+- Two hidden scenarios, `inherit` and `removed`, both exited 0 with 11 of 11 checks true each. The only environment difference between them was `JEV_API_KEY`. Overall: `passed: true`.
+
+| Issue | Result | Why |
+|---|---|---|
+| #516 MCP loop-name docs | **PASS** | Guide 05, doc 09, the shared run-loop skill and the CHANGELOG all describe the current source (`loopNameKey`, `resolveLoop`):<br>• an exact ID of one of the user's loops wins first; if no loop has that ID, the lookup falls back to the name, and any other error is returned unchanged<br>• the full name is compared after trimming, collapsing spaces and lowercasing, with no Unicode normalization; part of a name returns `LOOP_NOT_FOUND`, and duplicates return `AMBIGUOUS_LOOP_NAME`<br>• stored display spelling is kept, and the `list_loops` `query` stays a separate substring filter<br>Claude's skill is built from the same shared file (`plugin-claude/src/index.ts`). Earlier-session tests passed: mcp (13 passed, 11 skipped), plugin (8 of 8), docs generation and Prettier. |
+| #535 Windows launcher Jev seeding | **PASS** | My native check confirmed, in a throwaway process environment with fake values:<br>• an inherited `JEV_API_KEY` reaches the child and gateway environments and the gateway process; when it is removed, it is absent from all three<br>• inherited GG credential names are stripped<br>• saved empty `GG_MASTER_KEY` and `GG_JEV_API_KEY` overrides, in exact and mixed case, are refused with the exact refusal message, and a valid config is still accepted<br>Source supports the rest: `GG_JEV_API_KEY ?? JEV_API_KEY` (config.ts), seeding only when the secret is absent (container.ts), and reuse of a running gateway before any start (Launcher.cs, around line 1208). The earlier session's seed tests passed (17 passed, 30 skipped), including that a stored secret survives an unseeded restart. The guide separates preventing the startup seed from deleting a stored key. |
+| #540 Reset "already gone" wording | **PASS** | Guide 08 and the CHANGELOG now say the earlier dry run is a separate invocation the confirmed command doesn't remember. "Already gone" applies only to an entry the command's own preview found that disappeared before it took the lock; entries cleared earlier get no claim. Source matches: each confirmed run builds its own preview and reports from it (reset.ts:913, 618–654). The earlier session's tests for this window inside one command passed (8 passed, 17 skipped). The archived 19-assertion Windows run of separate commands passed 19 of 19, including `no-claim-for-peer-cleared` and `claims-own-preview`. |
+
+**Where each piece of evidence comes from**
+- **My own run this session:** only the native check above.
+- **Earlier session, not rerun by me:** the six maintained commands (mcp, plugin, seed, reset, docs-gen `--check`, prettier `--check`). All exited 0, per the supplied receipts and log hashes.
+- **Read from source or docs only, not run:**
+  - config precedence and seeding conditions
+  - reuse of a running gateway with no restart or seed, and the still-releasing wait
+  - the shutdown-API link target (docs/07 `#gateway-shutdown-224`)
+  - the Explorer shortcut environment
+  - the internal-whitespace difference between `list_loops` and `describe_loop`
+- **Controlled single-command reset tests:** these cover only the window inside one confirmed command, with a simulated removal.
+- **Archived run of separate commands:** `F2C-sequential-attribution` at commit `67f6f0e130b99af436241c0bd43c1a6b1d3e620d`, step exits 0 1 0 0, 19 of 19. This is a historical record that I did not rerun.
+
+**Evidence limits**
+- Nothing tested a real race, a live GUI or shortcut launch, the installed `GraphGoblin.exe`, a real Node gateway, or real provider credentials and seeding. In the native check, the child process was the driver's own executable receiving the `GatewayEnvironment` map, not `apps/api/dist/main.js`.
+- The guide's PowerShell `Remove-Item Env:JEV_API_KEY` snippet was never run as written. The wrapper created the absent-key environment itself.
+- The duplicate-name (`AMBIGUOUS_LOOP_NAME`) case was tested against a controlled, deliberately inconsistent upstream. The Unicode cases rely on the maintained tests and source.
+- The patch changes documentation only. Runtime behavior therefore comes from the base revision. The archived reset run was on the earlier commit `67f6f0e`.
+- I didn't recompute the patch SHA or the receipt log hashes; they are quoted as supplied. The launcher, driver and executable hashes come from the wrapper's output.
+- I made no Git or candidate changes, no external calls and no host changes, and printed no credential values.

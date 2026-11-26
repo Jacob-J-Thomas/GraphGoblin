@@ -1,0 +1,266 @@
+"""Immutable preparation, post-author provenance and exact source snapshots for #524 QA."""
+
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+
+ROOT = Path(__file__).resolve().parent
+EVIDENCE = ROOT.parent
+AUTHOR = EVIDENCE / 'qa-packets-524-correction-01'
+AUTHOR_OUT = AUTHOR / 'claude-author-01'
+SHARED = EVIDENCE / 'scope-preparation-01'
+WORKTREE = Path('G:/ggq/gg-fu-qa-packets-20261124/GraphGoblin')
+HEAD = '7ee3e20a32e9a0c024bc63431e715c919c442dcb'
+TARGET = '631d16e39b8e9932f4763390a4166fa67eea8df3'
+BRANCH = 'codex/gg-fu-qa-packets-20261124'
+MODEL = 'claude-opus-5-5'
+NOT_BEFORE = '2026-11-25T05:10:20+00:00'
+NODE = Path('C:/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node.exe')
+PNPM = Path('C:/nvm4w/nodejs/pnpm.cmd')
+PYTHON = 'C:/Users/98jak/AppData/Local/Programs/Python/Python311/python.exe'
+ALLOWED = sorted(('tooling/scripts/check-qa-packet.mjs', 'tooling/scripts/check-qa-packet.test.mjs',
+                  'docs/10-testing-and-quality.md'))
+CONFIG = ('.gitattributes', '.prettierignore', '.prettierrc', '.gitignore',
+          'package.json', 'tooling/package.json', 'pnpm-lock.yaml')
+CHECKS = ('focused', 'fixtures', 'packet')
+AUTH = {'loggedIn': True, 'authMethod': 'claude.ai', 'apiProvider': 'firstParty',
+        'subscriptionType': 'max', 'apiKeySource': None}
+
+
+def need(condition, reason):
+    if not condition:
+        raise RuntimeError(reason)
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def digest(path):
+    return sha(path.read_bytes())
+
+
+def load(path):
+    return json.loads(path.read_text(encoding='utf-8-sig'))
+
+
+def save(path, data):
+    with path.open('x', encoding='utf-8', newline='\n') as stream:
+        json.dump(data, stream, indent=2)
+        stream.write('\n')
+
+
+def utc():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def environment(temp=None):
+    keep = {'systemroot', 'windir', 'comspec', 'path', 'pathext', 'temp', 'tmp',
+            'userprofile', 'appdata', 'localappdata', 'systemdrive', 'os', 'number_of_processors'}
+    env = {key: value for key, value in os.environ.items() if key.casefold() in keep}
+    env.update(PATH=str(NODE.parent) + ';' + env.get('PATH', ''), CI='1', GIT_TERMINAL_PROMPT='0')
+    if temp is not None:
+        temp.mkdir(exist_ok=False)
+        env.update(TEMP=str(temp), TMP=str(temp))
+    return env
+
+
+def git(*args):
+    result = subprocess.run(['git', '--no-optional-locks', '-c', 'diff.autoRefreshIndex=false', *args],
+                            cwd=WORKTREE, env=environment(), timeout=30, capture_output=True,
+                            creationflags=subprocess.CREATE_NO_WINDOW, check=True)
+    return result.stdout
+
+
+def git_text(*args):
+    return git(*args).decode('utf-8').strip()
+
+
+def names(*args):
+    return sorted(path for path in git(*args).decode('utf-8').split('\0') if path)
+
+
+def file_hashes(paths):
+    hashes = {}
+    for rel in sorted(paths):
+        path = WORKTREE / rel
+        need(path.is_file() and path.resolve(strict=True) == path, f'SOURCE_NOT_PLAIN: {rel}')
+        hashes[rel] = digest(path)
+    return hashes
+
+
+def snapshot(candidate):
+    head, branch = git_text('rev-parse', 'HEAD'), git_text('branch', '--show-current')
+    need(head == HEAD and branch == BRANCH and Path(git_text('rev-parse', '--show-toplevel')) == WORKTREE,
+         'BASELINE_WORKTREE_OR_HEAD_CHANGED')
+    index = Path(git_text('rev-parse', '--path-format=absolute', '--git-path', 'index'))
+    need(index.is_file() and index.resolve(strict=True) == index and not Path(f'{index}.lock').exists(),
+         'INDEX_NOT_STABLE_PHYSICAL_FILE')
+    index_before = digest(index)
+    staged = names('diff', '--cached', '--name-only', '-z')
+    untracked = names('ls-files', '--others', '--exclude-standard', '-z')
+    changed = names('diff', '--name-only', '--no-renames', 'HEAD', '-z')
+    need(not staged and not untracked and changed == (ALLOWED if candidate else []),
+         'AUTHOR_MUST_LEAVE_EXACT_THREE_UNSTAGED_PATHS' if candidate else 'PREPARATION_REQUIRES_CLEAN_BASELINE')
+    packet = names('diff', '--name-only', '--no-renames', TARGET, HEAD, '-z', '--', 'docs/qa')
+    integrated = names('diff', '--name-only', '--no-renames', TARGET, HEAD, '-z')
+    need(len(packet) == 66 and len(integrated) == 72, 'SCAN3_SCOPE_DRIFT')
+    need(not (WORKTREE / '.editorconfig').exists(), 'UNEXPECTED_EDITORCONFIG_OVERRIDE')
+    raw = file_hashes(set(integrated) | set(CONFIG))
+    patch = git('diff', '--binary', '--no-ext-diff', '--no-textconv', 'HEAD')
+    target_to_candidate = git('diff', '--binary', '--no-ext-diff', '--no-textconv', TARGET)
+    target_tree = git_text('rev-parse', f'{TARGET}^{{tree}}')
+    tree = git_text('rev-parse', 'HEAD^{tree}')
+    need(git_text('merge-base', TARGET, HEAD) == TARGET and digest(index) == index_before
+         and git_text('rev-parse', 'HEAD') == head, 'SNAPSHOT_INDEX_HEAD_OR_MERGE_BASE_CHANGED')
+    return {
+        'worktree': WORKTREE.as_posix(), 'head': head, 'tree': tree, 'branch': branch,
+        'target': TARGET, 'targetTree': target_tree, 'index': index.as_posix(), 'indexSha256': index_before,
+        'changedPaths': changed, 'stagedPaths': staged, 'untrackedPaths': untracked,
+        'rawFiles': raw, 'packetPaths': packet, 'packetPathCount': len(packet),
+        'changedFileSha256': {rel: raw[rel] for rel in changed}, 'patchSha256': sha(patch),
+        'targetToCandidatePatchSha256': sha(target_to_candidate),
+        'nodeSha256': digest(NODE), 'pnpmCmdSha256': digest(PNPM),
+    }
+
+
+def prep():
+    frozen = load(ROOT / 'PREPARATION-BINDINGS.json')
+    for rel, expected in frozen['local'].items():
+        need(digest(ROOT / rel) == expected, f'PREPARATION_FILE_CHANGED: {rel}')
+    for rel, expected in frozen['external'].items():
+        need(digest(EVIDENCE / rel) == expected, f'EXTERNAL_EVIDENCE_CHANGED: {rel}')
+    return load(ROOT / 'PREPARED-BASELINE.json')
+
+
+def verify_baseline(candidate, baseline):
+    mutable = {'changedPaths', 'changedFileSha256', 'patchSha256', 'targetToCandidatePatchSha256', 'rawFiles'}
+    need({k: v for k, v in candidate.items() if k not in mutable} ==
+         {k: v for k, v in baseline.items() if k not in mutable}, 'BASE_IDENTITY_OR_INDEX_BYTES_CHANGED')
+    need(set(candidate['rawFiles']) == set(baseline['rawFiles']), 'RAW_PROTECTED_SCOPE_CHANGED')
+    raw_changes = sorted(k for k, value in candidate['rawFiles'].items() if value != baseline['rawFiles'][k])
+    need(raw_changes == ALLOWED, 'EXACT_THREE_RAW_FILES_MUST_DIFFER_AND_ALL_66_PACKET_BYTES_MUST_MATCH')
+
+
+def events(path):
+    with path.open(encoding='utf-8', errors='replace') as stream:
+        for line in stream:
+            try:
+                yield json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+
+def provider_evidence(path):
+    init, final, models, rates, calls = {}, {}, set(), [], {}
+    for record in events(path):
+        if record.get('type') == 'system' and record.get('subtype') == 'init':
+            init = record
+        if record.get('type') == 'result':
+            final = record
+        if record.get('type') == 'rate_limit_event':
+            rates.append(record.get('rate_limit_info', {}))
+        message = record.get('message')
+        if not isinstance(message, dict):
+            continue
+        if record.get('type') == 'assistant' and message.get('model'):
+            models.add(message['model'])
+        for item in message.get('content', []):
+            if not isinstance(item, dict):
+                continue
+            if item.get('type') == 'tool_use':
+                calls[item['id']] = {'tool': item.get('name'), 'input': item.get('input', {})}
+            if item.get('type') == 'tool_result' and item.get('tool_use_id') in calls:
+                raw = json.dumps(item.get('content', ''), ensure_ascii=False)
+                calls[item['tool_use_id']].update(
+                    success=not item.get('is_error', False) and not re.search(r'Exit code[ :]+[1-9][0-9]*', raw),
+                    resultSha256=sha(raw.encode()))
+    verified = (init.get('model') == MODEL and init.get('apiKeySource') == 'none'
+                and bool(init.get('session_id')) and final.get('is_error') is False
+                and list(final.get('modelUsage', {})) == sorted(models) == [MODEL]
+                and any(row.get('isUsingOverage') is False for row in rates)
+                and not any(row.get('isUsingOverage') is True for row in rates))
+    return init, final, rates, list(calls.values()), verified
+
+
+def author_evidence():
+    receipt_path = AUTHOR_OUT / 'CLAUDE-EXIT.json'
+    need(receipt_path.is_file(), 'WAIT_SUCCESSFUL_ACTUAL_524_AUTHOR_EXIT')
+    receipt = load(receipt_path)
+    need(receipt.get('invocationSucceeded') is True and receipt.get('exitCode') == 0
+         and receipt.get('timedOut') is False and receipt.get('isError') is False
+         and receipt.get('finalHead') == HEAD and receipt.get('finalBranch') == BRANCH
+         and receipt.get('changedPaths') == ALLOWED and not receipt.get('outOfScopePaths')
+         and not receipt.get('stagedPaths')
+         and not receipt.get('postflightError'), 'AUTHOR_FAILED_OR_SCOPE_NOT_PROVED')
+    need(receipt.get('providerModel') == MODEL and receipt.get('providerApiKeySource') == 'none'
+         and receipt.get('assistantModels') == receipt.get('models') == [MODEL], 'AUTHOR_MODEL_RECEIPT_MISMATCH')
+    files = ('CLAUDE-EXIT.json', 'CLAUDE-LAUNCH.json', 'CLAUDE-EVENTS.private.jsonl',
+             'CLAUDE-STDERR.private.log', 'CLAUDE-BRIEF.private.txt', 'IMPLEMENTATION-REPORT.claude.md')
+    need(all((AUTHOR_OUT / name).is_file() for name in files), 'AUTHOR_RAW_PROVENANCE_INCOMPLETE')
+    launch = load(AUTHOR_OUT / files[1])
+    need(launch.get('auth') == AUTH and launch.get('model') == MODEL and launch.get('effort') == 'xhigh'
+         and launch.get('expectedHead') == HEAD and launch.get('expectedBranch') == BRANCH
+         and Path(launch.get('worktree', '')) == WORKTREE and sorted(launch.get('writePaths', [])) == ALLOWED
+         and launch.get('initialWorktreeChanges') == {}
+         and launch.get('promptSha256') == digest(AUTHOR_OUT / files[4]), 'AUTHOR_LAUNCH_MISMATCH')
+    init, result, rates, calls, verified = provider_evidence(AUTHOR_OUT / files[2])
+    report = result.get('result') or ''
+    need(verified and report and sha(report.encode()) == receipt.get('reportSha256')
+         and (AUTHOR_OUT / files[5]).read_text(encoding='utf-8') == report + '\n',
+         'AUTHOR_RAW_RESULT_OR_ORDINARY_MAX_MISMATCH')
+    required = [value for value in load(AUTHOR / 'IMPLEMENTATION-CONTRACT.json')['verificationCommands']
+                if '--write' not in value]
+    bash_history = [{'command': row['input'].get('command'), 'success': row.get('success'),
+                     'resultSha256': row.get('resultSha256')} for row in calls if row['tool'] == 'Bash']
+    need(result.get('permission_denials', []) == receipt.get('permissionDenials', []),
+         'AUTHOR_RAW_PERMISSION_DENIAL_RECEIPT_MISMATCH')
+    adjudication = None
+    if receipt.get('permissionDenials') or any(row['command'] not in launch['bashCommands'] for row in bash_history):
+        from author_adjudication_524 import validate
+        adjudication = validate(receipt)
+    for command in required:
+        matching = [row for row in bash_history if row['command'] == command]
+        need(matching and matching[-1]['success'] is True, f'AUTHOR_REQUIRED_CHECK_NOT_PROVED: {command}')
+    author = {'sessionId': init['session_id'], 'filesSha256': {name: digest(AUTHOR_OUT / name) for name in files},
+              'bashHistory': bash_history, 'rates': rates}
+    if adjudication is not None:
+        author['adjudication'] = adjudication
+    return receipt, author
+
+
+def bound():
+    baseline = prep()
+    path = ROOT / 'CANDIDATE-BINDING.json'
+    need(path.is_file(), 'UNBOUND_WAIT_SUCCESSFUL_AUTHOR_AND_EXACT_SOURCE_BINDING')
+    binding = load(path)
+    need(all(digest(ROOT / name) == value for name, value in binding['patchFilesSha256'].items()),
+         'COMPLETE_PATCH_ARTIFACT_CHANGED')
+    need(all(digest(AUTHOR_OUT / name) == value for name, value in binding['author']['filesSha256'].items()),
+         'BOUND_AUTHOR_EVIDENCE_CHANGED')
+    author_receipt = load(AUTHOR_OUT / 'CLAUDE-EXIT.json')
+    if author_receipt.get('permissionDenials') or binding['author'].get('adjudication'):
+        from author_adjudication_524 import validate
+        need(validate(author_receipt) == binding['author'].get('adjudication'), 'BOUND_524_ADJUDICATION_CHANGED')
+    current = snapshot(candidate=True)
+    verify_baseline(current, baseline)
+    need(current == binding['source'], 'BOUND_CANDIDATE_CHANGED')
+    return binding
+
+
+def commands():
+    return tuple(f'{PYTHON} {ROOT.as_posix()}/run-check.py {mode}' for mode in CHECKS)
+
+
+def approved(binding):
+    proposal = ROOT / 'QUEUE-ITEM.proposed.json'
+    need(load(proposal) == load(ROOT / 'QUEUE-TEMPLATE.json'), 'QUEUE_PROPOSAL_DRIFT')
+    receipt = {'issue': 524, 'candidateBindingSha256': digest(ROOT / 'CANDIDATE-BINDING.json'),
+               'queueItemSha256': digest(proposal), 'authorized': True}
+    approval = ROOT / 'QA-APPROVED.json'
+    need(binding['issue'] == 524 and approval.is_file() and load(approval) == receipt,
+         'EXACT_ROOT_QA_APPROVAL_REQUIRED')

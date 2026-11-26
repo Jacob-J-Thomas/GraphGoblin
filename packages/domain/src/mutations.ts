@@ -16,7 +16,7 @@ import {
   type ExpressionObservation,
   type ExpressionReason,
 } from './expression.js';
-import { validateJson } from './json-schema.js';
+import { validateJson, type SchemaValidation } from './json-schema.js';
 import { applyPatch, assertMutablePath } from './patch.js';
 import { getAtPointer } from './pointer.js';
 import { unsafeRegexReason } from './regex-safety.js';
@@ -56,7 +56,7 @@ export type MutationFailureMapper = (
 export type MutationFact =
   | { kind: 'expression'; reason: ExpressionReason; itemIndex?: number }
   | { kind: 'template'; fact: TemplateFact; itemIndex?: number }
-  | { kind: 'regex' | 'target' | 'patch' | 'schema' };
+  | { kind: 'regex' | 'target' | 'patch' };
 
 export type MutationFactMapper = (
   fact: MutationFact,
@@ -66,7 +66,7 @@ export type MutationFactMapper = (
 
 type Rethrow = (error: unknown, fact?: MutationFact) => never;
 
-function authored<T>(operation: () => T, rethrow: Rethrow, kind: 'target' | 'regex' | 'schema'): T {
+function authored<T>(operation: () => T, rethrow: Rethrow, kind: 'target' | 'regex'): T {
   try {
     return operation();
   } catch (error) {
@@ -336,7 +336,14 @@ export async function planMutation(
       authored(() => assertMutablePath(op.target), rethrow, 'target');
       const source = authored(() => getAtPointer(thread, op.source), rethrow, 'target');
       const value = source.found ? source.value : undefined;
-      const validation = authored(() => validateJson(op.jsonSchema, value), rethrow, 'schema');
+      // An authored schema that does not compile returns as validation errors and enters repair.
+      // Anything validation throws carries no authored fact; only the ordinary mapper sees it.
+      let validation: SchemaValidation;
+      try {
+        validation = validateJson(op.jsonSchema, value);
+      } catch (error) {
+        return rethrow(error);
+      }
       if (validation.ok) {
         const exists = authored(() => getAtPointer(thread, op.target), rethrow, 'target').found;
         return {

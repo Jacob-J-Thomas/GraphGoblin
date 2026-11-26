@@ -1,0 +1,293 @@
+diff --git a/.gitattributes b/.gitattributes
+index 5e245ffd9..6892ffa81 100644
+--- a/.gitattributes
++++ b/.gitattributes
+@@ -274,3 +274,12 @@ docs/qa/2026-11-23-macos-main-integration/raw/** -text -whitespace
+ 
+ # Preserve exact D238/D239 macOS canonical-path QA raw evidence bytes.
+ docs/qa/2026-11-23-macos-canonical-path-test/raw/** -text -whitespace
++
++# Preserve exact QA artifact bytes and avoid treating retained evidence as source whitespace.
++docs/qa/2026-11-23-inspector-offline-timeline/** -text -whitespace
++
++# Preserve the additive D242 supplement exactly, including inner reading notes.
++docs/qa/2026-11-23-inspector-offline-timeline-d242/** -text -whitespace
++
++# Preserve exact signed core-delivery receipts.
++docs/qa/2026-11-23-inspector-core-delivery/** -text -whitespace
+diff --git a/.prettierignore b/.prettierignore
+index a2019c897..76f0e0a5d 100644
+--- a/.prettierignore
++++ b/.prettierignore
+@@ -134,3 +134,15 @@ docs/qa/2026-11-23-macos-main-integration/raw/**
+ 
+ # Preserve exact D238/D239 macOS canonical-path QA raw evidence bytes.
+ docs/qa/2026-11-23-macos-canonical-path-test/raw/**
++
++# Preserve the complete selected QA archive, including sealed inner reading notes.
++docs/qa/2026-11-23-inspector-offline-timeline/**
++
++# Optional only for the final current README, formatted and rehashed before sealing.
++!docs/qa/2026-11-23-inspector-offline-timeline/README.md
++
++# Preserve all D242 supplement evidence after final prose formatting and byte pins.
++docs/qa/2026-11-23-inspector-offline-timeline-d242/**
++
++# Preserve exact signed core-delivery receipts and prewritten reader.
++docs/qa/2026-11-23-inspector-core-delivery/**
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 5440edf4c..a7f7dfac6 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -18,6 +18,58 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+   at their saved paths or rerun the installer. No format change or migration. Part of #456 and
+   #326; owner acceptance is tracked separately. See ADR-0082.
+ 
++- The run inspector keeps the last run it read through an API or browser outage (#416). The run
++  section used to disappear behind the offline message as soon as a refresh failed. It now keeps
++  the record's status, failure, result, wait form and delivery or finalization state under
++  **Last observed, may be out of date**, with a notice saying whether the browser is offline,
++  the API cannot be reached or the run is being read again. Only a run read with an in-memory
++  receipt qualifies: a real, non-manual, contract-valid GET from the current client, cache, query
++  and credentials. Cache seeds, manual writes, retired requests and cold loads stay unavailable.
++  A definitive HTTP refusal retires the receipt and shows its ordinary error. A successful GET
++  whose body does not match the contract retires the receipt too, without changing the ordinary
++  query result, which keeps that body. A later transport failure cannot bring the fallback back,
++  although its ordinary offline error can replace an earlier HTTP message. Nodes show their
++  recorded IDs and summaries that no qualified read supplied are omitted. The execution context
++  stays, with the pinned definition shown as unavailable and a cancellation's actor and sequence
++  numbers only from a qualified observation; a selected exit event keeps its own explanation of a
++  missing value. Every control that writes (pause, cancel, resume, replay, script recovery, Start
++  fresh session, input and signal answers, the delete-ready preview and confirmation) stays
++  unavailable until a run read that started after the outage began has committed; reconnecting, a
++  health probe or an open stream alone does not unlock it. One run's own outage does not carry
++  over to another run opened in the same view; a browser disconnect applies to every run. Open
++  reviews close, late previews are discarded, and a command queued across a loss, reconnect or
++  A → B → A visit reports **Not sent** instead of sending. Drafts of the same wait, reading and
++  Cancel keep working, and a write already sent keeps its real outcome; nothing is replayed. While
++  a script recovery already sent is unresolved, no replacement review opens over it, so its late
++  failure or success is still reported. A sent delete-ready confirmation holds its review the same
++  way while that review is open, was expired by an outage or was closed by withholding the run
++  section; an outage, reconnect or the section shown again does not release that hold. Only after
++  the browser itself has dismissed that review (as on a repeated Esc) may a new review open and
++  read a new preview, and it cannot be confirmed until the first confirmation settles. The first
++  confirmation's outcome is then reported beside the controls, not in the newer review; if the
++  API could not be reached, it says the change may or may not have been saved. A confirmation's
++  failure is shown in its own review only while that review is open and current, and otherwise
++  beside the controls. Start fresh session additionally needs a post-outage observation
++  of the same failure and still sends that failure's own sequence; a choice queued before a
++  failure of the observation read alone stays spent after that read recovers, including through a
++  removed and recreated query or another accepted API key. That choice, a script recovery retry
++  and a delete-ready confirmation belong to the inspector view rather than its run section; their
++  reviews stay with the section. When the section is withheld until a run read under another
++  accepted key qualifies, after a browser loss the view recorded, the controls shown again stay
++  disabled while the action is pending, so that fresh read cannot offer a second retry or
++  confirmation, and then report its actual outcome (**Not sent**, the retry's own error, or that a
++  confirmation may or may not have been saved) rather than losing it. Another run or a later visit
++  shows neither its pending state nor its outcome. At most
++  one extra deduplicated read per outage is added, of the run or, where Start fresh session needs
++  it, the observation. The Timeline and the thread keep their behaviour. No persistent format,
++  store, export or contract change.
++
++- The Timeline's sequence column now fits the widest number shown instead of a fixed 30 px track
++  (#420), so five-, six-digit and longer sequences show in full beside their event type, and rows,
++  the title count, the window summary and the sequence form wrap on narrow screens and with
++  enlarged text. Selection, keyboard movement, paging, Follow live and the history budgets are
++  unchanged.
++
+ - The run inspector header shows the outcome the Timeline shows (#386). The run record is projected
+   after its event is published, so a refresh could still be in flight, or return the earlier status
+   at the terminal event's sequence, and the header kept saying running. The header now also follows
+diff --git a/docs/09-frontend-and-pwa.md b/docs/09-frontend-and-pwa.md
+index 5aa8494a3..7dc7eef2c 100644
+--- a/docs/09-frontend-and-pwa.md
++++ b/docs/09-frontend-and-pwa.md
+@@ -137,6 +137,131 @@ A selected `node.finished` patch shows each `add` operation's recorded value as
+ with **Before** absent for an append (`/messages/-`, `/vars/list/-`); repeated appends each show
+ their own value, not the final array's last element (#385).
+ 
++### Run inspector during an outage (#416)
++
++When the run read fails to reach the API, pauses because the browser is offline, or the browser
++reports a disconnect, the inspector's run section keeps the last run this view read, under a
++warning titled **Last observed, may be out of date** that says whether the browser is offline,
++the API cannot be reached, or the run is being read again. The retained section shows the
++record's status, failure, result, wait (with its form) and delivery and finalization state as last
++read. It does not claim anything the record did not say: a terminal run that was not finalized
++still reads **Execution ended; finalization pending.** Nodes are named by their recorded IDs, and
++the pinned version's labels and the section's gate and return summaries are omitted until the run
++is read again. The execution context stays: it shows the run record, says the pinned definition is
++unavailable rather than loading, and names the recorded node by its ID. The exit evaluation, a
++finish event's result, a cancellation's actor with its request and cancellation sequence numbers,
++and fresh-session notes come from the run observation and are kept only from a qualified
++observation read. A foreign or manually written observation supplies none of them; a cancelled
++run then says its cancellation record could not be read. The Timeline, the selected payload
++(including a selected exit's explanation of a missing value, which keeps the observation, thread
++and version it already read), the exact thread and the preceding selection below keep their own
++behaviour.
++
++Only a qualified receipt lets a run stay on screen. A receipt is in-memory metadata, at most one
++per guarded query and never a copy of the body: the start position of a real run (or
++observation) GET sent by this app's API client, provider, physical query and current credential
++generation, recorded when that GET's own successful, non-manual cache commit arrives, including
++an identical body. The run body must also match the run snapshot contract, and each observation
++field the section shows must be the expected event kind for this run. Cache seeds, placeholders,
++manual writes, removed or replaced query entries, another provider or cache, aborted or retired
++attempts and answers under retired credentials never qualify. A cold or unproved row stays
++unavailable and shows the ordinary offline state. A definitive refusal (an HTTP or authentication
++error, a missing run or a response naming another run) retires the receipt and fails the read with
++its ordinary error. A successful GET whose body does not match the run snapshot contract, or an
++observation with a field of the wrong kind or run, also retires the receipt, but leaves the
++ordinary query result unchanged: the body stays the query's data as returned and no error is
++added. After either, a later transport error cannot bring the last observed run back. That later
++failure's ordinary offline error can replace an earlier HTTP message on screen; the fallback stays
++unavailable until a new qualified read. Removing the query from the cache removes its receipt with
++it.
++
++Freshness compares positions. A loss records the start of the latest outage; repeated failures
++within it keep that boundary, and it stays recorded after the outage ends, so a nonzero loss alone
++does not mean an outage is current. The run is current again only when its receipt is newer than
++the latest boundary this view knows (`committed > max(browser loss, run-read loss)`); a positive
++receipt by itself only permits the last-observed display. Being online again, a successful health
++probe or an open event stream may start the existing rereads but never unlock the view, and a read
++that started before the loss cannot either. The boundary the view remembers for a run, kept even
++when a credential or provider change empties the receipt's own loss, belongs to that run: another
++run opened in the same view starts from its own receipts, so an outage of one run's read never
++marks another run last observed. A browser disconnect applies to every run until each is read
++again. The shared API probe, the stream's reread and the API key panel's refresh keep doing that
++work. The inspector adds at most one deduplicated reread per
++outage boundary that nothing else serves, joining a read already in flight: of the run, and of
++the observation only when **Start fresh session** needs it. There is no polling for receipts.
++
++While the run is last observed, every control that writes is unavailable: pause, cancel, resume,
++replay, script recovery, **Start fresh session**, input and signal answers, and the delete-ready
++review with its preview and confirmation. Each view issues a write gate, replaced whenever the
++visit, the run or the outage boundary changes. A control checks it before opening a review,
++before queueing a mutation and again immediately before each API write; the mutation carries the
++gate with its frozen run, wait, consent, failure or selection identity. An open replay, script
++or delete-ready review therefore closes when the connection is lost, a preview that arrives late
++is discarded, and a command queued or delayed across a loss, a reconnect or an A → B → A visit
++reports **Not sent** instead of sending. Keyboard submission is checked the same way. Cancel and
++close, reading, and the draft of the same wait keep working; a new wait starts empty. A write that
++was already sent keeps its actual outcome; a delete-ready confirmation reports it beside the
++controls, except a failure while the review it was sent from is still open and current, which that
++review shows: cancelling the review dismisses the failure with it, while an outage that expires
++the review, or withholding the run section, moves the failure beside the controls. While a script
++recovery (queued or sent) is unresolved, its launcher stays disabled and its handler refuses, even after
++the outage that expired its review has ended or the run section showing it was withheld and shown
++again: no replacement review resets it or sends a second command before it settles, and its
++eventual failure or success is still reported. A sent delete-ready confirmation holds the
++delete-ready launchers the same way while its review is open, has been expired by an outage or
++was closed by withholding the run section; an outage, a reconnect or the section shown again does
++not release that hold. The one
++exception is a review the browser itself has already dismissed (it closes a modal dialog on a
++repeated Esc without asking): the confirmation is still pending, but a new review may open and
++read a new preview. That review cannot be confirmed while the first confirmation is pending,
++because these controls send one confirmation at a time; after the first settles, confirming the
++newer review is a separate explicit choice. The first confirmation's outcome is reported beside
++the controls, never in the newer review, and a newer review opened before it settles neither
++discards that outcome nor is closed by it. The outcome is the success message; when the API could
++not be reached, that the change may or may not have been saved; otherwise **Not saved: …** with
++the reason. Nothing is replayed automatically. **Start
++fresh session** also needs an observation read after the loss whose failure event names the same
++run, node and missing-session visit as the current record; it sends that failure event's own
++sequence even when later delivery audits exist. Its gate keeps the observation boundary it was
++issued under and, like the view's write gate, is replaced when that boundary or the evidence's
++freshness changes; a replaced gate stays spent. Once the view has shown a failure of the
++observation read alone, with the run read and the browser healthy, a choice queued before it
++reports **Not sent** even after the observation is read again with an equal body, including from
++a removed and recreated query or under another accepted API key that the API key panel followed.
++A new choice after the qualifying observation read sends once. The view, not the run section,
++owns a **Start fresh session** choice, a script recovery retry and a delete-ready confirmation,
++with their pending state and outcomes; their reviews belong to the section and close with it. The
++section is withheld while its run is unproved, for example after the API key panel follows another
++accepted key once this view has recorded a browser loss, until a run read under that key
++qualifies. A choice, retry or confirmation queued or sent before that stays pending: the controls
++shown again stay disabled until it settles (once the browser has dismissed a pending
++confirmation's review, as above, a new review may open but not be confirmed), so a fresh read of
++the same run cannot offer a second command or confirmation meanwhile. They then report its actual
++outcome, such as **Not sent**, the
++retry's own error or, for a confirmation the API could not be reached for, that the change may or
++may not have been saved, until a new explicit choice or review replaces it. For a confirmation, a
++failure classified by the API client as a network error reports uncertainty rather than a server
++refusal. Classification of failures while consuming a response body remains tracked in
++[#561](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/561). Pending state and outcomes belong to the visit
++that made the choice; another run opened in the same view, or a later visit, shows neither.
++Withholding, qualification and the gate are unchanged, and the section stays hidden while it is
++withheld. Other run controls stay available
++through an observation-only failure. Script consent keeps the run and observed sequence shown
++when its review opened. The Runs list's delete-ready
++controls share the hold on a sent confirmation, its exception after a browser dismissal and the
++report beside the controls; otherwise they and other pages keep their behaviour.
++
++### Timeline sequence column (#420)
++
++Each Timeline row sizes its sequence column to the widest sequence in the rows shown, in
++characters of its monospace font, so five-, six-digit and longer contract-valid numbers show in
++full and stay aligned without a cap, rounding or truncation. A row wraps onto further lines,
++sequence and type first and the description below, when a narrow screen or enlarged text cannot
++hold them side by side; the event type's size follows the root text size. The card title's event
++count, the window summary and the sequence form also wrap. Accessible names, `data-seq`, the one
++row Tab stop, selection, keyboard movement, paging, **Follow live**, the 80-row window, the
++512-event and byte budgets, 128-event pages and the independent live cursor are unchanged.
++
+ ## Native Chat and the Goblin PWA (#443)
+ 
+ Chat is the management application's first navigation item and index destination at `/app/chat`.
+diff --git a/docs/delivery/2026-11-17-five-intents-register.md b/docs/delivery/2026-11-17-five-intents-register.md
+index c6838e518..b92d20474 100644
+--- a/docs/delivery/2026-11-17-five-intents-register.md
++++ b/docs/delivery/2026-11-17-five-intents-register.md
+@@ -393,3 +393,52 @@ Signed PR #553 completed intent 4 before this lane began. At admission, the appr
+ Actual Claude owns the production correction; GPT supplies bounded supporting tests/docs. [Exact-source evidence](../qa/2026-11-22-i5-inspector-truthfulness/README.md) records 3,102 passing web tests with 98.65% line and 94.44% branch coverage, 36 distinct independent component outcomes across qualified invocations, and six fresh browser passes. Both prior CHANGES_REQUIRED reviews, budget-stopped author terminals and failed checks/fixtures retain their historical outcomes. This candidate record closes no issue by itself.
+ 
+ Actual Claude targeted review of the final supporting correction, the fresh independent Astra MAX third/final audit, exact-head/current-target ordinary CI/native and signed merge remain required. Preserve the three-scan cap and current owner gates; no fourth general scan, fabricated provider completion or weakened coverage is implied. #416 then #420 follow this pair's engineering delivery. Final owner decision review/rework precedes owner QA; Mac #501, #448/#459 owner obligations, #460 and conditional #379 retain their separate status. Later completion records belong in the linked issue/PR discussions and subsequent register entries.
++
++## Intent 5 offline evidence and Timeline candidate — November 23, D240–D241
++
++Signed PR #557 delivered #386/#385 before this #416/#420 candidate. Product source is frozen at
++`a0ce7b781e333b70f4711b5e9201ef63c157df1d`, tree
++`3f47fed82c18930fc0a56bc8e2598e7190ba8f3c`, against signed main
++`0f6c325becf3e3e0562ae69dfae2c42bcf1d7129`. The inspector retains qualified last-known evidence
++during relevant outages while keeping write authority tied to a matching fresh read and new
++consent. Same-visit pending session actions and their refusal feedback survive temporary run
++section removal. Long Timeline numbers remain separately legible from event types.
++
++The [source and QA archive](../qa/2026-11-23-inspector-offline-timeline/README.md) retains actual
++Claude UI implementation and GPT architecture provenance, the scoped Fable core critique,
++both negative opposing reviews, original failures, bounded corrections and independent QA.
++Current evidence is 233 focused passes, independent fresh2 and full63 passes, and 3,179 whole-web
++passes with 98.68% line and 94.46% branch coverage. The fresh native browser run passed 11/12
++without retries. Strict G1 still fails the pre-existing 320px/200%-text whole-page overflow;
++all 12 current Timeline samples have zero number/type overlap or clipping. The retained-main
++comparison and current-source disposition support #420's bounded criterion, with broader
++reflow separately parked in #563. #561/#562 also remain outside this batch.
++
++This records a candidate and completed local evidence, not delivery or owner acceptance.
++Repository gates, exact-head/current-target CI and native artifact verification, the fresh
++independent Astra MAX formal pass 3, and verified signed merge remain required. Historical
++CHANGES REQUIRED verdicts remain preserved; the two consumed formal passes and one general
++scan are not reset. Engineering stays 41/48 overall, 24/26 core and 4/5 intents until merge.
++The catalogue keeps D01–D03 first and adds D240/D241 outcomes and declined alternatives.
++Consolidated owner accept/rework stays before owner QA. Mac #501, #448/#459 owner obligations,
++held #460, refinement-gated #379 and the four conditional post-Mac issues retain their gates.
++
++## Intent 5 D242 correction and publication candidate — November 23
++
++The historical D240/D241 checkpoint is superseded by this current candidate. Actual ordinary-Max Opus 5.5/xhigh implemented the eight-path B2 correction with 83 paired tools. The reviewed/tested runtime is `20a69d9b53910a5ede81088e9ff67680f348ce68`, tree `8be5890a170f2a51af49467e1f71e88839bef28b`. Root separately applied a docs09 wording qualification after coverage closed, then froze local commit `56404df70e8d28f0b2194bf57b4799bea682cb5f`, tree `728e957b61df8581a94c37261d3be845eeaca7d9`. Only that document changed; apps/web tree `c2f489343ef414c67c7b750ec7245f50364126d0` and runtime/tests/dependencies remain identical. The documentation scopes confirmation uncertainty to typed network errors and retains parked #561's source-supported body-consumption gap.
++
++The [D242 QA archive](../qa/2026-11-23-inspector-offline-timeline-d242/README.md) preserves all actual first failures and qualifications: original final Astra formal pass 3/3 **CHANGES REQUIRED**, old native four-case negative witness, loader failure/repair, root's optional-callback type-only correction and raw-index qualification. Actual Fable 5.2/xhigh then returned **ACCEPT FIX** for the known B2 correction; root read the full ordinary report and adjudicated all eight nonblocking notes. Formal reviews remain 3/3 consumed and general scans 2/3; this scoped known-fix route is not another formal audit or an Astra sign-off.
++
++Closed evidence is 244 focused passes (all 233 prior cases plus 11 new), independent fresh 2/2 and full 63/63, whole-web 3,190 passes in 236 files with 98.68% line and 94.46% branch coverage, and corrected native 10/10 across 49 criteria. The fixed browser selection remains 11/12: strict G1 is still failed and parked in #563, with all 12 geometry cells identical to the prior run and zero sequence/type overlap or clipping. #561/#562 remain outside this batch. Runtime execution and Fable source review bind 20a69; later documentation equivalence does not imply a new runtime execution.
++
++This is a publication candidate, not merged delivery or owner acceptance. Applicable final-head checks, fresh exact-head/current-target CI and native artifacts, capped root completion and verified signed merge remain required as external postcommit receipts. Engineering stays **41/48 overall, 24/26 five-intent core and 4/5 intents** until actual verified merge. The owner review draft preserves the complete 241-entry prefix, D01-D03 first and the historical through-240 introduction, then appends one D242 entry. Owner accept/rework and all 12 owner QA boxes remain unchecked. Mac #456/PR #501, owner trackers #448/#459, conditional #64/#125/#221/#323, held #460, refinement #379 and deployment retain their separate gates.
++
++## Inspector core signed delivery and Mac continuation — November 23
++
++Signed PR #564 merge `d2df8600c2c8574bec420947de686b936910b245` delivered #416/#420. Independent postmerge verification found the valid signature, ordered parents `[0f6c325becf3e3e0562ae69dfae2c42bcf1d7129, 847f0750cc354cd4510707c9faa2fda060b4c301]`, tested tree `f4895587b638e2f043707edfd9add5bace26533d`, main at the merge, both issues closed as completed and owner trackers #448/#459 still open. Engineering is now **43/48 (89.58%) overall** (33 closed plus 10 engineering-complete owner-open), **26/26 five-intent core** and **5/5 intents**. Owner acceptance and deployment are separate.
++
++The [core-delivery supplement](../qa/2026-11-23-inspector-core-delivery/README.md) retains hosted run 45219913330, attempt 1, with all six jobs successful: 10,575 unit passes/63 declared skips, 494 browser passes/one live-provider skip, 27 Windows launcher checks, 338 canonical Windows records and 13 V8 summaries above the unchanged line/branch thresholds. Hosted web branches are 94.45%; the earlier local whole-web result is 94.46%. The exact capped completion report matched public comment 7108452709 before live premerge, and signed delivery independently closed the remaining merge requirement.
++
++Preserve the original final Astra CHANGES REQUIRED, formal 3/3 and general scans 2/3, actual named Fable ACCEPT FIX/root disposition, all first failures and source identities. The local fixed 12 remains 11 passes and one strict G1 failure; all 12 geometry cells match and number/type clipping/overlap are zero. #561/#562/#563 remain parked. The 27 ignored-file staging qualification and pathname-only closeout reader correction changed no source/test result and did not rerun gates.
++
++D243 is still the admitted routing decision for the upcoming Mac integration: omit only main.test.ts from the proposed shared-host local API smoke, because child startup drops parent GG_* controls and ordinary config defaults Ollama enabled at 11434. This is source-supported, not an observed connection. Full hosted unit/coverage and native Mac startup retain that file. Other 11 API/nine web/local static/build, actual integrated-source admission, Mac seven-job CI/final review, Finder/Dock device QA and future signed Mac merge remain pending; no conditional post-Mac dispatch or gate waiver is implied. Owner decision review/rework precedes owner QA, all 12 boxes remain unchecked, and the four conditional issues, owner trackers, held/refinement work and deployment retain their gates.

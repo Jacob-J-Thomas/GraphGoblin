@@ -1,0 +1,38 @@
+diff --git a/tooling/scripts/macos-launcher.acceptance.mjs b/tooling/scripts/macos-launcher.acceptance.mjs
+index fe7dd2a5..b03ea1c1 100644
+--- a/tooling/scripts/macos-launcher.acceptance.mjs
++++ b/tooling/scripts/macos-launcher.acceptance.mjs
+@@ -772,10 +772,20 @@ async function scopedAcceptance(fixture, t) {
+     evidence.fingerprint = fingerprint;
+ 
+     stage = 'concurrent-cold-launch';
+-    const attempts = await Promise.allSettled([
+-      headless(fixture, 'cold-attempt-one', '--ensure-gateway'),
+-      headless(fixture, 'cold-attempt-two', '--ensure-gateway'),
+-    ]);
++    const coldLauncherLocale = {
++      LANG: 'ggcanary17544768eaef/not-a-locale',
++      LC_ALL: 'ggcanary17544768eaef',
++    };
++    evidence.coldLauncherLocale = coldLauncherLocale;
++    // Either process can win the startup lock, so both must exercise the malformed locale.
++    const attempts = await Promise.allSettled(
++      ['cold-attempt-one', 'cold-attempt-two'].map((label) =>
++        fixture.run(label, fixture.launcher, ['--ensure-gateway'], {
++          timeout: 75_000,
++          env: { ...fixture.env, ...coldLauncherLocale },
++        }),
++      ),
++    );
+     owner = await processAndLeases(fixture, primaryPort, fingerprint, 'cold-owner');
+     evidence.owner = owner;
+     for (const attempt of attempts) {
+@@ -790,7 +800,7 @@ async function scopedAcceptance(fixture, t) {
+     );
+     assert.equal((await ownedFile(join(dataDir, 'master.key'), 256, true)).bytes.length, 44);
+     passed(
+-      'Concurrent cold attempts completed and a single verified gateway served both built shells after both launchers exited.',
++      'Concurrent cold attempts with malformed locales completed and a single verified gateway served both built shells after both launchers exited.',
+     );
+ 
+     stage = 'warm-and-log-admission';

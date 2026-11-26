@@ -1,0 +1,254 @@
+"""Read-only independent QA checks for the integrated #467 candidate."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import subprocess
+import sys
+from urllib.parse import unquote, urlsplit
+
+QA=Path(__file__).resolve().parent
+CANDIDATE=json.loads((QA/'CANDIDATE-MANIFEST.json').read_bytes())
+WORKTREE=Path(CANDIDATE['worktree'])
+GH='C:/Program Files/GitHub CLI/gh.exe'
+NODE='C:/Users/98jak/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64/node.exe'
+REPO=CANDIDATE['repo']
+CHECKS=('identity','hosted','host')
+ANSI=re.compile(r'\x1b\[[0-?]*[ -/]*[@-~]')
+EXPECTED={
+    'check':'installed-jsonata-patch','ordinary':3,'wideSiblings':250,
+    'depth':{'reason':'depth','message':'expression exceeded max depth 0'},
+    'time':{'reason':'time','message':'expression exceeded -1ms'},'fresh':1,
+}
+
+def sha(value):
+    return hashlib.sha256(value).hexdigest()
+
+def sha_file(path):
+    return sha(path.read_bytes())
+
+def save(path,data):
+    path.write_bytes((json.dumps(data,indent=2)+'\n').encode())
+
+def execute(args,cwd=WORKTREE,env=None,stdin=None,timeout=60):
+    result=subprocess.run(args,cwd=cwd,env=env,input=stdin,capture_output=True,
+                          timeout=timeout,creationflags=subprocess.CREATE_NO_WINDOW)
+    if result.returncode:
+        raise RuntimeError(f'{Path(args[0]).name} returned {result.returncode}')
+    return result.stdout
+
+def git(*args):
+    return execute(['git','--no-optional-locks','-c','diff.autoRefreshIndex=false',*args])
+
+def remote(path):
+    return execute([GH,'api','--hostname','github.com',f'repos/{REPO}/{path}'])
+
+def remote_json(path):
+    return json.loads(remote(path))
+
+def rev_file(revision,path):
+    return git('cat-file','blob',f':{path}' if revision==':' else f'{revision}:{path}')
+
+def verify(condition,message):
+    if not condition:
+        raise RuntimeError(message)
+
+def snapshot():
+    head=git('rev-parse','HEAD').decode().strip()
+    tree=git('rev-parse','HEAD^{tree}').decode().strip()
+    branch=git('branch','--show-current').decode().strip()
+    status=git('status','--porcelain=v1','-uall').decode()
+    source={p:sha_file(WORKTREE/p) for p in CANDIDATE['sources']}
+    index=Path(git('rev-parse','--path-format=absolute','--git-path','index').decode().strip())
+    parents=git('rev-parse','HEAD^1','HEAD^2').decode().splitlines()
+    diff_patch=git('diff','--binary',CANDIDATE['target'],head,'--',*CANDIDATE['sources'])
+    result={'head':head,'tree':tree,'branch':branch,'clean':not status,
+            'parents':parents,'sourceFilesSha256':source,'indexSha256':sha_file(index),
+            'sourcePatchSha256':sha(diff_patch)}
+    verify(head==CANDIDATE['head'] and tree==CANDIDATE['tree'] and branch==CANDIDATE['branch'],
+           'LOCAL_HEAD_TREE_OR_BRANCH_DRIFT')
+    verify(not status and source==CANDIDATE['sources'],'LOCAL_WORKTREE_NOT_FROZEN')
+    verify(parents==CANDIDATE['localParents'],'LOCAL_PARENT_DRIFT')
+    verify(sha_file(index)==CANDIDATE['indexSha256'],'LOCAL_INDEX_DRIFT')
+    verify(sha(diff_patch)==CANDIDATE['sourcePatchSha256'],'LOCAL_SOURCE_PATCH_DRIFT')
+    return result
+
+def identity():
+    pr=remote_json(f"pulls/{CANDIDATE['pr']}")
+    live_main=remote_json('git/ref/heads/main')['object']['sha']
+    verify(pr['head']['sha']==CANDIDATE['head'] and pr['state']=='open',
+           'PR_HEAD_CHANGED_OR_PR_NOT_OPEN')
+    verify(pr['base']['ref']=='main' and pr['base']['sha']==live_main,'PR_TARGET_READBACK_MISMATCH')
+    current_merge=pr.get('merge_commit_sha')
+    image_merge_is_current=(current_merge==CANDIDATE['checkout'] and live_main==CANDIDATE['target'])
+    revisions=(CANDIDATE['originalPublication']['head'],CANDIDATE['priorIntegration']['head'],
+               CANDIDATE['head'],CANDIDATE['target'])
+    verify(all(sha(rev_file(revision,p))==h for revision in revisions
+           for p,h in CANDIDATE['unchangedDependencyInputs'].items()),'PATCH_LOCKFILE_OR_DEPLOY_RELATED_INPUT_DRIFT')
+    verify(all(rev_file(revision,p)==rev_file(CANDIDATE['head'],p)
+               for revision in revisions[:2]
+               for p in ('.github/workflows/ci.yml','docs/research/licenses.md')),
+           'PUBLISHED_WORKFLOW_OR_LICENSE_SOURCE_CHANGED')
+    packet=CANDIDATE['packet']
+    archived=json.loads(rev_file(CANDIDATE['head'],packet+'/MANIFEST.json'))
+    verify(len(archived['members'])==CANDIDATE['initialQaPacketRawFiles'],'PACKET_COUNT_MISMATCH')
+    for row in archived['members']:
+        path=packet+'/'+row['path']
+        data=rev_file(CANDIDATE['head'],path)
+        verify(all(data==rev_file(revision,path) for revision in
+                   (CANDIDATE['originalPublication']['head'],CANDIDATE['priorIntegration']['head'],':'))
+               and sha(data)==row['sha256'],
+               'REVIEW_MEMBER_BYTE_DRIFT')
+    for path,expected_hash in CANDIDATE['integrationPreservedPaths'].items():
+        verify(all(sha(rev_file(revision,path))==expected_hash
+                   for revision in (CANDIDATE['priorIntegration']['head'],CANDIDATE['head'],':')),
+               'INTEGRATION_PRESERVED_PATH_DRIFT')
+    licences=rev_file(CANDIDATE['head'],'docs/research/licenses.md').decode()
+    patch_section=licences.split('## JSONata patch',1)[1].split('## Font files',1)[0].strip()
+    source_tests=rev_file(CANDIDATE['head'],'packages/domain/src/expression.test.ts').decode().splitlines()
+    timestamp_lines=[f'{line_no}: {line}' for line_no,line in enumerate(source_tests,1)
+                     if 'timestamp' in line or '$now()' in line or '$millis()' in line]
+    workflow=rev_file(CANDIDATE['head'],'.github/workflows/ci.yml').decode().splitlines()
+    relevant_workflow=[f'{line_no}: {line}' for line_no,line in enumerate(workflow,1)
+                     if 'Build the distributed image' in line or 'Evaluate expressions with' in line or
+                     CANDIDATE['containerCommand'] in line or 'steps.image.outcome' in line]
+    deploy=[f'{line_no}: {line}' for line_no,line in enumerate(
+            rev_file(CANDIDATE['head'],'Dockerfile').decode().splitlines(),1)
+            if 'deploy' in line or 'COPY --from' in line]
+    package=json.loads(rev_file(CANDIDATE['head'],'packages/domain/package.json'))
+    return {'pr':CANDIDATE['pr'],'liveHead':pr['head']['sha'],'liveMain':live_main,
+            'currentMergeCommit':current_merge,'boundTarget':CANDIDATE['target'],
+            'boundMergeCommit':CANDIDATE['checkout'],'imageMergeIsCurrent':image_merge_is_current,
+            'recordedRawReceiptHashesVerified':len(archived['members']),
+            'packetVerification':'Original/prior/current committed blobs and current index; sparse omission is unchanged.',
+            'dependencyInputRevisionsVerified':list(revisions),
+            'licenseDocumentation':patch_section,'timestampUnitTestSourceLines':timestamp_lines,
+            'imageWorkflowSourceLines':relevant_workflow,'imageBuildDeploySourceLines':deploy,
+            'domainPublicExport':package.get('exports')}
+
+def one_match(values,message):
+    verify(len(values)==1,message)
+    return values[0]
+
+def log_record(raw,checkout,command,script):
+    lines=[ANSI.sub('',line.split(' ',1)[1]) for line in raw.decode('utf-8').splitlines() if ' ' in line]
+    checkout_indices=[i for i,line in enumerate(lines) if line.endswith('git log -1 --format=%H')]
+    ci=one_match(checkout_indices,'CHECKOUT_SHA_LINE_NOT_UNIQUE')
+    verify(lines[ci+1]==checkout,'RUNNER_CHECKOUT_SHA_MISMATCH')
+    builds=[i for i,line in enumerate(lines) if line.startswith('##[group]Run docker build --tag graphgoblin-template-check .')]
+    build=one_match(builds,'EXPECTED_DOCKER_BUILD_COMMAND_NOT_OBSERVED')
+    starts=[i for i,line in enumerate(lines) if line==f'##[group]Run {command}']
+    start=one_match(starts,'EXPECTED_DOCKER_PROBE_COMMAND_NOT_OBSERVED')
+    verify(ci<build<start,'CHECKOUT_BUILD_PROBE_ORDER_MISMATCH')
+    verify(any('naming to docker.io/library/graphgoblin-template-check:latest' in line
+               for line in lines[build:start]),'IMAGE_EXPORT_TAG_NOT_OBSERVED')
+    block=[command,*script.decode().splitlines(),'JS']
+    verify(lines[start+1:start+1+len(block)]==block,'ECHOED_PROBE_JAVASCRIPT_MISMATCH')
+    observations=[(i,json.loads(line)) for i,line in enumerate(lines)
+                  if line.startswith('{"check":"installed-jsonata-patch",')]
+    index,observed=one_match(observations,'EXPECTED_CONTAINER_OUTPUT_NOT_UNIQUE')
+    verify(index>start+len(block) and observed==EXPECTED,'CONTAINER_OUTPUT_MISMATCH')
+    exports=[line for line in lines[build:start] if 'exporting manifest sha256:' in line or
+             'writing image sha256:' in line or 'exporting config sha256:' in line]
+    return {'checkoutLogged':checkout,'buildCommand':lines[build].removeprefix('##[group]Run '),
+            'containerCommand':command,'loggedProbeSha256':sha(script),
+            'result':observed,'exportDigestLines':exports,'sourceOfEvidence':'GitHub Actions container stdout'}
+
+def fetch_hosted(out=QA):
+    c=CANDIDATE
+    run=remote_json(f"actions/runs/{c['runId']}")
+    job=remote_json(f"actions/jobs/{c['imageJobId']}")
+    verify(run['head_sha']==c['head'] and run['run_attempt']==1 and run['event']=='pull_request'
+           and run['path']=='.github/workflows/ci.yml','WORKFLOW_RUN_BINDING_MISMATCH')
+    verify(job['run_id']==c['runId'] and job['head_sha']==c['head']
+           and job['run_attempt']==1 and job['name']=='Template image','TEMPLATE_JOB_BINDING_MISMATCH')
+    verify(job['status']=='completed' and job['conclusion']=='success',
+           f"HOSTED_IMAGE_NOT_PASSING: {job['status']} / {job['conclusion']}")
+    expected_steps=('Run actions/checkout@v4','Build the distributed image',
+                    'Load installed templates without network or writable storage',
+                    'Evaluate expressions with the installed JSONata patch')
+    step_map={s['name']:s for s in job['steps']}
+    verify(all(name in step_map and step_map[name]['status']=='completed' and
+               step_map[name]['conclusion']=='success' for name in expected_steps),'EXPECTED_IMAGE_STEP_NOT_SUCCESSFUL')
+    merge=remote_json(f"git/commits/{c['checkout']}")
+    verify([p['sha'] for p in merge['parents']]==[c['target'],c['head']] and
+           merge['tree']['sha']==c['tree'],'SYNTHETIC_CHECKOUT_PARENT_OR_TREE_MISMATCH')
+    script=(QA/'WORKFLOW-PROBE.mjs').read_bytes()
+    verify(sha(script)==c['probeSha256'],'WORKFLOW_PROBE_FILE_DRIFT')
+    raw=remote(f"actions/jobs/{c['imageJobId']}/logs")
+    verify(sha(raw)==c['imageRawLogSha256'] and len(raw)==c['imageRawLogBytes'],
+           'CURRENT_IMAGE_RAW_LOG_BINDING_DRIFT')
+    log=out/'template-image.raw.log'
+    log.write_bytes(raw)
+    evidence=log_record(raw,c['checkout'],c['containerCommand'],script)
+    historical={}
+    for key in ('originalPublication','priorIntegration'):
+        binding=c[key]
+        prior_raw=(QA/binding['rawLogFile']).read_bytes()
+        verify(sha(prior_raw)==binding['rawLogSha256'],'HISTORICAL_RAW_LOG_DRIFT')
+        prior=log_record(prior_raw,binding['checkout'],c['containerCommand'],script)
+        historical[key]={'runId':binding['runId'],'jobId':binding['imageJobId'],
+             'runHead':binding['head'],'target':binding['target'],'checkoutLogged':prior['checkoutLogged'],
+             'logSha256':sha(prior_raw),'result':prior['result'],
+             'limit':'Historical run; never substitutes for the current integrated image.'}
+    return {'runId':c['runId'],'runHead':run['head_sha'],'runAttempt':run['run_attempt'],
+            'workflowStatus':run['status'],'workflowConclusion':run['conclusion'],
+            'workflowPullRequestReadback':[
+                 {'number':p['number'],'head':p['head']['sha'],'base':p['base']['sha']}
+                 for p in run.get('pull_requests',[])],
+            'jobId':c['imageJobId'],'jobStatus':job['status'],'jobConclusion':job['conclusion'],
+            'steps':[step_map[name] for name in expected_steps],
+            'checkoutTree':merge['tree']['sha'],'checkoutParents':[p['sha'] for p in merge['parents']],
+            'logFile':log.name,'logSha256':sha(raw),'logBytes':len(raw),**evidence,
+            'historicalResults':historical}
+
+def host():
+    c=CANDIDATE
+    env={k:v for k,v in os.environ.items() if k.casefold() in
+         {'path','systemroot','windir','comspec','temppath','temp','tmp','systemdrive','userprofile'}}
+    api=WORKTREE/'apps/api'
+    version=execute([NODE,'--version'],cwd=api,env=env).decode().strip()
+    verify(version==c['node'],'HOST_NODE_VERSION_MISMATCH')
+    resolved=execute([NODE,'--input-type=module','-e',
+                      "console.log(import.meta.resolve('@graphgoblin/domain'))"],cwd=api,env=env).decode().strip()
+    url=urlsplit(resolved)
+    verify(url.scheme=='file' and not url.netloc,'HOST_IMPORT_NOT_A_LOCAL_FILE')
+    entry=Path(unquote(url.path).lstrip('/')).resolve()
+    expected=(WORKTREE/'packages/domain/dist/index.js').resolve()
+    verify(entry==expected and entry.is_file(),'HOST_ENTRY_NOT_EXISTING_COMPILED_PUBLIC_EXPORT')
+    script=(QA/'WORKFLOW-PROBE.mjs').read_bytes()
+    verify(sha(script)==c['probeSha256'],'WORKFLOW_PROBE_FILE_DRIFT')
+    raw=execute([NODE,'--input-type=module'],cwd=api,env=env,stdin=script,timeout=25)
+    observed=json.loads(raw)
+    verify(observed==EXPECTED,'HOST_COMPILED_PACKAGE_PROBE_FAILED')
+    return {'runtime':version,'resolvedCompiledEntry':entry.relative_to(WORKTREE).as_posix(),
+            'compiledEntrySha256':sha_file(entry),'probeSha256':sha(script),
+            'command':'node --input-type=module on exact workflow JavaScript from apps/api',
+            'result':observed,'evidenceLimit':'Existing compiled host package only, no local Docker or new build.'}
+
+def main():
+    if len(sys.argv)!=2 or sys.argv[1] not in CHECKS:
+        sys.exit('Use one exact check: identity, hosted, or host')
+    mode=sys.argv[1]
+    result_file=QA/f'{mode.upper()}-RESULT.json'
+    if result_file.exists():
+        sys.exit('The independent evidence slot for this check has already been used.')
+    before=snapshot()
+    try:
+        result={'identity':identity,'hosted':fetch_hosted,'host':host}[mode]()
+        error=None
+    except (OSError,ValueError,RuntimeError,subprocess.SubprocessError) as exc:
+        result=None
+        error=str(exc)
+    after=snapshot()
+    outcome={'mode':mode,'exitCode':int(error is not None or before!=after),'sourceUnchanged':before==after,
+             'sourcePatchSha256':CANDIDATE['sourcePatchSha256'],'before':before,'after':after,
+             'result':result,'error':error,'capturedAt':datetime.now(timezone.utc).isoformat()}
+    save(result_file,outcome)
+    print(json.dumps(outcome,indent=2))
+    sys.exit(outcome['exitCode'])
+
+if __name__=='__main__':
+    main()

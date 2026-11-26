@@ -1,0 +1,66 @@
+{
+  "verificationSchema": "macos-pr501-packet-verification/1",
+  "verifiedAtUtc": "2026-11-17T04:37:03.828Z",
+  "method": "Read-only verification of sealed packet metadata/checksum manifests, resolving manifest paths within each packet; SHA-256 and sizes computed from current filesystem bytes.",
+  "packets": [
+    {
+      "packet": "macos-pr501-ci-08",
+      "packetFileCount": 153,
+      "packetBytes": 17871065,
+      "sumsFile": "SHA256SUMS.txt",
+      "sumsFileSha256": "c002c408ee9d096ae2db7d2f5905f2b112de97f437cd5409a64a3a189c65ef57",
+      "expectedSumsSha256": "c002c408ee9d096ae2db7d2f5905f2b112de97f437cd5409a64a3a189c65ef57",
+      "sumsFileHashMatchesExpected": true,
+      "sumsRows": 152,
+      "sumsMalformedOrDuplicateRows": [],
+      "sumsRowDigestMismatches": [],
+      "sumsMissingPaths": [],
+      "sumsExtraPaths": [],
+      "metadataFileSha256": "9b8c062d99eb7a99b8495fe75a6c2a0ef0c3f98adf3b0a2ff67f0149eb65e035",
+      "metadataSchema": "graphgoblin-pr501-ci-packet/1",
+      "metadataFileRowsPresent": true,
+      "metadataFileRows": 151,
+      "metadataRowDigestMismatches": [],
+      "metadataRowSizeMismatches": [],
+      "metadataUnsafeOrDuplicateRows": [],
+      "metadataVsSumsMissing": [],
+      "metadataVsSumsExtra": [],
+      "expectedSelfExclusions": [
+        "SHA256SUMS.txt"
+      ],
+      "reparsePoints": []
+    },
+    {
+      "packet": "macos-pr501-ci-09",
+      "packetFileCount": 157,
+      "packetBytes": 22253832,
+      "sumsFile": "SHA256SUMS",
+      "sumsFileSha256": "4f19a32f98ca247cce14f141d8641db922a60759ef86d9c47444c3e5719b359e",
+      "expectedSumsSha256": "4f19a32f98ca247cce14f141d8641db922a60759ef86d9c47444c3e5719b359e",
+      "sumsFileHashMatchesExpected": true,
+      "sumsRows": 156,
+      "sumsMalformedOrDuplicateRows": [],
+      "sumsRowDigestMismatches": [],
+      "sumsMissingPaths": [],
+      "sumsExtraPaths": [],
+      "metadataFileSha256": "d8e0121d5b427f17187aecb889c2e6212b8b0a786a54d561552f319ee8665bfd",
+      "metadataSchema": null,
+      "metadataFileRowsPresent": false,
+      "metadataFileRows": 0,
+      "metadataRowDigestMismatches": [],
+      "metadataRowSizeMismatches": [],
+      "metadataUnsafeOrDuplicateRows": [],
+      "metadataVsSumsMissing": [],
+      "metadataVsSumsExtra": [],
+      "expectedSelfExclusions": [
+        "SHA256SUMS"
+      ],
+      "reparsePoints": []
+    }
+  ],
+  "limitations": [
+    "CI08 run-metadata.json files rows declare bytes and SHA-256 for 151 files; run-metadata.json is self-excluded from that row list but covered by SHA256SUMS.txt. The checksum sidecar is the sole packet file excluded from checksums.",
+    "CI09 run-metadata.json is run/artifact metadata without a per-file files array or declared per-file sizes; SHA256SUMS covers every packet file, including run-metadata.json and backend-execution-diagnosis-01.md, except its own SHA256SUMS file.",
+    "backend-execution-diagnosis-01.md in CI09 is a separately identified source assessment, not raw CI and not a confirmed cause."
+  ]
+}

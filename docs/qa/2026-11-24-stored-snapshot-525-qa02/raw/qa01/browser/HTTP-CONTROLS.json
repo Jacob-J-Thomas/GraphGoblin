@@ -1,0 +1,400 @@
+{
+  "evidenceTier": "independent Claude QA",
+  "syntheticRunSeededWithoutExecution": true,
+  "controls": {
+    "omitted": {
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "requestId": "d6498f94-6eea-4360-9758-68e15ec8a495",
+      "body": {
+        "id": "01M3Y7RKG0RBHQ8VBGRA994MR1",
+        "loopId": "01M3Y7RKG0RBHQ8VBGRA994MQX",
+        "version": 1,
+        "status": "snapshot",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "525 immutable pinned fixture",
+          "description": "Synthetic terminal history; no provider ran.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Pinned 525 Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Pinned 525 Work",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Retain “snapshot” text and unicode 雪.  "
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never",
+                  "configOverrides": {
+                    "features.plugins": false
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Pinned 525 Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "a",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "b",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-24T09:30:00.000Z"
+      }
+    },
+    "materialized": {
+      "status": 200,
+      "contentType": "application/json; charset=utf-8",
+      "requestId": "5fbee23b-4ddf-4f99-9f51-76c23de74bc0",
+      "body": {
+        "id": "01M3Y7RKG0RBHQ8VBGRA994MR2",
+        "loopId": "01M3Y7RKG0RBHQ8VBGRA994MQX",
+        "version": 1,
+        "status": "snapshot",
+        "definition": {
+          "schemaVersion": 4,
+          "name": "525 immutable pinned fixture",
+          "description": "Synthetic terminal history; no provider ran.",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Pinned 525 Start",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "work",
+              "label": "Pinned 525 Work",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Retain “snapshot” text and unicode 雪.  "
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never",
+                  "configOverrides": {
+                    "features.plugins": false
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                },
+                "timeoutSeconds": 120
+              }
+            },
+            {
+              "id": "done",
+              "label": "Pinned 525 Done",
+              "ui": {
+                "x": 0,
+                "y": 0
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "a",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "work",
+                "port": "in"
+              }
+            },
+            {
+              "id": "b",
+              "from": {
+                "node": "work",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        },
+        "createdAt": "2026-11-24T09:30:00.000Z"
+      }
+    },
+    "wrongLoop": {
+      "status": 404,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "e968ec27-b874-405f-af17-26ac5eca9261",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/version-not-found",
+        "title": "version not found",
+        "status": 404,
+        "code": "VERSION_NOT_FOUND",
+        "detail": "version 01M3Y7RKG0RBHQ8VBGRA994MR7 not found"
+      }
+    },
+    "anonymous": {
+      "status": 401,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "de275e46-d28e-4432-b081-c65108b98e11",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/unauthorized",
+        "title": "unauthorized",
+        "status": 401,
+        "code": "UNAUTHORIZED",
+        "detail": "an API key is required"
+      }
+    },
+    "foreign": {
+      "status": 404,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "5876dba4-a79f-4e7e-b0a4-123c0b0325dc",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/loop-not-found",
+        "title": "loop not found",
+        "status": 404,
+        "code": "LOOP_NOT_FOUND",
+        "detail": "loop 01M3Y7RKG0RBHQ8VBGRA994MQX not found"
+      }
+    },
+    "invalid": {
+      "status": 500,
+      "contentType": "application/problem+json; charset=utf-8",
+      "requestId": "f0cf3b1e-a54d-4507-ab7f-b1a3fe581dcc",
+      "body": {
+        "type": "https://graphgoblin.dev/problems/response-invalid",
+        "title": "response invalid",
+        "status": 500,
+        "code": "RESPONSE_INVALID",
+        "detail": "the server produced a response that does not match its schema"
+      }
+    }
+  },
+  "settingsChange": {
+    "status": 200,
+    "versionResponseUnchanged": true,
+    "omittedModelAndEffortRemainAbsent": true
+  },
+  "run": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "requestId": "c04a1149-15b3-4bc7-af42-014defbad8aa",
+    "body": {
+      "id": "01M3Y7RKG0RBHQ8VBGRA994MR3",
+      "ownerId": "local",
+      "loopId": "01M3Y7RKG0RBHQ8VBGRA994MQX",
+      "versionId": "01M3Y7RKG0RBHQ8VBGRA994MR1",
+      "pinned": {
+        "source": "draft",
+        "version": 1,
+        "name": "525 immutable pinned fixture",
+        "label": "525 immutable pinned fixture draft v1",
+        "defaults": {
+          "owner": {
+            "byHarness": {}
+          },
+          "process": {
+            "byHarness": {}
+          }
+        },
+        "limits": {
+          "maxNodeVisits": 10,
+          "runDeadlineSeconds": null,
+          "structuredTimeoutMs": null
+        },
+        "classifiers": {}
+      },
+      "invocationId": "01M3Y7RKG0RBHQ8VBGRA994MR4",
+      "status": "succeeded",
+      "currentNodeId": "done",
+      "iteration": 1,
+      "outcome": "success",
+      "result": null,
+      "createdAt": "2026-11-24T10:00:00.000Z",
+      "startedAt": "2026-11-24T10:00:00.000Z",
+      "finishedAt": "2026-11-24T10:00:00.000Z",
+      "finalizedAt": "2026-11-24T10:00:00.000Z",
+      "lastEventSeq": 9,
+      "recovery": {
+        "observedSeq": 9,
+        "resume": {
+          "allowed": false,
+          "code": "RUN_FINISHED",
+          "message": "This run has finished. Resume only continues paused runs or supported failures."
+        },
+        "replayDefault": {
+          "allowed": false,
+          "code": "REPLAY_NODE_NOT_REACHED",
+          "message": "This run never reached this node."
+        },
+        "replay": [
+          {
+            "nodeId": "start",
+            "label": "Pinned 525 Start",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Pinned 525 Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "work",
+            "label": "Pinned 525 Work",
+            "action": {
+              "allowed": true
+            },
+            "effects": [
+              {
+                "nodeId": "work",
+                "label": "Pinned 525 Work",
+                "kind": "inference"
+              }
+            ]
+          },
+          {
+            "nodeId": "done",
+            "label": "Pinned 525 Done",
+            "action": {
+              "allowed": true
+            },
+            "effects": []
+          }
+        ]
+      }
+    }
+  },
+  "ollamaEnabled": false,
+  "providerTurns": 0
+}

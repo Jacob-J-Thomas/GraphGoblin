@@ -1,0 +1,47 @@
+{
+  "id": "S2-cold-env-canary-launch",
+  "cases": [
+    "O3",
+    "O6"
+  ],
+  "startedAt": "2026-11-16T21:04:13.971Z",
+  "checks": [
+    {
+      "id": "precondition-port-refused",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "precondition-store-absent",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "precondition-no-gateway",
+      "ok": true,
+      "hard": true
+    },
+    {
+      "id": "envelope-open-management-running",
+      "ok": false,
+      "hard": true,
+      "detail": {
+        "ok": false,
+        "exit": {
+          "code": null,
+          "signal": "SIGSEGV",
+          "ms": 751
+        },
+        "stdout": "",
+        "stderrBytes": 0,
+        "elapsedMs": 751,
+        "timedOut": false
+      }
+    }
+  ],
+  "notes": {},
+  "status": "stopped",
+  "error": "S2-cold-env-canary-launch: envelope-open-management-running",
+  "elapsedMs": 769,
+  "finishedAt": "2026-11-16T21:04:14.740Z"
+}

@@ -8,6 +8,18 @@ Captured 2026-10-02 while stabilising the `apps/api` test suite. Versions: `@lib
 - The process main thread and forked child processes never crashed: 0 failures in 20 runs of the API suite under `pool: 'forks'` and in every plain-process experiment. Loading the addon on the main thread before the worker starts also prevented the crash (0 of 20).
 - Consequence: packages whose tests touch libsql (`infrastructure`, formerly `adapter-sqlite`, and `apps/api`) pin Vitest to `pool: 'forks'`. Do not accept a `vitest doctor` suggestion to switch them to `threads` or `vmThreads`. If a production component ever runs libsql inside a worker thread, load the addon on the main thread first.
 
+## Read-only file URIs have two parsing layers
+
+Verified on macOS arm64 with Node 22.22.2, `@libsql/client` 0.18.0 and `libsql` 0.5.29 during
+the November 24, 2026 Mac launcher QA. The outer libsql URL decodes its path once before passing
+it to native SQLite. SQLite then parses a leading `file:` URI, including its own percent escapes,
+query and fragment. Encoding only the outer URI leaves literal filesystem `%HH`, `?` and `#`
+active in the inner parser; a fragment can discard the appended `mode=ro` and create a different
+file. `openReadOnlyDatabaseClient` escapes these inner path characters, preserves POSIX
+backslashes and Unicode spelling, supplies an empty authority, then encodes the complete URI
+for libsql. Regression tests assert actual file identity, `SQLITE_READONLY`, and missing-file
+noncreation. Read-only access retains the WAL behavior described below; it is not immutable mode.
+
 ## Single connection for `:memory:`
 
 - An in-memory client has exactly one connection. A second `transaction()` or a plain `execute()` while a transaction is open throws `TRANSACTION_ACTIVE` rather than queueing. `serializeClient` in `packages/infrastructure/src/sqlite/db.ts` serialises all statements and transactions through a mutex for this reason.

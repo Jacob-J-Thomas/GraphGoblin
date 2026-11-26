@@ -1,0 +1,83 @@
+{
+  "providerModel": "claude-opus-5-5",
+  "providerApiKeySource": "none",
+  "priorSessionId": "998d8ae7-3aaf-4342-b04a-387a38d79ae8",
+  "priorTimedOutWithoutVerdict": true,
+  "priorInitialNativeBlockedBeforeCompile": "SystemRoot case lookup in sanitized Windows environment",
+  "priorDriverSha256": "77466906a94cb9b59ee05f6125e6c86d96bdb4cd5eb90d5e54d8e3e781983841",
+  "checks": {
+    "mcp": {
+      "role": "independent QA",
+      "check": "mcp",
+      "command": "pnpm.cmd --filter @graphgoblin/mcp exec vitest run src/loop-names.test.ts src/mcp.test.ts -t \"loop lookup|controlled inconsistent|lists and describes loops\"",
+      "exitCode": 0,
+      "logSha256": "c37a66f81d13e1bd9e3b0ad8cd56bedb724063bf3320200c9f9a0b8af1581db4",
+      "summary": [
+        "Test Files  2 passed (2)",
+        "Tests  13 passed | 11 skipped (24)"
+      ],
+      "receipt": "independent-qa-01/CHECK-mcp.json"
+    },
+    "plugin": {
+      "role": "independent QA",
+      "check": "plugin",
+      "command": "pnpm.cmd --filter @graphgoblin/plugin-claude exec vitest run src/plugin.test.ts",
+      "exitCode": 0,
+      "logSha256": "8ef757234bc796d5ccb6fb8eb29b07d0e36446d599c9ded471944c200d58e284",
+      "summary": [
+        "Test Files  1 passed (1)",
+        "Tests  8 passed (8)"
+      ],
+      "receipt": "independent-qa-01/CHECK-plugin.json"
+    },
+    "seed": {
+      "role": "independent QA",
+      "check": "seed",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/container.test.ts src/units.test.ts -t \"Jev key at boot|resolves the Jev environment seed\"",
+      "exitCode": 0,
+      "logSha256": "b8c5c374cc327d572d7b73aec85c5899e4d95fe1992c14c4e8e881fbf681574a",
+      "summary": [
+        "Test Files  2 passed (2)",
+        "Tests  17 passed | 30 skipped (47)"
+      ],
+      "receipt": "independent-qa-01/CHECK-seed.json"
+    },
+    "reset": {
+      "role": "independent QA",
+      "check": "reset",
+      "command": "pnpm.cmd --filter @graphgoblin/api exec vitest run src/reset/reset-ownership.test.ts -t \"the locks a dry run|already gone when it took a lock|refusal after taking the locks|names the stale locks and guards it reclaimed\"",
+      "exitCode": 0,
+      "logSha256": "5b5061816b742d140be63ee13938be29a028398b2a75e479599ac96dd85687e2",
+      "summary": [
+        "Test Files  1 passed (1)",
+        "Tests  8 passed | 17 skipped (25)"
+      ],
+      "receipt": "independent-qa-01/CHECK-reset.json"
+    },
+    "docs": {
+      "role": "independent QA",
+      "check": "docs",
+      "command": "pnpm.cmd exec node tooling/scripts/gen-docs.mjs --check",
+      "exitCode": 0,
+      "logSha256": "402f12b8ba74b35076fb254a5a8703fd2f7148ebfde2954722a5238f10e89d6a",
+      "summary": [
+        "v22.23.4",
+        "Generated docs are up to date."
+      ],
+      "receipt": "independent-qa-01/CHECK-docs.json"
+    },
+    "format": {
+      "role": "independent QA",
+      "check": "format",
+      "command": "pnpm.cmd exec prettier --check CHANGELOG.md apps/plugin-codex/plugin/graphgoblin/skills/run-loop/SKILL.md docs/09-frontend-and-pwa.md docs/guide/05-mcp-and-codex-plugin.md docs/guide/06-settings-and-secrets.md docs/guide/08-offline-upgrade.md",
+      "exitCode": 0,
+      "logSha256": "149d652067ae7199191def718eb3510cc5a0010d2704d679a4e2518efab49e2d",
+      "summary": [
+        "v22.23.4",
+        "Checking formatting...",
+        "All matched files use Prettier code style!"
+      ],
+      "receipt": "independent-qa-01/CHECK-format.json"
+    }
+  }
+}

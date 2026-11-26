@@ -1,0 +1,58 @@
+Exit code 1
+$ vitest run scripts/windows-launcher-evidence.test.mjs
+
+ RUN  v5.0.3 G:/ggq/gg-fu-api-fixtures-20261124/GraphGoblin/tooling
+
+ ❯ scripts/windows-launcher-evidence.test.mjs (40 tests | 1 failed) 4854ms
+   × the Windows job runs the exact native command after a successful build whatever evidence preparation does 9ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  scripts/windows-launcher-evidence.test.mjs > the Windows job runs the exact native command after a successful build whatever evidence preparation does
+AssertionError: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    'install',
+    'build',
+    'evidence',
+    'native',
+    'finalize',
+    'upload',
++   'api-entry'
+  ]
+
+
+- Expected
++ Received
+
+@@ -3,6 +3,7 @@
+    "build",
+    "evidence",
+    "native",
+    "finalize",
+    "upload",
++   "api-entry",
+  ]
+
+ ❯ scripts/windows-launcher-evidence.test.mjs:1592:10
+    1590|   const nominal = prepared();
+    1591|   const passing = schedule(steps, nominal);
+    1592|   assert.deepEqual(ran(passing).slice(3), [
+       |          ^
+    1593|     'install',
+    1594|     'build',
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 39 passed (40)
+   Start at  19:18:44
+   Duration  5.16s (tests 97%, transform 1%, import 1%)
+
+[ELIFECYCLE] Test failed. See above for more details.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in G:\ggq\gg-fu-api-fixtures-
+  │ 20261124\GraphGoblin\tooling

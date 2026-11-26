@@ -33,6 +33,15 @@ Name the QA agent in the issue body's Delivery section, not with a label.
 
 Retain QA evidence under `docs/qa/` with repository-relative citations and preserve raw JSON, YAML and JavaScript/TypeScript bytes so recorded hashes remain valid; `.prettierignore` excludes those artifacts while QA Markdown remains formatted.
 
+### QA packet files (#524)
+
+- Reader-facing pages (READMEs, summaries, reading notes) are formatted `.md`, authored formatted before their hashes are sealed.
+- An immutable Markdown original (a reviewer's, QA agent's or tool's report kept as evidence) is stored byte-for-byte as `<name>.md.txt`, with its SHA-256 in the packet manifest, and a formatted `.md` page summarizes or links it for readers. Prettier infers no parser for `.txt`, so `pnpm format` and `pnpm format:check` leave it untouched without an ignore rule. When the original contains CRLF line endings or trailing whitespace, give it a `-text -whitespace` entry in `.gitattributes`, as earlier packets do, so Git's `text=auto eol=lf` normalization cannot change the recorded bytes.
+- A newly added Markdown file whose name, without its extension, ends in the word `original` (`original.md`, `report.original.md`, `review-original.md`, `QA original.md`; case-insensitive, after the start of the name, a space, `.`, `-` or `_`) is refused. Its name says it is an immutable original, while its Markdown extension exposes it to formatters. The rule judges only the file names of paths added since the base: historical paths, directory names such as `original-final-audit/` and other uses of the word, such as `original-hash-verification.md`, are unaffected.
+- Historical QA artifacts keep their bytes and names: they are not renamed, reformatted or given new ignore rules.
+
+Before publishing a packet, the delivery orchestrator runs `pnpm check:qa --base <base ref>` (for example `--base origin/main`) in the delivery checkout and resolves every failure. It selects the `docs/qa` paths changed from the merge base of that ref and `HEAD` to the working tree (committed, staged, unstaged and untracked; Git-ignored files excluded), checks their Markdown with the repository Prettier configuration even where an archive ignore rule hides it from `pnpm format:check`, retains opaque originals with their SHA-256, refuses new Markdown originals by the rule above, and fails on selected paths missing from a sparse checkout. It is read-only and local: it does not replace `pnpm format:check` or CI, which remain the full gates ([10 - Testing and quality](10-testing-and-quality.md#qa-packet-pre-publication-check-524)).
+
 ## Model routing
 
 The triager sets one `impl:<model>` label and one `review:<model>` label. Use the following tiers, with xhigh reasoning:

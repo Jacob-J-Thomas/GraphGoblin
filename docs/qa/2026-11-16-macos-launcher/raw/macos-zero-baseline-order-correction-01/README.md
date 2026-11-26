@@ -1,0 +1,11 @@
+# macOS Swift zero-baseline ordering correction
+
+The collector now indexes the sentinel's original `Left.profraw` into a fresh `swift-zero-profile.profdata` after all four instrumented objects have been built and verified. The early sentinel still checks union, deduplication and zero-hit mapping. Both final exports use the same four objects. The baseline merge uses only the raw counters from the separate `GraphGoblinCoverageSentinel` module. The collector already merges that exact raw input for the early sentinel, and the new path adds no indexed-input dependency. [LLVM profdata merge documentation](https://llvm.org/docs/CommandGuide/llvm-profdata.html#profdata-merge)
+
+CI11 passed all 154 Swift tests in 6.265 seconds. Its zero-baseline export returned status 0 with valid 568,359-byte JSON and zero covered lines and regions across the raw LLVM export. Its 749-byte stderr contained four freshness warnings, one per object, because it used the indexed profile created before linking. The raw export includes test code. Its totals of 9,038 lines and 3,763 regions are LLVM raw totals. The coverage checker failed before reporting production totals. The upstream LLVM loader compares each object mtime against the indexed profile mtime before loading coverage. [LLVM loader implementation](https://github.com/llvm/llvm-project/blob/llvmorg-19.1.7/llvm/tools/llvm-cov/CodeCoverage.cpp#L410-L428)
+
+`collector.diff` contains the sole tracked-file change against `bdabca42017a49c476c8aeb5a2b3d55e7d539b01`. The patch preserves strict stderr checks on merge and export, the zero-hit and denominator checks, all coverage thresholds, and existing test selection and deadlines.
+
+Node 22.23.4 syntax, focused ESLint and Prettier, `git diff --check`, and all 43 coverage-checker tests passed on Windows. The additional source control executes the sentinel and final collection blocks with mocked LLVM calls to check the operation order, isolation of the sentinel raw input, and identical export object inputs. It passes the updated collector and rejects the exact base collector at the ordering assertion.
+
+The next hosted macOS run must produce a clean `swift-zero-profile` merge and `swift-zero-baseline` export, then report measured Swift lines and regions. CI11 originals remain under `macos-pr501-ci-11/artifacts/extracted/macos-launcher-coverage`.
