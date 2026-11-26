@@ -1,0 +1,74 @@
+{
+  "purpose": "B6 correction-01: re-verify HEAD 9673af09 (runtime-neutral body reader types) with the v2 wrapper/environment layout. Each stage is its own wrapper invocation. c-build and c-client-coverage run only under the heavy-suite lock.",
+  "excluded": {
+    "api-client emitter tests in c-client": "packages/api-client/src/generated.test.ts and scripts/generate.test.ts run only inside c-client-coverage (the package's full suite), after a recorded check that nothing listens on 127.0.0.1:11434"
+  },
+  "checks": {
+    "c-mcp-tsc-p": {
+      "argv": ["--filter", "@graphgoblin/mcp", "exec", "tsc", "-p", "tsconfig.json"],
+      "timeoutSeconds": 180
+    },
+    "c-client-tsc-p": {
+      "argv": ["--filter", "@graphgoblin/api-client", "exec", "tsc", "-p", "tsconfig.json"],
+      "timeoutSeconds": 180
+    },
+    "c-typecheck": {
+      "argv": ["typecheck", "--continue"],
+      "timeoutSeconds": 900
+    },
+    "c-client": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/api-client",
+        "exec",
+        "vitest",
+        "run",
+        "src/body.test.ts",
+        "src/classifiers.test.ts",
+        "src/contract.test.ts",
+        "src/errors.test.ts",
+        "src/ollama.test.ts",
+        "src/resources.test.ts",
+        "src/sse-completion.test.ts",
+        "src/sse.test.ts",
+        "src/templates.test.ts",
+        "src/wait.test.ts",
+        "--reporter=verbose"
+      ],
+      "timeoutSeconds": 300,
+      "expectedFiles": 10
+    },
+    "c-web": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/web",
+        "exec",
+        "vitest",
+        "run",
+        "src/api/queries.reconnect.test.tsx",
+        "src/lib/utils.test.ts",
+        "src/runs/",
+        "--reporter=verbose"
+      ],
+      "timeoutSeconds": 600,
+      "expectedFiles": 34
+    },
+    "c-lint": {
+      "argv": ["lint", "--continue"],
+      "timeoutSeconds": 900
+    },
+    "c-format": {
+      "argv": ["format:check"],
+      "timeoutSeconds": 300
+    },
+    "c-build": {
+      "argv": ["build", "--force"],
+      "timeoutSeconds": 900,
+      "forcedFullBuild": true
+    },
+    "c-client-coverage": {
+      "argv": ["--filter", "@graphgoblin/api-client", "test:coverage"],
+      "timeoutSeconds": 600
+    }
+  }
+}

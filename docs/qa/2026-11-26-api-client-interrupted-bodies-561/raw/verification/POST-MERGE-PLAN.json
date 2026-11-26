@@ -1,0 +1,66 @@
+{
+  "purpose": "B6 task 3: post-merge re-run on the integrated branch (candidate 34a5d301 merged with origin/main 4e1037c9). Same wrapper and environment constructor as the unfiltered contract run. Each stage is invoked separately so a failure does not hide later results.",
+  "excluded": {
+    "packages/api-client/src/generated.test.ts": "emitter path: emitOpenApi builds its own config object with GG_OLLAMA_ENABLED defaulting to true (127.0.0.1:11434); excluded as in the verification contract",
+    "packages/api-client/scripts/generate.test.ts": "same emitter path"
+  },
+  "checks": {
+    "pm-client": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/api-client",
+        "exec",
+        "vitest",
+        "run",
+        "src/body.test.ts",
+        "src/classifiers.test.ts",
+        "src/contract.test.ts",
+        "src/errors.test.ts",
+        "src/ollama.test.ts",
+        "src/resources.test.ts",
+        "src/sse-completion.test.ts",
+        "src/sse.test.ts",
+        "src/templates.test.ts",
+        "src/wait.test.ts",
+        "--reporter=verbose"
+      ],
+      "timeoutSeconds": 300,
+      "expectedFiles": 10
+    },
+    "pm-web": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/web",
+        "exec",
+        "vitest",
+        "run",
+        "src/api/queries.reconnect.test.tsx",
+        "src/lib/utils.test.ts",
+        "src/runs/",
+        "--reporter=verbose"
+      ],
+      "timeoutSeconds": 600,
+      "expectedFiles": 34
+    },
+    "pm-typecheck": {
+      "argv": [
+        "typecheck",
+        "--continue"
+      ],
+      "timeoutSeconds": 900
+    },
+    "pm-lint": {
+      "argv": [
+        "lint",
+        "--continue"
+      ],
+      "timeoutSeconds": 900
+    },
+    "pm-format": {
+      "argv": [
+        "format:check"
+      ],
+      "timeoutSeconds": 300
+    }
+  }
+}

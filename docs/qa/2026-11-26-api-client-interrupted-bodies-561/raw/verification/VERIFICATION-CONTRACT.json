@@ -1,0 +1,181 @@
+{
+  "issue": 561,
+  "role": "actual Claude complete verification only",
+  "model": "claude-opus-5-5",
+  "effort": "xhigh",
+  "ordinaryMaxOnly": true,
+  "worktree": "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin",
+  "baseline": {
+    "head": "154e78d54ee485330816d606032280de44d6e891",
+    "branch": "codex/gg-fu-api-client-561-20261124",
+    "indexSha256": "5aaabc8c568cb86454b606808d8ff21a882cf63bfb06b1b3da0d61abe6941a78",
+    "changedFilesSha256": {
+      "CHANGELOG.md": "eaaf3dc929c75c9a865c8459fb3292e628ff2a4edf8742a0077468d66a7166d8",
+      "docs/07-api-and-streaming.md": "325d706636b96f42ae37cecd3a3124b71c0226ea30ffb3fdd491d4a1c3855c58",
+      "packages/api-client/src/body.test.ts": "15271315cd34cc31b9fea1037e8746113cd1029664ed83e6676b904c92c485a8",
+      "packages/api-client/src/body.ts": "50f86f3574b30d37bd6493444328bd91e1bccb6e46eed35e825d12a882cb25af",
+      "packages/api-client/src/client.ts": "c5f4a7e7b450c7d21fa6e62a9baba97d391783e2cc50a277a498d433b3a8c67c",
+      "packages/api-client/src/errors.test.ts": "4fcd2fd0576127adb6e69ae0bac3feebdd00528f9c1701bb0dc345036ce2f1ac",
+      "packages/api-client/src/errors.ts": "c5902219ce90614fc9bbbab90fc062c9f9309305b44e51c4f76a5beedbbacedd",
+      "packages/api-client/src/resources.ts": "8d01b98ed9397ddbba3ece1b3b7dc7d97c7c7ba025ace4a9840e4c2aa860aed1"
+    },
+    "protectedFilesSha256": {
+      "AGENTS.md": "59d887677cb387ef540330c1ea20d67c6fbc4cbc0c149f234850d5b4508ea0c5",
+      "apps/api/src/emit-openapi.ts": "d0e741e74c18387d099210c3656aed998355913f12dd2ed0c26a0e24191e0f0c",
+      "apps/api/src/testing/test-app.ts": "275fd7228ef196733bdcc884a05eaf8f3ffce8498bb4298ce18ca13b4f75cff0",
+      "apps/web/src/api/queries.reconnect.test.tsx": "8f9d8c46bb22d1764b620801bcae77383cb846b16272de14d764955956d3b3fc",
+      "apps/web/src/api/queries.ts": "ddde12b11ca03fcd3d777db09d6787756d5b8d92de74e169cfed54312c434b36",
+      "apps/web/src/lib/utils.ts": "0f73cc8f6f39c4f0d21ea43071c26d9606a517f3078c7a4643c4bdb119eb05ac",
+      "apps/web/src/runs/RunInspectorPage.offline.test.tsx": "e49fc15e9238500102d4abae5270a9c487cdb34193fd4ec476d789da091ddf78",
+      "apps/web/src/runs/RunInspectorPage.tsx": "1a5c4e057da8fdbd2a17890f2461fd2e665690bba2d97e9d7ec1aca7cfcd7e79",
+      "docs/15-issue-workflow.md": "57eaaed4c8ab33bc7b55b38477c4af2aaa992c6848c21e25592add3b37c6fb5a",
+      "docs/README.md": "dae66b4d8ec8c5aff74cc1cbc0e2d5daf169343f4cbb43ce521bcb62cde04548",
+      "package.json": "827a24953ad2ce0ebf3e18173b6560604ff90353cca6a7b8971e37b6936da73c",
+      "packages/api-client/node_modules/openapi-fetch/dist/index.mjs": "ec9c9437bc2f5b4a59f6411a36b326f82943d7caba634ee2c7d41192f296e11f",
+      "packages/api-client/package.json": "3df194db56251cdf269a86f0f4c4d316569608ef9ce6853680c019ea8f017137",
+      "packages/api-client/scripts/codegen.ts": "682d0a51784d4e417ff0f9f53ee58f1d379ed74d4d398499d8ae36ef61a3395f",
+      "packages/api-client/scripts/generate.test.ts": "f0c3dad5fa6439c7c895bcd2c62aa2dd36491138e6338e6ffd16c1858f24e2dd",
+      "packages/api-client/src/index.ts": "18cea62ce333fb8c9c2bd8bc221adbe3db5f21bd9365dc9ff080b2f20437cf65",
+      "packages/api-client/src/sse-completion.test.ts": "e1e1eab96bbbbfd4ac56db861eecd9b08f0b1af645dd2c1dc05ea158216e6dac",
+      "packages/api-client/src/sse.test.ts": "5098499da3508df37e55b43bfe747fe1821ac0979cf4ada997aa82edd5fb3885",
+      "packages/api-client/src/sse.ts": "93f704a084c1119d749ca71a663568947359cab37659c40ba38fc653b2c8ad2b",
+      "packages/api-client/vitest.config.ts": "02e8dcce1ad858d083fc5b03f41386ae6c49c83705a18fdc87344aaadd518a81",
+      "pnpm-lock.yaml": "bcc908d0f7aa32ba4a64302a9f74284c1a0679e2372ca1ba83176af5b5bbcce2",
+      "tooling/vitest.shared.mjs": "d9554239bb67a37b86c896e6df1eb1d444ea480a4ea291c4943e51a7ff8327e2"
+    }
+  },
+  "sourceManifestSha256": "80cfbae250d6782f7d42e16cd3f29355fe8f93af92a0087fa6761d375e6667cc",
+  "checks": {
+    "client": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/api-client",
+        "exec",
+        "vitest",
+        "run",
+        "src/body.test.ts",
+        "src/errors.test.ts",
+        "src/resources.test.ts",
+        "src/sse.test.ts",
+        "src/sse-completion.test.ts",
+        "--reporter=verbose"
+      ],
+      "timeoutSeconds": 120,
+      "expectedFiles": 5,
+      "expectedTests": 100
+    },
+    "web": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/web",
+        "exec",
+        "vitest",
+        "run",
+        "src/api/queries.reconnect.test.tsx",
+        "src/runs/RunInspectorPage.offline.test.tsx",
+        "--reporter=verbose"
+      ],
+      "timeoutSeconds": 120,
+      "expectedFiles": 2,
+      "minimumTests": 60
+    },
+    "web-types": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/web",
+        "typecheck"
+      ],
+      "timeoutSeconds": 180
+    },
+    "mcp-types": {
+      "argv": [
+        "--filter",
+        "@graphgoblin/mcp",
+        "typecheck"
+      ],
+      "timeoutSeconds": 180
+    },
+    "build": {
+      "argv": [
+        "build",
+        "--force"
+      ],
+      "timeoutSeconds": 240,
+      "forcedFullBuild": true
+    }
+  },
+  "sequence": [
+    "client",
+    "web",
+    "web-types",
+    "mcp-types",
+    "build"
+  ],
+  "notBefore": "2026-11-25T10:10:20+00:00",
+  "deadlineSeconds": 1800,
+  "wrapperTimeoutMs": 900000,
+  "maxAttemptsPerStage": 1,
+  "sourceEditsAllowed": false,
+  "actorOutput": "claude-verification-01",
+  "evidenceRoot": "verification-evidence",
+  "ownedHelperSha256": "73da0fe861c6e3c075c58a13dc5237624190591ce6fdd7167896dd329e694f4b",
+  "ownedHelperOrigin": "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\editor-forms-527-521-522-526\\verification-continuation-05\\owned_process.py",
+  "ownedHelperOriginSha256": "73da0fe861c6e3c075c58a13dc5237624190591ce6fdd7167896dd329e694f4b",
+  "dependencyHashes": {
+    "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\inspector-561-562-563-556\\review-561-01\\REVIEW.md": "5545e20d69dd26b86262b693ea053f3f53a216055c7e75669f577553ec45bbd0",
+    "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\inspector-561-562-563-556\\review-561-01\\SOURCE-MANIFEST.json": "80cfbae250d6782f7d42e16cd3f29355fe8f93af92a0087fa6761d375e6667cc",
+    "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\inspector-561-562-563-556\\author-preparation-01\\561-revision02\\claude-author-01\\CLAUDE-EXIT.json": "f133a69c32672d70afc10ccf4f3acfd688bb7ec2de7dd3bc5df81b1803e76d52",
+    "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\inspector-561-562-563-556\\author-preparation-01\\561-revision02\\claude-author-01\\CLAUDE-EVENTS.private.jsonl": "fb3d1fcd1227fe89f7be83fbe5f5b730132da736426a05a4237cb86efbf5e195",
+    "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\scope-preparation-01\\prepare-scope.py": "8e50a6da5a83e7ddc412ea1c14c646096091c9c61a97067b3af358ef3ccc99e7",
+    "C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe": "dccc52de28d8df2ee22d2062424f8c563070d95d8ad70c54c4bf01d590dec14f",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\package.json": "827a24953ad2ce0ebf3e18173b6560604ff90353cca6a7b8971e37b6936da73c",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\api\\package.json": "33c81976af69126e2e87b698b4890909a4612cd476fc2ac085751c833cea47c4",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\mcp\\package.json": "8a4f4e720ab70eb894b7fd018f4dbf17a86b7bc8acc2e737245c9d137bed696f",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\plugin-claude\\package.json": "4fdf9559b33e6dc0c4f6a8c70b025f2a752790e11fd78053c6b406d931e5e205",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\plugin-codex\\package.json": "5f9f16c9b59295199cf673d36c62c47ab068a5bbcb1efbd42253920f40da06da",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\web\\package.json": "1cea9d5eeaee3d31ff109dc61a9ec1d169ddb0d5b4b76a1bc34a2de3eac71911",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\packages\\adapter-codex\\package.json": "cd15ff8d27334b630c2b7e6356f6e620408aabacdb927c9d288e27afebccda78",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\packages\\adapter-jev\\package.json": "3b53bad1935190583ad3d963134a58fa19f383ca718bfd11d6a2018906f90857",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\packages\\api-client\\package.json": "3df194db56251cdf269a86f0f4c4d316569608ef9ce6853680c019ea8f017137",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\packages\\contracts\\package.json": "f16706ee603376ef59ceaed1c6ca598da39bd6786626344abeb775d9353a2b34",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\packages\\domain\\package.json": "3eda82e6b6855b3057309bc6685fd4907c891f7d8d9cd96464c3bfb2cf28c68c",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\packages\\engine\\package.json": "3045b857ef6ca9ee84f49d4bb314c7a480814b1e09f0d770564dc90790d05f94",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\packages\\infrastructure\\package.json": "e321a13c8a5dcf928cdfcc3a33aec2d1983d7ee36696c600de87bd67f4f6efda",
+    "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\inspector-561-562-563-556\\verification-561-01-preparation\\MANIFEST.json": "a79fdc7c2032a969504cee4e3cc4c6a84562ac6354cd18566c21d1a5a727e6a1",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\turbo.json": "19b495d4a674d000361f8b494cfb571eeff69812daaa56bfb41cfd236b589e6b",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\pnpm-workspace.yaml": "33a77d0d6ace8c63021f53cb84b9cf06289fd999fcd444608d968f5b72e73ae5",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\api\\src\\templates\\copy-catalog.ts": "d801509c520b2b1a1f6c06fd77ef7094200f9c29f9e65f6dc79a0e6917da260c",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\api\\src\\templates\\catalog-package.ts": "59ed125259c1d7ac74adb1db16d6935940f39c3481f352844eda081fcd430dce",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\api\\src\\templates\\catalog.ts": "8a96ae17243544184d204fbe7a0c754b3162e13cebfdaef2d8ebcba270d4bbe5",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\plugin-codex\\src\\cli.ts": "3a939c17e897976189eee9a8dadc924a89649e7d5b5df110e6ffaeae8eb6af81",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\plugin-codex\\src\\assemble.ts": "db05a35bd6d29f3761ff4ea5efe624ce5b7055e7db21bebe87d67a4695ae0200",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\plugin-codex\\src\\manifest.ts": "6f7f11e1e0d48646e58dc9e52bc1ae75104708deec94d653a9aab25b07a51e34",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\plugin-claude\\src\\cli.ts": "64ef7e1688eebb4e0368efff70efa79b65351b50a67d4c223cc45c2b60c00cf6",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\plugin-claude\\src\\index.ts": "73789d8c846c5add445b9c8afd94f8a190f8da68ea450453acca5ec23f3170ed",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\tooling\\plugin-output.mjs": "5e476c713622ed83b5ae5760113e4944e220eba8d14b1475b5eff296618d8355",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\web\\vite.config.ts": "6309a4934e061f2081d86a01fb53b8c39a03e35fb5f10e0c51bb6a66598a5dbe",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\web\\vite.goblin.config.ts": "01bc16f954719b651d29bc77032694de12da55dbd75337b0914cec6281961ce9",
+    "G:\\ggq\\gg-fu-api-client-561-20261124\\GraphGoblin\\apps\\api\\src\\emit-openapi.ts": "d0e741e74c18387d099210c3656aed998355913f12dd2ed0c26a0e24191e0f0c"
+  },
+  "priorAuthorSession": "917bc9ea-1701-4acc-a50e-dc258d988907",
+  "sourceBindingState": "FROZEN_WAIT_ROOT_FUP090_CANDIDATE_DISPOSITION",
+  "coverage": "No full API-client/emitter/broad API suite; full package coverage remains later safe current-target/hosted gate",
+  "revision": "02 restores ProgramFiles before actor scrub boundary; source/commands/budgets unchanged",
+  "actorEnvironmentSafeValues": {
+    "ProgramFiles": "C:\\Program Files",
+    "ProgramFiles(x86)": "C:\\Program Files (x86)",
+    "ProgramW6432": "C:\\Program Files"
+  },
+  "commandGgEnvironment": {
+    "GG_OLLAMA_ENABLED": "false",
+    "GG_OLLAMA_URL": "http://127.0.0.1:1"
+  },
+  "futureEdgeArtifact": {
+    "path": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
+    "bytes": 5316936,
+    "sha256": "5b07e50eaba5ca60fe6b900cc418a2081cdb8de6c621bfaf85b58865ede378ee",
+    "notExecuted": true,
+    "qualification": "Host read-only artifact identity for future exact QA; current verification does not launch Edge."
+  },
+  "previousPreparationManifestSha256": "a79fdc7c2032a969504cee4e3cc4c6a84562ac6354cd18566c21d1a5a727e6a1"
+}
