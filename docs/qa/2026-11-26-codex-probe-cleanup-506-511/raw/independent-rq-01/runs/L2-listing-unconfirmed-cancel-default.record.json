@@ -1,0 +1,110 @@
+{
+  "caseId": "L2-listing-unconfirmed-cancel-default",
+  "scenario": "listing-unconfirmed",
+  "mode": "cancel",
+  "listingTimeoutMs": 15000,
+  "cancelGraceMs": "default",
+  "node": "v22.23.4",
+  "announcedAt": 2053.7,
+  "cancelAt": 2298.5,
+  "cancelOutcome": {
+    "status": "rejected",
+    "at": 4314.1,
+    "name": "Error",
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+    "message": "Codex could not list the machine's MCP servers, so the turn did not start: the listing was cancelled and its process did not confirm that it stopped; it may still be running.",
+    "retriable": false,
+    "submission": "delivery-uncertain"
+  },
+  "result": {
+    "status": "rejected",
+    "at": 4314,
+    "name": "Error",
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+    "message": "Codex could not list the machine's MCP servers, so the turn did not start: the listing was cancelled and its process did not confirm that it stopped; it may still be running.",
+    "retriable": false,
+    "submission": "delivery-uncertain"
+  },
+  "settleAfterCancelMs": 2016,
+  "drainedEvents": [
+    {
+      "type": "error",
+      "code": "HARNESS_TERMINATION_UNCONFIRMED",
+      "message": "Codex could not list the machine's MCP servers, so the turn did not start: the listing was cancelled and its process did not confirm that it stopped; it may still be running.",
+      "retriable": false,
+      "submission": "delivery-uncertain"
+    }
+  ],
+  "warnings": [
+    {
+      "obj": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "retriable": false
+      },
+      "msg": "codex turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the listing was cancelled and its process did not confirm that it stopped; it may still be running."
+    }
+  ],
+  "spawnCount": 1,
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 60736,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\L2-listing-unconfirmed-cancel-default-HnFnNw\\work",
+      "at": 1673.7
+    },
+    {
+      "kind": "stderr-first",
+      "id": 0,
+      "at": 2053.7
+    },
+    {
+      "kind": "kill",
+      "id": 0,
+      "signal": "SIGTERM",
+      "at": 2299.4
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 2349.4
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 10275.2
+    }
+  ],
+  "helpersAtSettle": [
+    {
+      "name": "listing-grandchild.pid",
+      "pid": 59108,
+      "alive": true
+    }
+  ],
+  "helpersAliveAfterWait": [],
+  "turnAttempt": false,
+  "leaks": []
+}

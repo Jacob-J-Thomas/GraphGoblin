@@ -1,0 +1,169 @@
+{
+  "caseId": "Q08-ebusy-auth",
+  "source": "head",
+  "scenario": "cwdhold-auth",
+  "timeoutMs": 5000,
+  "holdMs": 6000,
+  "binaryKind": "fake",
+  "node": "v22.23.4",
+  "root": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp",
+  "probe": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp\\temp\\gg-codex-probe-cdb9d9e8",
+  "elapsedMs": 3002,
+  "result": {
+    "state": "auth",
+    "ok": false,
+    "problems": [
+      "Codex sign-in is missing or invalid. Run codex login, then retry preflight.",
+      "Codex readiness check could not remove its temporary folder. Check that the Codex CLI starts and responds, then retry preflight."
+    ],
+    "authenticated": false,
+    "version": "0.160.0"
+  },
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 50860,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp\\temp\\gg-codex-probe-cdb9d9e8",
+      "at": 1635.9
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1940.9
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1941
+    },
+    {
+      "kind": "spawn",
+      "id": 1,
+      "pid": 60340,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp\\temp\\gg-codex-probe-cdb9d9e8",
+      "at": 1951.1
+    },
+    {
+      "kind": "exit",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 2269.4
+    },
+    {
+      "kind": "close",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 2269.4
+    },
+    {
+      "kind": "spawn",
+      "id": 2,
+      "pid": 59872,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "resume",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp\\temp\\gg-codex-probe-cdb9d9e8",
+      "at": 2279
+    },
+    {
+      "kind": "exit",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2649
+    },
+    {
+      "kind": "close",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2649.1
+    },
+    {
+      "kind": "spawn",
+      "id": 3,
+      "pid": 60804,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "login",
+        "status"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp\\temp\\gg-codex-probe-cdb9d9e8",
+      "at": 2659.3
+    },
+    {
+      "kind": "stderr-first",
+      "id": 3,
+      "at": 2958.7
+    },
+    {
+      "kind": "exit",
+      "id": 3,
+      "code": 1,
+      "signal": null,
+      "at": 3000.4
+    },
+    {
+      "kind": "close",
+      "id": 3,
+      "code": 1,
+      "signal": null,
+      "at": 3000.5
+    },
+    {
+      "kind": "rm",
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp\\temp\\gg-codex-probe-cdb9d9e8",
+      "options": {
+        "recursive": true,
+        "force": true
+      },
+      "at": 3001.7,
+      "outcome": "EBUSY"
+    }
+  ],
+  "rmCalls": [
+    {
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q08-ebusy-auth-AvEpkp\\temp\\gg-codex-probe-cdb9d9e8",
+      "outcome": "EBUSY"
+    }
+  ],
+  "atReturn": {
+    "tempEntries": [
+      "gg-codex-probe-cdb9d9e8"
+    ],
+    "probeExists": true,
+    "probeEntries": [],
+    "helpers": []
+  },
+  "afterHelpers": {
+    "tempEntries": [
+      "gg-codex-probe-cdb9d9e8"
+    ],
+    "probeExists": true,
+    "probeEntries": [],
+    "helpersAlive": [
+      "holder.pid"
+    ],
+    "forcedTermination": [],
+    "turnAttempt": false
+  }
+}

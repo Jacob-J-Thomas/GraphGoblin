@@ -1,0 +1,110 @@
+{
+  "caseId": "L3-listing-unconfirmed-cancel-grace500",
+  "scenario": "listing-unconfirmed",
+  "mode": "cancel",
+  "listingTimeoutMs": 15000,
+  "cancelGraceMs": 500,
+  "node": "v22.23.4",
+  "announcedAt": 1745.3,
+  "cancelAt": 1917.3,
+  "cancelOutcome": {
+    "status": "rejected",
+    "at": 2444.3,
+    "name": "Error",
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+    "message": "Codex CLI termination was not confirmed: its output stayed open 500 ms after the turn was aborted, so a process it started may still be running",
+    "retriable": false,
+    "submission": "delivery-uncertain"
+  },
+  "result": {
+    "status": "rejected",
+    "at": 2444.2,
+    "name": "Error",
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+    "message": "Codex CLI termination was not confirmed: its output stayed open 500 ms after the turn was aborted, so a process it started may still be running",
+    "retriable": false,
+    "submission": "delivery-uncertain"
+  },
+  "settleAfterCancelMs": 527,
+  "drainedEvents": [
+    {
+      "type": "error",
+      "code": "HARNESS_TERMINATION_UNCONFIRMED",
+      "message": "Codex CLI termination was not confirmed: its output stayed open 500 ms after the turn was aborted, so a process it started may still be running",
+      "retriable": false,
+      "submission": "delivery-uncertain"
+    }
+  ],
+  "warnings": [
+    {
+      "obj": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "retriable": false
+      },
+      "msg": "codex turn failed: Codex CLI termination was not confirmed: its output stayed open 500 ms after the turn was aborted, so a process it started may still be running"
+    }
+  ],
+  "spawnCount": 1,
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 63120,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\L3-listing-unconfirmed-cancel-grace500-w6dkYO\\work",
+      "at": 1524.6
+    },
+    {
+      "kind": "stderr-first",
+      "id": 0,
+      "at": 1745.3
+    },
+    {
+      "kind": "kill",
+      "id": 0,
+      "signal": "SIGTERM",
+      "at": 1918
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 1969
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 9919.7
+    }
+  ],
+  "helpersAtSettle": [
+    {
+      "name": "listing-grandchild.pid",
+      "pid": 37508,
+      "alive": true
+    }
+  ],
+  "helpersAliveAfterWait": [],
+  "turnAttempt": false,
+  "leaks": []
+}

@@ -1,0 +1,132 @@
+PASS WITH LIMITS
+
+# Independent QA for #506 and #511 at `46617e29` (Claude window, rq-01)
+
+QA agent: Claude Opus 5.5 (xhigh). I am independent of the author. Scope is `qa:touched-systems`.
+
+**Environment**
+
+- Windows 11, Node v22.23.4 (project runtime), pnpm 12.8.1, Vitest 5.0.3.
+- Worktree `G:/ggq/gg-fu-codex-cleanup-20261124/GraphGoblin` at HEAD `46617e29`, clean before and after. No source was modified.
+- All fixtures were under `G:/ggq/tmp/506-511-qa`.
+
+**How the cases ran**
+
+- Raw outputs: `raw/runs/`. Scripts: `raw/scripts/`.
+- Preflight and listing cases drive HEAD's TypeScript source through the package's public `createCodexHarness()`: `.preflight()` and `.start()` / `.cancel()`. Node runs the source with `--experimental-transform-types`.
+- A module-resolution hook (`hooks.mjs`) substitutes observing wrappers only for imports made by `cli.ts`:
+  - `fs-spy.mjs` records each `rm` call and its outcome.
+  - `cp-spy.mjs` records each spawn, kill request, exit, close and first stderr chunk.
+  - Both then call the real functions unchanged.
+- The fake CLI is `raw/scripts/fake-codex.mjs`. It starts no session and makes no provider request. It records and refuses any turn command, and every case pointed `CODEX_HOME` at an unused path.
+- Each helper process it starts is bounded (6–8 s) and records its pid.
+- Each case waits for its helpers to end and then removes only its own case root.
+- At the end, a search for the helper marker and for the QA path found 0 remaining processes.
+- Red controls ran byte-identical copies of `cli.ts` at `babb335c` and `4e1037c9`; `git hash-object` matched Git. They are labelled RC.
+
+## Invocations and raw files
+
+Every case writes `raw/runs/<ID>.record.json` (the full event timeline and result) and `raw/runs/<ID>.out.txt` (stdout/stderr). From `G:/ggq/tmp/506-511-qa/scripts`, with `TEMP` on G::
+
+- Preflight cases (`P` = `node --experimental-transform-types --import ./register.mjs preflight-case.mjs`):
+  - `P Q01-ready head ready 5000`
+  - `P Q02-auth head auth 5000`
+  - `P Q03-hang-confirmed head hang 2500`
+  - `P Q04-missing head ready 15000 8000 missing`
+  - `P Q05-unconfirmed-detached head unconfirmed-detached 2500 8000`
+  - `P Q06-unconfirmed-attached head unconfirmed-attached 2500 8000`
+  - `P Q07-ebusy-ready head cwdhold-ready 5000 6000`
+  - `P Q08-ebusy-auth head cwdhold-auth 5000 6000`
+  - `P Q09-ebusy-timeout head cwdhold-hang 2500 8000`
+  - `P Q10-long-hang-confirmed head hang 2500`
+  - `P RC1-babb335c-unconfirmed-detached babb335c unconfirmed-detached 2500 8000`
+  - `P RC2-base-4e1037c9-hang 4e1037c9 hang 2500`
+- Listing cases (`L` = `node --experimental-transform-types --import ./register.mjs listing-case.mjs`):
+  - `L L1-listing-hang-cancel listing-hang cancel 15000`
+  - `L L2-listing-unconfirmed-cancel-default listing-unconfirmed cancel 15000`
+  - `L L3-listing-unconfirmed-cancel-grace500 listing-unconfirmed cancel 15000 500`
+  - `L L4-listing-unconfirmed-deadline listing-unconfirmed deadline 2500`
+  - `L L5-listing-hang-cancel-grace10 listing-hang cancel 15000 10`
+- #511 runs:
+  - N1–N3 and F1 write `raw/runs/<ID>-*.stdout.txt` / `.log` plus `*.temp-after.txt`, a recursive listing of the private TEMP root after exit.
+  - The N2/N3 scratch Vitest configuration is `raw/red511-config/vitest.config.mjs`. It aliases only `./adapters.js` and `vitest`.
+- Gate logs: `raw/runs/G1-…G4-*.log`.
+- `raw/scripts/preflight-case.mjs` is the final driver. Two additions came during the session:
+  - The 226-character TEMP branch only runs for IDs containing `long` (Q10).
+  - The wait for a helper's late pid file was added after Q07/Q08 (see the note below the tables).
+  - Neither changes what the earlier cases did or how their results were recorded.
+
+## Case table
+
+Times are milliseconds from the start of the driver process. `rm` lists the adapter's own calls.
+
+### Readiness preflight (#506)
+
+| ID | Case | Expected | Actual | Result |
+| --- | --- | --- | --- | --- |
+| Q01 | Ready CLI | `ready`. Probe removed once after the last close. TEMP root empty. | `ready`, version 0.160.0, authenticated. `close@4000.7 → rm ok@4001.1`. TEMP empty. | PASS |
+| Q02 | Signed-out CLI (`Not logged in`, exit 1) | `auth`, `authenticated: false`. No cleanup problem. Probe removed. | As expected; the stderr canary did not reach the result. `close@2383 → rm ok@2384.2`. TEMP empty. | PASS |
+| Q03 | Confirmed-close timeout: `login status` hangs, 2500 ms deadline | Typed `unknown` with version. One `SIGTERM`. Close before the single removal. No residue. | `kill(SIGTERM)@4955.6` (+2504.7 after spawn) `→ exit/close@4966.3 → rm ok@4966.9`. No `SIGKILL`. `problems: [UNKNOWN]`. TEMP empty. | PASS |
+| Q04 | Missing executable, 15 s deadline | `cli-missing` without waiting. Probe removed. | `spawn@1921.7 → ENOENT@1922.3 → rm ok@1923.2`, reported 1.5 ms after spawn. TEMP empty. | PASS |
+| Q05 | **Real child outliving its kill window:** `login status` starts a detached grandchild that keeps the inherited pipes and the probe as its working directory (8 s) and writes `sentinel.txt` | `unknown` + version, `[UNKNOWN, NOT_STOPPED]`. Zero `rm` calls. Probe retained. | `kill@5845.4 → exit@5880.3`. Return at about 7873, after the 2 s allowance. **0 `rm` calls.** Probe still holds `sentinel.txt` at return and after the grandchild ended. Close arrived only at 11777.4. No removal problem. | PASS |
+| Q06 | Same, but the grandchild is **not detached**: the structure of the bundled `@openai/codex` `bin/codex.js` launcher | Observation | The grandchild ended with its killed parent. `exit@5365.2 → close@5391.6 → rm ok@5392.2`. Confirmed path, probe removed. | OBSERVED |
+| Q07 | **Real `EBUSY`**, ready CLI: `login status` leaves a detached holder (stdio ignored) whose working directory is the probe | `unknown`, `[PROBE_LEFT]` only. One `rm`, `EBUSY`. Directory left. | `close@3053.9 → rm EBUSY@3054.3`. Result `{state: unknown, problems: [PROBE_LEFT]}`. Probe left, empty. | PASS* |
+| Q08 | Real `EBUSY`, signed-out CLI | `auth` + `authenticated: false`. Auth problem, then `PROBE_LEFT`. One `rm`. | As expected. `rm EBUSY@3001.7`, once. | PASS* |
+| Q09 | Real `EBUSY` after a confirmed timeout | `[UNKNOWN, PROBE_LEFT]` + version. Kill → close → one `rm`. | `kill@5058.7 → exit/close@5073.7 → rm EBUSY@5074.3`. As expected. | PASS |
+| Q10 | Confirmed timeout under a 226-character TEMP root | Probe path 250 characters. Removed after close. | Path 250 characters. `close@5241.4 → rm ok@5242`. TEMP root empty. | PASS |
+
+### Red controls on older revisions
+
+| ID | Case | Expected | Actual | Result |
+| --- | --- | --- | --- | --- |
+| RC1 | **Red, `babb335c`** (the candidate formal review 1 examined), Q05 scenario | Old code tries to remove the probe while the descendant still runs | `kill@4703 → exit@4736.6 → rm EBUSY@6726.3 → close@11052.4`. Problems `[UNKNOWN, NOT_STOPPED, PROBE_LEFT]`. This is formal review 1's R1, now shown with a real process. | RED as expected |
+| RC2 | **Red, `4e1037c9`** (pre-#506 base), Q03 scenario | Original defect: removal before close | `kill@4667.5 → rm EBUSY@4668.7 → exit/close@4695.9`. Probe directory left. Matches the historical `timeout-0*.stdout.json`. | RED as expected |
+
+### Per-turn MCP listing
+
+All cases use the public `createCodexHarness().start()`.
+
+| ID | Case | Expected | Actual | Result |
+| --- | --- | --- | --- | --- |
+| L1 | Listing hangs; turn cancelled | `AbortError`. Listing process closes before the turn settles. No turn. | `kill@2486.8 → close@2520.1 → result AbortError@2521.4`. `cancel()` resolves. 1 spawn, no turn attempt, no events. | PASS |
+| L2 | Listing process unconfirmed (detached grandchild keeps the pipes); cancelled; default `cancelGraceMs` | `HARNESS_TERMINATION_UNCONFIRMED` with the listing message `was cancelled`, non-retriable. `cancel()` rejects. No turn. | Settled 2016 ms after cancel with the exact docs/06 listing message, `submission: delivery-uncertain`. One `error` event. No canary or path leaks. Close came about 6 s later. | PASS |
+| L3 | As L2 with `cancelGraceMs: 500` (the R2 wording) | The harness's generic termination message, same code | Settled 527 ms after cancel: `Codex CLI termination was not confirmed: its output stayed open 500 ms …`, same code. | PASS |
+| L4 | Listing process unconfirmed after its own 2500 ms deadline, no cancellation | Listing message `timed out after 2500 ms` | `kill@4157.1` (+2511.7) `→ settle@6174.6` (kill + 2017.5) with that exact message. No turn. | PASS |
+| L5 | Listing that does close, with `cancelGraceMs: 10` (the author's untested caveat) | Generic message possible | Generic `10 ms` message at cancel + 16 ms. The listing closed 10 ms after the turn settled. | PASS |
+
+### Live suite collection (#511)
+
+| ID | Case | Expected | Actual | Result |
+| --- | --- | --- | --- | --- |
+| N1 | Disabled collection at HEAD: `pnpm --filter @graphgoblin/adapter-codex exec vitest run src/live.test.ts --reporter=verbose` with `LIVE=0` and a fresh empty TEMP/TMP/TMPDIR | Exit 0. 4 skipped. TEMP root empty after exit. | Exit 0. 4 skipped. TEMP root has **no entries at all**. | PASS |
+| N2 | **Red:** pre-fix `live.test.ts` (byte copy from `4e1037c9`), collected from a scratch Vitest root against the worktree's `adapters.ts` | One `graphgoblin-live-*` left | Exit 0. 4 skipped. `graphgoblin-live-iBpft1` left. | RED as expected |
+| N3 | Same scratch method with HEAD's `live.test.ts` | Nothing left | Exit 0. 4 skipped. TEMP root empty. Rules out the method as the cause of the N2 difference. | PASS |
+| F1 | Maintained focused suites at HEAD: `probe-directory`, `cli`, `isolation`, `live-collection`, `live`, with `LIVE=0` and `--testNamePattern='^(?!.*actual installed SDK CLI)'`, private TEMP | Pass, TEMP clean | 4 files passed, 1 skipped. 104 passed, 5 skipped. TEMP clean afterwards. | PASS |
+
+### Gates
+
+| ID | Check | Result |
+| --- | --- | --- |
+| G1 | `prettier --check` on the 12 slice paths | PASS |
+| G2 | `git diff --check 4e1037c9 46617e29` | PASS |
+| G3 | `pnpm --filter @graphgoblin/adapter-codex lint` | PASS |
+| G4 | `pnpm --filter @graphgoblin/adapter-codex typecheck` | PASS |
+
+\* **Q07/Q08 harness gap.** The holder starts after the fake CLI has exited, so its pid file appeared after my driver's wait loop had finished. The two case roots were therefore not auto-removed. I confirmed both holder pids (58340, 59484) had no running process and removed those two roots by hand. The driver now waits for a late pid file, and Q09 onward used it. The product results in those records are unaffected, and the cases were not re-run.
+
+## Limits
+
+- **Package coverage at the merged HEAD is pending.** It was not run.
+  - A bounded background job (`raw/scripts/coverage-when-locked.sh`) polled `G:/ggq/tmp/heavy-suite.lock` every 20 s from about 04:08Z to 04:34Z.
+  - The lock passed from A4 (api coverage) directly to B4 (editor-forms Edge QA) without the job acquiring it. Its record is `raw/runs/C1-coverage-head.log`.
+  - Per the rules, I did not run it unlocked. The author's coverage run is at `49b29cfe`: 710 passed, 5 skipped, 99.31% lines, 96% branches. The merge leaves every `adapter-codex` file byte-identical, and F1 passed at HEAD.
+- **The real installed Codex CLI was not run.** It is the owner CLI and is excluded.
+  - The unconfirmed path was exercised with a fake CLI whose detached grandchild keeps the pipes.
+  - Q06 shows that a non-detached grandchild with inherited stdio is ended with its parent on Windows. The mechanism (probably libuv's kill-on-close job object) and the real native binary's behaviour are not established.
+- **The enabled #511 lifecycle was covered only by the maintained `live-collection.test.ts` (F1).** I did not run my own `LIVE=1` run, so that no real CLI could be reached by mistake.
+- Only Windows was exercised. macOS and Linux were not.
+- Failure frequency with real CLIs is not established. An unconfirmed check leaves its probe directory permanently (Q05). This is by contract (see `REVIEW.md`, observation 1).
+
+## Recommendations (not added to the branch)
+
+- A maintained, bounded native regression with a detached helper that keeps the pipes, as in Q05 and L2–L4. It would pin zero removals and the listing message with a real process. It would also cover the `cancelGraceMs` race (L3/L5).

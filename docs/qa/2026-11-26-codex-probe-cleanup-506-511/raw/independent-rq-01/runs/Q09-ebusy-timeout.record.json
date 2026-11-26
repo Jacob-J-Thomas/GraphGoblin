@@ -1,0 +1,173 @@
+{
+  "caseId": "Q09-ebusy-timeout",
+  "source": "head",
+  "scenario": "cwdhold-hang",
+  "timeoutMs": 2500,
+  "holdMs": 8000,
+  "binaryKind": "fake",
+  "node": "v22.23.4",
+  "root": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k",
+  "probe": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k\\temp\\gg-codex-probe-0faa45cc",
+  "elapsedMs": 5074,
+  "result": {
+    "state": "unknown",
+    "ok": false,
+    "problems": [
+      "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.",
+      "Codex readiness check could not remove its temporary folder. Check that the Codex CLI starts and responds, then retry preflight."
+    ],
+    "version": "0.160.0"
+  },
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 36260,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k\\temp\\gg-codex-probe-0faa45cc",
+      "at": 1594.6
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1880.6
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1880.7
+    },
+    {
+      "kind": "spawn",
+      "id": 1,
+      "pid": 62080,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k\\temp\\gg-codex-probe-0faa45cc",
+      "at": 1890.9
+    },
+    {
+      "kind": "exit",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 2223.6
+    },
+    {
+      "kind": "close",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 2223.6
+    },
+    {
+      "kind": "spawn",
+      "id": 2,
+      "pid": 62416,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "resume",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k\\temp\\gg-codex-probe-0faa45cc",
+      "at": 2234.1
+    },
+    {
+      "kind": "exit",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2542.5
+    },
+    {
+      "kind": "close",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2542.5
+    },
+    {
+      "kind": "spawn",
+      "id": 3,
+      "pid": 60804,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "login",
+        "status"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k\\temp\\gg-codex-probe-0faa45cc",
+      "at": 2552.6
+    },
+    {
+      "kind": "kill",
+      "id": 3,
+      "signal": "SIGTERM",
+      "at": 5058.7
+    },
+    {
+      "kind": "exit",
+      "id": 3,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 5073.7
+    },
+    {
+      "kind": "close",
+      "id": 3,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 5073.7
+    },
+    {
+      "kind": "rm",
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k\\temp\\gg-codex-probe-0faa45cc",
+      "options": {
+        "recursive": true,
+        "force": true
+      },
+      "at": 5074.3,
+      "outcome": "EBUSY"
+    }
+  ],
+  "rmCalls": [
+    {
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\Q09-ebusy-timeout-UsC81k\\temp\\gg-codex-probe-0faa45cc",
+      "outcome": "EBUSY"
+    }
+  ],
+  "atReturn": {
+    "tempEntries": [
+      "gg-codex-probe-0faa45cc"
+    ],
+    "probeExists": true,
+    "probeEntries": [],
+    "helpers": [
+      {
+        "name": "holder.pid",
+        "pid": 62632,
+        "alive": true
+      }
+    ]
+  },
+  "afterHelpers": {
+    "tempEntries": [
+      "gg-codex-probe-0faa45cc"
+    ],
+    "probeExists": true,
+    "probeEntries": [],
+    "helpersAlive": [],
+    "forcedTermination": [],
+    "turnAttempt": false
+  }
+}

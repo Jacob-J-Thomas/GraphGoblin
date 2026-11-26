@@ -1,0 +1,104 @@
+{
+  "caseId": "L5-listing-hang-cancel-grace10",
+  "scenario": "listing-hang",
+  "mode": "cancel",
+  "listingTimeoutMs": 15000,
+  "cancelGraceMs": 10,
+  "node": "v22.23.4",
+  "announcedAt": 2155.2,
+  "cancelAt": 2155.8,
+  "cancelOutcome": {
+    "status": "rejected",
+    "at": 2171.4,
+    "name": "Error",
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+    "message": "Codex CLI termination was not confirmed: its output stayed open 10 ms after the turn was aborted, so a process it started may still be running",
+    "retriable": false,
+    "submission": "delivery-uncertain"
+  },
+  "result": {
+    "status": "rejected",
+    "at": 2171.3,
+    "name": "Error",
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+    "message": "Codex CLI termination was not confirmed: its output stayed open 10 ms after the turn was aborted, so a process it started may still be running",
+    "retriable": false,
+    "submission": "delivery-uncertain"
+  },
+  "settleAfterCancelMs": 16,
+  "drainedEvents": [
+    {
+      "type": "error",
+      "code": "HARNESS_TERMINATION_UNCONFIRMED",
+      "message": "Codex CLI termination was not confirmed: its output stayed open 10 ms after the turn was aborted, so a process it started may still be running",
+      "retriable": false,
+      "submission": "delivery-uncertain"
+    }
+  ],
+  "warnings": [
+    {
+      "obj": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "retriable": false
+      },
+      "msg": "codex turn failed: Codex CLI termination was not confirmed: its output stayed open 10 ms after the turn was aborted, so a process it started may still be running"
+    }
+  ],
+  "spawnCount": 1,
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 62920,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\L5-listing-hang-cancel-grace10-qXcmmp\\work",
+      "at": 1847.3
+    },
+    {
+      "kind": "stderr-first",
+      "id": 0,
+      "at": 2155.2
+    },
+    {
+      "kind": "kill",
+      "id": 0,
+      "signal": "SIGTERM",
+      "at": 2156.5
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 2181.4
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 2181.4
+    }
+  ],
+  "helpersAtSettle": [],
+  "helpersAliveAfterWait": [],
+  "turnAttempt": false,
+  "leaks": []
+}
