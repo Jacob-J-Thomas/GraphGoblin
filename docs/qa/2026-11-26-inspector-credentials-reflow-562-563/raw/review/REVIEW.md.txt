@@ -1,0 +1,210 @@
+READY FOR OPPOSITE-FAMILY REVIEW (updated 2026-11-26 after ec5c2bb3). The code review of e7e66523 found no P1/P2 FIX-IN-PR issues, only four P3 findings (two DEFER-ISSUE, two NO-CHANGE). QA's Q1 (P2, FIX-IN-PR) was fixed in ec5c2bb3 within the admitted scope and verified in Edge; see the addenda. Originally this line read: "… Phase-2 QA then added Q1 …, so the slice needs an orchestrator decision before opposite-family review."
+
+# Interim review: #562/#563 at `e7e66523` (Claude Opus 5.5 xhigh, independent of the author)
+
+- Worktree `G:/ggq/gg-fu-inspector-562-563-20261124/GraphGoblin`, branch
+  `codex/gg-fu-inspector-562-563-20261124`, commit `e7e6652377420cf5b4ff5ec1de120dd739543bbc` on
+  base `14ea69842` (22 files, +3405/-150). The review was read-only, using `git show`/`git diff`.
+- Reviewed against:
+  - issues #562 and #563;
+  - `continuation-562-563-02-preparation/AUTHOR-BRIEF.md` and `AUTHOR-CONTRACT.json` (30 write paths);
+  - `design-inspector-01/DESIGN.claude.md`;
+  - `ROOT-DESIGN-ADJUDICATION.md` (FUP-076);
+  - `HANDOFF.md`;
+  - `claude-window-author-03/AUTHOR-REPORT.md` and its raw browser evidence.
+- Policy: `review-policy.md` (finding admission, severity, dispositions).
+
+## Scope and rule checks
+
+- All 22 changed paths are inside the contract's 30 write paths. `context.tsx`, `bounded-value.*`,
+  `recovery-controls.test.tsx`, `ScriptRecovery.test.tsx` and `SessionRecoveryControls.test.tsx`
+  were not touched. `dialog.tsx` (outside scope) already had the `returnFocus` prop used here.
+- The commit uses the repository identity (Jacob-J-Thomas) and has no assistant attribution.
+- `docs/09` and `CHANGELOG.md` are updated. No ADR is needed, because FUP-076 is recorded in the
+  delivery evidence and no repository decision changed.
+- No coverage threshold or exclusion changed. No `any` casts were added. The relative imports use `.js`.
+- The three frozen fixture files were checked against the first author's frozen copies
+  (`partial-author-562-563-triage-01/frozen-partial-source/`, which match the contract hashes
+  `ed1894a0…`, `e6545b45…`, `d8496710…`). Ignoring whitespace, the committed versions differ only in:
+  - Prettier re-wrapping;
+  - the three intent relabels and their comments;
+  - the inspector-route exemption at 1440/200.
+
+  No assertion, oracle or soft-check was removed (diff checked line by line).
+
+## #562: credential-generation dispatch boundary
+
+**Verified by reading the code:**
+
+1. **Atomic check.** `bindCredential` builds a client whose `fetch` puts the bound credential on
+   the exact `Request` (a `WeakMap`) and then calls the app client's `withApiKey` fetch.
+   `withApiKey` reads `{ key, generation, rejected }` with a single `getState()`. In the same
+   synchronous step it compares the bound credential and throws `CredentialChangedError` before
+   it sets the header or calls `fetch`.
+   - openapi-fetch 0.17 (`dist/index.mjs` lines 69–123) awaits any `onRequest` middleware before
+     it calls `fetch(request)`, so this check comes after every middleware and mutation await.
+   - The app client adds no middleware (grep: no `client.use(`). Author item 7 is therefore
+     currently inert.
+2. **Refusal unwrapping.** openapi-fetch's `onError` (`networkErrors`) wraps the refusal as
+   `GraphGoblinApiError.network(cause)`. `sendUnder` unwraps it back to `CredentialChangedError`.
+   As a result, a refusal never reaches `isOfflineError`, the status-0 outage paths or the global
+   mutation cache as a transport failure.
+3. **Every inspector write is covered.** A grep of `runs.(cancel|pause|resume|recoverSession|provideInput|signal|replay|confirmDeletion|previewDeletion)`
+   in `apps/web/src` finds only the five changed components. `RunLauncher` (`runs.start`) is
+   not an inspector write.
+4. **Gate identity and live check.** The gate memo depends on `generation` and `rejected`, and
+   `open()` checks `isCurrentCredential`. `sessionGate` inherits the gate's credential. The Runs
+   list keeps `OPEN_GATE`, which has no credential, so its behaviour is unchanged.
+5. **Outcome suppression.** In every component, `crossed(gate)` is evaluated at settlement.
+   Navigation, fork IDs, error text and `onConfirmed` are suppressed under another credential, and
+   the run/thread/runs cache refresh is kept. `sameCredential(command.gate, availability)` hides an
+   earlier credential's outcome once the gate changes.
+6. **Same-key save.** It leaves `generation` unchanged (`accept`), so the gate and the review
+   are unchanged.
+
+The required copy, focus and reset behaviour matches the root adjudication. The copy is
+parameterised with the real control labels (`Replay...` with three dots, not the design's `…`).
+
+### Author's behaviour decisions (deviations 4–8)
+
+| # | Decision | Assessment |
+|---|---|---|
+| 4 | Equality on `{generation, rejected}` instead of `!rejected && generation === captured` | Accept (NO-CHANGE). Every acceptance change is a new generation. A gate issued while rejected sends with the already-rejected key and gets an ordinary 401, which cannot cross credentials. |
+| 5 | A write whose own 401 rejects the key reports "requested before this browser's API key changed" | Admitted as **F2 (P3)** below. It is safe, but the copy is inaccurate. |
+| 6 | An earlier attempt's refusal under A is hidden, and the review closes with "Nothing was sent" | Admitted as **F1 (P3)** below. The copy can be false. |
+| 7 | `bindCredential` drops middleware added after creation | NO-CHANGE. No such middleware exists, and the doc comment states the precondition. |
+| 8 | A script, fresh-session or input outcome settled under another key is still reported after its control is gone | Accept (NO-CHANGE). It keeps the "already sent" truthfulness. |
+
+## #563: reflow
+
+Assessment of the author's deviations from the design:
+
+- **Header wraps from 640 px (`sm:flex-wrap`).** Accept. The baseline evidence shows nav links
+  reaching 1068 px at 640 and 768 px with 200% text on all 7 routes. A header that kept the design's
+  "unchanged at 640 px and up" would fail the adjudicated 640/768 containment gate. The candidate
+  holds 1440/100, 1440/200 and 320/100 header boxes at 0 differences on the six non-inspector routes
+  (I read `browser-candidate/*/baseline-comparison.json`).
+- **Run-header `fit-content(50%)`.** Accept. In the baseline's 1440/200 geometry, the controls
+  column starts at x=224 while the h1 ends at x=500.8, so the controls covered the run ID and
+  intercepted the double click. The candidate moves the controls to x=720. 1440/100 is unchanged
+  (0 differences). See F4 for the intermediate widths that no cell holds.
+- **Wider label wrapping (`WRAPPING_LABEL`).** Accept. `cn`/`variants` use plain `clsx`, so
+  `h-auto` must win the cascade over `h-9`/`h-8`. The candidate's `uncontained` (control text
+  vertically inside its control) check passes at 320/200, which shows that it does for fine
+  pointers. The coarse-pointer cascade is by construction only.
+- **Inherited `wrap-anywhere` on the selected-event column and around `ExecutionContext`.**
+  Accept. `overflow-wrap` is inherited, and the exact-JSON `pre` is `white-space: pre`, so the
+  only sideways scroller is unaffected. It does lower min-content sizes inside those subtrees.
+  At wide widths that has no effect, and at narrow widths words break only where they would
+  otherwise overflow.
+- **`py-1.5` below 640 px.** Accept. A 44 px coarse Menu plus 2×6 px gives the same 56 px row.
+
+### Fixture reclassifications (`inspector-reflow.spec.ts`)
+
+The `intended` label only controls whether `compareWithBaseline` asserts `differences == []`.
+Every relabelled cell still runs, unchanged:
+- the containment checks (`expectContained`: document width, body width, text ranges, control text);
+- `scrollTo(999,0)`;
+- the exact-ID double click;
+- Menu/Escape;
+- the Replay dialog containment;
+- Tab order;
+- Timeline keys;
+- focus-scroll checks;
+- the focus-order-equals-baseline soft check.
+
+Findings:
+
+- **MATRIX 1440/200, ROUTE 640/200 and 768/200.** These cells failed those containment checks on
+  the baseline build, so no fix could also keep their boxes equal to the baseline. The relabel is
+  required and weakens nothing that could pass.
+- **Inspector route at 1440/200.** This is the only cell where the relabel also stops holding
+  shared-header boxes. The candidate's own comparison shows 0 header/nav differences there; only
+  h1, run ID, run header, status, controls, Resume reason and history changed. See F3.
+- **Evidence note.** Boxes are `getBoundingClientRect` (viewport-relative). In the MATRIX 1440/200
+  and 640/768 reflow cells, the header "differences" are vertical scroll offsets only (for
+  example the header top moves from −2773 to −2472 with identical left, width and height). The
+  recorded difference lists in reflow cells therefore overstate what moved. They are records,
+  not assertions, so nothing depends on them.
+
+### #416 tests updated in `RunInspectorPage.offline.test.tsx`
+
+- All the changed cases explicitly store a second accepted key in another tab:
+  - `anotherKey` variant of the fresh-session queue;
+  - fresh-session withheld for another key;
+  - script retry ×2;
+  - delete-ready confirmation ×2.
+- Per FUP-076 they now expect the key-specific Not-sent or requested copy.
+- The following #416 safety assertions remain:
+  - single send;
+  - pending hold;
+  - withheld section and disabled replacement controls;
+  - no reopen;
+  - fresh choice sends once with the failure's own sequence.
+- The `removed and read again` variant still asserts `NOT_SENT`. Outage-only outcome reporting
+  (UNCERTAIN, "Not saved", the transport error) is still covered in `HistoryEligibility.test.tsx`
+  and in the unchanged same-key offline cases.
+- Nothing was weakened to make the candidate pass.
+
+## Findings
+
+| ID | Sev | Disposition | Signature | Evidence | Required outcome |
+|---|---|---|---|---|---|
+| F1 | P3 | DEFER-ISSUE (or a cheap in-PR copy fix if the orchestrator prefers) | `credential-expiry/closed-copy-ignores-settled-attempt` | `useClosedByKey` sets `'closed'` whenever the review was open and no write is pending (`RunControls.tsx` `setExpiry(sending ? 'sending' : 'closed')`). Scenario: the user opens Replay..., chooses Create, and A answers 409 (shown in the dialog, which stays open). Another tab then stores key B, and the review closes with "Review closed: this browser's API key changed. **Nothing was sent.**" The earlier 409 text is hidden (`sameCredential` false). The same happens for ScriptRecovery (`retry.pending` false after a failed retry) and the delete-ready review. | "Nothing was sent" should only be claimed when no write from that review reached dispatch. Otherwise the copy should be neutral (for example "Review closed: this browser's API key changed. Open … again …"). The server's existing-replay guard and observedSeq limit the practical harm: no duplicate effect was shown. |
+| F2 | P3 | DEFER-ISSUE (owner/GPT copy decision) | `credential-expiry/self-rejection-reported-as-change` | Author deviation 5. A write sent under A that is answered 401 calls `markRejected()` in `withApiKey`. That is a new generation, so `crossed(gate)` is true at settlement, and the control shows "Pause was requested before this browser's API key changed. Its outcome isn't shown under the current key; check Runs before trying again." The outcome is known (refused), and the key was rejected, not changed. | Distinguish a rejection caused by the write's own 401 from a foreign credential change, or accept the conservative copy explicitly. It is safe either way. |
+| F3 | P3 | NO-CHANGE (note for Saturday's reviewer) | `reflow-fixture/route-exemption-broader-than-needed` | The inspector-route 1440/200 relabel exempts the whole cell (header and nav boxes included), although only the run-header and history keys need it. The candidate shows 0 header differences there, and the same header is held at 1440/200 on six routes. | Optionally hold the `header`/`logo`/`nav*` keys and record only the `history:*` keys in that cell. |
+| F4 | P3 | NO-CHANGE (QA observation target) | `reflow/fit-content-intermediate-widths-unheld` | `fit-content(50%)` applies from 640 px at every text size. Only 1440/100 and 320/100 are held unchanged, so 640–1439 px at 100% text can change wherever the controls column's max-content is more than half the header (a long Resume reason). The change is the intended direction (the title keeps at least 50%), but no cell records it. | QA compares 768/1024 at 100% text before and after (see QA-REPORT). |
+
+Considered and rejected (not admitted):
+- Re-wrapping a `fetch` per write (`createGraphGoblinClient` per call): no measurable cost.
+- `leading-none` on wrapped multi-line labels: aesthetic only.
+- The `role=status` paragraph shown on its own when ScriptRecovery has no consent left: a live
+  region inserted with its content may not be announced, but the text is visible and it is an
+  edge case. No concrete user cost was established.
+
+## Tests: would they fail if the fix were reverted?
+
+- **Edge credentials spec.** The author's baseline run (unchanged dist, hash-bound) failed 3/4
+  (`toBeHidden` on the old review). The double-click case passed on both.
+- **Unit tier.**
+  - `credential-dispatch.test.ts` holds an `onRequest` middleware await and asserts that fetch is
+    never called. Without the `withApiKey` comparison it would send.
+  - The pre-render click test asserts the dialog is still shown and enabled when the click fires.
+  - The held-`onMutate` replacement and same-key-new-generation cases assert 0 sends. Before the
+    fix those fixtures sent 1 (`562-QUEUED-*.json`).
+- **Reflow spec.** The baseline run failed 22/30, with each failure in the relevant cells.
+
+## Addendum after phase-2 QA (see `QA-REPORT.md`)
+
+Phase-2 QA found one more root cause that this code review missed. It is listed here so the
+findings ledger stays complete. The phase-1 verdict above covered the code review only.
+
+| ID | Sev | Disposition | Signature | Evidence | Required outcome |
+|---|---|---|---|---|---|
+| Q1 | P2 | FIX-IN-PR (inside the #563 acceptance criteria and the contract's write paths; the orchestrator decides) | `reflow/waiting-input-form-overflows-at-320-200` | Real Edge, built API, combined tree. On a run **waiting for input**, at 320 px with 200% text, the document is **326 px** wide and `scrollTo(999,0)` moves 6 px. The "Input requested" card's content column takes ~229 px against a 174 px content box, so the JSON input, **Submit input** and "At Approve (approve)" spill past the card's right edge (302 px against 288 px), and the `-mx-3` Prompt `pre` reaches 326.4 px. Waiting-signal, paused, cancelled, finished and failed runs stay at 320 px, and so does a waiting run at 320 px with normal text. This is pre-existing on main (hidden there by the 469 px overflow), but #563's acceptance ("without horizontal document overflow") covers it. The author's matrix only rendered finished runs, so the new spec never exercised `WaitPanel`'s form. Evidence: `qa/R563-diagnostic/prompt-chain.json`, `qa/R563-states/`. | At 320 px with 200% text, a run waiting for input (with or without an input schema) has no horizontal document overflow and the form stays inside its card. A waiting-input run should also be added to the reflow matrix. **Probe result** (`qa/R563-coarse-pointer/input-card-culprit.json`): `JsonSchemaForm`'s `form.grid` (min-width auto) is 229.4 px wide because its one-line **Submit input** button (`whitespace-nowrap shrink-0`, with no `WRAPPING_LABEL`) needs about 229 px at 200% text. The card's implicit `auto` grid column grows to that width. "Send signal" is short enough to fit. `WaitPanel.tsx` is a write path, but the button and form belong to `forms/JsonSchemaForm` (outside the 30 paths). The fix may be a container constraint in `WaitPanel`, but that would make the label ellipsize, which the design rejects. A wrapping submit label in `JsonSchemaForm` would need a scope decision. |
+
+## Addendum 2: Q1 fix `ec5c2bb33` (brief review)
+
+- **Scope.** The orchestrator admitted `apps/web/src/forms/JsonSchemaForm.tsx` and its test into
+  #563. The fix touches 7 files (+208/−6) and stays inside that scope. The commit has no
+  attribution.
+- **What changed.** `JsonSchemaForm`'s submit label wraps: the same class string as
+  `WRAPPING_LABEL.md`, so a label that fits is the same one-line 36 px button (44 px coarse). The
+  wait card's body becomes one `minmax(0,1fr)` column with `wrap-anywhere`. The name, the
+  `type="submit"` and the submit's place last in the form are unchanged.
+- **Tests.** The reflow spec changes are purely additive (+148/−1, the import only): two
+  waiting-for-input tests across all MATRIX layouts (containment, every box inside the card,
+  sideways scroll, baseline comparison) and a New run form check. No assertion was weakened.
+  The unit tests add 2 JsonSchemaForm cases and 1 WaitPanel case.
+- **New P3 notes (NO-CHANGE):**
+  - The wrap class string is duplicated between `forms/JsonSchemaForm.tsx` and `RunControls.tsx`.
+    A later shared home could be `components/ui`.
+  - The New run spec records `documentWidth` but does not assert it. QA asserts it, and it passes.
+- **Q1 status: resolved and verified** (see "Q1 re-verification" in `QA-REPORT.md`).
+
+## Not established by this review
+
+- Runtime behaviour. That is QA's job (see `QA-REPORT.md`).
+- Coarse-pointer button heights and native browser zoom. The author did not measure them.
+- That no other code path reads `client.config.fetch` with different semantics. Only
+  `subscribeRunEvents` uses `config` (reads, unbound).
