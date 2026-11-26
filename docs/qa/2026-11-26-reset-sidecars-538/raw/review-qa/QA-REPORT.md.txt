@@ -1,0 +1,177 @@
+PASS WITH LIMITS
+
+# #538 independent QA (`qa:touched-systems`)
+
+- **Candidate:** `230640ae579e12c511894a9a586d82ce6d682202` (base `14ea6984`).
+- **Host:** Windows 10.0.26300.9974, Node v22.23.4, G: NTFS. Full capability record in `FILESYSTEM-CAPABILITIES.txt`.
+- **Fixtures:** disposable only, under `G:/ggq/tmp/538-qa/`. The owner's store, services and settings were not touched.
+
+## Build provenance
+
+- `turbo run build --filter=@graphgoblin/api --force` exited 0 under the heavy-suite lock (04:10–04:23 UTC). `tsc -b` found the outputs up to date.
+- A separate fresh `tsc` compile of the commit into `G:/ggq/tmp/538-qa/distcheck` gives byte-identical files:
+  - `reset/reset.js` `55239c78…` = `apps/api/dist/reset/reset.js`;
+  - `reset/tree.js` `22e894f9…` = `apps/api/dist/reset/tree.js`.
+- Every built-CLI case therefore ran the committed code. Raw log: `api-build.log`.
+
+## Systems touched and how each was tested
+
+1. **Reset planner sidecar selection** (`sidecarEntry`, `nativeChoice`, configured/stored check): through the built CLI `node apps/api/dist/main.js --reset [--yes --data-dir]`.
+   - Each run used the default private-copy store reader and a real seeded format-3 database plus committed WAL (the repository seeder).
+   - Fixtures use real NTFS hard links, case and Unicode aliases, look-alikes and copies.
+2. **Root Keeps and the private manifest pair exception:** checked from the same runs.
+   - Dry-run and confirmed Removes and Keeps are compared with each other and with expectations.
+   - Disk state is checked independently: names, file IDs (lstat bigint dev:ino), nlink and SHA-256.
+   - `fsutil hardlink list` gives a kernel witness of every name of each linked file, before and after.
+3. **Ownership-role overlap refusals, held and unverifiable locks, strict collisions and special files:** through the built CLI.
+   - Live locks are held by a separate process through the built lock module.
+4. **Refusal branches NTFS does not produce on demand:** through the built `runResetCli` in-process, with the real default reader.
+   - Covered: wrong-parent, unlisted and failing native answers; locked-replan ambiguity; configured/stored short-name disagreement.
+   - Exactly one query is controlled per case: `fs.realpathSync.native` for one path, or an lstat alias for a simulated `GRAPHG~1.DB`. Each such case is labelled controlled.
+5. **Docs and CHANGELOG:** read against the observed behaviour (REVIEW.md R3).
+
+## Case results (62 cases, 62 pass)
+
+- **P-:** 30 built-CLI success cases.
+- **R-:** 20 built-CLI refusal cases. Each runs the dry run and the confirmed reset, and each must refuse with exact text, an empty stdout, "Nothing in the data directory was changed." and an unchanged tree.
+- **C-:** 12 controlled cases.
+- **Raw data:** `QA-CLI-RESULT.json` (sha256 `bb221a64…`) and `QA-CONTROLLED-RESULT.json` (`6f7a957d…`). They hold every call's stdout and stderr, before/after snapshots, link witnesses and per-check results.
+
+| Case | What | Exit | Checks | Result |
+| --- | --- | --- | --- | --- |
+| P-root-wal-none | root -wal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-root-wal-00-unrelated | root -wal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-root-wal-zz-unrelated | root -wal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-nested-wal-none | nested -wal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-nested-wal-00-unrelated | nested -wal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-wal-zz-unrelated | nested -wal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-root-shm-none | root -shm sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-root-shm-00-unrelated | root -shm sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-root-shm-zz-unrelated | root -shm sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-nested-shm-none | nested -shm sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-nested-shm-00-unrelated | nested -shm sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-shm-zz-unrelated | nested -shm sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-root-journal-none | root -journal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-root-journal-00-unrelated | root -journal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-root-journal-zz-unrelated | root -journal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-nested-journal-none | nested -journal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-nested-journal-00-unrelated | nested -journal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-journal-zz-unrelated | nested -journal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-wal-rootlink | nested -wal sidecar hard-linked at the data-directory root as 00-root-link-wal | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-shm-rootlink | nested -shm sidecar hard-linked at the data-directory root as 00-root-link-shm | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-journal-rootlink | nested -journal sidecar hard-linked at the data-directory root as 00-root-link-journal | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-root-wal-three-other-names | root WAL with 00-unrelated, zz-unrelated and keep-dir/inner-link names (nlink 4) | dry/confirmed exit 0/0 | 34/34 | PASS |
+| P-spelled-wal-none | WAL listed only as GRAPHGOBLIN.DB-WAL for database graphgoblin.db; other hard link: none | dry/confirmed exit 0/0 | 21/21 | PASS |
+| P-spelled-wal-00-unrelated | WAL listed only as GRAPHGOBLIN.DB-WAL for database graphgoblin.db; other hard link: 00-unrelated | dry/confirmed exit 0/0 | 25/25 | PASS |
+| P-spelled-wal-zz-unrelated | WAL listed only as GRAPHGOBLIN.DB-WAL for database graphgoblin.db; other hard link: zz-unrelated | dry/confirmed exit 0/0 | 25/25 | PASS |
+| P-configured-case-alias-with-link | GG_DB_URL names GraphGoblin.db; directory lists graphgoblin.db, graphgoblin.db-wal and 00-unrelated (WAL link) | dry/confirmed exit 0/0 | 25/25 | PASS |
+| P-unicode-alias-with-link | GG_DB_URL names οσ-1.db; directory lists ΟΣ-1.DB, ΟΣ-1.DB-WAL and 00-unrelated (WAL link) | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-kelvin-lookalike | database K.db with WAL K.db-wal; a distinct file named K.db-wal (Kelvin sign) is kept | dry/confirmed exit 0/0 | 24/24 | PASS |
+| P-copy-not-link | a byte-identical copy of the WAL (different identity) is kept as not part of the store | dry/confirmed exit 0/0 | 24/24 | PASS |
+| P-wal-link-inside-kept-workspace | root WAL hard-linked as workspaces/not-a-run/copy-wal (inside a kept workspace) | dry/confirmed exit 0/0 | 24/24 | PASS |
+| R-root-wal-as-datadir-lock | graphgoblin.db-wal is a hard link of graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-root-shm-as-db-lock | graphgoblin.db-shm is a hard link of graphgoblin.db.graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-nested-journal-as-db-lock | nested/graphgoblin.db-journal is a hard link of nested/graphgoblin.db.graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-nested-wal-as-datadir-lock | nested/graphgoblin.db-wal is a hard link of graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-workspaces | root WAL hard-linked as a top-level file named workspaces | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-artifacts | root WAL hard-linked as a top-level file named artifacts | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-chat-audio | root WAL hard-linked as a top-level file named chat-audio | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-datadir-guard | root WAL hard-linked as graphgoblin.lock.reclaim (the guard must be a directory) | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-lock-no-record | root WAL (real WAL bytes) hard-linked as graphgoblin.lock | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-held-datadir-lock-with-wal-link | a live process holds the data-directory lock; the WAL has another hard link 00-unrelated | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-held-db-lock-with-wal-link | a live process holds the database lock; the WAL has another hard link 00-unrelated | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-held-datadir-lock-shared-with-wal | a live process holds the data-directory lock, and graphgoblin.db-wal is a hard link of that live lock file | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-junction-exact | a junction at the exact SHM name | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-junction-other-spelling | a junction listed only as GRAPHGOBLIN.DB-WAL (another spelling of the WAL name) | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-directory-at-journal | a directory at the journal name | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-shm | root WAL hard-linked as graphgoblin.db-shm | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-in-removed-workspace | root WAL hard-linked as workspaces/01JRESETRUNAAAAAAAAAAAAAAA/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-in-artifacts | root WAL hard-linked as artifacts/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-in-chat-audio | root WAL hard-linked as chat-audio/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-kept-workspace-entry | root WAL hard-linked as workspaces/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| C0-native-control | same fixture as C1-C4, real native final path: dry run removes GRAPHGOBLIN.DB-WAL | exit 0 | 5/5 | PASS |
+| C1-native-other-directory | native final path answers another directory: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C2-native-unlisted-name | native final path answers an unlisted name: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C3-native-EPERM | native final path answers EPERM: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C4-native-ENOENT | native final path answers ENOENT after presence: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C5-locked-replan-ambiguity | native answer turns unusable after the preview's store read | exit 1 | 3/3 | PASS |
+| C6-locked-replan-ambiguity-stale-locks | native answer turns unusable after the preview's store read; stale dead-PID lock files present | exit 1 | 3/3 | PASS |
+| C7-short-writer-only | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C8-short-reader-only | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C9-short-two-files | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C10-short-two-hard-links | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C11-short-agree | configured GRAPHG~1.DB-wal and listed graphgoblin.db-wal name one entry: proceeds, reads the stored spelling | exit 0 | 5/5 | PASS |
+
+## What the cases establish
+
+- **Wrong-entry removal is gone:**
+  - Root and nested WAL, SHM and journal, with an earlier (`00-unrelated`), later (`zz-unrelated`) or no other name: the confirmed reset removed exactly the configured sidecar name in all 18 rows.
+  - Removes was identical in the dry run and the confirmed reset.
+  - The dry run changed no name, ID, nlink or byte.
+  - The native NTFS listing put `00-unrelated` before and `zz-unrelated` after the sidecar, as each case asserted.
+- **The owner's other link keeps its bytes and identity:**
+  - Every surviving link kept its SHA-256 and file ID, and its nlink dropped by exactly one (2→1; 4→3 in the three-name case).
+  - `fsutil hardlink list` lists only the surviving name afterwards.
+  - Root-level links are listed under Keeps as `another name for <sidecar>; the file stays under this name`. Nested siblings and links inside kept directories get no row and survive.
+- **Unrelated data unchanged:** `master.key`, `notes.txt` and the kept `workspaces/not-a-run` are unchanged. The recorded run workspace, database and WAL are removed. No `gg-reset-store-*` residue remains in the reader TEMP after any call.
+- **Non-exact spellings (real NTFS):**
+  - With the WAL listed only as `GRAPHGOBLIN.DB-WAL`, the reset removes that entry and keeps another link.
+  - The real native final path answered `GRAPHGOBLIN.DB-WAL` (C0).
+  - A configured `GraphGoblin.db` and a configured Unicode `οσ-1.db` (listed `ΟΣ-1.DB`) both agree with the stored spelling and keep the other link.
+  - A Kelvin-sign look-alike is kept as a distinct file. A same-bytes copy is "not part of the store".
+- **Overlap with reset ownership roles refuses before any change:**
+  - Sidecar = data-directory lock or database lock (root and nested, holding a dead-PID record). The refusal names both.
+  - Sidecar = `workspaces`, `artifacts` or `chat-audio`. The refusal names both.
+  - Sidecar = `graphgoblin.lock.reclaim`: the earlier lock gate refuses with "reclamation guard is not a physical directory…", which does not name the sidecar (REVIEW R3).
+  - Sidecar = lock with no valid record: the earlier "could not be verified" refusal.
+- **Held locks (a live process holding the lock through the built lock module) refuse with the existing held diagnostic:**
+  - data-directory lock;
+  - database lock;
+  - a sidecar name that is a hard link of the live lock file.
+  - The holder then released normally (`release:removed`).
+- **Special files:**
+  - A junction at the exact SHM name, or listed only under another WAL spelling, refuses as a link.
+  - A directory at the journal name refuses.
+- **Strict collisions:**
+  - Another SQLite part, an entry in a removed run workspace, `artifacts/` or `chat-audio/`: "would list … twice".
+  - A non-run file directly under `workspaces/`: "would both remove and keep".
+- **Controlled refusals:**
+  - Wrong parent, unlisted name, EPERM and ENOENT from the native query: refuse with exact text in the dry run and the confirmed reset, nothing changed, store never read.
+  - Locked-replan ambiguity refuses with no Removing marker. The store is read once, and the locks are released; the stale-lock variant reports what was reclaimed and released.
+  - `GRAPHG~1.DB` vs `graphgoblin.db`: writer-only, reader-only, two files and two hard links each refuse before any store read. The agreeing case reads the stored spelling.
+
+## Regression suite, gates and #489 watch
+
+- **`(apps/api) vitest run src/reset/`, first run: FAIL**, 1 failed | 228 passed | 5 skipped (`focused-reset-tests.log`, kept verbatim; context in `focused-reset-tests.FAILURE-CONTEXT.txt`).
+  - Failing test: `reset-sidecars.test.ts > … > root -journal, other hard link: none`, confirmed exit 1.
+  - Its stderr was not captured because the test checks the code first.
+- **Single labelled diagnostic re-run: PASS**, 229 passed | 5 skipped (`focused-reset-tests.diagnostic-rerun-01.log`).
+- **Diagnostics (same scenario, source `runResetCli`):** D1 alone, 80 runs, 0 failures; D2 alongside 47 real private-copy reads in the same TEMP, 240 runs, 0 failures (`DIAG-D1-*.json`, `DIAG-D2-*.json`).
+  - The `diag-d1.attempt0-*` logs are a harness CommonJS error, not a product result.
+  - Cause not established (REVIEW R4).
+- **#489:** the reset-tree rename EPERM did not recur. The tree and fixture suites passed in both focused runs.
+- **API gates:**
+  - `pnpm --filter @graphgoblin/api typecheck`: exit 0.
+  - `lint`: exit 0.
+  - `prettier --check` on the five changed files: clean (`gates.log`).
+- **Coverage:** not re-run here. The author's raw log shows API lines 94.56% and branches 90.16%.
+
+## Not established
+
+- **8.3 short names:** none issued on G:, and the policy query was access denied. The configured/stored disagreement was exercised only with a controlled lstat alias.
+- **Case-sensitive directories:** enabling the attribute was denied without elevation. The two-exact-names-differing-in-case case was not run; it runs only on Linux CI.
+- **Other platforms:** macOS, Linux, SMB, ReFS and non-NTFS volumes were not exercised. The non-Windows multi-match refusal and the FIFO case were not run natively.
+- **Native refusals:** a real (unmocked) native-query refusal could not be produced on this volume.
+- **Unlink race:** an external-process race at unlink time is outside reach (documented residual).
+- **Ubuntu coverage:** API coverage on ubuntu (the CI gate) with this change was not measured.
+- **The R4 intermittent failure:** its cause is not established.
+
+## Recommended maintained regressions (not added to the branch)
+
+1. Assert `{ code, err }` together in the order matrix (REVIEW R2).
+2. Built-CLI-style checks currently only in this QA:
+   - a sidecar hard-linked at the `.reclaim` guard name;
+   - a held lock whose file is also the sidecar;
+   - one WAL with three other names, including one inside a kept directory;
+   - a non-run file directly under `workspaces/` linked to the WAL.
+3. Consider running `src/reset/reset-sidecars.test.ts` in the Windows CI job, so the native final-path proof has a maintained venue (REVIEW R5).

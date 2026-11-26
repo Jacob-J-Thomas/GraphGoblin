@@ -1,0 +1,125 @@
+# #538 author report (Claude window, author 02)
+
+Outcome: ready for independent review and QA. Brief: `claude-orchestration-20261125/BRIEF-A1-538.md`.
+
+- Worktree `G:/ggq/gg-fu-538/GraphGoblin`, branch `codex/gg-fu-reset-sidecars-538-20261125`.
+- Base `14ea69842025c627f704b436727385d78e08768c`. One commit: `230640ae579e12c511894a9a586d82ce6d682202`, "Remove the SQLite sidecar entry its name opens, keeping other hard links (#538)". Repository identity, no attribution. Not pushed, merged or rebased.
+- Changed paths, all inside the contract's write list: `apps/api/src/reset/reset.ts`, `apps/api/src/reset/reset-sidecars.test.ts` (new), `docs/guide/08-offline-upgrade.md` (reset section), `docs/decisions/ADR-0042-explicit-resets-replace-conversion.md`, `CHANGELOG.md` (Unreleased). 1265 insertions, 23 deletions.
+- Host: Windows 10.0.26300, Node v22.23.4, G: NTFS (case-insensitive; `fsutil fsinfo volumeinfo` returns access denied without elevation, as in the earlier evidence).
+
+## Starting point and what I changed
+
+The interrupted attempt (`author-preparation-02/claude-implementation-01`) left a complete implementation and test file, uncommitted. I kept it and checked it against every contract point (below). I changed two things:
+
+1. **Dead Kelvin test.** In `keeps a look-alike sidecar name that only JavaScript folds to the sidecar name`, the "Kelvin sign" had been written as an ASCII `K`, so the look-alike was the real sidecar name. Its skip guard therefore fired on every platform and the case never ran. It now uses `'\u212A.db-wal'` (escaped, so formatting cannot turn it back into an ASCII `K`), with an assertion that it differs from `K.db-wal`. It runs and passes on this NTFS host. A volume that folds Kelvin to `k` (for example case-insensitive APFS) still skips it through the guard.
+2. **Stale comment.** The `assertDisjointManifest` comment claimed its refusal was unreachable for any configuration. That was already inaccurate at 14ea. The new tests reach it on purpose: a sidecar hard-linked into a removed workspace, into `artifacts/`, or as another SQLite part. The comment now says the exported check has no exception, and that `planReset` ends with the same check plus its proved sidecar links.
+
+## Contract points
+
+| Contract point | Implementation (`reset.ts`) |
+| --- | --- |
+| Exact regular listed sidecar is the entry, whatever other links exist | `sidecarEntry`: no-follow `statEntry` from the validated parent. If the parent's `readdir` lists the name exactly, that entry is used. |
+| Non-exact name: sole same-parent identity match | `namesOf` over the same listing, then a fresh `statEntry` of the chosen name. It must still be a regular file with the same identity and the same physical ancestors (`sameRoute`). Otherwise the reset refuses with "changed while the reset was listing it". |
+| Several matches: Windows-only native proof, refuse otherwise | `nativeChoice`: refuses outside win32. On win32 it calls `realpathSync.native` directly on the parent and on the requested leaf, never through `canonicalPath`'s ENOENT fallback. It requires `dirname(final) === native(parent)` and an exact listed basename among the candidates. Any thrown error (including ENOENT after earlier presence) or contradictory answer becomes a `ResetRefusedError`. |
+| Never resolve links or special files; diagnostic names only | The kind check comes first. A non-regular leaf refuses with the existing "is a link/special file, not a database file" message before any matching or native query. The listed name it shows is diagnostic only. |
+| A present leaf with no listed name refuses | "…is present, but the data directory lists no name for it…" |
+| Case folding is never evidence | No folding anywhere in selection. Only listing strings and identities are used. |
+| Configured and stored final names differ: both spellings, same entry or none, before the store read | The loop in `planReset` runs before `readStore`. Both spellings go through `sidecarEntry` in the same parent. Paths must be equal, or both absent. Otherwise the reset refuses and names both. Two hard links with one identity also refuse, because their paths differ. No libSQL change, and no inferred short-name support. |
+| Exported guard strict; private pair-only exception | `assertDisjointManifest` calls `checkManifest(targets, kept, [])`, so it stays strict. The planner passes `SidecarLink` tuples (removed sidecar path, kept top-level name, identity). A kept identity may equal a removed one only for that exact tuple. Removed-versus-removed path and identity checks stay unconditional. |
+| Root Keeps by sidecar name only; no nested Keeps rows | Sidecar identities are no longer added to `owned`; only their listed paths are. The database identity, reserved roots and nested-database root keep identity suppression. Another top-level name of a removed sidecar gets the plain row `another name for <sidecar>; the file stays under this name`. Siblings beside a nested database still get no rows. |
+| Sidecar sharing an ownership role refuses where the planner can see it; earlier lock refusals preserved | `refuseShared` runs for reserved roots (`workspaces`, `artifacts`, `chat-audio`) and for every present lock file and `.reclaim` guard, both data-directory and database (nested too). It names the sidecar and the competing role. The read-only held/unverifiable-lock gates still run first and keep their own diagnostics. |
+| Locked replan, exact listed pathname, release on newly seen ambiguity | `planReset` is unchanged in its call sites, so the locked plan repeats the selection and `removeEntry` unlinks the listed path it chose. A refusal there goes through the existing refused-reset accounting, which releases locks and reports reclaimed entries. `tree.ts`, the lock module, the store reader and `ownershipName` are untouched. |
+| Residual race wording kept | ADR-0042 and the guide keep the external-process race qualification and add that a readdir just before unlink would be equally racy. |
+
+The docs follow the code: a guide paragraph in the reset section and one locked-plan clause, ADR-0042's listing/identity statement, and an Unreleased CHANGELOG entry ("no upgrade action"; 8.3, macOS and network/non-NTFS volumes not qualified). `docs/11` already says "keeps every other entry", which stays true, and the contract assigns its edits to the #533 preparation, so I did not touch it.
+
+## Tests (`apps/api/src/reset/reset-sidecars.test.ts`)
+
+All cases use the public `runResetCli` (dry run and confirmed) on disposable temp stores, with real hard links. `readdir`/`lstat` pass through unless a case says it controls them.
+
+- **Order matrix, 18 cases.** WAL, SHM and journal × root and nested × no link / `00-unrelated` (listed first) / `zz-unrelated` (listed last).
+  - Hard-link controls: same identity and `nlink === 2` before the reset; listing order forced by reordering the real names. On win32 the case also asserts the host's own NTFS order.
+  - Results: dry-run and confirmed Removes and Keeps, a byte-for-byte snapshot unchanged by the dry run, and the exact sidecar gone after confirmation. The other name survives with the same bytes and identity and `nlink === 1`. A root link is listed under Keeps as "another name"; a nested sibling has no row.
+- **Nested sidecar with a top-level name, 3 cases (one per suffix).** The top-level link is kept with its row, bytes, identity and `nlink === 1`.
+- **Copy versus link.** A same-bytes copy has a different identity and is kept as "not part of the store", never as "another name". This separates a real hard link from data mutation or a copy.
+- **Case-sensitive directory.** Two exact names differing only in case: the sidecar is removed and the other name kept. Skipped on this host; runs where the directory keeps case apart (Linux CI). No host setting is changed.
+- **Kelvin look-alike.** The fixed test described above.
+- **Ownership overlaps, 4 cases.** The shared file holds a valid dead-PID record: root WAL as `graphgoblin.lock`, root SHM as the database lock, nested journal as `db/store.db.graphgoblin.lock`, nested WAL as `graphgoblin.lock`. Each refusal is exact, `out` is empty, the tree is unchanged, and the store was read twice (proving the planner refused, not the lock gate).
+- **Reserved roots, 3 cases.** `workspaces`, `artifacts` and `chat-audio` as hard links of the WAL each refuse, naming both.
+- **Earlier lock refusal preserved, 2 cases.** With no valid record (root and nested lock) the existing "Store ownership could not be verified" diagnostic appears.
+- **Strict collisions, 3 cases.** Another SQLite part, an entry in a removed run workspace, and an entry in removed `artifacts/` all give "manifest would list … twice".
+- **Exported guard.** `assertDisjointManifest` refuses a kept "another name" row that shares the removed identity.
+- **Special files.** A junction or symlink at the exact name, and one listed under another spelling, give the existing link message. The second asserts that no native query ran for the sidecar. A FIFO case runs off Windows.
+- **Windows native proof.**
+  - Real NTFS success for `00-unrelated` and `zz-unrelated` with the stored spelling unlisted. The real `realpathSync.native` call is observed, not mocked, and returns `GRAPHGOBLIN.DB-WAL`.
+  - Real Greek Unicode alias `οσ-1.db` → `ΟΣ-1.DB-WAL`. The fixture verifies the alias first and skips otherwise. Both spellings' real native answers are asserted.
+  - Controlled failures: another directory, an unlisted name, EPERM, ENOENT after presence. Each refuses with an unchanged tree, no output and no lock effect.
+  - Locked-replan ambiguity, with and without stale locks: the existing release and reclaim accounting is shown.
+- **Outside Windows.** Controlled lstat alias: several matches refuse without a native query.
+- **Unlisted and changed entries.** A controlled spelling that opens an unlisted file refuses. A chosen name renamed away before its re-observation refuses with "changed while the reset was listing it".
+- **Configured versus stored names (controlled short-name lstat alias, no real 8.3 assumed), 14 cases.**
+  - For each suffix, 4 refusals before any store read: only the writer's spelling present, only the reader's, two different files, two hard links of one file.
+  - Agreement: both spellings name one entry, and the store is read under the stored spelling.
+  - A writer sidecar first seen under the locks refuses and releases them.
+
+On this host the file runs 66 tests: 63 passed, 3 skipped (case-sensitive pair, FIFO, outside-Windows).
+
+## Commands and results
+
+All runs used Node v22.23.4 from the project-scoped runtime, with TEMP/TMP set to `G:/ggq/tmp/a1-538`.
+
+- `vitest run src/reset/reset-sidecars.test.ts` (before the Kelvin fix): 62 passed, 4 skipped.
+- `vitest run src/reset/`, final: 12 files; 229 passed, 5 skipped.
+- `pnpm --filter @graphgoblin/api typecheck`: exit 0.
+- `pnpm --filter @graphgoblin/api lint`: exit 0.
+- `pnpm exec prettier --check apps/api CHANGELOG.md docs/guide/08-offline-upgrade.md docs/decisions/ADR-0042-…`: clean. Final gate log: `final-gates.log`.
+- `pnpm turbo run test:coverage --filter=@graphgoblin/api`, under the heavy-suite lock: exit 0. Dependency builds were Turbo cache hits; `api#build` and `api#test:coverage` ran fresh. Raw log: `coverage-api.log`; summary: `coverage-summary.api.json`.
+  - Tests: 147 files passed, 3 skipped; 2353 tests passed, 43 skipped.
+  - Package totals: lines 94.56% (4851/5130), branches 90.16% (3806/4221), statements 93.11%, functions 90.22%.
+  - `reset.ts`: lines 98.47% (453/460), branches 94.31% (398/422), statements 98.06%, functions 95.94%.
+  - Changed lines left uncovered on this host:
+    - the non-Windows refusal in `nativeChoice`, which the outside-Windows test covers off Windows;
+    - the diagnostic fallback name for a special file with zero or several listed matches;
+    - some fallthrough branches of the kept-link condition;
+    - the kept-entry `identity === undefined` skip.
+- #489 EPERM: did not recur in any run.
+
+## Native verifier
+
+I read `author-preparation-02/verify-native-candidate.mjs` in full before running it. It is safe:
+
+- It gates on win32, Node 22.23.4, the admission/contract hash and HEAD 14ea.
+- It strips `GG_*` and provider variables and sets `GG_DATA_DIR`/`GG_DB_URL` to disposable stores it creates.
+- It points TEMP/TMP at its own scratch folder, seeds through the existing fixture seeder, and invokes only the built `apps/api/dist/main.js --reset` (which dispatches straight to `runResetCli`).
+- It only reads the worktree (`git rev-parse` and source hashes).
+- It never touches the owner's store.
+
+**Placement.** The script writes `native-author-evidence-01/` next to itself, which would have added files to the historical `author-preparation-02` folder. I copied it with its two inputs (`AUTHOR-CONTRACT.json`, `ROOT-ADMISSION.json`) into this folder and ran the copy. SHA-256 hashes are identical to the originals: script `cd49e1af…3989`, contract `a179da92…94fcd`, admission `7de338aa…3e68`.
+
+**Run.** One invocation (its maximum), under the lock, after the single Turbo API build, before the commit (it requires HEAD 14ea). Exit 1, stdout `{"verified":false,"sourceUntouched":true,"cases":3,...}`. Raw: `native-author-evidence-01/NATIVE-CANDIDATE-RESULT.json`, `native-verifier.stdout.log`, `native-verifier.stderr.log` (empty), `native-verifier.exit.txt`. Fixtures: `native-author-evidence-01/native-wal-Lz4rVe/`.
+
+**What it established.** For all three cases (`ordinary`, root `early-hardlink` with `00-unrelated-wal`, and nested `late-hardlink` with `nested/zz-unrelated-wal`), using the built CLI, the default private-copy reader and a real seeded format-3 WAL:
+
+- The kernel link witness held: identity equal and nlink 2.
+- The dry run changed nothing.
+- Both calls read format 3 and exited 0 with empty stderr.
+- Removes listed the intended WAL.
+- Root Keeps listed `00-unrelated-wal` as "another name for graphgoblin.db-wal".
+- The recorded workspace was removed, and the intended WAL was gone after confirmation.
+- The other link survived with the same bytes and identity, and the `master.key` and notes bytes were kept.
+- The protected sources were unchanged.
+
+**Why `verified` is false.** The only failing criterion is `privateCopyResidue.length === 0`. Scratch held one entry, `tsx-98jak`: tsx's compile cache, 133 files all prefixed `17956-`, created at 21:44:01, before the first store directory existed (21:44:02.4). Nothing inside scratch is newer than the seeded database; only the scratch directory's own mtime moved, during the reset calls (21:44:33), as the reader's private copies were created and removed.
+
+The cause is in the verifier, not the product. It assigns `TEMP=scratch` into `env` before spawning the seeder with `--import tsx` and that `env`, so the seeder's tsx cache lands in the folder later checked for reset residue. The earlier `probe-native-wal.mjs` spawned the seeder without `env` and did not have this problem. The built CLI never loads tsx: `dist/reset/store-facts.js` spawns `store-facts-reader.js` with plain node.
+
+I did not rerun, patch or substitute the verifier.
+
+**Not established here.** 8.3 short-name behaviour (no capable volume), case-sensitive directories, macOS, network or non-NTFS volumes, and an external-process race at unlink time.
+
+## Open questions and caveats
+
+1. A corrected residue criterion would ignore the seeder's `tsx-*` cache or seed with a separate TEMP. Whether to rerun the verifier that way, or accept the per-criterion results above, is the orchestrator's or QA's call. The script's `maximumInvocations` is 1.
+2. A `master.key` that is itself a hard link of a removed sidecar is kept, but its row reads "another name for <sidecar>" rather than the secret-store reason. Its bytes survive.
+3. A sidecar hard-linked to a kept entry under `workspaces/` (not a stored run ID) still refuses through the strict manifest check. This is deliberate: the contract says not to widen workspace overlap rules.
+4. The opposite-family review, independent QA, current-target CI and the Astra MAX final gate remain outstanding. No QA packet was written under `docs/qa/` (the sparse checkout excludes it and the brief did not ask for one), so `pnpm check:qa` was not run.
