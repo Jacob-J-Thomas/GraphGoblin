@@ -4,6 +4,22 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- A selected connection's **Remove connection** (and **Reset route**) stays inside the canvas and
+  wholly hittable after Fit view (#479). With the side panels collapsed, Fit put a Decision
+  loop-back's label about 31 px under the canvas's top, so the toolbar above it was clipped: only
+  its bottom 13.5 px drew on a desktop, and a coarse pointer's 44 px target lost part of its
+  height in the opening and both Fits. The row of controls is now placed from the canvas pane and
+  its own measured box, 8 px inside the pane: above its label as before when it fits, otherwise
+  18 px below the label when that fits and covers no segment handle or card port, otherwise
+  clamped inside the pane on the side with more room. Views that already had room above keep the
+  toolbar exactly where it was; a label that leaves the canvas takes the toolbar with it; on a
+  320 px window a row with **Crosses a card**, **Reset route** and **Remove connection** wraps
+  with **Remove connection** last. Fit, pans and zooms only re-place it: they save nothing and add
+  no history. A held **Reset route** keeps its place until the view changes, so later presses
+  still land on it, and a shared id's note stays on the far side of the controls. Fit view, its
+  padding, saved routes and labels, the gesture gate and every refusal are unchanged; no stored
+  format or API change.
+
 - `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
   delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
   that ref to the working tree, including staged, unstaged and untracked files, and checks their
