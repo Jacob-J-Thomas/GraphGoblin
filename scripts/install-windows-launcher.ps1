@@ -308,12 +308,20 @@ try {
         try { $PwaShortcut = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PwaShortcut) }
         catch { $PwaShortcut = $null }
     }
+    $invalidSource = 'Install the Chrome PWA, then supply -PwaShortcut with its .lnk path.'
     if (!$PwaShortcut -or ![IO.File]::Exists($PwaShortcut) -or [IO.Path]::GetExtension($PwaShortcut) -ine '.lnk') {
-        Refuse-LauncherInstall 'Install the Chrome PWA, then supply -PwaShortcut with its .lnk path.'
+        Refuse-LauncherInstall $invalidSource
     }
+    $unsupportedSource = 'The PWA shortcut is a link or other reparse point, which the installer does not support; files in cloud-synced folders can be reparse points. Copy the Chrome PWA shortcut to an ordinary local folder that is not synced, pass that copy with -PwaShortcut, then run the installer again.'
+    $changedSource = 'The PWA shortcut changed during preparation. Select its current file and run the installer again.'
 
     Initialize-InstallerPaths
     $source = Get-InstallerPath $PwaShortcut
+    # The selected leaf's observed attributes decide (#499): a leaf reported as a reparse point, such
+    # as a link or a visible cloud placeholder, is refused before its digest, any stage or any
+    # shortcut read.
+    if (!$source.Id -or $source.IsDirectory) { Refuse-LauncherInstall $invalidSource }
+    if ($source.IsLink) { Refuse-LauncherInstall $unsupportedSource }
     $sourceDigest = Get-InstallerDigest $source.Path
     $exe = Join-Path $InstallDir 'GraphGoblin.exe'
     $paths = @($exe, "$exe.json")
@@ -342,6 +350,9 @@ try {
     $seenIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     [void]$seenPaths.Add($source.Path)
     [void]$seenIds.Add($source.Id)
+    # The parameter that selects each output, in $paths order.
+    $outputParameters = @('-InstallDir', '-InstallDir', '-DesktopShortcut', '-StartMenuShortcut', '-PinnedShortcut')
+    $regularOutput = 'Choose a regular output file with the required shortcut extension.'
     foreach ($path in $paths) {
         if ([string]::IsNullOrWhiteSpace($path)) { Refuse-LauncherInstall 'Choose a valid output shortcut path.' }
         try { $destination = Get-InstallerPath $path }
@@ -355,9 +366,15 @@ try {
         if (!$seenPaths.Add($destination.Path) -or ($destination.Id -and !$seenIds.Add($destination.Id))) {
             Refuse-LauncherInstall 'The PWA source and launcher outputs must use distinct files and paths. Choose a separate shortcut destination.'
         }
-        if ($destination.IsDirectory -or $destination.IsLink -or
-            ($destinations.Count -ge 2 -and [IO.Path]::GetExtension($destination.Path) -ine '.lnk')) {
-            Refuse-LauncherInstall 'Choose a regular output file with the required shortcut extension.'
+        if ($destination.IsDirectory) { Refuse-LauncherInstall $regularOutput }
+        # After the collision checks and before its digest, an existing output leaf reported as a
+        # reparse point is refused with the parameter that selected it (#499).
+        if ($destination.IsLink) {
+            $parameter = $outputParameters[$destinations.Count]
+            Refuse-LauncherInstall "An existing launcher output selected by $parameter is a link or other reparse point, which the installer does not replace; files in cloud-synced folders can be reparse points. Choose an ordinary local path that is not synced with $parameter, then run the installer again."
+        }
+        if ($destinations.Count -ge 2 -and [IO.Path]::GetExtension($destination.Path) -ine '.lnk') {
+            Refuse-LauncherInstall $regularOutput
         }
         $destinations.Add($destination)
         $originalDigest = if ($destination.Id) { Get-InstallerDigest $destination.Path } else { '' }
@@ -457,10 +474,15 @@ try {
             }
         }
     )
-    $currentSource = Get-InstallerPath $source.Path
-    if (!(Test-InstallerFile $currentSource $source.Id $sourceDigest)) {
-        Refuse-LauncherInstall 'The PWA shortcut changed during preparation. Select its current file and run the installer again.'
+    # Re-observe the selected input itself, not only its earlier canonical target, so a leaf now
+    # replaced by a link to the same file is seen (#499). A different or missing file is a change;
+    # the same file now reported as a reparse point is refused before any digest.
+    $currentSource = Get-InstallerPath $PwaShortcut
+    if (!$currentSource.Id -or $currentSource.Id -cne $source.Id -or $currentSource.Path -ine $source.Path) {
+        Refuse-LauncherInstall $changedSource
     }
+    if ($currentSource.IsDirectory -or $currentSource.IsLink) { Refuse-LauncherInstall $unsupportedSource }
+    if (!(Test-InstallerFile $currentSource $source.Id $sourceDigest)) { Refuse-LauncherInstall $changedSource }
 
     $retainStages = $true
     $result = Publish-LauncherArtifacts -Artifacts $artifacts

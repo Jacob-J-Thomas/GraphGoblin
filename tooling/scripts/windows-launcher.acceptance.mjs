@@ -1307,8 +1307,8 @@ test(
         assert.equal(id.stdout.trim(), installed.LauncherAppUserModelId);
       }
     }
-    /** A separate process holds `path` with read access and FILE_SHARE_READ only. */
-    function holdWithReadSharing(path) {
+    /** A separate process holds `path` with read access, sharing only `share` ('Read' or 'None'). */
+    function holdWithSharing(path, share) {
       const holding = execute(
         powerShell,
         [
@@ -1316,9 +1316,14 @@ test(
           '-NoProfile',
           '-NonInteractive',
           '-Command',
-          "$held = [IO.File]::Open($env:GG_TEST_HELD, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::Read); try { [Console]::Out.WriteLine('held'); [Console]::Out.Flush(); [void][Console]::In.ReadToEnd() } finally { $held.Dispose() }",
+          "$held = [IO.File]::Open($env:GG_TEST_HELD, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]$env:GG_TEST_SHARE); try { [Console]::Out.WriteLine('held'); [Console]::Out.Flush(); [void][Console]::In.ReadToEnd() } finally { $held.Dispose() }",
         ],
-        { env: { ...env, GG_TEST_HELD: path }, cwd: base, windowsHide: true, timeout: 60_000 },
+        {
+          env: { ...env, GG_TEST_HELD: path, GG_TEST_SHARE: share },
+          cwd: base,
+          windowsHide: true,
+          timeout: 60_000,
+        },
       );
       // The outcome is the observed child record; a closed pipe must not escape as an event.
       holding.child.stdin.on('error', () => {});
@@ -1330,7 +1335,7 @@ test(
         holding.child.stdout.on('data', (chunk) => {
           if (String(chunk).includes('held')) resolve();
         });
-        settled.then(() => reject(new Error('The read-sharing holder exited before holding.')));
+        settled.then(() => reject(new Error('The file holder exited before holding.')));
       });
       return {
         ready,
@@ -1439,7 +1444,7 @@ test(
       async () => {
         const outputsBefore = await outputState(reinstallOutputs);
         // Identity and hash reads still succeed; replacing or deleting the Programs link does not.
-        const holder = holdWithReadSharing(reinstallPrograms);
+        const holder = holdWithSharing(reinstallPrograms, 'Read');
         let refusal;
         let released;
         let stages;
@@ -1810,6 +1815,181 @@ test(
       assert.deepEqual(await readdir(folders.localAppData), []);
       assert.deepEqual(await readdir(folders.dataDir), []);
     });
+
+    // #499: a leaf observed as a reparse point is refused. Genuine file symbolic links witness it;
+    // creating one needs a venue that already permits it, such as the hosted Windows runner, and
+    // the fixture never grants itself that right. Cloud placeholders belong to native CFAPI QA.
+    const unsupportedSource =
+      'The PWA shortcut is a link or other reparse point, which the installer does not support; files in cloud-synced folders can be reparse points. Copy the Chrome PWA shortcut to an ordinary local folder that is not synced, pass that copy with -PwaShortcut, then run the installer again.';
+    const unsupportedOutput = (parameter) =>
+      `An existing launcher output selected by ${parameter} is a link or other reparse point, which the installer does not replace; files in cloud-synced folders can be reparse points. Choose an ordinary local path that is not synced with ${parameter}, then run the installer again.`;
+    /** Creates a file symbolic link and confirms Windows reports it as a visible reparse point. */
+    async function visibleFileLink(target, path) {
+      await symlink(target, path, 'file');
+      const created = await lstat(path, { bigint: true });
+      assert.ok(created.isSymbolicLink(), 'The fixture must be a genuine file symbolic link.');
+      assert.equal(await realpath(path), await realpath(target));
+      const observed = await nativeObservation(
+        `
+        $item = Get-Item -LiteralPath $env:GG_TEST_FILE_LINK -Force;
+        [pscustomobject]@{
+          linkType = $item.LinkType
+          directory = [bool]($item.Attributes -band [IO.FileAttributes]::Directory)
+          reparsePoint = [bool]($item.Attributes -band [IO.FileAttributes]::ReparsePoint)
+        } | ConvertTo-Json -Compress
+      `,
+        { GG_TEST_FILE_LINK: path },
+      );
+      assert.ok(['SymbolicLink', 'SymLink'].includes(observed.linkType));
+      assert.deepEqual(
+        { directory: observed.directory, reparsePoint: observed.reparsePoint },
+        { directory: false, reparsePoint: true },
+        'Windows must report the fixture leaf as a visible file reparse point.',
+      );
+      return created;
+    }
+    /**
+     * Another process holds `target` without sharing while the installer runs. Its zero-access
+     * identity read still succeeds, but a digest or shortcut read would fail with another refusal.
+     */
+    async function refusedWhileUnshared(target, overrides, message) {
+      const holder = holdWithSharing(target, 'None');
+      let refusal;
+      let stages;
+      let released;
+      try {
+        await holder.ready;
+        stages = await observeStages(async () => {
+          refusal = await refused(invoke(overrides), message);
+        });
+      } finally {
+        released = await holder.release();
+      }
+      assert.ok(released.result, 'The unshared holder must exit normally after release.');
+      assert.equal(released.result.stdout.trim(), 'held');
+      assert.deepEqual(stages, [], 'A reparse-point refusal must precede every stage.');
+      return refusal;
+    }
+
+    await t.test(
+      'a PWA source or existing output observed as a reparse point is refused before its digest',
+      async () => {
+        const links = join(base, 'reparse links');
+        await mkdir(links);
+        const linkedSource = join(links, 'linked source.lnk');
+        const sourceLink = await visibleFileLink(source, linkedSource);
+        // -NoShortcuts publishes only the launcher and config but still needs an ordinary source.
+        for (const NoShortcuts of [false, true]) {
+          assertRefusal(
+            await refusedWhileUnshared(
+              source,
+              { PwaShortcut: linkedSource, NoShortcuts },
+              'A linked PWA source must be refused.',
+            ),
+            unsupportedSource,
+          );
+        }
+        // Collision priority is unchanged: an output link to the source names the source's file.
+        assertRefusal(
+          await refused(
+            invoke({ DesktopShortcut: linkedSource }),
+            'An output link to the source must collide with it.',
+          ),
+          'The PWA source and launcher outputs must use distinct files and paths. Choose a separate shortcut destination.',
+        );
+        const outputTarget = join(links, 'output target.lnk');
+        await copyFile(pinnedSeed, outputTarget);
+        const outputLink = join(links, 'linked output.lnk');
+        const outputLinkState = await visibleFileLink(outputTarget, outputLink);
+        const outputTargetBefore = await outputState([outputTarget]);
+        for (const [parameter, overrides] of [
+          ['-DesktopShortcut', { DesktopShortcut: outputLink }],
+          ['-PinnedShortcut', { PinnedShortcut: outputLink }],
+        ]) {
+          assertRefusal(
+            await refusedWhileUnshared(outputTarget, overrides, 'A linked output must be refused.'),
+            unsupportedOutput(parameter),
+          );
+        }
+        assert.deepEqual(await outputState([outputTarget]), outputTargetBefore);
+        assert.ok(sameFile(await lstat(outputLink, { bigint: true }), outputLinkState));
+        assert.ok(sameFile(await lstat(linkedSource, { bigint: true }), sourceLink));
+        assert.deepEqual(await snapshot(), before);
+        assert.deepEqual(await sourceState(), sourceStateBefore);
+        assert.deepEqual(await readdir(store), []);
+        await assertNoStages([install, dirname(desktop), dirname(programs), links]);
+      },
+    );
+
+    await t.test(
+      'the late source check re-observes the original selected lexical leaf as a link to the same target',
+      async () => {
+        // Once preparation stages, the junction is retargeted so the selected leaf becomes a file
+        // link to the same previously accepted target; the refusal shows that leaf was observed
+        // again. The target stays readable and identical, so this case cannot show whether the
+        // digest ran first: the installer source shows that ordering, and the early no-sharing
+        // cases are the separate evidence of refusal before content reads.
+        const late = join(base, 'late source');
+        const original = join(late, 'original');
+        const relinked = join(late, 'relinked');
+        const selected = join(late, 'selected');
+        await mkdir(original, { recursive: true });
+        await mkdir(relinked);
+        const lateTarget = join(original, 'GraphGoblin.lnk');
+        await copyFile(source, lateTarget);
+        await visibleFileLink(lateTarget, join(relinked, 'GraphGoblin.lnk'));
+        await symlink(original, selected, 'junction');
+        const lateInstall = join(late, 'install');
+        await mkdir(lateInstall);
+        const lateExe = join(lateInstall, 'GraphGoblin.exe');
+        const lateOptions = {
+          PwaShortcut: join(selected, 'GraphGoblin.lnk'),
+          InstallDir: lateInstall,
+          NoShortcuts: true,
+          Environment: safeOverrides,
+        };
+        // An ordinary leaf through its validated junction path still installs.
+        const result = await invoke(lateOptions);
+        assert.equal(errorText(result.stderr), '');
+        assert.match(result.stdout, /Launcher configured\./);
+        assert.equal(
+          JSON.parse(await readFile(lateExe + '.json', 'utf8')).PwaAppUserModelId,
+          'Chrome.PwaFixture',
+        );
+        const installed = await outputState([lateExe, lateExe + '.json']);
+        const targetBefore = await outputState([lateTarget]);
+        let swapping;
+        let watchFailure;
+        const observer = watch(lateInstall, (_event, name) => {
+          if (swapping || !name?.startsWith('gg-launcher-stage-')) return;
+          swapping = unlink(selected).then(() => symlink(relinked, selected, 'junction'));
+          swapping.catch(() => {});
+        });
+        observer.on('error', (error) => (watchFailure = error));
+        let refusal;
+        try {
+          refusal = await refused(
+            invoke(lateOptions),
+            'A selected leaf replaced by a link must be refused.',
+          );
+        } finally {
+          observer.close();
+        }
+        if (watchFailure) throw watchFailure;
+        assert.ok(swapping, 'Preparation must stage before the late source check.');
+        await swapping;
+        assert.equal(await realpath(selected), await realpath(relinked));
+        assertRefusal(refusal, unsupportedSource);
+        assert.deepEqual(await outputState([lateExe, lateExe + '.json']), installed);
+        assert.deepEqual(await outputState([lateTarget]), targetBefore);
+        assert.deepEqual((await readdir(lateInstall)).sort(), [
+          'GraphGoblin.exe',
+          'GraphGoblin.exe.json',
+        ]);
+        assert.deepEqual(await sourceState(), sourceStateBefore);
+        assert.deepEqual(await readdir(store), []);
+      },
+    );
 
     try {
       const started = await execute(exe, ['--ensure-gateway', '--config', configPath], {

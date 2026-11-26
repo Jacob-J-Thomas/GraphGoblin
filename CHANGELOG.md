@@ -4,6 +4,25 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- The Windows launcher installer refuses a PWA shortcut, or an existing launcher output, that
+  Windows reports as a link or other reparse point, as files in cloud-synced folders can be, and
+  says to use ordinary local paths that are not synced (#499). The source is refused from the
+  attributes already read, before its digest, any stage or any shortcut read. The check just
+  before publication reads the selected `-PwaShortcut` path again rather than only its earlier
+  target, so a path that now reaches the same file through a link is refused the same way, without
+  hashing. "The PWA shortcut changed during preparation" now means only a different, missing or
+  modified file. A file symbolic link source, previously followed to its target, is now refused.
+  An output refusal names the parameter that selected it (`-InstallDir`, `-DesktopShortcut`,
+  `-StartMenuShortcut` or `-PinnedShortcut`). Collision refusals still come first, and the
+  directory and extension refusals and staged publication with rollback are unchanged. The
+  installer recognizes only the reparse attribute Windows reports: it adds no sync-service support
+  and does not promise that a service will not download a refused placeholder. The install and
+  troubleshooting guides cover redirected and synced Desktop folders.
+  **Upgrade:** if your Chrome shortcut or launcher outputs are in a synced folder, copy the
+  shortcut to an ordinary local folder and rerun the installer with explicit `-PwaShortcut`,
+  `-InstallDir`, `-DesktopShortcut` and `-StartMenuShortcut` paths. No store, export or
+  stored-data change.
+
 - The Windows launcher reuses a running gateway without waiting for helpers, locks or the
   checkout's files (#566, #544, ADR-0090). `/healthz` adds `X-GraphGoblin-Launch-Identity`, a
   versioned digest of the effective non-secret settings and canonical store and serving paths that

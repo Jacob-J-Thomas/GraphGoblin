@@ -83,6 +83,19 @@ The installer validates the staged launcher and configuration before changing in
 If a publication failure leaves restoration unverified, keep the `gg-launcher-stage-*` folders
 near the requested outputs for recovery.
 
+Use ordinary local files for the source and outputs. Shortcut discovery and the default shortcut
+outputs use your Desktop and Start-menu folders, and Windows can redirect the Desktop into a
+cloud-synced folder. The installer refuses a PWA shortcut, or an existing output, that Windows
+reports as a link or other reparse point, as files in synced folders can be. It checks the
+source again just before publishing. When the defaults land in a synced location, copy the Chrome
+app shortcut to an ordinary local folder that is not synced and pass that copy as `-PwaShortcut`,
+and pass ordinary local `-InstallDir`, `-DesktopShortcut` and `-StartMenuShortcut` paths. If you
+supply `-PinnedShortcut`, it must name an existing ordinary local shortcut; `-NoShortcuts` ignores
+it. `-NoShortcuts` still needs an ordinary PWA source. A shortcut published into a synced folder
+can be refused on a later reinstall. The installer sees only the reparse attribute Windows
+reports, not which sync service set it. It does not support synced folders as outputs, and it
+cannot promise that a sync service will not download a refused file.
+
 For process settings beyond the explicit paths and port, invoke the script from PowerShell with
 `-Environment @{ GG_REQUIRE_API_KEY = 'true'; GG_DB_URL = 'file:D:/graphgoblin-data/graphgoblin.db' }`.
 Only supplied overrides are persisted; shell `GG_*` variables are not copied. The launcher clears

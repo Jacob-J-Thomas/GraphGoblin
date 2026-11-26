@@ -66,6 +66,26 @@ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
   shortcuts unchanged and removes its stage; a successful install into the new folder points the
   shortcuts there, and you can then remove the old folder. Any other compiler failure reports
   only `Launcher compilation failed.`: check the checkout and the .NET Framework compiler.
+- **Installer: the PWA shortcut is a link or other reparse point:** Windows reports the selected
+  Chrome shortcut, passed as `-PwaShortcut` or found in the default Start-menu `Chrome Apps` or
+  Desktop location, as a reparse point, such as a symbolic link or a cloud-sync placeholder. The
+  installer decides from the attributes it has just read, before hashing or staging anything or
+  reading the shortcut, but it cannot promise that a sync service will not download the file. It
+  reads the selected path again just before publishing and refuses the same way if that path now
+  reaches the same file through a link. This is not a changed file, so running again with the
+  same path is refused again. Copy the Chrome app shortcut to an ordinary local folder that is not
+  synced, pass that copy with `-PwaShortcut` and run the installer again; this applies with
+  `-NoShortcuts` too. A file symbolic link as the source is refused even when its target is an
+  ordinary shortcut. "The PWA shortcut changed during preparation" means that the selected path
+  now names a different or missing file, or that its contents changed.
+- **Installer: an existing launcher output is a link or other reparse point:** the message names
+  the parameter that selected it, `-InstallDir`, `-DesktopShortcut`, `-StartMenuShortcut` or
+  `-PinnedShortcut`, including a default Desktop or Start-menu location. Pass an ordinary local
+  path that is not synced with that parameter, or name an existing ordinary local shortcut with
+  `-PinnedShortcut` or omit it, then run the installer again. The refused file is left unchanged.
+  A shortcut that an earlier install published into a synced folder can be refused this way on
+  reinstall. The installer sees only the attribute Windows reports, not the sync service, and
+  cannot promise that a service will not download a refused placeholder.
 
 - **Not enrolled for its current Repo, Node, DataDir, Port and `GG_*` overrides:** the launcher JSON
   was edited, or was written by an earlier installer. Rerun `install-windows-launcher.ps1` with the
