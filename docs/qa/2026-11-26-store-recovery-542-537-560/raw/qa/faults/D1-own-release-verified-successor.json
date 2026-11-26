@@ -1,0 +1,128 @@
+{
+  "name": "D1-own-release-verified-successor",
+  "issue": "#542",
+  "system": "own guard release EPERM with a verified live successor (native creation identity) via shell startup",
+  "checks": [
+    {
+      "what": "startup completed and listened (main lock kept, no rollback)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "what": "clean shutdown exit 0",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "what": "while listening the main record was this API process",
+      "ok": true
+    },
+    {
+      "what": "while listening the guard held only the successor marker",
+      "ok": true,
+      "detail": [
+        "c5e9817a-db37-468b-94af-b310e5bbc484.json"
+      ]
+    },
+    {
+      "what": "exactly one rmdir of the guard (single attempt, never repeated)",
+      "ok": true,
+      "detail": [
+        "preload-registered",
+        "unlink:e145f93c-5553-4a8e-99d2-a49ea656213e.json",
+        "rmdir:graphgoblin.lock.reclaim",
+        "guard-rmdir-fault:successor",
+        "unlink:502acf6e-c7c7-41fc-a94c-f9fb24bc281d.json",
+        "rmdir:store.db.graphgoblin.lock.reclaim",
+        "database-close",
+        "unlink:store.db.graphgoblin.lock",
+        "unlink:graphgoblin.lock"
+      ]
+    },
+    {
+      "what": "successor marker never unlinked",
+      "ok": true
+    },
+    {
+      "what": "successor guard and marker bytes intact after shutdown",
+      "ok": true
+    },
+    {
+      "what": "main lock released at shutdown",
+      "ok": true
+    },
+    {
+      "what": "database lock and guard released",
+      "ok": true
+    },
+    {
+      "what": "no stderr output",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "successor": {
+    "pid": 64456,
+    "creationTime": "134401594170841180",
+    "recorded": "134401594170841180",
+    "token": "c5e9817a-db37-468b-94af-b310e5bbc484"
+  },
+  "startup": {
+    "code": 0,
+    "signal": null,
+    "listened": true,
+    "control": {
+      "getStatus": 200,
+      "postStatus": 202
+    },
+    "stderr": "",
+    "stdoutLines": 6,
+    "stdoutTail": "ing request\"}\n{\"level\":30,\"time\":1795685823629,\"pid\":63856,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":8.73700000000008,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795685823632,\"pid\":63856,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:49270\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":49272},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795685823639,\"pid\":63856,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":6.655099999999948,\"msg\":\"request completed\"}\n",
+    "faultLog": [
+      "preload-registered",
+      "unlink:e145f93c-5553-4a8e-99d2-a49ea656213e.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "guard-rmdir-fault:successor",
+      "unlink:502acf6e-c7c7-41fc-a94c-f9fb24bc281d.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "database-close",
+      "unlink:store.db.graphgoblin.lock",
+      "unlink:graphgoblin.lock"
+    ]
+  },
+  "whileListening": {
+    "mainLock": "{\"pid\":63856,\"startedAt\":\"2026-11-26T09:37:00.755Z\",\"windowsCreationTime\":\"134401594180642990\",\"token\":\"e145f93c-5553-4a8e-99d2-a49ea656213e\"}",
+    "guard": [
+      "c5e9817a-db37-468b-94af-b310e5bbc484.json"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock.reclaim",
+      "type": "dir"
+    },
+    {
+      "path": "graphgoblin.lock.reclaim\\c5e9817a-db37-468b-94af-b310e5bbc484.json",
+      "type": "file",
+      "size": 103,
+      "text": "{\"pid\":64456,\"windowsCreationTime\":\"134401594170841180\",\"token\":\"c5e9817a-db37-468b-94af-b310e5bbc484\"}"
+    },
+    {
+      "path": "store.db",
+      "type": "file",
+      "size": 4096
+    },
+    {
+      "path": "store.db-shm",
+      "type": "file",
+      "size": 32768
+    },
+    {
+      "path": "store.db-wal",
+      "type": "file",
+      "size": 642752
+    }
+  ],
+  "ms": 6614,
+  "pass": true
+}

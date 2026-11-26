@@ -1,0 +1,76 @@
+{
+  "name": "C1-unreadable-stale-marker-native-acl",
+  "issue": "#537",
+  "system": "observed recovery marker read (native ACL denial) via shell startup and read-only status",
+  "checks": [
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "labelled observed-marker-read with vetted code and marker path",
+      "ok": true,
+      "detail": "Error: Store ownership observed-marker-read failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\C1-unreadable-stale-marker-native-acl\\data\\graphgoblin.lock.reclaim\\6ee3494c-0031-"
+    },
+    {
+      "what": "error carries operation, code and marker token",
+      "ok": true
+    },
+    {
+      "what": "original error kept as cause",
+      "ok": true
+    },
+    {
+      "what": "read-only status fails with the same label",
+      "ok": true,
+      "detail": {
+        "error": {
+          "message": "Store ownership observed-marker-read failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\C1-unreadable-stale-marker-native-acl\\data\\graphgoblin.lock.reclaim\\6ee3494c-0031-4165-a165-52ee86f3b0f0.json",
+          "code": "EPERM",
+          "operation": "observed-marker-read",
+          "markerToken": "6ee3494c-0031-4165-a165-52ee86f3b0f0",
+          "causeCode": "EPERM"
+        }
+      }
+    },
+    {
+      "what": "marker bytes untouched",
+      "ok": true
+    },
+    {
+      "what": "no main lock or staging created",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: Store ownership observed-marker-read failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\C1-unreadable-stale-marker-native-acl\\data\\graphgoblin.lock.reclaim\\6ee3494c-0031-4165-a165-52ee86f3b0f0.json\n    at filesystemFailure (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:134:26)\n    at lockFileState (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:91:15)\n    at async observeRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:181:23)\n    ... 4 lines matching cause stack trace ...\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'EPERM',\n  operation: 'observed-marker-read',\n  markerToken: '6ee3494c-0031-4165-a165-52ee86f3b0f0',\n  [cause]: Error: EPERM: operation not permitted, open 'G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\C1-unreadable-stale-marker-native-acl\\data\\graphgoblin.lock.reclaim\\6ee3494c-0031-4165-a165-52ee86f3b0f0.json'\n      at async open (node:internal/fs/promises:639:25)\n      at async readFile (node:internal/fs/promises:1252:14)\n      at async lockFileState (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:80:18)\n      at async observeRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:181:23)\n      at async acquireRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:358:30)\n      at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:655:26)\n      at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n      at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n      at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n    errno: -4048,\n    code: 'EPERM',\n    syscall: 'open',\n    path: 'G:\\\\ggq\\\\tmp\\\\rq-542-qa\\\\runs\\\\faults-2026-11-26T09-32-59-710Z\\\\C1-unreadable-stale-marker-native-acl\\\\data\\\\graphgoblin.lock.reclaim\\\\6ee3494c-0031-4165-a165-52ee86f3b0f0.json'\n  }\n}\n",
+    "stdoutLines": 1,
+    "stdoutTail": ""
+  },
+  "readOnlyStatus": {
+    "error": {
+      "message": "Store ownership observed-marker-read failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\C1-unreadable-stale-marker-native-acl\\data\\graphgoblin.lock.reclaim\\6ee3494c-0031-4165-a165-52ee86f3b0f0.json",
+      "code": "EPERM",
+      "operation": "observed-marker-read",
+      "markerToken": "6ee3494c-0031-4165-a165-52ee86f3b0f0",
+      "causeCode": "EPERM"
+    }
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock.reclaim",
+      "type": "dir"
+    },
+    {
+      "path": "graphgoblin.lock.reclaim\\6ee3494c-0031-4165-a165-52ee86f3b0f0.json",
+      "type": "file",
+      "size": 60,
+      "text": "{\"pid\":57308,\"token\":\"6ee3494c-0031-4165-a165-52ee86f3b0f0\"}"
+    }
+  ],
+  "ms": 7164,
+  "pass": true
+}

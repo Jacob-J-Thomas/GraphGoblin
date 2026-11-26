@@ -1,0 +1,62 @@
+{
+  "name": "D4-acquisition-verified-successor",
+  "issue": "#542 / FUP091",
+  "system": "acquisition-side guard EPERM with a verified live successor (unchanged held(path))",
+  "checks": [
+    {
+      "what": "stale marker removed",
+      "ok": true
+    },
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "exactly the ordinary one-line held(path) refusal",
+      "ok": true,
+      "detail": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D4-acquisition-verified-successor\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n"
+    },
+    {
+      "what": "one rmdir attempt",
+      "ok": true
+    },
+    {
+      "what": "successor intact",
+      "ok": true
+    },
+    {
+      "what": "no main lock created",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D4-acquisition-verified-successor\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:e9ae4b53-a1d5-4981-b09a-83aece91ff42.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "guard-rmdir-fault:successor",
+      "unlink:70ef0673-bb21-4ac0-a3ab-bb3ee606ec93.json",
+      "rmdir:graphgoblin.lock.reclaim.70ef0673-bb21-4ac0-a3ab-bb3ee606ec93.tmp"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock.reclaim",
+      "type": "dir"
+    },
+    {
+      "path": "graphgoblin.lock.reclaim\\71fda769-b72e-4503-89e0-45882e9504d8.json",
+      "type": "file",
+      "size": 103,
+      "text": "{\"pid\":52104,\"windowsCreationTime\":\"134401594382950880\",\"token\":\"71fda769-b72e-4503-89e0-45882e9504d8\"}"
+    }
+  ],
+  "ms": 5133,
+  "pass": true
+}

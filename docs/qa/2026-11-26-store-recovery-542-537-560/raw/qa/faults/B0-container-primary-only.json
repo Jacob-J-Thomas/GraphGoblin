@@ -1,0 +1,85 @@
+{
+  "name": "B0-container-primary-only",
+  "issue": "#560",
+  "system": "createContainer setup cleanup via shell startup (primary: invalid GG_MASTER_KEY after SQLite opened)",
+  "checks": [
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "primary failure printed first",
+      "ok": true,
+      "detail": "Error: GG_MASTER_KEY must decode to exactly 32 bytes\n    at loadMasterKey (file:"
+    },
+    {
+      "what": "primary thrown unchanged, no detail",
+      "ok": true
+    },
+    {
+      "what": "no secondary message text",
+      "ok": true
+    },
+    {
+      "what": "database closed exactly once",
+      "ok": true,
+      "detail": [
+        "preload-registered",
+        "unlink:112a2a2b-c19e-4f96-b2d6-02a73ad4438a.json",
+        "rmdir:graphgoblin.lock.reclaim",
+        "unlink:6e9472d9-e773-4378-b4c1-767cc1f03afb.json",
+        "rmdir:store.db.graphgoblin.lock.reclaim",
+        "database-close",
+        "unlink:store.db.graphgoblin.lock",
+        "unlink:graphgoblin.lock"
+      ]
+    },
+    {
+      "what": "database lease then directory lease each released once",
+      "ok": true,
+      "detail": [
+        "unlink:store.db.graphgoblin.lock",
+        "unlink:graphgoblin.lock"
+      ]
+    },
+    {
+      "what": "directory lease record removed",
+      "ok": true
+    },
+    {
+      "what": "database lease record removed",
+      "ok": true
+    },
+    {
+      "what": "guards released",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: GG_MASTER_KEY must decode to exactly 32 bytes\n    at loadMasterKey (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/master-key.js:12:19)\n    at createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:132:20)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16)\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:112a2a2b-c19e-4f96-b2d6-02a73ad4438a.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "unlink:6e9472d9-e773-4378-b4c1-767cc1f03afb.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "database-close",
+      "unlink:store.db.graphgoblin.lock",
+      "unlink:graphgoblin.lock"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "store.db",
+      "type": "file",
+      "size": 0
+    }
+  ],
+  "ms": 8302,
+  "pass": true
+}

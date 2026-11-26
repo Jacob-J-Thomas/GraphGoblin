@@ -1,0 +1,323 @@
+{
+  "packet": "docs/qa/2026-11-26-store-recovery-542-537-560",
+  "issues": [
+    542,
+    537,
+    560
+  ],
+  "source": {
+    "branch": "codex/gg-fu-store-recovery-residual-20261125",
+    "base": "f0dac0158c475c1bd43c779a744ee8e3c89b8c2e",
+    "baseNote": "#533 typed hard-link component on main 4e1037c9; the same change is in PR #587",
+    "main": "4e1037c9e9922ffa27237fe79850403b6b54fc70",
+    "commits": {
+      "implementation": "8ffe5c0bbee8e943a4a46c9a2a9d384568d04a7e",
+      "addedTests": "6c86acea5db1725795c3e02fcc00dff521aacc7e",
+      "r2Fix": "7ca7557724c02952029fb41136bb89e3e8542ec3"
+    },
+    "reviewedAndQaHead": "6c86acea5db1725795c3e02fcc00dff521aacc7e"
+  },
+  "retention": "Originals are byte-for-byte copies. Markdown originals are stored as *.md.txt and logs as *.log.txt; raw/** is -text so Git does not normalize bytes. Coverage logs keep their terminal colour codes. Scripts keep their original local paths and do not promise portable replay.",
+  "files": [
+    {
+      "path": "raw/author/AUTHOR-REPORT.md.txt",
+      "bytes": 22544,
+      "sha256": "7259f53daa9f7801af59e26ff7d32ef9a218123957b95fc06a4f0f9625a58c9b",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-author-04/AUTHOR-REPORT.md"
+    },
+    {
+      "path": "raw/author/mutation-check.mjs",
+      "bytes": 4579,
+      "sha256": "8bc0a22db5e06b0b620e4ddcb0b7b4f0571d17c793e6769af8b0b92333d39564",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-author-04/mutation-check.mjs"
+    },
+    {
+      "path": "raw/author/api-coverage-run1-pre-commit.log.txt",
+      "bytes": 270393,
+      "sha256": "12ed6c6e1e6439500fe857e647bc243abf797f70b61900eeac8ca12890af8bd1",
+      "origin": "G:/ggq/tmp/a4-542-537-560/api-coverage.log"
+    },
+    {
+      "path": "raw/author/api-coverage-run2-8ffe5c0b.log.txt",
+      "bytes": 299283,
+      "sha256": "cc71c558ba5d67796d62c62051e4309d37d8e3c8b386192d6b33c7cbdefbd920",
+      "origin": "G:/ggq/tmp/a4-542-537-560/api-coverage-final.log"
+    },
+    {
+      "path": "raw/author/api-coverage-run3-6c86acea.log.txt",
+      "bytes": 335250,
+      "sha256": "46be0549fd20ab7699bbeb972b37786246e3178234e8a7d8e2592cac204bef86",
+      "origin": "G:/ggq/tmp/a4-542-537-560/api-coverage-rerun.log"
+    },
+    {
+      "path": "raw/author/r2-proof.sh",
+      "bytes": 1237,
+      "sha256": "1769894ec6f25997598f0760378ddc9ee61395139667eec47da2121ae703178b",
+      "origin": "G:/ggq/tmp/a4-542-537-560/r2-proof.sh"
+    },
+    {
+      "path": "raw/author/r2-proof.log.txt",
+      "bytes": 37296,
+      "sha256": "f252e7c97e032bc553124f86ccd668c3c449510e97d56d501e4b472d58c13cef",
+      "origin": "G:/ggq/tmp/a4-542-537-560/r2-proof.log"
+    },
+    {
+      "path": "raw/review/REVIEW.md.txt",
+      "bytes": 11856,
+      "sha256": "cce0de581f4904acad101ed795ac6db797d8e51e07575aaf3e223474b473b36f",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/REVIEW.md"
+    },
+    {
+      "path": "raw/qa/QA-REPORT.md.txt",
+      "bytes": 12406,
+      "sha256": "c815844565d78eb9b855f7b4f8d7ee9fa3d3d503c0f9c94d5da54c0f4c66ea8e",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/QA-REPORT.md"
+    },
+    {
+      "path": "raw/qa/focused-tests.log.txt",
+      "bytes": 419,
+      "sha256": "1f500b54f7987ddf3b463d2167c86dccfb222fbcce0965f626de72dcc5a4036e",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/focused-tests.log"
+    },
+    {
+      "path": "raw/qa/faults/A1-record-write.json",
+      "bytes": 2350,
+      "sha256": "ba358ed67e00f00663f54b90ef3a82ad3b4d8e238154febe2fd7aa4471107104",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A1-record-write.json"
+    },
+    {
+      "path": "raw/qa/faults/A2-record-write-close.json",
+      "bytes": 2730,
+      "sha256": "a90f9d638c98aa025f93bfebc0f98866ca7e9430fa46d9864c5331bf2213404b",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A2-record-write-close.json"
+    },
+    {
+      "path": "raw/qa/faults/A2b-record-write-close-handle-open.json",
+      "bytes": 2748,
+      "sha256": "d2051673c35a4b5a60ff9ba3122877d1195965fa9a988f6337d8710bbbcd7c59",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A2b-record-write-close-handle-open.json"
+    },
+    {
+      "path": "raw/qa/faults/A3-record-write-unlink.json",
+      "bytes": 4421,
+      "sha256": "1620e77faff5f1b1d8c08678cf43196f62e160aedf2e97ebff8edd75e9273a59",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A3-record-write-unlink.json"
+    },
+    {
+      "path": "raw/qa/faults/A4-record-write-identity.json",
+      "bytes": 4202,
+      "sha256": "d45be2287b68f71872ebb6065602f8f27698743d723c5fffa16b49975089ce0e",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A4-record-write-identity.json"
+    },
+    {
+      "path": "raw/qa/faults/A5-record-close-only.json",
+      "bytes": 2312,
+      "sha256": "19b1d3b034e0ecc3ca52e90eeb7052adffe4a6cfab75e5e925b96df83e458b29",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A5-record-close-only.json"
+    },
+    {
+      "path": "raw/qa/faults/A6-record-close-unlink.json",
+      "bytes": 4731,
+      "sha256": "12805bb660fd51645320802ea3660c220b898f33b74d43d28dad74e6eee643d8",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A6-record-close-unlink.json"
+    },
+    {
+      "path": "raw/qa/faults/A6b-record-write-lookup.json",
+      "bytes": 4245,
+      "sha256": "6de55059239351afbaf1ef7a407b6e1411f88756797c8e941c4c127f92f2ffef",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A6b-record-write-lookup.json"
+    },
+    {
+      "path": "raw/qa/faults/A7-record-write-guard-release.json",
+      "bytes": 3671,
+      "sha256": "41dde33d542cba0130c5ce923b07f29363d6f92d5326915cebe2cd3617873d76",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A7-record-write-guard-release.json"
+    },
+    {
+      "path": "raw/qa/faults/A8-database-record-flattened-with-directory-lease.json",
+      "bytes": 3889,
+      "sha256": "cc2ffbe06e95ff37c8f6594a720c94cf1351951280fb0da7f53be4673471f585",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A8-database-record-flattened-with-directory-lease.json"
+    },
+    {
+      "path": "raw/qa/faults/A9-attestation-failure-module-level.json",
+      "bytes": 1123,
+      "sha256": "c5b76165c0487a83913d83f214a7611f9235d4719acd172c19eaf1c2f2eacc02",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/A9-attestation-failure-module-level.json"
+    },
+    {
+      "path": "raw/qa/faults/B0-container-primary-only.json",
+      "bytes": 2489,
+      "sha256": "92bf6a61605a39f87fe1db0b90dc87f3dadcaf6dc77af7dd6dc8a76aea25fb16",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B0-container-primary-only.json"
+    },
+    {
+      "path": "raw/qa/faults/B1-container-database-close.json",
+      "bytes": 3760,
+      "sha256": "f67ad07e87cd86aed7c2b314875ce7aa018e9195f810fcd576dcc92921cda111",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B1-container-database-close.json"
+    },
+    {
+      "path": "raw/qa/faults/B1b-container-database-close-left-open.json",
+      "bytes": 3837,
+      "sha256": "1fadcc5ef169f43e7ec93d300f0515e1d26a33bdd0ee4d1a7bc00c64bef44b6f",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B1b-container-database-close-left-open.json"
+    },
+    {
+      "path": "raw/qa/faults/B1m-managed-unknown-primary.json",
+      "bytes": 1636,
+      "sha256": "d033bfca2d9ffb869aa37247fcc4022ac75e78f71b1391b9b5b6b58bdeade235",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B1m-managed-unknown-primary.json"
+    },
+    {
+      "path": "raw/qa/faults/B2-readonly-close-behind-store-refusal.json",
+      "bytes": 5171,
+      "sha256": "65ee95440cc984d5abae699b35976956d0583f3839b2575a06078c9a681589bb",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B2-readonly-close-behind-store-refusal.json"
+    },
+    {
+      "path": "raw/qa/faults/B2m-managed-store-refused.json",
+      "bytes": 1780,
+      "sha256": "4bb1ad87fe99f07a1d59194b8a285da657e5d2eeaadfad240eb112aa97402429",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B2m-managed-store-refused.json"
+    },
+    {
+      "path": "raw/qa/faults/B3-readonly-close-only.json",
+      "bytes": 4294,
+      "sha256": "2fb3367146e70f3a5c277bd0a120d296f56a2c924f8752eba2ddee1a3678f0e9",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B3-readonly-close-only.json"
+    },
+    {
+      "path": "raw/qa/faults/B4-container-database-lease-release.json",
+      "bytes": 3523,
+      "sha256": "b24aba4103d4160aa13fd928f7783f1ef57b6e075026acbf533f3696ffbb0706",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B4-container-database-lease-release.json"
+    },
+    {
+      "path": "raw/qa/faults/B5-container-both-lease-releases.json",
+      "bytes": 4324,
+      "sha256": "91296d841fed6c5f3537d9581ddbb8f89f16c6a99b5ca9843c71c8ac9fbca7a1",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/B5-container-both-lease-releases.json"
+    },
+    {
+      "path": "raw/qa/faults/C1-unreadable-stale-marker-native-acl.json",
+      "bytes": 4535,
+      "sha256": "54fd21a752fe0e88399f5d1a0a80af17e367efd79010b55ce022c5215cf408a9",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/C1-unreadable-stale-marker-native-acl.json"
+    },
+    {
+      "path": "raw/qa/faults/C2-own-marker-read-on-release.json",
+      "bytes": 3588,
+      "sha256": "d842515c94a5dcc8b4d8724a166dc011a9c524a5b0a8bf3d57923b46797adbb1",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/C2-own-marker-read-on-release.json"
+    },
+    {
+      "path": "raw/qa/faults/D1-own-release-verified-successor.json",
+      "bytes": 4035,
+      "sha256": "7c8e7845ef0cf216a83e4f9670bc7774eadcf6eff12eb3c5128bf2e05e07c6af",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D1-own-release-verified-successor.json"
+    },
+    {
+      "path": "raw/qa/faults/D2-own-release-unchanged-guard.json",
+      "bytes": 4719,
+      "sha256": "48d038fa3cd7440b601de50bc5c9db205b6b9f1585d14ea7b3998750c12acd3b",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D2-own-release-unchanged-guard.json"
+    },
+    {
+      "path": "raw/qa/faults/D3-own-release-identity-mismatch.json",
+      "bytes": 3834,
+      "sha256": "1a749ae95903ac611f01fa91bdd89b80054e40cd6b7ab8df23100561d07af69f",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D3-own-release-identity-mismatch.json"
+    },
+    {
+      "path": "raw/qa/faults/D3b-diagnostic-rerun-module-level.txt",
+      "bytes": 468,
+      "sha256": "f0d3a954dcd78e122c4dbbd27f299edf35fe77d7f63005fe9cae00dec9c3a78a",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D3b-diagnostic-rerun-module-level.txt"
+    },
+    {
+      "path": "raw/qa/faults/D3b-own-release-lookup-failure.json",
+      "bytes": 5623,
+      "sha256": "985845b2d61289e7f8d3a9b119a7b3cbe8fdb2d8f45047453a3d705be1f13a83",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D3b-own-release-lookup-failure.json"
+    },
+    {
+      "path": "raw/qa/faults/D4-acquisition-verified-successor.json",
+      "bytes": 2012,
+      "sha256": "72e8c9fcdf645cef2423b8c5ce29d5bab00ce7a5567418d50725e8cc28801ce0",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D4-acquisition-verified-successor.json"
+    },
+    {
+      "path": "raw/qa/faults/D4m-managed-store-held.json",
+      "bytes": 2109,
+      "sha256": "9c757546eba085d78a95c2327f3780ef219c33712b70a07396b2150fd0a0c28d",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D4m-managed-store-held.json"
+    },
+    {
+      "path": "raw/qa/faults/D5-acquisition-persistent-lookup-failure.json",
+      "bytes": 6223,
+      "sha256": "6517e98754b8280a1fb1174004c360990f8525342483cac9b35d167ea637e936",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/D5-acquisition-persistent-lookup-failure.json"
+    },
+    {
+      "path": "raw/qa/faults/console.log.txt",
+      "bytes": 4693,
+      "sha256": "a278b30346691eed1f5634782eb61fcd2413917d5a210d499656b234ee8e05c8",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/console.log"
+    },
+    {
+      "path": "raw/qa/faults/faults-summary-2026-11-26T09-32-59-710Z.json",
+      "bytes": 3989,
+      "sha256": "c6f1a7791a2490280b1471d92e3daa816d5993975456b8891f74c9ae2f9a28c4",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/faults/faults-summary-2026-11-26T09-32-59-710Z.json"
+    },
+    {
+      "path": "raw/qa/contention/console.log.txt",
+      "bytes": 2560,
+      "sha256": "ed8d700931c24a058ac6aa09b5627780b76ccc69b2d2d30bed0b0837ba58323e",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/contention/console.log"
+    },
+    {
+      "path": "raw/qa/contention/contention-2026-11-26T09-38-16-493Z.json",
+      "bytes": 22332,
+      "sha256": "1d43373fafc0d3dae2b2d41a74fee263736ebccaf32fe189d30766fe45d1e06d",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/contention/contention-2026-11-26T09-38-16-493Z.json"
+    },
+    {
+      "path": "raw/qa/contention/library-level-CANDIDATE-NATIVE-CONTENTION.json",
+      "bytes": 6268,
+      "sha256": "e59b0146db8465a32da046c1f9fbfde96b8de58f8960c58c109c3a32b0f4cb84",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/contention/library-level-CANDIDATE-NATIVE-CONTENTION.json"
+    },
+    {
+      "path": "raw/qa/contention/library-level-candidate-console.log.txt",
+      "bytes": 144,
+      "sha256": "1df1b02c3c78a41aadff716afbe354745149703611218ab5f4be222011a02fc8",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/raw/contention/library-level-candidate-console.log"
+    },
+    {
+      "path": "raw/qa/scripts/D3b-diagnostic.mjs",
+      "bytes": 703,
+      "sha256": "e960b5a8fe0b6970a7b1852ad7fa9a024cc247c96d0a687a209b1a1526789cf9",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/scripts/D3b-diagnostic.mjs"
+    },
+    {
+      "path": "raw/qa/scripts/fault-preload.mjs",
+      "bytes": 7853,
+      "sha256": "95451fb8d0220def9761dd4e47238e8adc3f692f0bc186a52709d2b9f3d04b73",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/scripts/fault-preload.mjs"
+    },
+    {
+      "path": "raw/qa/scripts/qa-contention.mjs",
+      "bytes": 7830,
+      "sha256": "4827de39adf25e01f43e824b3d51e3451f0106ae7185fc30de1d442e0b4160a5",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/scripts/qa-contention.mjs"
+    },
+    {
+      "path": "raw/qa/scripts/qa-faults.mjs",
+      "bytes": 43516,
+      "sha256": "26f0680922b8ea88c461146eaef3f83959456ec4fba3b4e2c673261cdbe0c0ac",
+      "origin": "G:/ggq/delivery-evidence/2026-11-24-followups/store-recovery-542-537-560-533/claude-window-rq-01/scripts/qa-faults.mjs"
+    }
+  ]
+}

@@ -1,0 +1,264 @@
+# Author report: #542 / #537 / #560 store-recovery residual (claude-window-author-04)
+
+Author: Claude Opus 5.5 (xhigh), Claude-only window, brief `BRIEF-A4-542-537-560.md` under
+`claude-orchestration-20261125/COMMON-RULES.md`. Scope contract:
+`residual-author-preparation-03/` (AUTHOR-PROMPT, ARCHITECTURE-BRIDGE, HANDOFF, AUTHOR-CONTRACT,
+EXPECTED-SOURCE-FILES) and `ARCHITECTURE-ADJUDICATION.md` (FUP044), with FUP084 and FUP091.
+
+Outcome: NEEDS-ORCHESTRATOR. Implementation, focused tests, typecheck, lint, formatting and check:qa pass on the final commit and are ready for independent QA and opposite-family review, but the task-3 API coverage gate (>=90% lines and branches) could not be confirmed on this shared Windows venue: three locked full runs each lost a result to an environmental fault (a load-sensitive 20 s timeout in an unrelated history-cleanup case, or a libsql 0xC0000005 worker crash). The orchestrator must decide whether hosted CI coverage, or a rerun on a quieter machine, satisfies the gate.
+
+## Source binding
+
+- Worktree `G:/ggq/gg-r542/GraphGoblin`, branch `codex/gg-fu-store-recovery-residual-20261125`.
+- Start: `f0dac0158c475c1bd43c779a744ee8e3c89b8c2e` (the #533 typed hard-link component on
+  `4e1037c9`), clean.
+- Commits: `8ffe5c0bbee8e943a4a46c9a2a9d384568d04a7e` (implementation, tests, docs; tree `dae9e9aaea8c65b9fcc5b6f38540bbcad4177ebd`) and `6c86acea5` (three added coverage-gap tests in `data-dir-lock-failures.test.ts`). Repository identity, no attribution. Not pushed or merged.
+- Files changed (all 11 admitted paths, nothing else): `apps/api/src/data-dir-lock.ts`,
+  `apps/api/src/container.ts`, `apps/api/src/serve.ts`, `apps/api/src/startup-cleanup.ts` (new),
+  `apps/api/src/data-dir-lock-failures.test.ts`, `apps/api/src/container-startup-cleanup.test.ts`
+  (new), `apps/api/src/serve-failure-output.test.ts`, `docs/11-security-and-distribution.md`,
+  `CHANGELOG.md`, `docs/decisions/ADR-0091-bounded-startup-ownership-cleanup.md` (new),
+  `docs/decisions/README.md`. No protected path changed.
+- The earlier author attempt `residual-author-preparation-03/claude-implementation-01` ended on a
+  usage limit with no tool calls and no changes; it is left as recorded.
+
+## Behaviour per issue
+
+### #560: primary startup errors survive cleanup failures
+
+Exclusive lock record (`acquireFile`, used for both the data-directory and database locks):
+
+- The open, stale-record handling, `EEXIST`/held refusal and public lock paths are unchanged.
+- After the exclusive `wx` open, a write, attestation (`file.stat`) or close failure becomes the
+  primary. The handle is closed exactly once in every case (the old code closed twice on a write
+  failure and let a close failure replace the write failure).
+- Proof before the sole cleanup unlink: a partial record (write failed) is matched by the
+  handle's identity, read with `file.stat` before the close; a complete record (attestation or
+  close-only failure) by its exact random-token bytes. Both are checked at the configured path
+  with a non-following `lstat`; a non-regular entry or a different identity/record is foreign.
+- Proven gone (`ENOENT`) or proven foreign: the in-process `heldPaths` reservation is dropped and
+  foreign data is never touched. Identity unavailable (stat failed, inode 0), lookup failure or
+  unlink failure: the file and the reservation are kept and the main path is reported as
+  retained (`{ resource: 'lock-record', path }`). No destructive call is repeated.
+- The guard release still follows once. If it fails, `recovery-release` is appended behind the
+  record's own cleanup steps. Pre-open failures (stale refusal, open errors) keep the existing
+  generic `cleanupFailure` path ("reclamation cleanup also failed"), and the post-acquisition
+  rollback ("rolled back" / "ownership remains held") is unchanged.
+- With nothing to report, the original primary object is thrown unchanged.
+
+`createContainer` setup:
+
+- The read-only client's close is in scope: a close failure no longer replaces a guard/catalog/
+  store-format failure (it becomes `readonly-database-close` behind it), and a close-only failure
+  is its own primary.
+- Any failed SQLite close (read-only or mutable) keeps both acquired leases; no release is
+  attempted, and both are reported as retained (database lease by database file path,
+  data-directory lease by data directory).
+- Otherwise the database lease, then the directory lease, are each released once; a failure of
+  the first never suppresses the second. A failed release is reported and its lease listed as
+  retained. Zero, one or two leases are handled as acquired.
+- `dispose()`, `start()` failure teardown, shutdown and `serve()` stop are untouched.
+
+Reporting (`startup-cleanup.ts`, `serve.ts`):
+
+- `StartupCleanupError extends AggregateError`: `primary`, `errors[0]` and `cause` are the original
+  failure; `cleanup` holds ordered `{ operation, code, error }` steps with closed labels and vetted
+  codes; `retained` lists kept ownership; `errors` holds the original secondary objects.
+  `withStartupCleanup` returns the exact primary when nothing needs reporting and flattens a
+  tagged primary in causal order.
+- `startupFailureCause` classifies only the tagged primary, with the existing closed table.
+  Arbitrary `AggregateError` values are not interpreted.
+- `shellFailureOutput` prints the primary's usual rendering (known refusals: their explanation,
+  escaped where it already was; unknown primaries: `util.inspect(primary)`, the same text
+  `console.error(primary)` prints) followed by one control-escaped line of labels, codes and
+  retained paths. Secondary messages are never printed.
+
+### #542: own-release successor on Windows
+
+- Right after publication, on win32 only, the caller captures its guard identity with
+  `lstat` -> sole own-marker `readdir` -> `lstat`, requiring a physical directory, inode != 0,
+  a stable identity and consistency with the staging directory's identity (taken once before the
+  loop). The capture never throws; any failure yields "unknown" and changes nothing else. The
+  rename `try` now ends at the rename so the capture can never be mistaken for a publication
+  failure (`continue` replaces the fall-through; the loop semantics are identical).
+- Only when the release read its exact record, itself removed its exact marker, and has a known
+  captured identity, an `EPERM` from removing the emptied guard runs #582's positive successor
+  check once (`hasLiveRecoverySuccessor`) against that captured identity and own marker name.
+  A verified successor completes the release: main lock kept, no extra reclamation claimed,
+  `heldPaths` entry for the guard cleared as on any successful release.
+- Confirmed absence keeps current success behaviour; `ENOENT`/`ENOTEMPTY`/`EEXIST` and non-Windows
+  outcomes are unchanged; unchanged, changed-but-empty, invalid, unverifiable or unknown-identity
+  states keep the filesystem refusal and the existing rollback/retained-main route.
+- The bypass of the `heldPaths` shortcut is implicit and private: the classification reads the
+  physical path; `observeRecovery`, `dataDirLockState` and ordinary acquisition admission still
+  consult `heldPaths`, so failed-release reservations stay fail-closed.
+- The verified acquisition successor (FUP091) still throws exactly `held(path)`: no cause, code
+  or operation (pinned).
+
+### #537: labelled residual reads and probe evidence
+
+- A recovery-marker read that would already escape, after the existing `ENOENT` and Windows
+  `EPERM`-then-absent logic, is now `observed-marker-read` (enumerated marker, acquisition and
+  read-only status) or `recovery-marker-read` (own marker on release), with the marker path,
+  `markerToken` from the path's own name, a vetted code or `UNKNOWN`, and the raw original cause.
+  Main owner record reads still throw the raw error.
+- `filesystemFailure` now vets every code (`/^[A-Z][A-Z0-9_]{0,63}$/`, else `UNKNOWN`).
+- Optional failure reporting was added to `probeRecoveryDirectory` and `hasLiveRecoverySuccessor`
+  without changing their decisions, order or defaults. Failed probes (`recovery-directory-lookup`,
+  `successor-inspection`, `successor-liveness`, `successor-identity`) are attached to the unresolved
+  `recovery-directory-remove` error as `probeFailures` with a vetted code; the raw cause is a
+  non-enumerable property, so it stays inspectable but is not printed. A different creation
+  identity or an unverifiable shape is a decision and adds no entry. The outer `EPERM` cause, code
+  and operation are unchanged; the second disappearance probe and the initial/terminal reads stay
+  where they were. No new event or envelope.
+
+## FUP044 accepted findings
+
+1. Tagged aggregate plus narrow `serve.ts` change: `StartupCleanupError` in the leaf module
+   `startup-cleanup.ts` (imports nothing from the API, so no cycles). Only it is unwrapped. Exact
+   primary first and as cause; single-error identity when cleanup settles; ordered labelled
+   secondaries; managed classification of the primary including `key-source-unavailable`; shell
+   keeps the known explanation plus bounded detail; known refusals never degrade. Tested for
+   every known primary, unknown primaries, arbitrary `AggregateError`, flattening and escaping.
+2. Read-only setup close included; primary guard/catalog failure preserved when close also fails;
+   close-only failure is its own primary. Later lifecycle cleanup excluded and documented.
+3. Failed mutable or read-only close retains both leases; otherwise database then directory lease
+   released once each, first failure not suppressing the second. The fixture really closes before
+   throwing, and the code still retains both leases.
+4. win32-only disambiguation; unknown identity covers inode 0, non-directory/link, lookup failure,
+   unstable capture, listing mismatch and staged/published mismatch; capture is the
+   lstat/readdir/lstat sandwich with staging as consistency evidence; identity change alone never
+   proceeds; positive proof is #582's full check; persistent/unverifiable `EPERM` keeps the
+   labelled failure plus separate probe evidence; one `rmdir` per opportunity; non-Windows and
+   `ENOTEMPTY` release behaviour unchanged.
+5. `heldPaths` preserved at acquisition admission and for failed-release reservations; only the
+   own-release classification after removing its own exact marker reads past it. Documentation and
+   ADR state that the main `wx` record, not the released guard, excludes a second writer, and that
+   stat plus `rmdir` is not compare-and-delete.
+6. Handle identity read before the sole close; missing identity retains file and reservation;
+   reservation dropped only on proven unlink, `ENOENT` or proven foreign; close-only uses the exact
+   token record; non-atomic read/unlink documented; foreign state preserved; ordered errors name
+   the retained main path and append the outer recovery-release failure.
+
+## FUP091 and FUP084
+
+- FUP091: the confirmed-successor acquisition refusal is unchanged (`held(path)`, no
+  cause/code/operation, shell one line, `store-held`), pinned in the existing test. Unverified
+  `EPERM` keeps its code/operation/cause and may carry bounded probe evidence.
+- FUP084 P3-1: both negative creation-identity cases and the replacement case now assert exactly
+  one `windowsProcessIdentity(foreignPid)` call. Two new controls follow a positive lookup:
+  - marker-only: the sole marker is replaced in place by rename (a new object, same name, token
+    and bytes; the replacement exists first so the inode cannot be reused) while the directory
+    identity is asserted unchanged. Post-probe calls prove the final listing ran, the marker
+    recheck ran and the final directory check was not reached (`lstat` targets after the probe:
+    marker, then the disappearance probe).
+  - directory-only: nothing on disk changes; a labelled controlled observation makes only the next
+    bigint `lstat` of the guard (the final directory identity check) report another inode. Marker
+    identity, mtime, ctime and bytes are asserted unchanged; post-probe `lstat` targets are marker,
+    controlled guard, real disappearance probe; the control was consumed.
+  Each keeps successor bytes and exactly one guard `rmdir`.
+- FUP084 P3-2: the existing #581 changelog entry now discloses terminal uncertainty on the eighth
+  unsettled marker read, the lost final stale-marker unlink, and the read-only status guard.
+
+## Tests added or changed
+
+- `data-dir-lock-failures.test.ts` (39 -> 90 tests): labelled marker reads (win32
+  `EPERM`, linux `EACCES`, unvetted and non-string codes), read-only status read, own-marker read
+  with rollback; probe evidence (identity unavailable vs credible mismatch, liveness, inspection,
+  directory lookup) and that probe text is not printed; FUP084 controls; own-release: verified
+  successor with and without a reclaimed stale guard, unchanged and changed-empty guards, invalid
+  and unverifiable successors, lookup failure evidence, six unknown-identity captures, own marker
+  already gone, capture failure without `EPERM`, unchanged `ENOENT`/`ENOTEMPTY`, non-Windows; the
+  #560 matrix (write, write+close, write+unlink, write+close+unlink, write+identity,
+  write+identity+close, write+lookup, close, close+unlink, each with and without a guard-release
+  failure), foreign replacement of partial and complete records, attestation failure and
+  attestation success with release-start refusal, plus (second commit) an own marker already gone at release and a failed record that vanishes before its proof lookup or during its single unlink. Two old expectations changed by design: the
+  resident marker read is now labelled, and the own-release verified successor now completes.
+- `container-startup-cleanup.test.ts` (new, 16 tests): exact original on settled cleanup; mutable
+  close failure retains both leases with release faults armed but never attempted; each and both
+  lease release failures; in-memory store (no database lease); defaults refusal before the
+  database lease; held database lock refusal; read-only close with store refusal, with both
+  leases retained; read-only close-only primary; Mac key-source refusal with and without a lease
+  failure; a tagged database-lease failure passed through unchanged and flattened.
+- `serve-failure-output.test.ts` (8 -> 25 tests): tagged classification and rendering for
+  every known primary, unknown primaries, arbitrary `AggregateError`, escaping, identity and
+  flattening, and code vetting. The bound #533 tests are unchanged.
+
+A temporary mutation check (`G:/ggq/tmp/a4-542-537-560/mutate.mjs`, not committed) applied 18
+single-predicate mutants to `data-dir-lock.ts` and `container.ts`; all 18 were killed by the
+focused files after two controls were added for the two initial survivors (capture listing check;
+verification without own-marker removal). Sources were restored byte-for-byte after each mutant.
+
+## Commands and results
+
+Environment: Windows 11, Git Bash, Node `v22.23.4` (project runtime on PATH), pnpm 12.8.1,
+`TEMP`/`TMP` on `G:/ggq/tmp/a4-542-537-560`. No install was needed or run.
+
+| Command (in the worktree) | Bytes | Result |
+| --- | --- | --- |
+| baseline `pnpm --filter @graphgoblin/api test src/data-dir-lock.test.ts src/data-dir-lock-failures.test.ts src/reset/reset-acquisition.test.ts` | `f0dac015` | 3 files, 101 passed |
+| same selection | final (`6c86acea`) | 3 files, 152 passed |
+| `pnpm --filter @graphgoblin/api test src/container-startup-cleanup.test.ts src/serve-failure-output.test.ts src/macos-local-key.test.ts` | final | 3 files, 42 passed, 18 skipped (the existing `geteuid`-gated Mac attestation tests cannot run on Windows) |
+| extra regression: `... test src/container.test.ts src/serve.test.ts src/database-ownership.test.ts src/create-api-key.test.ts src/reset/reset.test.ts` | `8ffe5c0b` content | 5 files, 148 passed, 2 skipped |
+| `pnpm --filter @graphgoblin/api typecheck` | final | exit 0 |
+| `pnpm --filter @graphgoblin/api lint` | final | exit 0 |
+| `pnpm exec prettier --check` (the nine listed paths), then `apps/api/src/startup-cleanup.ts`, then `docs/decisions/README.md` | final | all formatted |
+| `pnpm check:qa --base origin/main` | final | passed; 0 `docs/qa` paths selected |
+| API coverage run 1, `pnpm test:coverage --filter=@graphgoblin/api` under the heavy-suite lock | pre-commit (differs from `8ffe5c0b` only by the detail wording) | 2,381 passed, 40 skipped, 1 failed: `history-cleanup.test.ts` "reclaims approved workspaces through the API with 1000 retained workspace users" timed out at 20 s under full load (the same case passes alone in 3.9 s; it inserts 1,000 runs and is unrelated to locks). Vitest prints no coverage report after a failure. Log: `api-coverage-run1-pre-commit.log` |
+| API coverage run 2, same command under the lock | `8ffe5c0b` | 2,377 passed, 40 skipped, 0 failed, but 1 unhandled error: the Vitest fork running `create-api-key.test.ts` exited with 3221225477 (0xC0000005, access violation; the package config documents libsql native crashes on Windows at worker exit), so its 12 tests never reported. Coverage: lines 94.05% (4870/5178), statements 92.4%, branches 89.5% (3822/4270), functions 89.85% (957/1065); exit 1 on the branch and function thresholds. In that run `create-api-key.ts` had 4/57 branches and 1/10 functions covered; its own test normally covers most of these, which by itself exceeds the 21-branch and 2-function shortfall. Changed files: `startup-cleanup.ts` 100/100/100, `container.ts` lines 97.68% / branches 94.61%, `data-dir-lock.ts` lines 93.65% / branches 88.88% (uncovered branches are pre-existing POSIX attestation, an already unreachable `published` branch and a non-listed rename error, plus three new-code branches covered by the second commit), `serve.ts` uncovered lines are the pre-existing `serve()` signal closures. Log: `api-coverage-run2-8ffe5c0b.log` |
+| API coverage rerun on `6c86acea` under the lock | final | the single coordinator-requested rerun: lock 09:09:24Z to 09:15:31Z. 2,384 passed, 40 skipped, 1 failed, no worker crash. The failure is again only `history-cleanup.test.ts` "reclaims approved workspaces through the API with 1000 retained workspace users" at 20,233 ms, so Vitest printed no coverage report. Hosted CI logs elsewhere in the evidence tree show the same case at 2.1 to 2.6 s; locally it takes 3.9 s alone. No further runs were made. Log: `api-coverage-run3-6c86acea.log` |
+
+Mutation check: `mutation-check.mjs` (copy of the temporary script) applied 18 single-predicate
+mutants to `data-dir-lock.ts` and `container.ts`; all were killed after the two initial survivors
+gained controls. Sources were restored byte-for-byte each time and verified afterwards.
+
+## Decisions, deviations and open points
+
+Decisions within the contract (each is a reviewer question, not a settled product decision):
+
+1. Detail wording is `cleanup also failed: <label> (<CODE>), ...; ownership retained: <resource>
+   <path>, ...`. It started as "startup cleanup also failed" and was changed before commit because
+   the lock module also serves `--reset` and `--create-api-key`, where "startup" would be wrong.
+   The class keeps the contract's name `StartupCleanupError`.
+2. Retained lease paths name the protected resource (data directory, database file); a retained
+   lock record names the lock file itself.
+3. A failed lease release is also listed as retained ownership (its real lease stays held), not
+   only leases kept after an unconfirmed close.
+4. A complete record whose bytes differ at cleanup time is treated as foreign: preserved, and the
+   in-process reservation is dropped, matching the existing `release()` treatment of a
+   non-matching record (`kept`, reservation dropped).
+5. The capture and staged identity run on win32 only. A staged identity that cannot be read makes
+   the captured identity unknown (fail-closed to the existing rollback), never a publication change.
+6. `filesystemFailure` now vets every code, so an unusual non-string or free-text code becomes
+   `UNKNOWN`; real Node codes are unchanged.
+7. For an unknown primary the shell output is `util.inspect(primary)` plus the detail line, the same
+   text `console.error(primary)` prints, except that a TTY would have colourised the object.
+8. Operation labels were chosen here: `observed-marker-read`, `recovery-marker-read`; probe labels
+   `recovery-directory-lookup`, `successor-inspection`, `successor-liveness`, `successor-identity`;
+   cleanup labels `main-record-identity|close|lookup|unlink`, `recovery-release`,
+   `readonly-database-close`, `database-close`, `database-lease-release`, `directory-lease-release`.
+9. The rename `try` in `acquireRecovery` was narrowed to the rename itself (with `continue`), so
+   nothing after publication can be caught as a publication failure. Loop semantics are unchanged.
+
+Caveats and open points:
+
+- No native contention, controlled filesystem-fault QA of built routes, or native multi-contender
+  runs were performed, as the brief reserves them for independent QA. All new evidence is unit
+  level with real disposable filesystem state and controlled faults. On Windows the win32 paths
+  run natively; on Linux/macOS CI they run with `process.platform` stubbed, as #582's tests do.
+- The positive own-release branch was exercised only with controlled scheduling; whether native
+  Windows ever reaches it, and the historical #471 cause and frequency, remain unknown.
+- `serve()`'s own startup catch still awaits `stop()` and could displace the error; `serve`-to-stop,
+  `start()`-to-`dispose()` and returned-container disposal remain outside this slice (documented).
+- The Mac attestation paths in `macos-local-key.test.ts` are skipped on Windows; the attested
+  success/failure/release-start cases added here run on every platform, and POSIX verification
+  relies on CI.
+- Two Windows-venue disturbances in the full API run (a load-sensitive 20 s timeout and a libsql
+  0xC0000005 worker crash) are not caused by this change as far as the evidence shows; that is an
+  inference from the failing cases' content and isolated reruns, not a proven cause.
+- Opposite-family (GPT) code review, independent QA, current-target CI and the fresh Astra MAX
+  final remain required before merge. #533's separate QA and #582's recorded review history and
+  timing exception are unchanged.
+
+Files in this folder: `AUTHOR-REPORT.md`, `api-coverage-run1-pre-commit.log`,
+`api-coverage-run2-8ffe5c0b.log`, `mutation-check.mjs`, `api-coverage-run3-6c86acea.log`.
