@@ -73,11 +73,15 @@ async function cli(environment: Record<string, string>) {
  * Seeds a checkpointed store at an unused staging path, then copies only its main DB to the fresh
  * `dbFile`. A closed writer's native cleanup may still remove its WAL/SHM after `close()` returns,
  * so the writer never opens the inspected path and none of its sidecars are shared with it.
+ * The writer applies `migrationsFolder` when given, otherwise every shipped migration.
  */
-async function fixture(dbFile: string, rows = DEFAULT_MODEL_CATALOG) {
+async function stagedStore(dbFile: string, rows: ModelCatalogEntry[], migrationsFolder?: string) {
   await mkdir(dirname(dbFile), { recursive: true });
   const staged = join(await mkdtemp(join(dir, 'fixture-writer-')), basename(dbFile));
-  const handle = openDatabase({ url: pathToFileURL(staged).href });
+  const handle = openDatabase({
+    url: pathToFileURL(staged).href,
+    ...(migrationsFolder === undefined ? {} : { migrationsFolder }),
+  });
   try {
     await handle.migrate();
     await new SqliteModelCatalog(handle.db).seed(rows);
@@ -92,6 +96,11 @@ async function fixture(dbFile: string, rows = DEFAULT_MODEL_CATALOG) {
     handle.close();
   }
   await copyFile(staged, dbFile, constants.COPYFILE_EXCL);
+}
+
+/** A current store with every shipped migration applied and `rows` seeded. */
+async function fixture(dbFile: string, rows = DEFAULT_MODEL_CATALOG) {
+  await stagedStore(dbFile, rows);
 }
 
 /** SQLite readers update -shm read marks; only DB/WAL contain the stored data. */
@@ -168,18 +177,7 @@ async function migrationPrefix(): Promise<string> {
 
 /** A current-format store whose last start predates the shipped migrations after the prefix. */
 async function pendingFixture(dbFile: string, rows: ModelCatalogEntry[]) {
-  await mkdir(dirname(dbFile), { recursive: true });
-  const handle = openDatabase({
-    url: pathToFileURL(dbFile).href,
-    migrationsFolder: await migrationPrefix(),
-  });
-  try {
-    await handle.migrate();
-    await new SqliteModelCatalog(handle.db).seed(rows);
-    await handle.client.execute('PRAGMA wal_checkpoint(TRUNCATE)');
-  } finally {
-    handle.close();
-  }
+  await stagedStore(dbFile, rows, await migrationPrefix());
 }
 
 /** Stored rows as startup reads them before pending migrations add the discovery tables. */
