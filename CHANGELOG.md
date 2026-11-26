@@ -4,6 +4,22 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- A reset now removes a SQLite sidecar as the directory entry its name opens and keeps every
+  other hard link of that file (#538). Before, when a `-wal`, `-shm` or `-journal` file had another
+  name in the same directory, the reset could list and unlink whichever name the directory listed
+  first. It still reported success and left the surviving name out of Keeps. Now the exact listed
+  name is used. Another spelling counts only when it is the one listed name with that file identity,
+  or on Windows the listed link the filesystem's final path names in the same directory; otherwise
+  the reset refuses. Another top-level name of a removed sidecar is listed under Keeps as
+  `another name for <sidecar>` and keeps its bytes. When `GG_DB_URL` spells the database file
+  differently from the directory listing, both sidecar spellings must name the same entry or none
+  before the store is read. A sidecar that is also one of the reset's lock files or guards, or a
+  reserved top-level name, is refused, and earlier lock refusals keep their diagnostics. An
+  ambiguity first seen under the locks refuses before removal and releases them. The exported
+  manifest check, lock module, store reader and stored formats are unchanged, so no upgrade action
+  is needed. Sidecars under 8.3 short names, macOS, and network or non-NTFS volumes are not
+  qualified by this change.
+
 - `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
   delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
   that ref to the working tree, including staged, unstaged and untracked files, and checks their
