@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# Brief B9 (#555): one native Windows Edge run of apps/web/e2e/pwa.spec.ts.
+# usage: run-pwa.sh <label> [extra playwright args, e.g. --grep=unresolved]
+# Writes verbatim stdout/stderr, the JSON report and a run receipt to the evidence folder.
+# Serves a disposable byte-identical copy of apps/web/dist (GG_E2E_WEB_DIST), as the E2E server
+# rewrites sw.js during PWA tests; temp, browser profile and test output live under G:/ggq/tmp.
+set -u
+label=$1; shift
+WT=G:/ggq/gg-fu-ui-555-test-errors-20261124/GraphGoblin
+EV=G:/ggq/delivery-evidence/2026-11-24-followups/ui-479-515-555/claude-window-555-01
+OUT=$EV/runs/$label
+SCR=G:/ggq/tmp/b9-555/$label
+mkdir "$OUT" || exit 90
+mkdir "$SCR" || exit 91
+mkdir "$SCR/temp" "$SCR/absent"
+cp -r "$WT/apps/web/dist" "$SCR/served-dist"
+hashes() { (cd "$1" && find . -type f | LC_ALL=C sort | sed 's|^\./||' | while read -r f; do printf '%s  %s\n' "$(sha256sum "$f" | cut -d' ' -f1)" "$f"; done); }
+hashes "$WT/apps/web/dist" > "$OUT/dist-source.sha256"
+hashes "$SCR/served-dist" > "$OUT/served-dist-before.sha256"
+export PATH="$HOME/.claude/codex-runs/GraphGoblin/runtime/node-v22.23.4-win-x64:$PATH"
+export TEMP="$SCR/temp" TMP="$SCR/temp"
+export CI=1 FORCE_COLOR=0 LIVE=0
+export GG_E2E_BROWSER_CHANNEL=msedge GG_E2E_WEB_DIST="$SCR/served-dist"
+export GG_OLLAMA_ENABLED=false GG_OLLAMA_URL=http://127.0.0.1:1
+export GG_CODEX_BINARY="$SCR/absent/absent-codex.exe" GG_CLAUDE_BINARY="$SCR/absent/absent-claude.exe"
+export PLAYWRIGHT_JSON_OUTPUT_NAME="$OUT/playwright.json"
+{
+  echo "label=$label"
+  echo "args=e2e/pwa.spec.ts $* --workers=1 --retries=0 --reporter=list,json --output=$SCR/test-output"
+  echo "head=$(git -C "$WT" rev-parse HEAD)"
+  echo "branch=$(git -C "$WT" branch --show-current)"
+  echo "status=$(git -C "$WT" status --porcelain=v1 | tr '\n' ';')"
+  echo "patchSha256=$(git -C "$WT" --no-optional-locks diff --binary --full-index --no-renames --no-ext-diff --no-textconv --no-color HEAD | sha256sum | cut -d' ' -f1)"
+  echo "specSha256=$(sha256sum "$WT/apps/web/e2e/pwa.spec.ts" | cut -d' ' -f1)"
+  echo "node=$(node --version)"
+  echo "pnpm=$(pnpm --version)"
+  echo "edgeSha256=$(sha256sum '/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe' | cut -d' ' -f1)"
+  echo "edgeVersions=$(ls '/c/Program Files (x86)/Microsoft/Edge/Application/' | grep -E '^[0-9]+\.' | tr '\n' ' ')"
+  echo "ProgramFiles=$(printenv PROGRAMFILES)"
+  echo "ProgramFiles(x86)=$(printenv 'ProgramFiles(x86)')"
+  echo "ProgramW6432=$(printenv ProgramW6432)"
+  echo "TEMP=$TEMP"
+  echo "GG_E2E_WEB_DIST=$GG_E2E_WEB_DIST"
+  echo "startUtc=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+} > "$OUT/RUN.txt"
+cd "$WT/apps/web" || exit 92
+pnpm exec playwright test e2e/pwa.spec.ts "$@" --workers=1 --retries=0 --reporter=list,json \
+  --output="$SCR/test-output" > "$OUT/stdout.log" 2> "$OUT/stderr.log"
+code=$?
+{
+  echo "endUtc=$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+  echo "exitCode=$code"
+} >> "$OUT/RUN.txt"
+hashes "$SCR/served-dist" > "$OUT/served-dist-after.sha256"
+if cmp -s "$OUT/served-dist-before.sha256" "$OUT/served-dist-after.sha256"; then echo "servedDistRestored=true" >> "$OUT/RUN.txt"; else echo "servedDistRestored=false" >> "$OUT/RUN.txt"; fi
+if cmp -s "$OUT/dist-source.sha256" "$OUT/served-dist-before.sha256"; then echo "servedCopyMatchesSource=true" >> "$OUT/RUN.txt"; else echo "servedCopyMatchesSource=false" >> "$OUT/RUN.txt"; fi
+echo "statusAfter=$(git -C "$WT" status --porcelain=v1 | tr '\n' ';')" >> "$OUT/RUN.txt"
+cat "$OUT/RUN.txt"
+exit $code

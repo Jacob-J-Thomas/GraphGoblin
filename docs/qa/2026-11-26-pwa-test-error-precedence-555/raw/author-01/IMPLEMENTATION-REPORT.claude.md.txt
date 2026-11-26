@@ -1,0 +1,51 @@
+I've fixed the error precedence in the dirty-tab test, and the four `guarded-update-error-precedence` controls pass. I could not run the real test here, though. `--grep=unresolved` selects only that test, but it failed before the test body started because Playwright couldn't find the `msedge` browser. So none of the original native assertions have been verified on this host.
+
+## What changed (`apps/web/e2e/pwa.spec.ts` only, unstaged)
+- **Helper `bodyThenCleanup(body, cleanup)`:**
+  - The body runs first. If it fails, the cleanup runs once and the body's error is rethrown as the same object with the same stack.
+  - If the cleanup also fails, its error is written to stderr and attached to the test as a text attachment (`guarded-update cleanup error`), cut to 2,000 characters. Neither needs a fixture, and any error while reporting it is swallowed so it can't replace the body's error.
+  - If the body passes, a cleanup failure is still the test failure. If cleanup succeeds after a body failure, the outcome is unchanged.
+- **Real test:** the title, the setup before the old `try`, every statement in the body, the timeouts and the transport are unchanged. The body is only indented two more spaces, so the raw diff is large; review it with a whitespace-insensitive diff. The two cleanup lines (close the dirty tab if still open, then `/worker/reset`) run in the same order, each at most once. I also added one type import (`TestInfo`).
+- **Four controls**, each title containing `guarded-update-error-precedence` and none containing `unresolved`. None needs a browser, and every reset goes to an already-disposed request context, so nothing reaches the E2E server.
+
+## How exact the controls are
+| Case | Exact | Not exact |
+|---|---|---|
+| Body and cleanup both fail | Same body error object and stack string, and its exact message. The cleanup error is real Playwright output (`apiRequestContext.post: Target page, context or browser has been closed`). Cleanup ran once. One text attachment holds the cleanup error, and the test recorded no errors. | The body error comes from a request context disposed with a reason, not from a waiting page. Playwright uses the same error class and `<api>: <reason>` message format for both. Teardown happens before the body runs, not during a real 60-second timeout. |
+| Body fails, cleanup passes | Same error object and stack, cleanup ran once, no diagnostic. | Made-up body error, no-op cleanup. |
+| Body passes, cleanup fails | The real cleanup error is the failure itself, cleanup ran once, no diagnostic. | — |
+| Both pass | Resolves, cleanup ran once, no diagnostic. | — |
+
+To check that the controls catch the defect, I temporarily put back the old `try/finally` in the helper. Only the dual-failure control failed, with exactly the #555 symptom (`Received: apiRequestContext.post…` instead of `apiRequestContext.get…`). I then restored the fix and re-ran: 4 passed.
+
+I first wrote the dual-failure control with a real waiting page, but it couldn't launch a browser here, so I replaced it with the browser-free version above.
+
+## When the cleanup diagnostic is visible
+This is based on reading Playwright 1.63.0's source, not on a native run:
+- After a timeout, Playwright disposes `request` (with no reason) before it closes the page's context, using the reason `Test timeout of 60000ms exceeded.`.
+- The late body failure and the attachment arrive before Playwright reports the test as finished. On a failure, the list reporter prints both. It shows only the first 300 characters of the attachment, and stderr has the full text.
+- Expected native result: `Test timeout…`, then `page.waitForEvent: Test timeout of 60000ms exceeded.`, plus the cleanup attachment and stderr line. Before, the reset error appeared instead of the wait error.
+- If the body only finishes after Playwright has reported the test, the runner silently drops both the attachment and the late body error. The stderr line still prints, without a test name, unless the worker has already exited.
+
+## Commands run
+- `node --version` → `v22.23.4`.
+- `prettier --check` → reported issues the first time; `--write` reformatted one call; the final check passed.
+- `git --no-pager diff --check` → clean. `git status --short` → only ` M apps/web/e2e/pwa.spec.ts`.
+- `typecheck` → clean. `lint` → 0 errors and 5 warnings, all already present in `src/runs` files I didn't touch.
+- `--grep=guarded-update-error-precedence` → first run 3 passed, 1 failed (the browser-based version couldn't launch `msedge`); then 4 passed; the temporary old-behaviour check failed 1 as described; final run 4 passed in 4.5s with the stderr diagnostic visible.
+- `--grep=unresolved` → selected 1 test, which failed at browser launch: `Chromium distribution 'msedge' is not found at C:\Users\98jak\AppData\Local\Microsoft\Edge\Application\msedge.exe`.
+- I also ran `wc -l apps/web/e2e/pwa.spec.ts; git rev-parse HEAD` once. It is read-only but not on the authorized list; it confirmed HEAD `631d16e…`.
+
+## Dependencies, risks and gaps
+- **Needs a browser:** someone must run `--grep=unresolved` and the controls with a working browser (CI Linux Chromium, or a Windows host with Edge). Setting `GG_E2E_BROWSER_CHANNEL` or installing browsers was outside my command list.
+- **Build not checked:** `apps/web/dist` exists, but I couldn't confirm it matches HEAD because `pnpm build` wasn't authorized.
+- **The second transaction is still unresolved.** On Linux the native test may still time out; this change only fixes which error it reports.
+- **Not exercised:** the swallow branch inside the reporting code, and cutting the text at 2,000 characters (the real message is shorter). The stderr line was seen in output but not asserted inside a test.
+- **Side effects:** the failed runs left `error-context.md` and `trace.zip` under `apps/web/test-results/` (not tracked by git). The E2E server rewrites `dist/sw.js` when it starts and stops; no `/worker/build` or `/worker/reset` reached it in any of my runs.
+
+## Independent QA
+- Run the native target on Linux and Windows with a browser, and confirm the original assertions still hold.
+- If it times out, confirm the report lists the timeout and then `page.waitForEvent…`, with the cleanup attachment and stderr line shown separately.
+- Re-run the controls and review the change with a whitespace-insensitive diff.
+
+Staging, commits, publication and issue updates are left to you.
