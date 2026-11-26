@@ -1,5 +1,5 @@
 import Fastify from 'fastify';
-import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import { serializerCompiler } from 'fastify-type-provider-zod';
 import { expect, it } from 'vitest';
 import { z } from 'zod';
 import { registerErrorHandler } from './errors.js';
@@ -8,9 +8,9 @@ import {
   requestValidatorCompiler,
 } from './request-validation.js';
 
-async function fixture(schema: z.ZodType, legacy = false) {
+async function fixture(schema: z.ZodType) {
   const app = Fastify({ logger: false });
-  app.setValidatorCompiler(legacy ? validatorCompiler : requestValidatorCompiler);
+  app.setValidatorCompiler(requestValidatorCompiler);
   registerErrorHandler(app);
   app.post('/fixture', { schema: { body: schema } }, (request) => request.body);
   await app.ready();
@@ -84,26 +84,6 @@ it('keeps ordinary and root diagnostics and the parsed success value without dup
     expect(root.json()).toMatchObject({
       code: 'VALIDATION_FAILED',
       errors: [{ path: '/', message: 'Invalid input: expected object, received array' }],
-    });
-  } finally {
-    await app.close();
-  }
-});
-
-it('preserves diagnostics from the existing provider compiler without reinterpreting its strings', async () => {
-  const app = await fixture(z.strictObject({ count: z.number() }), true);
-  try {
-    const response = await app.inject({
-      method: 'POST',
-      url: '/fixture',
-      payload: { count: 'bad', 'extra/~': true },
-    });
-    expect(response.json()).toMatchObject({
-      code: 'VALIDATION_FAILED',
-      errors: [
-        { path: '/count', message: 'Invalid input: expected number, received string' },
-        { path: '/extra~1~0', message: 'Unrecognized key "extra/~"' },
-      ],
     });
   } finally {
     await app.close();

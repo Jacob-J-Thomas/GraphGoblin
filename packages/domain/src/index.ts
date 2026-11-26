@@ -24,7 +24,7 @@ export * from './json-schema.js';
 export * from './mutations.js';
 export * from './graph.js';
 export * from './answers.js';
-export { findAuthoredSources, syntaxIssues } from './syntax.js';
+export { findAuthoredSources } from './syntax.js';
 export { renameLoopNode, type NodeRenameResult } from './node-references.js';
 export * from './state-machine.js';
 export * from './loop-io.js';

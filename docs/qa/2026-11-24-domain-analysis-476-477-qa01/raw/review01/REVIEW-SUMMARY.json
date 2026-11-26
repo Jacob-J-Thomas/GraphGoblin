@@ -1,0 +1,250 @@
+{
+  "schemaVersion": 1,
+  "decision": "READY",
+  "decisionScope": "Independent formal review scan 1 of the frozen patch; separate QA/CI/final Astra MAX and merge gates remain.",
+  "completedAtUtc": "2026-11-25T02:15:22.9927508Z",
+  "reviewer": "domain_followup_review",
+  "reviewerFamily": "OpenAI",
+  "formalScan": 1,
+  "formalScanCap": 3,
+  "finalIndependentAstraMaxConsumed": false,
+  "issues": [
+    476,
+    477
+  ],
+  "repository": "G:\\ggq\\gg-fu-domain-analysis-20261124\\GraphGoblin",
+  "baseCommit": "d2df8600c2c8574bec420947de686b936910b245",
+  "patchSha256": "dd0f9f6b5df075bbcbc914a1982968e6aeb9677b8c456d21bb7f804841766345",
+  "sourceManifest": "SOURCE-MANIFEST.json",
+  "reviewedSourceHashes": [
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "91ef99679ed2fe25711192cd298ab8213651effd757011859ee8580a680490f4",
+      "bytes": 198766
+    },
+    {
+      "path": "apps/web/src/editor/store.rename.test.ts",
+      "sha256": "7fd31f13d38c11f2e19a482b6071f133c40b0aa8169d07c9eb82d3fefdf54056",
+      "bytes": 18184
+    },
+    {
+      "path": "apps/web/src/editor/store.ts",
+      "sha256": "5bd7b85c36bc7bea196152a1b81d2573e94c8164764b9d4f3e90be829c5dab09",
+      "bytes": 43198
+    },
+    {
+      "path": "docs/03-domain-model.md",
+      "sha256": "4e219c89041249d631a67f53b2a54f637be4b9038494d242e759cbba6ba2b0cc",
+      "bytes": 41358
+    },
+    {
+      "path": "docs/09-frontend-and-pwa.md",
+      "sha256": "02a61c955d7a212f4b5473cd6642872ef7afe6e947336e18ac499ce1f2f072a3",
+      "bytes": 354139
+    },
+    {
+      "path": "packages/domain/src/index.ts",
+      "sha256": "0b38489ddf3cde28d82bbb01d7c9c6e6feed63afe31e2892be55a136b590ee1e",
+      "bytes": 1259
+    },
+    {
+      "path": "packages/domain/src/node-references.test.ts",
+      "sha256": "4fc51b8159a35fce6c5ab61ec49b37dc6af9b1959f8c3648d7a3a49d296f05cf",
+      "bytes": 39222
+    },
+    {
+      "path": "packages/domain/src/node-references.ts",
+      "sha256": "0f32de3394e56d74ae728168825fc8b1fedd3c5561c3bac78d186a35f9accbca",
+      "bytes": 12380
+    },
+    {
+      "path": "packages/domain/src/syntax.test.ts",
+      "sha256": "5c5f8901ad71a614c654ac20992672a4ffd0e1918cefad65e8c04d91a0c1c6d4",
+      "bytes": 13376
+    },
+    {
+      "path": "packages/domain/src/syntax.ts",
+      "sha256": "ab74dfe284810dd14ea4421bd7221a7014786b82178373fec07afdeee1d9df25",
+      "bytes": 5239
+    }
+  ],
+  "sourceAndPatchUnchanged": true,
+  "matchesAuthorCorrectionExit": true,
+  "indexUnchanged": true,
+  "stagedPaths": [],
+  "untrackedPaths": [],
+  "findings": [],
+  "findingCounts": {
+    "fixInPr": 0,
+    "followup": 0
+  },
+  "validation": {
+    "domainFocused": {
+      "files": 5,
+      "tests": 116,
+      "passed": true
+    },
+    "webFocused": {
+      "files": 4,
+      "tests": 34,
+      "passed": true
+    },
+    "independentControls": {
+      "cases": 203,
+      "passed": true,
+      "groups": [
+        {
+          "name": "baseline rename differential: actual repair, warning and immutability parity with count conservation",
+          "cases": 192,
+          "passed": true
+        },
+        {
+          "name": "no-op and refused results contain only kind, without draft/source/count disclosure",
+          "cases": 5,
+          "passed": true
+        },
+        {
+          "name": "public validateLoop branch selection: invalid sibling retained, invalid/missing/unknown discriminants skipped, inactive malformed source ignored",
+          "cases": 6,
+          "passed": true
+        }
+      ]
+    },
+    "typecheckPassed": true,
+    "lintPassed": true,
+    "lintErrors": 0,
+    "lintWarnings": 5,
+    "lintWarningsInUnchangedPaths": true,
+    "formatPassed": true,
+    "diffCheckPassed": true
+  },
+  "commands": [
+    {
+      "record": "domain-focused.json",
+      "command": "pnpm.cmd --filter @graphgoblin/domain test src/syntax.test.ts src/node-references.test.ts src/source-analysis.test.ts src/parse-identity.test.ts src/graph.test.ts",
+      "exitCode": 0,
+      "node": "v22.23.4"
+    },
+    {
+      "record": "web-focused.json",
+      "command": "pnpm.cmd --filter @graphgoblin/web test src/editor/store.rename.test.ts src/editor/RenameNotice.test.tsx src/editor/EditorPage.rename.test.tsx src/editor/EditorPage.rename-activation.test.tsx",
+      "exitCode": 0,
+      "node": "v22.23.4"
+    },
+    {
+      "record": "review-controls.command.json",
+      "command": "pnpm.cmd --filter @graphgoblin/web exec tsx --conditions=development <review-01>/review-controls.mts",
+      "exitCode": 0,
+      "node": "v22.23.4"
+    },
+    {
+      "record": "typecheck.json",
+      "command": "pnpm.cmd --filter @graphgoblin/domain --filter @graphgoblin/web typecheck",
+      "exitCode": 0,
+      "node": "v22.23.4"
+    },
+    {
+      "record": "lint.json",
+      "command": "pnpm.cmd --filter @graphgoblin/domain --filter @graphgoblin/web lint",
+      "exitCode": 0,
+      "node": "v22.23.4"
+    },
+    {
+      "record": "format.json",
+      "command": "pnpm.cmd exec prettier --check <10 SOURCE-MANIFEST changed paths>",
+      "exitCode": 0,
+      "node": "v22.23.4"
+    },
+    {
+      "record": "diff-check.json",
+      "command": "git diff --check",
+      "exitCode": 0,
+      "node": null
+    }
+  ],
+  "remainingGates": [
+    "Independent touched-system QA including safely isolated API publication diagnostics",
+    "Required package/repository coverage and other checks",
+    "Exact-head and exact-target CI",
+    "Reserved final independent Astra MAX review",
+    "Applicable publication and merge authority"
+  ],
+  "evidenceLimits": [
+    "No fresh HTTP/API publication acceptance or browser E2E in this review",
+    "No broad local API suite because base lacks #565 fixture isolation",
+    "Full domain coverage is author-carried evidence for matching source hashes, not reviewer-executed coverage",
+    "192 differential cases are bounded evidence, not exhaustive equivalence"
+  ],
+  "protectedActions": {
+    "sourceEdited": false,
+    "indexWritten": false,
+    "ownerServicesAccessed": false,
+    "providerTurns": false,
+    "committed": false,
+    "published": false,
+    "merged": false,
+    "issueWrites": false
+  },
+  "artifacts": [
+    {
+      "file": "REVIEW.md",
+      "sha256": "74cad762d9d5ba0a6d7736f7b472daf1cfd6328f7a9266ad155aff928354adb2"
+    },
+    {
+      "file": "SOURCE-MANIFEST.json",
+      "sha256": "465888c29d1b93dcf8f508a5a5f34d4fb627b3376b4828b5207941ef43952c0d"
+    },
+    {
+      "file": "SOURCE-VERIFICATION.json",
+      "sha256": "02956c1d32c99bb6f84122c419c0095f9bfacc5c37268f94a48baf55cc31663f"
+    },
+    {
+      "file": "CALLER-SEARCH.json",
+      "sha256": "2d36df187503da7ba4696a829875c0f59c63567b378b959c8aa7f03f14cfee7c"
+    },
+    {
+      "file": "candidate.patch",
+      "sha256": "dd0f9f6b5df075bbcbc914a1982968e6aeb9677b8c456d21bb7f804841766345"
+    },
+    {
+      "file": "candidate-index.patch",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "review-controls.mts",
+      "sha256": "da5ba8414143d998f84f79b3aade6675b359cf11426eb22ae1864a45a7cb071a"
+    },
+    {
+      "file": "review-controls.results.json",
+      "sha256": "46a4548ea514797e6f497228793b5d955a5f9d6820692a7bcd4bc0d4ee9c12c8"
+    },
+    {
+      "file": "baseline-node-references.relocated.ts",
+      "sha256": "6169701aa9d5b5f9ce97740a6ab3646902b7c13de6094d7a6aa63eff322ea504"
+    },
+    {
+      "file": "domain-focused.log",
+      "sha256": "9b40198239925cf9232400baf994927ebc0402dbcf31b76e83eca4918b8aefd8"
+    },
+    {
+      "file": "web-focused.log",
+      "sha256": "c2267cb0876ffe03532912d7de9acd19d654d4f4c5780c498537e345fb8b07f1"
+    },
+    {
+      "file": "typecheck.log",
+      "sha256": "9735068593d57d6d9ebb858d654dc46434a4daa42af1ddbd87a0998ff67313a7"
+    },
+    {
+      "file": "lint.log",
+      "sha256": "34c48b92bedc5e93ac2cb8860cbe053761bef4884b7c22ab2fd6911a81b6712c"
+    },
+    {
+      "file": "format.log",
+      "sha256": "f20510a9da4717c51c4cffee6d0dd88d6c9a723d0a83711d01216f5b48961283"
+    },
+    {
+      "file": "diff-check.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
