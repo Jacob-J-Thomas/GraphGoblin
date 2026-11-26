@@ -194,6 +194,13 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   selected. Fit view, its padding, saved routes and labels, the gesture gate and every refusal
   are unchanged; no stored format or API change.
 
+- Windows launcher evidence records the native warm review-1 regressions (#566, #544) as their
+  own required `warm-review1` case. That test ran outside every recorded case, so its fixture and
+  gateway cleanup records had no case scope and were rejected, and a passing native run finalized
+  as `incomplete` with `records-rejected`. Its records now carry the case and subtest, its start,
+  end, subtests and child processes are required like the other cases', and the schema, the
+  rejection rule and the finalize gate are unchanged. No stored, export or contract change.
+
 - `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
   `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
   template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so
@@ -249,6 +256,48 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   its error nor its new run and does not navigate, only that it was requested. Saving the key that
   is already accepted keeps reviews and consent. Server authorization, the actor model, the
   event-qualified header and #575's outage boundaries are unchanged.
+
+- The Windows launcher installer refuses a PWA shortcut, or an existing launcher output, that
+  Windows reports as a link or other reparse point, as files in cloud-synced folders can be, and
+  says to use ordinary local paths that are not synced (#499). The source is refused from the
+  attributes already read, before its digest, any stage or any shortcut read. The check just
+  before publication reads the selected `-PwaShortcut` path again rather than only its earlier
+  target, so a path that now reaches the same file through a link is refused the same way, without
+  hashing. "The PWA shortcut changed during preparation" now means only a different, missing or
+  modified file. A file symbolic link source, previously followed to its target, is now refused.
+  An output refusal names the parameter that selected it (`-InstallDir`, `-DesktopShortcut`,
+  `-StartMenuShortcut` or `-PinnedShortcut`). Collision refusals still come first, and the
+  directory and extension refusals and staged publication with rollback are unchanged. The
+  installer recognizes only the reparse attribute Windows reports: it adds no sync-service support
+  and does not promise that a service will not download a refused placeholder. The install and
+  troubleshooting guides cover redirected and synced Desktop folders.
+  **Upgrade:** if your Chrome shortcut or launcher outputs are in a synced folder, copy the
+  shortcut to an ordinary local folder and rerun the installer with explicit `-PwaShortcut`,
+  `-InstallDir`, `-DesktopShortcut` and `-StartMenuShortcut` paths. No store, export or
+  stored-data change.
+
+- The Windows launcher reuses a running gateway without waiting for helpers, locks or the
+  checkout's files (#566, #544, ADR-0090). `/healthz` adds `X-GraphGoblin-Launch-Identity`, a
+  versioned digest of the effective non-secret settings and canonical store and serving paths that
+  ignores the Node runtime and build. The installer enrolls it once through the configured runtime
+  and binds it to the launcher's exact checkout, Node, data-directory, port and `GG_*` inputs; a
+  click first probes the port and reuses a ready gateway with that identity whose store still
+  resolves to the enrolled locations. Startup locks, helper containment and the full fingerprint
+  check apply only to cold start, which also refuses settings that drifted from the enrollment.
+  Under a host job policy that refuses process creation, a warm click now succeeds without
+  attempting one; a cold start still refuses. A configuration changed while a click waited, a
+  retargeted store alias (including one that now names a different object differing only in
+  letter case), a matching gateway whose `/app/` answers 404 or 410, and an occupied but silent
+  port are refused without stopping anything; the missing web shell is refused at once. Both
+  health digests and the enrollment come from one observation of the store and serving paths.
+  Simultaneous clicks open one PWA window, a click whose window time is nearly spent never starts
+  Chrome late, and a missing or refused Chrome start names the running gateway's address. The full
+  fingerprint, `/healthz` body and other headers are unchanged.
+  **Upgrade:** a coordinated cutover. Shut down a running gateway from an earlier build
+  deliberately once, update and build the checkout, then rerun
+  `scripts/install-windows-launcher.ps1`; a launcher JSON without enrollment is refused until
+  then. Rerun the installer after editing the launcher's Repo, Node, DataDir, Port or overrides.
+  No store, export or stored-data change.
 
 - `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
   delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with

@@ -2,10 +2,16 @@
 
 The public `/healthz` JSON body remains `{status: "ok"}`. Its response headers also publish
 `X-GraphGoblin-Instance` (an opaque non-secret runtime/configuration fingerprint),
-`X-GraphGoblin-Pid` and `X-GraphGoblin-Phase`. The optional Windows launcher compares the expected
-identity and checks the built `/app/` shell before opening its PWA. These headers identify local
-configuration; they are not authentication and disclose no raw paths or credentials. See
-[ADR-0064](decisions/ADR-0064-windows-desktop-launcher.md).
+`X-GraphGoblin-Launch-Identity` (`v1:` and a SHA-256 of the effective non-secret launch
+settings, independent of the Node runtime and build), `X-GraphGoblin-Pid` and
+`X-GraphGoblin-Phase`. The gateway computes both digests once at startup, from one observation of
+its store and serving paths. The optional Windows launcher reuses a running gateway whose launch
+identity equals the one its installer enrolled, checks the built `/app/` shell before opening its
+PWA (a definite `/app/` 404 or 410 is refused at once), and after its own cold start also
+requires the expected full fingerprint and PID. These headers identify local configuration; they are not
+authentication and disclose no raw paths, database URLs or credentials. See
+[ADR-0064](decisions/ADR-0064-windows-desktop-launcher.md) and
+[ADR-0090](decisions/ADR-0090-windows-launcher-warm-discovery.md).
 
 ## Principles (Decided)
 

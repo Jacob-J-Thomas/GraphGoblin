@@ -92,9 +92,154 @@ multi-record write, and its rollback after a short write, keep no encoded copy b
 status and closes them, records only the outcome, status and parser code (no canary in any string
 or decoded byte array) and then serves an ordinary request; ordinary construction keeps Fastify's
 default handler as the control.
+
+Warm discovery (#566, ADR-0090) has API unit tests that pin the launch projection and digest with
+a golden vector and its exhaustive `ApiConfig` decisions. They check equality across Node and
+build replacement, secrets, database lookup spelling and nested key order, and inequality for the
+store, database, API-key requirement, serving roots, checkout and protocol. They also keep the
+protocol-2 full fingerprint bytes and the one-line helper modes, against an independent golden
+text with reordered configuration keys, absent serving roots and a raw non-file database, and
+show that a supplied path snapshot determines both enrollment digests and both health headers even
+when a later resolution differs. Tooling tests compare the built helper's enrollment with the
+built gateway's `/healthz`, with the legacy helper output and through a checkout alias. Native
+fixtures enroll through the compiled launcher's `--enroll-install`, the installer's own path, and
+the installer case checks the embedded record and its input digest. Every fixture child starts
+from one host environment with every `GG_*` and `JEV_API_KEY` spelling removed, and every gateway
+these fixtures start has `GG_OLLAMA_ENABLED=false` among its final overrides, whatever the case
+overrides; the launcher fixtures assert it before enrollment and the manual start before
+spawning. Native cases reuse a gateway with the runtime and checkout
+paths removed and both startup mutexes held, refuse an edited configuration until re-enrollment,
+reuse a matching manual start, and re-probe under the locks after an unanswered warm probe. They
+refuse a configuration edited or removed during the lock wait, refuse a matching listener whose
+`/app/` answers 404 or 410 at once while both startup mutexes are held (an unanswered `/app/` still
+waits for the locks), and refuse without stopping a live gateway whose relative database alias
+was retargeted, then reuse it once the alias is restored.
+The unanswered listener reads every socket, so a client's close is observable, and waits for the
+launcher's actual `GET /healthz` probe to close; every wait in these cases is bounded, and a
+failed or cancelled case stops its exact click before releasing the mutex holder, whose own
+acquisition and hold are bounded too. A gateway these #566/#544 cases start is drained only as its
+verified owner over one private IPv4 loopback connection whose agent refuses any second
+connection: enrolled identity, Windows creation identity, executable, command line, lease bytes
+and the shutdown incarnation captured with the owner, revalidated before and after observing the
+current token on that connection, with redirects refused. A replacement listener, a changed PID,
+lease or incarnation, or an unverified start receives no shutdown request. In a controlled
+handover at a test-only point after the outer drain's final proof, a separately verified real
+drain closes that gateway, a replacement binds the port, and the outer drain refuses to reconnect,
+so the replacement receives no request; this covers that one ordering, not a swap during an
+issued request. `NativeChecks --enrollment-checks` covers the input
+digest's encoding, case-insensitive duplicate refusal, the strict helper record, the one-handle
+configuration snapshot and store resolution: a real case-insensitive alias of one directory is
+accepted through the full `FILE_ID_INFO` of two held handles, and a controlled comparison (not a
+case-sensitive directory or ReFS witness) refuses distinct case-only objects, equal low 64 ID bits
+with different high bits, another volume and unavailable or unusable IDs, and accepts two equal
+full IDs. `--handoff-checks` covers a
+refused browser start at handoff, the PWA window mutex and the shared window deadline with
+injected control points and a fake proxy that only counts its starts: a near-expired click starts
+no Chrome, start preparation that crosses the last admissible threshold makes no start call, a
+prepared start with exactly one poll left still starts, and sleeps never pass the deadline.
+
+The #544 case runs the public launcher under fixture-owned outer jobs. An unlimited control must
+start the gateway through the same nested creation shape, admitting the launcher, a contained
+helper and the gateway in that job. Its kill-on-close job stays held by a `NativeChecks
+--job-owner` broker until the gateway has been drained as its verified owner after the warm
+measurement and the broker is explicitly released; the broker then reports its sibling alive and
+only itself and that sibling left. Cancelling the broker, even while its gateway is still
+starting, settles the launcher, the gateway and their descendants, which a separate witness
+observes through exact retained handles while an unrelated process survives. One limited job then
+holds an actual active-process limit of
+3, read back from the job, whose exact members are the fixture and one unrelated detached sibling.
+A native probe fills the one free slot with a suspended child and requires both a plain creation
+and a `PROC_THREAD_ATTRIBUTE_JOB_LIST` creation to be refused. On that job's completion port each
+click has its own window, ended by a fence packet and a quiet poll. The cold click's actual helper
+refusal must be observed as `JOB_OBJECT_MSG_ACTIVE_PROCESS_LIMIT`; this calibrates the observer.
+The warm click must then keep the same gateway PID, identity and lock bytes with no refused and no
+admitted creation besides itself, and a final probe must still observe refusals. A missing
+calibration, an observer failure or a fixture failure fails the case and leaves the no-attempt
+gate open; warm success alone never passes it. The limited job is kill-on-close, so a stopped
+fixture takes its members with it. This is headless gateway reuse; PWA window behavior under a
+limit needs its own shell evidence.
+The focused native entry `native Windows warm review1 owned fixture and handoff regressions` runs
+the owned-cleanup, owned-control, cancellation, store-identity, sanitized-environment and
+window-deadline regressions on their own, with two pooled loopback ports.
+
+The checkout-alias case, `native Windows launcher accepts junction and directory symlink checkout
+paths` (#493), runs one subtest through a genuine Windows junction to the checkout and one through
+a directory symbolic link. They are distinct controls: success with one link type does not
+establish the other. Each alias must read back natively as a directory reparse point of the
+requested type whose canonical target is the checkout, and the direct and aliased enrollments must
+give the same launch digest from different recorded inputs. Run through the alias, the built
+helper must print the direct spelling's identity and a free store state, and importing it with an
+invalid `GG_PORT` must print nothing and exit successfully; the store must still be empty. Each
+spelling in turn then cold-starts the gateway, and launches through both spellings reuse that same
+verified owner. Enrollments naming a different store or different settings are refused as a
+mismatched gateway, with the owner unchanged, no gateway log of their own and the other store
+still empty. Each round drains only its verified owner, and the fixture confirms that the alias
+is still the same link to the checkout before unlinking it; an alias whose release was not
+verified is kept. The directory-symbolic-link subtest needs a Windows venue whose test account can
+already create directory symbolic links, such as the hosted `windows-latest` runner. Elsewhere
+`symlink` fails at the `create-alias` stage (EPERM), before any helper or launch assertion. That is
+a failed prerequisite of a required case, never a pass or a skip: run it on a capable venue rather
+than changing host privileges or security policy, skipping it or substituting a junction. Hosted
+CI run 43790735875 passed both link types at `6f383da7`, before the #566/#544 warm discovery, and a
+later local run on a host without the capability failed the symbolic-link subtest at
+`create-alias` with EPERM. Neither is native acceptance of the current source.
+
+The installer case runs the shipped script in hidden, no-profile Windows PowerShell 5.1 on its
+disposable fixture, as named subtests before the case's only gateway start (#498, #532, #520). A
+public first install and same-path reinstall with an explicit disposable pinned `.lnk` change a
+persisted nonsecret override (`GG_LOG_LEVEL` `warn` to `debug`) and read back the stable launcher
+AppUserModelID, target, adjacent `--config` argument and icon of the Desktop, Programs and pinned
+links. The PWA source and its hard link keep their bytes and file identity, the store stays empty
+and no `gg-launcher-stage-*` folder remains at any output or nearest existing ancestor. Rewriting
+a disposable pin is not evidence of Explorer's taskbar behavior. Another process then holds the
+existing Programs link with read access and read-only sharing: the pre-publication identity and
+hash reads succeed, its replacement is denied after the launcher and configuration were
+published, the installer reports that the previous files were restored, and every output keeps
+its bytes and identity. The compiler controls use fixture geometry, not a product rule: an
+existing 174-character InstallDir gives a 241-character staged executable, which the .NET
+Framework compiler refuses during resource preparation (CS1567/CS1619). A fresh install there,
+and the same-path reinstall after a successful first install that staged in the shorter existing
+parent while the folder was absent, are refused with `-InstallDir` guidance, keep the installed
+executable, configuration and shortcuts, and leave no stage; a non-resource compiler failure
+keeps the generic message without paths or compiler output. A zero-argument run binds the
+script's own defaults: checkout, project Node `PATH`, `APPDATA`/`LOCALAPPDATA`, `GG_DATA_DIR` and
+`TEMP`/`TMP` are fixture values, and a test-only, process-local type accelerator registered
+before the script is parsed answers its two `[Environment]::GetFolderPath` lookups with fixture
+Desktop and Programs folders. The child refuses before the installer runs unless those are the
+script's only folder lookups and the alias resolves in a newly parsed script block. Port 4747's
+app ID is derived without contacting the port. A Chrome Apps source yields separate Desktop and
+Programs links, a Desktop-only source collides with the Desktop output and preserves existing
+outputs, and a missing source publishes nothing. This proves default parameter binding and source
+selection with an isolated resolver, not Windows folder redirection for any account; no owner
+folder, registry value, Chrome install or real pin is used.
 They establish native routes and ABI behavior; actual installed Chrome/taskbar pin behavior is
 tracked separately with native shell evidence. No live provider turn or owner service/store is
 used. The existing cross-platform coverage thresholds and general CI gates remain unchanged.
+
+Two further subtests of the installer case use genuine file symbolic links (#499); each link must
+read back natively as a file reparse point that is not a directory. `a PWA source or existing
+output observed as a reparse point is refused before its digest` refuses a linked `-PwaShortcut`,
+with and without `-NoShortcuts`, and linked `-DesktopShortcut` and `-PinnedShortcut` outputs with
+a message naming that parameter, while another process holds the link's target without sharing.
+The installer's zero-access identity read still succeeds there, but a digest or shortcut read
+would fail with a different refusal, so the expected messages show that these refusals come
+before any content read. No stage is created, and every output, target, link and the store keep
+their state; a Desktop output linked to the source still gets the distinct-files collision refusal
+first. `the late source check re-observes the original selected lexical leaf as a link to the same
+target` installs once through a junction to an ordinary source, then retargets that junction when
+the next run stages, so the selected leaf becomes a file link to the same previously accepted
+target. The refusal, with the installed files, target and store unchanged and no stage left, shows
+that the late check observed that leaf again. Because the target stays readable and identical,
+this subtest cannot show whether the digest ran before the refusal: the installer source shows
+that ordering, and the early no-sharing subtest is the separate evidence of refusal before content
+reads. Both subtests need a Windows venue whose test account can already create file symbolic
+links, such as the hosted `windows-latest` runner. On a host without `SeCreateSymbolicLinkPrivilege`
+or Developer Mode, `symlink` fails with EPERM before any installer assertion. That is a failed
+prerequisite of a required case, never a pass or a skip: run it on a capable venue rather than
+changing host privileges or security policy, skipping the subtests or substituting another link
+type. The parent case then fails as a whole, although it also carries the #498, #532, #520 and
+#536 regressions and the default-discovery controls above; their own subtest results stay separate
+evidence, and an EPERM at link creation is not an installer regression.
 
 The separate-process recovery check runs with `pnpm build` followed by `pnpm test:recovery-process`. It starts the built API against disposable mixed healthy/damaged SQLite history and removes its temporary data directory on success.
 
@@ -259,7 +404,7 @@ Budgets come from the retained #485, #487, #490 and #501 logs (summarized in ADR
 The `windows-launcher` job (**Windows launcher**, 20 minutes) installs, builds and runs `pnpm test:windows-launcher` with its unchanged assertions, timeouts, TAP output and stdout records. It used to upload `.tmp/windows-launcher-*/`, which never produced an archive. The uploader's documented default excludes hidden paths, including everything below a dot-directory such as `.tmp`. The fixture trees also hold stores, keys, shortcuts, binaries, hard links and junctions to the checkout, none of which may be exported. Bounded typed evidence replaces them (#496):
 
 - **Prepare.** After the build step, `node tooling/scripts/windows-launcher-evidence.mjs init` creates a fresh, non-hidden `windows-launcher-evidence-XXXXXX` directory directly below the runner temp folder, outside the checkout and every fixture. It needs only the checkout and Node, so it runs whenever Node setup succeeded and the run is not cancelled, including after a failed install or build, which are then recorded as not run. It writes `manifest.json`, which binds the repository, workflow reference, job key, run ID and attempt, event, ref and SHA, and the event head and base. It also binds the checked-out commit, its tree and its parents read from the commit header, so a shallow merge checkout can be compared with the event, plus the runner image and the Node version. Missing or malformed values are recorded as null and listed under `unavailable` (the event base only for a pull request). A preparation failure fails the job but cannot skip install, build or the native command: the native step runs after every successful build, then receives no evidence directory, and nothing is finalized or uploaded.
-- **Record.** The native step receives only that directory, through `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR`. The suite reads it once, removes it from its environment before any child starts, and appends typed records to `observations.ndjson` synchronously as they occur. The records cover the start and end of every test and subtest; every child process's tool and mode, exit code, recognised error code, signal, kill state, configured timeout, elapsed time, stdout and stderr byte counts and a closed diagnostic class recognised from its stderr; checkout-alias link type, target match, release and unlink disposition; lock-contention owner counts; gateway drain, window-fixture and contender cleanup; and each fixture root's existence and type at exit, observed with `lstat`. Fixtures are identified only by their random six-character suffix.
+- **Record.** The native step receives only that directory, through `GG_TEST_WINDOWS_LAUNCHER_EVIDENCE_DIR`. The suite reads it once, removes it from its environment before any child starts, and appends typed records to `observations.ndjson` synchronously as they occur. The records cover the start and end of every test and subtest; every child process's tool and mode, exit code, recognised error code, signal, kill state, configured timeout, elapsed time, stdout and stderr byte counts and a closed diagnostic class recognised from its stderr; checkout-alias link type, target match, release and unlink disposition; lock-contention owner counts; gateway drain, window-fixture and contender cleanup; and each fixture root's existence and type at exit, observed with `lstat`. Fixtures are identified only by their random six-character suffix. Each top-level native test runs as one recorded case (`installer`, `launcher`, `checkout-alias`, `lock-contention`, `bounded-logs` and `warm-review1`), so its fixture and cleanup records carry that case and its subtest; such a record written outside every case has no scope and is rejected, while a child process outside every case is recorded for the suite.
 - **Privacy.** A record holds closed enums, bounded integers, booleans and validated identifiers only: no path, argument, environment value, key, token, store byte, command output, error message or log text. Records with missing, extra, invalid or mutually inconsistent fields become `rejected` records. So does a second statement of a once-per-run fact (each test and subtest start and end, each link kind's alias outcome, each alias round and each contention trial), and any of the recorder's own lifecycle or fixture-state types written through the public API.
 - **Bounds.** Each record is at most 1 KiB and the file at most 1,024 records and 192 KiB, with room reserved for the closing records. Records beyond that are counted as omitted after one `overflow` record. The manifest is capped at 8 KiB and the result at 16 KiB, so the archive stays below 256 KiB.
 - **Failures.** A failing test or subtest also prints its typed end record and its last child record to stdout. A test or subtest ends when its body settles or as soon as node:test stops waiting for it, whichever comes first (#534). node:test stops waiting when it cancels the test (the test's own timeout, or a parent or the whole run that finished first) or when the test starts after its parent ended. Such a test is recorded as failed at that moment, as node:test reports it, with a failure kind and no error code or exit status. The first failure recorded is kept: a later return or throw of the cancelled body adds no second end and is not rejected, and a body that failed before it was cancelled keeps its own failure fields. The body keeps running, so cleanup and child records it writes afterwards stay in its own test's scope. Subtests still running when their parent ends count among the parent's failed subtests. An evidence directory that is missing, linked, outside the runner temp or not created by `init` is refused with one stdout marker; the tests still run with their own result. A write failure stops recording with one marker and never throws into a test.

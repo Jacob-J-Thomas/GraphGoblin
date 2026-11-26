@@ -4,8 +4,9 @@ Windows launcher's read-only identity and ownership helpers each enter a private
 job at process creation (ADR-0086). Only their own descendants are collected; queried owners,
 WMI's service, providers and the detached gateway are outside that lifetime. This needs Windows
 10 or Windows Server 2016 or later and compatible nested jobs. Staged installation checks API
-capability, and every click verifies actual containment before even reusing a gateway. Failure
-refuses a fresh spawn with closed text. Both output streams drain concurrently, stdout is capped
+capability and enrolls the gateway's launch identity through one contained helper run. A warm
+click that reuses a matching gateway starts no helper and creates no process (ADR-0090); every
+cold start verifies actual containment again. Failure refuses a fresh spawn with closed text. Both output streams drain concurrently, stdout is capped
 at 256 KiB and strict protocol validation, root exit, EOFs and empty-job accounting share a
 15-second initial work budget. Failed checks use one further two-second cleanup allowance before
 operator presentation; synchronous OS calls can exceed the observed wall-clock bound. Held-store
@@ -122,6 +123,17 @@ data directory's `master.key` and GraphGoblin's encrypted secret store instead. 
 non-secret overrides remain supported; inherited `GG_*` variables are still cleared rather
 than copied into launcher configuration or its child environment
 ([ADR-0085](decisions/ADR-0085-refuse-launcher-secret-overrides.md)).
+
+The installer enrolls the gateway's public launch identity: a versioned SHA-256 of effective
+non-secret settings and canonical store and serving paths, bound to a digest of the launcher's
+exact Repo, Node, DataDir, Port and `GG_*` inputs. Secrets, raw database URLs, the runtime and
+build bytes never enter it. A warm click reuses only a gateway publishing that identity whose
+configured data directory and database still resolve to the enrolled targets; a target that
+differs only in letter case must open to the same file-system object, so distinct case-only
+objects in a case-sensitive directory are never confused and an unverifiable one is refused. Any
+other listener is refused and never stopped. The identity detects ordinary wrong listeners and changed settings;
+it is not a credential and does not authenticate the peer
+([ADR-0090](decisions/ADR-0090-windows-launcher-warm-discovery.md)).
 
 A gateway started by the Windows launcher keeps its private server log in the launcher folder,
 which must be a local NTFS folder accessible only to the operator, SYSTEM and Administrators.

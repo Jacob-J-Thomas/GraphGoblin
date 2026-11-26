@@ -1,0 +1,188 @@
+TAP version 13
+# {"evidence":"windows-launcher-observation","seq":87,"at":"2026-11-26T04:40:05.073Z","type":"case-end","case":"installer","subtest":1,"result":"fail","elapsedMs":9577,"failedSubtests":0,"failureKind":"assertion","failureCode":"ERR_ASSERTION","failureExit":null,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":86,"at":"2026-11-26T04:40:05.069Z","type":"child","case":"installer","subtest":1,"child":14,"tool":"launcher","mode":"read-shortcut-id","outcome":"exit-zero","exitCode":0,"errorCode":null,"signal":null,"killed":false,"timeoutMs":null,"elapsedMs":106,"stdoutBytes":38,"stderrBytes":0,"diagnostic":"none"}
+# Subtest: Windows PowerShell 5.1 installer validates before replacing native launcher files
+    # Subtest: public first install and same-path reinstall persist changed settings and every shortcut
+    not ok 1 - public first install and same-path reinstall persist changed settings and every shortcut
+      ---
+      duration_ms: 9578.758
+      type: 'test'
+      location: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\tooling\\scripts\\windows-launcher-evidence.mjs:983:27'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        ... Skipped lines
+        
+          {
+            ChromeAppId: 'emmodkfokbdfahoaemkgoijaaeaohobg',
+            ChromeProfile: 'Default',
+            ChromeProxy: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\chrome_proxy.exe',
+            DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store',
+        ...
+              Database: 'file',
+        +     Inputs: 'dcf9bb15967dc2d10158cceabe504aa17716772be6e2cbe2b78345ea0780c91c',
+        +     Launch: 'v1:5bdfaa80492a3fecf9bda44aa2d8c5a7adb281aaf9180794bae131141370f8dd',
+        -     Inputs: 'e5ed48c4f3ae792b52082a78db49d28929a7895a3119c0b2cd30d51fb5c9ddc9',
+        -     Launch: 'v1:71765c33a10cf7a4a94767deea6f49f75eeb87216f088fe1e8c53ef98daf8332',
+              Lookup: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store\\graphgoblin.db',
+              Target: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store\\graphgoblin.db',
+              Version: 1
+            },
+            Environment: null,
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        Repo: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\'
+        Node: 'C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe'
+        DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store'
+        Port: 4830
+        ChromeProxy: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\chrome_proxy.exe'
+        ChromeProfile: 'Default'
+        ChromeAppId: 'emmodkfokbdfahoaemkgoijaaeaohobg'
+        IconLocation: ',0'
+        PwaAppUserModelId: 'Chrome.PwaFixture'
+        LauncherAppUserModelId: 'GraphGoblin.5f8a1ccc87c92e9cb6588f0d'
+        Environment: ~
+        StartupTimeoutSeconds: 60
+        WindowTimeoutSeconds: 30
+        Enrollment:
+          Version: 1
+          Launch: 'v1:71765c33a10cf7a4a94767deea6f49f75eeb87216f088fe1e8c53ef98daf8332'
+          DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store'
+          Database: 'file'
+          Lookup: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store\\graphgoblin.db'
+          Target: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store\\graphgoblin.db'
+          Inputs: 'e5ed48c4f3ae792b52082a78db49d28929a7895a3119c0b2cd30d51fb5c9ddc9'
+      actual:
+        Repo: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\'
+        Node: 'C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe'
+        DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store'
+        Port: 4830
+        ChromeProxy: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\chrome_proxy.exe'
+        ChromeProfile: 'Default'
+        ChromeAppId: 'emmodkfokbdfahoaemkgoijaaeaohobg'
+        IconLocation: ',0'
+        PwaAppUserModelId: 'Chrome.PwaFixture'
+        LauncherAppUserModelId: 'GraphGoblin.5f8a1ccc87c92e9cb6588f0d'
+        Environment: ~
+        StartupTimeoutSeconds: 60
+        WindowTimeoutSeconds: 30
+        Enrollment:
+          Version: 1
+          Launch: 'v1:5bdfaa80492a3fecf9bda44aa2d8c5a7adb281aaf9180794bae131141370f8dd'
+          DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store'
+          Database: 'file'
+          Lookup: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store\\graphgoblin.db'
+          Target: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\store\\graphgoblin.db'
+          Inputs: 'dcf9bb15967dc2d10158cceabe504aa17716772be6e2cbe2b78345ea0780c91c'
+      operator: 'deepStrictEqual'
+      stack: |-
+        file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1434:16
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1412:5
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    # Subtest: a later output held with read-only sharing restores every previous file
+    ok 2 - a later output held with read-only sharing restores every previous file
+      ---
+      duration_ms: 4612.5463
+      type: 'test'
+      ...
+    # Subtest: long staging paths refuse compilation with InstallDir guidance and keep installed files
+    ok 3 - long staging paths refuse compilation with InstallDir guidance and keep installed files
+      ---
+      duration_ms: 6901.6462
+      type: 'test'
+      ...
+    # Subtest: a non-resource compiler failure keeps the generic redacted refusal
+    ok 4 - a non-resource compiler failure keeps the generic redacted refusal
+      ---
+      duration_ms: 2220.3565
+      type: 'test'
+      ...
+    # Subtest: zero-argument defaults select the Chrome Apps source and publish separate Desktop and Programs links
+    ok 5 - zero-argument defaults select the Chrome Apps source and publish separate Desktop and Programs links
+      ---
+      duration_ms: 4192.6373
+      type: 'test'
+      ...
+    # Subtest: a Desktop-only default source collides with the Desktop output and keeps sentinels
+    ok 6 - a Desktop-only default source collides with the Desktop output and keeps sentinels
+      ---
+      duration_ms: 995.8028
+      type: 'test'
+      ...
+    # Subtest: without a default source no destination or stage is published
+    ok 7 - without a default source no destination or stage is published
+      ---
+      duration_ms: 745.1752
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-observation","seq":115,"at":"2026-11-26T04:40:24.747Z","type":"case-end","case":"installer","subtest":8,"result":"fail","elapsedMs":2,"failedSubtests":0,"failureKind":"system","failureCode":"EPERM","failureExit":null,"failureSignal":null}
+    # Subtest: a PWA source or existing output observed as a reparse point is refused before its digest
+    not ok 8 - a PWA source or existing output observed as a reparse point is refused before its digest
+      ---
+      duration_ms: 2.3294
+      type: 'test'
+      location: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\tooling\\scripts\\windows-launcher-evidence.mjs:983:27'
+      failureType: 'testCodeFailure'
+      error: "EPERM: operation not permitted, symlink 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\Chrome source.lnk' -> 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\reparse links\\linked source.lnk'"
+      code: 'EPERM'
+      stack: |-
+        async symlink (node:internal/fs/promises:1001:10)
+        async visibleFileLink (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1828:7)
+        async file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1880:28
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1874:5
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+# {"evidence":"windows-launcher-observation","seq":117,"at":"2026-11-26T04:40:24.751Z","type":"case-end","case":"installer","subtest":9,"result":"fail","elapsedMs":4,"failedSubtests":0,"failureKind":"system","failureCode":"EPERM","failureExit":null,"failureSignal":null}
+    # Subtest: the late source check re-observes the original selected lexical leaf as a link to the same target
+    not ok 9 - the late source check re-observes the original selected lexical leaf as a link to the same target
+      ---
+      duration_ms: 4.3683
+      type: 'test'
+      location: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\tooling\\scripts\\windows-launcher-evidence.mjs:983:27'
+      failureType: 'testCodeFailure'
+      error: "EPERM: operation not permitted, symlink 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\late source\\original\\GraphGoblin.lnk' -> 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-4zCR3C\\late source\\relinked\\GraphGoblin.lnk'"
+      code: 'EPERM'
+      stack: |-
+        async symlink (node:internal/fs/promises:1001:10)
+        async visibleFileLink (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1828:7)
+        async file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1940:9
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1924:5
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+# {"evidence":"windows-launcher-observation","seq":120,"at":"2026-11-26T04:40:32.177Z","type":"case-end","case":"installer","subtest":0,"result":"fail","elapsedMs":67334,"failedSubtests":3,"failureKind":"subtests","failureCode":null,"failureExit":null,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":118,"at":"2026-11-26T04:40:32.130Z","type":"child","case":"installer","subtest":0,"child":70,"tool":"launcher","mode":"ensure-gateway","outcome":"exit-zero","exitCode":0,"errorCode":null,"signal":null,"killed":false,"timeoutMs":30000,"elapsedMs":7377,"stdoutBytes":0,"stderrBytes":0,"diagnostic":"none"}
+    1..9
+not ok 1 - Windows PowerShell 5.1 installer validates before replacing native launcher files
+  ---
+  duration_ms: 67336.6181
+  type: 'test'
+  location: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:818:1'
+  failureType: 'subtestsFailed'
+  error: '3 subtests failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 10
+# suites 0
+# pass 6
+# fail 4
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 67526.1577

@@ -1,0 +1,55 @@
+# A2 report — #499 correction and commit; #493, #543, #494
+
+Saved by the orchestrator from the worker's final message (the worker could not write report files).
+
+**Outcome:** READY for integration onto current main and independent QA. Nothing pushed or merged.
+
+Worktree `G:/ggq/gg-followups-20261124/GraphGoblin`, branch `codex/gg-followups-20261124`, started at
+`f77940fe` (index matched the FUP098 binding), now HEAD `9e4462e69044a1bc898d869bcd861761f60096dd`, clean.
+
+| Commit | Issue | Files |
+|---|---|---|
+| `b95c2d69` Refuse reparse-point installer sources and outputs such as cloud placeholders | #499 | CHANGELOG, docs/guide/01, docs/guide/07, scripts/install-windows-launcher.ps1, tooling/scripts/windows-launcher.acceptance.mjs |
+| `f786b902` Document the native checkout-alias case and its symlink prerequisite | #493 | docs/10-testing-and-quality.md |
+| `9c9614fd` Index ADR-0086 with its delegated selection and pending owner review | #543 | docs/decisions/README.md |
+| `9e4462e6` Import the built identity helper from a real wrapper entry | #494 | tooling/scripts/launcher-identity.test.mjs |
+
+`git diff --stat f77940fe..HEAD`: 8 paths, +325/−22. Launcher.cs unchanged.
+
+## #499
+
+- FUP098 applied to the acceptance file only: parent case timeout restored 180_000 → 120_000; late case
+  retitled to "the late source check re-observes the original selected lexical leaf as a link to the
+  same target", with a 5-line comment stating what it proves (re-observation of the selected leaf; it
+  cannot show digest ordering — the installer source shows the `IsDirectory`/`IsLink` refusal precedes
+  `Test-InstallerFile`; the early no-sharing cases are the separate evidence for refusal before content
+  reads). Diff: `fup098-correction.diff`.
+- Static checks: PS 5.1 parser (5.1.26100.9818) 0 errors; PS 7 parser (7.6.9, bundled Codex runtime
+  pwsh — no system PowerShell 7 installed) 0 errors; negative control fails both parsers as expected;
+  installer ASCII-only; `node --check` exit 0; Prettier clean; scoped ESLint exit 0; `git diff --check`
+  clean. No fixes needed. None of the #499 cases has been run.
+
+## #493 / #543 / #494
+
+- #493: new docs/10 paragraph describing `native Windows launcher accepts junction and directory symlink
+  checkout paths`; directory-symlink subtest needs a venue whose account can create directory symlinks
+  (hosted windows-latest); EPERM at `create-alias` elsewhere is a failed prerequisite, never pass/skip.
+  Cites hosted CI run 43790735875 (job 133048320156) at 6f383da7 and the later local EPERM diagnostic.
+  The old one-sentence prerequisite was moved out of the #544 paragraph.
+- #543: one README entry for ADR-0086 (private kill-on-close job per helper; selected under delegated
+  authority D160; owner review pending; ADR-0090 supersedes only its warm-click refusal). ADR-0088 is
+  also unindexed — left out of scope.
+- #494: the eval import in the first identity test is replaced by a real wrapper file run as argv[1]
+  that records its own argv/lstat witness and dynamically imports the compiled helper through the
+  alias; parent asserts silent success under `GG_PORT=invalid` (which the direct control refuses),
+  empty store, witness identity, distinct (dev, ino) and realpaths.
+- Checks: Prettier, diff-check, ESLint, node --check clean; API build under lock (7 tasks, 0 cached);
+  focused test `reads the same identity and store state through a checkout link` passed (14.8 s).
+
+## Pending
+
+Installer runs, CFAPI/non-hydration QA, integrated PS 5.1/7 native acceptance (including the new
+#499 file-link cases and whether the 120 s parent deadline suffices), GUI/PWA QA, current-head CI,
+opposite-family review, independent QA, Astra MAX final.
+
+Evidence: this folder (`static-checks/`, `part2-checks/`, `commits.txt`, stat files).

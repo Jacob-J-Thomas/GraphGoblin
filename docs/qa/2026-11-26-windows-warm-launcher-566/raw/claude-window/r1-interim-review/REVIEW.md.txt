@@ -1,0 +1,262 @@
+CHANGES REQUIRED (one docs-only P2 fix in this PR; no P0 or P1; the installer code and the #494 regression are correct as written)
+
+# R1 interim independent Claude review: #499, #493, #543, #494
+
+Reviewer: Claude Opus 5.5 (xhigh), interim. This review comes before the deferred opposite-family GPT review and does not replace it.
+Reviewed by commit in `G:/ggq/gg-followups-20261124/GraphGoblin`, branch `codex/gg-followups-20261124`:
+`b95c2d69` (#499), `f786b902` (#493), `9c9614fd` (#543) and `9e4462e6` (#494), all against the parent
+`f77940fe`. `git diff --stat b95c2d69 9e4462e6` shows no later change to the installer or the acceptance file.
+Context commits `d2093221`, `b07e1524` and `f77940fe` were not re-reviewed. None of the four commits
+changes how they behave.
+
+Method: static review only. I read diffs with `git show`, the full installer script, the full installer
+case and its helpers in the acceptance file, the identity helper and `entry-point.ts`, ADR-0086 and
+ADR-0090, docs/09, 10, guide 01 and guide 07, the CHANGELOG, and the issues with their comments. I also
+read the #499 critique, the author report, the FUP098 brief, the CFAPI matrix results, the A2 report,
+PLAN-STATUS and the W1 brief. Nothing was built, tested or run in the worktree. Outside it, I made two
+read-only host probes for F1: the `AppModelUnlock` registry key and `whoami /priv`. I also fetched one
+Microsoft Learn page for F2. Line numbers refer to `9e4462e6`, which has the same installer and
+acceptance bytes as `b95c2d69`.
+
+## Root-cause ledger
+
+| ID | Severity | Signature | Disposition |
+| --- | --- | --- | --- |
+| F1 | P2 | `installer-acceptance/undocumented-file-symlink-prerequisite` | FIX-IN-PR (docs/10). Orchestrator also routes where the native run happens |
+| F2 | P3 | `installer-reparse/visibility-depends-on-placeholder-mode` | DEFER-ISSUE, represented by the still-open #499. Do not resolve #499 on this PR alone |
+| F3 | P3 | `decisions-index/no-completeness-gate` | DEFER-ISSUE (new follow-up candidate; not #543's scope) |
+| F4 | P3 | `installer-output-refusal/positional-parameter-naming` | DEFER-ISSUE (test and maintainability follow-up) |
+
+---
+
+### F1 (P2, FIX-IN-PR): the #499 cases give the whole installer case a file-symbolic-link prerequisite that is undocumented and unmet on this host
+
+- **Where:** `tooling/scripts/windows-launcher.acceptance.mjs:1827-1849` (`visibleFileLink` calls
+  `symlink(target, path, 'file')`), called at `:1880`, `:1903` and `:1940` inside the installer case
+  `:818-2019` ("Windows PowerShell 5.1 installer validates before replacing native launcher files",
+  parent timeout `120_000`). Documentation: `docs/10-testing-and-quality.md:187-217`, the
+  installer-case paragraph, which #499 did not change. The prerequisite text #493 added at `:178-185`
+  covers only the checkout-alias case.
+- **Evidence:**
+  - Creating a file symbolic link needs the same capability as a directory symbolic link
+    (SeCreateSymbolicLinkPrivilege, or Developer Mode's unprivileged create).
+  - On this host the current token has no SeCreateSymbolicLinkPrivilege (`whoami /priv`), and
+    `HKLM\...\AppModelUnlock` has no `AllowDevelopmentWithoutDevLicense` value.
+  - #493 and the new docs/10 text record a local `create-alias` EPERM for this reason.
+  - Before #499, the installer case did not need this capability. Local native runs of it passed in
+    62.7 s (`installer-slice/independent-qa-preparation-02/native-evidence/native-command-01/installer/stdout.log`)
+    and 70.2 s (`installer-slice/correction-532-r1/.../installer/stdout.log`).
+  - The author recorded the dependency as a risk ("I don't know whether this host can"), and the A2
+    report states that none of the #499 cases has run.
+- **Failure scenario:**
+  - PLAN-STATUS has the next independent headless native QA run the installer case on this host,
+    including "#499 local link cases".
+  - The two new #499 subtests (early refusal and late re-observation) will fail at `symlink` with
+    EPERM before any installer assertion. `node:test` then reports the parent installer case as
+    `not ok`.
+  - That parent case also carries the #498, #532, #520 and #536 regressions and the default-discovery
+    controls. A local failure would therefore look like an installer regression.
+  - Nothing in docs/10 tells the runner that this is a failed prerequisite and not product evidence.
+    Nothing forbids the tempting workaround either: an elevated shell or Developer Mode. #493's
+    paragraph forbids exactly that workaround, but only for the alias case.
+- **Suggested fix:** extend the docs/10 installer-case paragraph:
+  - Describe the three #499 subtests: early source and output refusal while the target is held without
+    sharing, with collision priority kept; and the late junction retarget that exposes a file link to
+    the same target.
+  - State that they need a venue whose account can already create file symbolic links, such as hosted
+    `windows-latest`.
+  - Say that EPERM at link creation is a failed prerequisite, never a pass or a skip, and that the
+    host's privileges and policy must not be changed. Mirror #493's wording.
+  - Orchestrator: send the #499 link cases to hosted CI or another venue that already has the
+    capability, and do not read a local EPERM as an installer failure.
+  - Optional, at the author's discretion and not required: put the link cases where a missing
+    prerequisite cannot mask the other installer regressions.
+
+### F2 (P3, DEFER-ISSUE to the existing #499): the refusal depends on the reparse bit being visible, and the PS7 evidence does not cover a standard PS7 install
+
+- **Where:** `scripts/install-windows-launcher.ps1:150` (`IsLink = (attributes & 0x400) != 0`), used at
+  `:324` (early source), `:372-375` (outputs), `:484` (late source) and in `Test-InstallerFile`.
+  The identity open at `:121` (`CreateFile`, zero access, follows links) runs before the attribute
+  read at `:145`.
+- **Evidence:**
+  - Microsoft Learn, "Compatibility with applications that use reparse points": the cloud files API
+    "always hides its reparse points from all applications except for sync engines and processes whose
+    main image resides under %systemroot%". A process must opt in with
+    `RtlSetProcessPlaceholderCompatibilityMode` to see them.
+  - The matrix's "PS7" was the packaged Codex runtime
+    (`C:\Program Files\WindowsApps\OpenAI.CodexPrimaryRuntime...\pwsh.exe`, recorded in
+    `public-install-matrix-499/7-d-before-kernel32.stdout.json`). A2 confirms that no system PS7 is
+    installed. A standard `C:\Program Files\PowerShell\7\pwsh.exe` view was never measured.
+  - In the venue, dehydrated placeholders reported attributes `4199968` = `0x401620`:
+    RECALL_ON_DATA_ACCESS, OFFLINE, REPARSE_POINT, SPARSE and ARCHIVE. Hydrated placeholders reported
+    `0x420`.
+  - Whether RECALL_ON_DATA_ACCESS and OFFLINE stay visible when the reparse point is hidden is **not
+    established**. The Microsoft page does not say.
+- **Failure scenario:**
+  - A user runs the installer from a standard PS7 that sees placeholders disguised. No `0x400` is
+    reported, so neither the early nor the late refusal fires.
+  - `Get-InstallerDigest` then hydrates a dehydrated source, which is exactly the #499 symptom.
+  - An existing synced output is replaced through `File.Replace`, where cloud replace and rollback are
+    unverified.
+  - This is the pre-change behaviour, not a regression. The documented invocation (`powershell`, 5.1,
+    under SystemRoot) gets the protection. The docs also hedge honestly: "sees only the reparse
+    attribute Windows reports" and "cannot promise ... will not download".
+  - Separately, a file marked RECALL_ON_OPEN could be recalled by the identity open itself, before any
+    check. The venue's CFAPI files used RECALL_ON_DATA_ACCESS, so this was not exercised.
+- **Suggested outcome:** a policy choice, not one prescribed implementation.
+  - First, have the pending CFAPI and native QA record a standard PS7 install's view.
+  - Then choose one of these: also treat RECALL_ON_DATA_ACCESS, RECALL_ON_OPEN or OFFLINE as "not an
+    ordinary local file" (only if those bits are shown to stay visible when disguised); make the
+    identity helper opt into exposed placeholders; or document Windows PowerShell 5.1 as the only route
+    with this protection.
+  - Keep #499 open, or state this limit explicitly when closing it. Its acceptance requires visibility
+    "under supported PS5.1 and PS7", and non-hydration with the new early check is still unmeasured
+    (A2 "Pending").
+
+### F3 (P3, DEFER-ISSUE): the decisions index omits 12 ADRs, and no gate enforces completeness
+
+- **Where:** `docs/decisions/README.md`. The #543 entry at `:111` is accurate (see below).
+- **Evidence:** at `9c9614fd`, these ADR files exist but are not linked from the index: ADR-0034,
+  0039, 0040, 0049, 0051, 0052, 0053, 0055, 0060, 0061, 0068 and 0088 (the A2 author noted 0088). An
+  issue search for "decisions index" and "ADR-0088" found only #543.
+- **Impact:** decision records cannot be found from the index. ADR-0040 (the Node 22 baseline) is cited
+  by AGENTS.md but missing from it. The gap recurs because nothing checks it, which is also how #543
+  arose.
+- **Suggested follow-up:** one issue to index the missing ADRs, with their statuses read from the ADRs
+  themselves, plus a deterministic docs check that every `docs/decisions/ADR-*.md` is linked once in
+  order. This is outside #543's contract ("exactly one ... link"). It does not block.
+
+### F4 (P3, DEFER-ISSUE): the output refusal derives the parameter name from array position, and half of the documented names are untested
+
+- **Where:** `scripts/install-windows-launcher.ps1:354` (`$outputParameters`, kept "in $paths
+  order") and `:373`. `$paths` is assembled separately at `:327-345`. The tests at
+  `acceptance.mjs:1904-1914` cover only `-DesktopShortcut` and `-PinnedShortcut`.
+- **Evidence:** the mapping is correct today. With `-NoShortcuts`, the only paths are exe and json,
+  both `-InstallDir`. Without it, Desktop and Start-menu are always added and Pinned is optional, last.
+  The `-InstallDir` names (two indices) and `-StartMenuShortcut` are never asserted, although guide 07
+  promises them. The author listed this gap.
+- **Failure scenario:** a future change adds or reorders an output in `$paths` without editing the
+  parallel array. The refusal then tells the user to change the wrong parameter, and no test fails.
+- **Suggested follow-up:** build each output path together with its selecting parameter, for example
+  as pairs, and add refusal assertions for `-InstallDir` (exe and json) and `-StartMenuShortcut`. This
+  is cheap, but it does not need to block.
+
+---
+
+## Checked with no finding
+
+**#499 installer (`b95c2d69`):**
+
+- **Order of checks:**
+  - The early source refusal (`:323-324`) comes after `Initialize-InstallerPaths` and the first
+    identity read. It comes before the source digest (`:325`), before any stage (`:389`) and before any
+    shortcut read (`:406`, `:422`). The CHANGELOG and guide 07 wording matches.
+  - Output refusal comes after both collision checks and the directory check, and before that output's
+    digest (`:380`).
+  - The late check (`:480-485`) re-reads the lexical `$PwaShortcut`. It reports "changed" for a
+    missing file, a different ID or a different canonical path. It refuses the same file as a reparse
+    point before `Test-InstallerFile` (no digest), and otherwise checks the digest. `$PwaShortcut` is
+    assigned only before the first read, so both reads use the same input.
+- **Junction, symlink and placeholder:**
+  - A file symbolic link source or output is refused (attributes come from `GetFileAttributes` on the
+    leaf without following it).
+  - A junction or directory symbolic link named `*.lnk` already fails `File.Exists` as a source, and
+    `IsDirectory` refuses it as an output.
+  - A hard link is not a reparse point and is accepted.
+  - An ordinary leaf reached through a junction parent still installs; the late case's first run
+    proves this.
+  - An exposed placeholder carries `0x400` (`0x420` hydrated, `0x401620` dehydrated) and is refused.
+    For disguised placeholders, see F2.
+- **PS 5.1 and PS 7:**
+  - The new lines use no version-specific constructs: string interpolation, `-cne`/`-ine`, list
+    `.Count` indexing.
+  - The C# `Paths` type is unchanged.
+  - `File.Exists` behaves the same in .NET Framework and .NET for dangling or real file links, since
+    neither follows the final link.
+  - The script is ASCII-only (0 non-ASCII bytes), as PS 5.1 needs without a BOM.
+- **TOCTOU:**
+  - The handle identity (follows links) and the leaf attributes (path-based) come from two syscalls.
+    This is unchanged from before.
+  - A leaf replaced between them, or between the early check and the digest, is caught by the late
+    re-observation (ID, path, link) for the source, and by `Publish-LauncherArtifacts`'
+    canonical-path ID, digest and link checks for outputs.
+  - The window left between the late check and `File.Replace`/`Move` is inherent and existed before.
+- **Error paths:**
+  - Every new refusal happens while `$retainStages` is `$false`, so the `finally` removes owned stages.
+  - A throw from the late `Get-InstallerPath` reaches the generic catch with stages cleaned.
+  - No new path reaches publication. A dangling file link source or output still gets the generic or
+    "available output path" message, as before (pre-existing, cosmetic).
+- **Tests prove their titles:**
+  - In the early case, `refusedWhileUnshared` holds the link target with `FileShare.None`. The
+    zero-access identity open (`FILE_READ_ATTRIBUTES|SYNCHRONIZE`) is not subject to share checks, but
+    the digest's read open would fail and give the generic message. Only an exact
+    `unsupportedSource`/`unsupportedOutput(param)` match therefore passes, which proves the refusal came
+    before the digest. A recursive watch confirms no stage was created.
+  - The collision case proves collision priority.
+  - The late case tells the new code from the old: the old code re-read the canonical target and would
+    have published. Its comment honestly limits the claim (no proof of digest order). A lost swap race
+    fails visibly rather than passing.
+  - Every case checks targets, links, outputs, the store and stage residue.
+- **Docs fidelity:** guides 01 and 07 and the CHANGELOG state only what the code shows and the evidence
+  supports: the leaf-attribute decision, "cannot promise" no download, fresh synced outputs not refused
+  but unsupported, `-PinnedShortcut`/`-NoShortcuts` rules, and the upgrade note. docs/09's general
+  wording is still accurate. No ADR is needed for this refinement of the existing refusal policy.
+- **Repository rules:** the CHANGELOG is updated, `git diff --check f77940fe 9e4462e6` is clean, and no
+  commit carries assistant attribution.
+
+**#493 docs/10 (`f786b902`):** each sentence matches `checkLauncherAlias` (`acceptance.mjs:3313-3566`)
+and the case at `:3568-3592`:
+
+- link-type and directory reparse readback; equal launch digest from different inputs;
+- alias identity and free store state; the invalid-`GG_PORT` import gives exit 0 with empty output
+  (`assertOutput`) and an empty store;
+- cold start per spelling with warm reuse through both spellings; mismatch refusals with the owner
+  unchanged and no log;
+- a verified unlink, with the alias kept if release is unverified; `create-alias` is the first stage.
+
+Hosted run 43790735875 tested a synthetic merge whose tree equals PR head `6f383da7`
+(`docs/qa/2026-11-16-launcher-identity-current-ci/README.md`). The #544 sentence moved without changing
+its meaning. The only gap is the installer-case prerequisite (F1).
+
+**#543 index (`9c9614fd`):**
+
+- The link target exists, and the entry sits in order between 0085 and 0087.
+- The description matches ADR-0086's decision: a private kill-on-close job assigned at creation,
+  concurrent stdout/stderr drain to EOF within one monotonic cutoff, termination of only that job, and
+  a 2,000 ms cleanup allowance.
+- The status matches the ADR header ("Selected under delegated coordinator authority (D160);
+  consolidated owner review pending") and the issue's "possible rework".
+- The narrow supersession by ADR-0090 matches both ADRs.
+
+**#494 identity test (`9e4462e6`):**
+
+- **Contract:** the wrapper is a real `.mjs` file run as Node's entry. The witness records the child's
+  own `process.argv[1]` and its `lstat` dev and ino, written before import, outside the store, with `wx`
+  and no stdout. The parent compares it with its own `lstat`, nonzero IDs and realpath, against the
+  compiled helper.
+- **Sensitivity:**
+  - Main execution on import fails the test. With `GG_PORT=invalid`, the guarded block writes
+    "Launcher configuration is invalid" and exits 1, or with a valid port it prints a digest.
+  - Moving `loadConfig` to module scope also fails it: the import rejects and the wrapper exits 1 with
+    stderr.
+  - A guard that accepted any existing file would run main and fail.
+  - Only a silent, non-throwing import-time evaluation would go undetected. The commit does not claim
+    that coverage.
+- **Controls kept:** the direct, positive and negative controls, the environment filter, the timeout
+  and the cleanup are unchanged.
+- **No residue:** the alias is unlinked before the scratch folder is removed recursively. The wrapper
+  and witness live in the scratch folder.
+- **Coverage:** the full installer case, `docs/10` and the coverage gate are unaffected; this is a
+  tooling acceptance test.
+
+## Caveats and open items (not findings)
+
+- **Timing:** the 120 s installer parent deadline is unmeasured with the #499 cases. My estimate is
+  about 7 more installer invocations (2 full compiles) plus 3 native observations, roughly +30 to 40 s,
+  against the earlier local 62.7 to 70.2 s. Hosted main took 28 to 33 s. Expect the hosted run to be
+  comfortable and a capable local venue to be tight. This is unverified.
+- **CI evidence budget:** hosted CI used 338 of 1008 usable observation records, which leaves room in
+  count. I did not measure the byte budget.
+- **Pending gates:** CFAPI non-hydration with the new early check, every #499 file-link case, PS7
+  installer behaviour, current-head CI and the deferred GPT review and Astra MAX final all remain
+  pending. This review ran no code.

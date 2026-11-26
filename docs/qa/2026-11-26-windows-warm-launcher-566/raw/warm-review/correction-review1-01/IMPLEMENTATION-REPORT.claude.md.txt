@@ -1,0 +1,76 @@
+I've corrected all seven review findings and the focused native entry passes, but it isn't clean yet. The readiness wrapper reports `passed: false` even though both readiness runs show all 20 TAP tests passing with exit 0. The wrapper prints no reason, and I'm not allowed to read its receipt, so I stopped with one readiness attempt left rather than spend it on a guess.
+
+HEAD and index are unchanged, and the 18 authorized paths are unstaged. Nothing was committed, stashed or published, and no owner ports, stores, Chrome or providers were used.
+
+## Open gap: readiness wrapper verdict
+- **Attempt 1** (`006-native-readiness-01`): 20/20 pass, exit 0, `passed: false`.
+- **Attempt 2** (`012-native-readiness-02`): same result. Before it I folded the control job's release observations (sibling alive, final members, sibling settled) back into `record.control`, so the #544 record keeps its historical shape. I then re-ran format, API, tooling, build and the focused entry on those final bytes. The verdict did not change.
+- Both runs' output shows the new R5 case and every original case passing. The #544 record shows the warm click made no admission attempt (`noAttemptGate: "witnessed"`), the cold helper refusal was seen on the observer (`calibration: "observed"`), the gateway was drained as its verified owner, and the control was released explicitly with only the fixture and its sibling left.
+- **Likely cause (unconfirmed):** the wrapper may expect the old 19-test count. Readiness now has 20 because I added R5 as a new subtest; R5's assertions could instead be folded into the existing transient-probe subtest. The receipts in `006` and `012` are the place to look.
+
+## Findings
+**R1 – drain only a verified owner**
+- **Where:** in `windows-launcher.acceptance.mjs`, `ownedAliasGateway` (2236) now also checks the enrolled launch digest and named lease files. `releaseAliasGateway` (2292) refuses any listener without a verified owner. It revalidates the owner before and after reading the shutdown token, then drains with that token, never following a redirect. `manualGateway` (685) settles a failed start through its own child handle.
+- **Applied to:** the manual, transient, retarget and quota fixtures, plus the alias test's release path.
+- **Regression:** `owned cleanup refuses a replacement listener with zero drains`.
+  - Rejections: changed lease bytes, creation time, PID, or no owner on a live gateway are refused, and its shutdown token stays the same. A replacement listener copying the owner's exact headers gets 0 drains. A redirect target gets 0 requests. A second real gateway on the same port is refused for the old owner.
+  - Positives: 2 owned drains succeed.
+
+**R2 – owned control job lifetime**
+- **Where:** `NativeChecks.cs` `JobLaunch` (1064). Every outer job is now kill-on-close. The new `--job-owner` mode reports, then holds the job until stdin closes or 150 s pass. `--await-exits` (1141) holds exact process handles. In the acceptance file, `ownJob` (375) and `exitWitness` (453); the quota case starts the control under `ownJob` (1808).
+- **Positive:** `owned compatible control remains alive until explicit release`. The gateway is in the job and survives and is reused warm after the job owner reports. After the owned drain and release, only the owner and its sibling remain and the sibling is settled.
+- **Cancellation:** `cancellation before health settles owned startup descendants`. A stub gateway that never listens is cancelled through the abort path. The launcher, gateway and a detached descendant exited within 8 ms, an unrelated process survived, no listener appeared and the gateway started only once.
+
+**R3 – actual object identity on case-only differences**
+- **Where:** `Launcher.cs` `Resolve` (1589) and `ResolvesTo` (1611). The canonical-path check stays. A case-only difference is accepted only if the enrolled target opens to the same volume and file index; an unverifiable identity is refused.
+- **Regression:** `native case-only target comparison preserves object identity`. Real handles accept a case-insensitive alias of one directory and refuse a different directory.
+- **Limit:** distinct `Store`/`store` objects are covered only by an injected comparison, not a real case-sensitive directory, because I changed no host settings. It uses the 64-bit file index, not ReFS 128-bit IDs.
+
+**R4 – one sanitized fixture environment**
+- **Where:** `fixtureEnvironment` (48) is now the single source for `env`. The separate `hostEnvironment` is gone, and enrollment, launcher, manual and job-owner starts all take it.
+- **Regression:** `mixed-case Jev sentinel is absent from fixture children`. A deliberately unsanitized child does see the mixed-case names (detector check). Children from enrollment (1), launcher (3), manual (1) and job owner (3) show no Jev or mixed-case `GG_*` names, exactly `GG_OLLAMA_ENABLED=false`, and the ordinary control variable present. Only names are reported, never values.
+
+**R5 – definite HTTP refusal**
+- **Where:** `Launcher.cs` `Get` (1491) returns and disposes completed HTTP errors; `Observe` (1522). A matching gateway with `/app/` 404 or 410 is refused as `web-unavailable` before the mutexes. Other HTTP errors and `/healthz` errors keep their previous ambiguous handling.
+- **Regression:** readiness case `a definite missing web shell is refused…` (1613). Both statuses are refused in under 10 s with the startup mutexes held. Each makes exactly one `/healthz` and one `/app/` request; the listener, lease records and `gateway.log` are untouched. Control: an `/app/` that never answers waits for the mutexes, then is refused as "not ready".
+
+**R6 – one window deadline**
+- **Where:** `Launcher.cs` `WindowHandoff` (2105), `OpenPwa` (2121), `Handoff` (2145). The clock starts before the first window search. Chrome starts only if at least one 200 ms poll remains; sleeps are capped to the remainder.
+  - The 200 ms threshold is a new constant, documented in ADR-0090.
+  - A near-expired click now reports `window-busy`.
+- **Regression:** `expired window deadline refuses a late spawn`. Injected cases: acquiring at 801–1200 ms gives 0 spawns, and the 800 ms boundary still spawns. Existing-window, reopen and ordinary paths behave as before.
+  - With a real mutex and a fake proxy that only counts starts, an ordinary spawn happened once and a near-expired click spawned nothing.
+
+**R7 – one path observation for both digests**
+- **Where:** `instanceIdentity(config, paths = launchPaths(config))` keeps the exact protocol-2 text; `launchEnrollment` and `routes/system.ts` share one snapshot.
+- **Tests** (`instance-identity.test.ts`):
+  - A hand-written golden text with reordered keys, absent serving roots and a raw non-file value, plus sorted-order rejection controls.
+  - A supplied snapshot that disagrees with a later resolution.
+  - The health route taking one observation, via a spy.
+- **Tooling test:** the enrolled `instance` equals the legacy helper's output for a non-file database.
+
+## Checks
+| Check | Attempts | Result |
+|---|---|---|
+| format-write | 2/2 | pass |
+| api-unit | 2/3 | 22/22 |
+| build | 2/2 | 12/12 |
+| tooling-identity | 2/3 | 2/2 |
+| native-review1 | 2/3 | 7/7 (parent + 6 named children), ~44 s |
+| native-readiness | 2/3 | 20/20 TAP, wrapper `passed: false` (gap above) |
+| installer | 1/2 | 1/1 |
+| typecheck | 1/3 | 21/21 |
+| lint | 1/2 | pass, 5 existing web warnings |
+| format-check / diff-check | 1/3 each | clean |
+
+Build budget is used up, so any further source edit cannot be rebuilt in this turn.
+
+## Other limits
+- Older fixtures (installer, primary, reused-PID, protected-PID, bounded logs) still use the old `stop()`; I only turned off redirects. Converting them was outside the reviewed scope.
+- The alias test's tighter cleanup and the directory-symlink case were not run here; the full suite wasn't admitted and symlink creation hits EPERM on this host. The original full run's 31 pass / 2 fail remains unexplained.
+- The control job now reads back flags `8192` (kill-on-close) instead of `0`, and processes killed by job close report exit code 0.
+- The full suite now uses all 20 of its pooled ports (18 existing + 2 for the focused entry).
+- This is headless gateway reuse only. Real Chrome/PWA behavior still needs shell evidence.
+- Fixture folders are left under `.tmp/`. G:/ggq/gg-565-junction-qa-vh1aqsmg was not touched.
+
+**Still pending:** settlement of the readiness verdict, the hosted Windows full-native and alias gate (including #544 on a hosted runner), independent delta review, fresh QA, real PWA evidence, integration and final review. This is not delivery-complete.

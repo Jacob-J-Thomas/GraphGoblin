@@ -1,0 +1,50 @@
+**Component native QA verdict: PASS. Scope: issues #498, #532 and #520 in the frozen four-path candidate, at the component level only.**
+
+I ran the one allowed wrapper exactly once. It produced 8 of 8 TAP outcomes: the 7 named child tests and their parent all passed, with no fail, cancel, skip or todo. The source and raw index were the same before and after the run. The owned Job settled reliably with no processes left. I made no edits, ran no static checks or builds, did not retry, and hit no denials. This does not cover real Chrome/PWA use, Explorer taskbar pinning, cloud acceptance, warm integration, current-target CI or the Astra MAX final review 3/3.
+
+## Run identity
+- **Actor:** model `claude-opus-5-5`, a fresh session separate from the implementation and verification03 actors. I can't see my own session ID or tool-use IDs, so they have to come from the harness record. I did not open any provider journal.
+- **Command:** the exact sole allowed command, run once.
+- **Recorded run:** `RESULT.json` records `actorLaunchSha256` `7ee7467e…0c76` and ran from 10:57:31.98Z to 10:58:36.26Z on 2026-11-25.
+- **What the wrapper launched** (from `installer/PROCESS.json`): `cmd.exe /d /c C:\nvm4w\nodejs\pnpm.cmd exec node --test --test-reporter=tap --test-name-pattern=Windows.PowerShell tooling/scripts/windows-launcher.acceptance.mjs`, root PID 7348, 150-second wrapper timeout.
+- **Receipts:** all 11 files are present in `native-command-01`. Digests reported by the wrapper:
+  - `RESULT.json`: `f20f9e1e…4de9`
+  - `TAP.json`: `e45e0fc9…f6`
+  - `installer/PROCESS-EXIT.json`: `32cc57ba…0322`
+  - `installer/PROCESS.json`: `94f6ac9b…89db3`
+  - `installer/stdout.log`: `2ce07932…ddab` (2,143 bytes)
+  - `installer/stderr.log`: empty, `e3b0c442…b855`
+  - `runtime.stdout.log`: `31d84dc2…3751`
+  - `PORT-READBACK.json`: `85d951dd…8242`
+  - `PORT-ATTRIBUTION.json`: `97a707f7…54f9`
+  - `VENUE.json`: `c98e04b4…56d`
+
+  I did not recompute these hashes. The stdout and stderr digests recorded in `PROCESS-EXIT.json` match the ones in `RESULT.json` and the summary.
+
+## Results by criterion
+
+| Criterion | Verdict | Evidence |
+|---|---|---|
+| Source and raw-index equality | **PASS** | HEAD `154e78d5…`, the branch, all 15 file hashes and patch `debed938…` are identical before and after the run and match the frozen inventory. The raw index is `d0302a4c…` both before and after. The wrapper computed these hashes; I read the source but did not hash it myself. |
+| Eight outcomes | **PASS** | The raw TAP shows `ok 1`–`ok 7` at indent 4, then `1..7`, then the parent `ok 1`, then `1..1`. The totals read `tests 8, pass 8, fail 0, cancelled 0, skipped 0, todo 0`, with no SKIP or TODO directives. The decoded titles match the raw titles and the test names in the source. |
+| Process exit and Job cleanup | **PASS** | Exit code 0, attached, not timed out, no failure. The Job held 1 process (PID 39756, membership verified) at 0 ms and none at 16 ms, so it was quiescent with a reliable reading. No forced close was requested and 0 processes were active before the close. |
+| Runtime, ports and run environment | **PASS (with limits)** | Node `v22.23.4` (probe exit 0, empty stderr) from the pinned runtime, run through `pnpm.cmd`. Ports 58700–58719 showed no initial occupancy on IPv4 or IPv6. The receipt says vacancy does not mean ownership, lists 4747, 4748, 7443 and 11434 as forbidden, records Ollama disabled and allows 1 attempt. The parent ran 62.68 s against its 120 s budget. |
+| #498 first install and same-path reinstall | **PASS** | Child 1 passed. Its assertions cover: the warn→debug settings change is saved; the launcher ID is stable and only the Environment setting differs; target, config argument, icon and app ID are correct for the Desktop, Programs and disposable pinned links; the PWA source and its hard link keep their bytes and identity; the store is empty and no stages remain. |
+| #498 sharing refusal and restore | **PASS** | Child 2 passed. A real read-sharing holder kept the Programs link open, and the installer refused with "…The previous files were restored." Stages were observed during the attempt. All five outputs kept their bytes and identity, and the holder exited normally. The message check ignores whitespace and only requires the text to appear. |
+| #532 resource-error and shorter-path controls | **PASS** | Child 3 passed. The fresh long install and the long same-path reinstall were refused with the shorter-InstallDir guidance and kept their installed files. The first install, with the long folder absent, succeeded by staging in the shorter parent folder. The 174-character folder size is a property of this fixture and toolchain, not a general path-length rule. The TAP does not say whether CS1567 or CS1619 fired. |
+| #532 non-resource compiler failure (CS1029 case) | **PASS** | Child 4 passed. It used both the missing-type program and the exact `#error error CS1619:` payload. Both got exit 1 and the full-line generic `Launcher compilation failed.` refusal. No resource guidance, error codes, private canary path or secret appeared. Prior files kept their bytes, the store was empty and no stages remained after each run. That the compiler actually emitted CS1029 comes from the historical formal1 evidence and source reasoning; this run's output does not show the compiler's diagnostic. |
+| Known parser limits | **Preserved (not run)** | Only lowercase `error` qualifies, plain prefixes only, and whitespace or extended-path forms fall back to the generic refusal. No speculative `error staging\\...` case was added, and the product behaviour was not widened. |
+| #520 zero-argument defaults | **PASS** | Children 5–7 passed. The installer was called with no arguments, using a test-only folder redirect inside the process. Covered: Chrome Apps source succeeds; the Desktop and Programs links are separate files; port 4747 is saved, not contacted; a Desktop-only source collides and every original file is kept; a missing source is refused and nothing is published. |
+| Final gateway control and its cleanup | **PASS (with visibility limit)** | The parent passed, so the `finally` stop did not throw and the gateway either shut down cleanly or was already stopped. The Job settled to 0. |
+
+## Limits on cleanup and what this run can see
+- The CI evidence recorder is turned off in local runs, so this run saved no `gateway-drain` record.
+- There is no port check after the run. Receipts don't show which port in 58700–58719 the run actually used.
+- The Job only shows its own member processes. A process that broke away from the Job would not appear.
+- The provider-off settings and the owned profile/TEMP folders come from the wrapper's own run-environment receipt. Only the Ollama-disabled setting is recorded there; I did not read the wrapper code.
+- The run left a scratch folder (`.tmp\r532-env-q9pqmaql`) and test fixture folders under the product worktree's `.tmp`. I did not inspect them.
+
+## Historical evidence (unchanged)
+Formal1, the R1 CS1029 failures, the old actual02 static failure and both denials remain original evidence. The old lint run (child exited 0, then 1 active process and a forced Job close) remains an inconclusive cleanup observation. This run cannot explain what caused it. I did not repeat the denied git-log/wc or external Glob actions.
+
+Still required after this: warm-delta reconciliation, current-target CI and the fresh Astra MAX final review 3/3.

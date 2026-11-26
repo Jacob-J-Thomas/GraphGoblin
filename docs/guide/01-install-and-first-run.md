@@ -83,6 +83,19 @@ The installer validates the staged launcher and configuration before changing in
 If a publication failure leaves restoration unverified, keep the `gg-launcher-stage-*` folders
 near the requested outputs for recovery.
 
+Use ordinary local files for the source and outputs. Shortcut discovery and the default shortcut
+outputs use your Desktop and Start-menu folders, and Windows can redirect the Desktop into a
+cloud-synced folder. The installer refuses a PWA shortcut, or an existing output, that Windows
+reports as a link or other reparse point, as files in synced folders can be. It checks the
+source again just before publishing. When the defaults land in a synced location, copy the Chrome
+app shortcut to an ordinary local folder that is not synced and pass that copy as `-PwaShortcut`,
+and pass ordinary local `-InstallDir`, `-DesktopShortcut` and `-StartMenuShortcut` paths. If you
+supply `-PinnedShortcut`, it must name an existing ordinary local shortcut; `-NoShortcuts` ignores
+it. `-NoShortcuts` still needs an ordinary PWA source. A shortcut published into a synced folder
+can be refused on a later reinstall. The installer sees only the reparse attribute Windows
+reports, not which sync service set it. It does not support synced folders as outputs, and it
+cannot promise that a sync service will not download a refused file.
+
 For process settings beyond the explicit paths and port, invoke the script from PowerShell with
 `-Environment @{ GG_REQUIRE_API_KEY = 'true'; GG_DB_URL = 'file:D:/graphgoblin-data/graphgoblin.db' }`.
 Only supplied overrides are persisted; shell `GG_*` variables are not copied. The launcher clears
@@ -95,11 +108,21 @@ The launcher also refuses those keys in manually edited configuration. Use the e
 data-directory `master.key` for encryption and set Jev's key through
 [Store secrets](06-settings-and-secrets.md#store-secrets). No acknowledgement bypass is offered.
 
+The installer also enrolls the gateway's launch identity: it runs the built checkout's read-only
+helper once with the configured runtime and settings, and records the result in the launcher's
+JSON together with a digest of the exact checkout, Node, data-directory, port and `GG_*` inputs.
+It writes no store files. A click first checks for a running gateway with that identity, without
+locks, helpers, the runtime or the checkout's files; if one is ready and its data directory and
+database still resolve to the enrolled locations, it is reused at once. Editing any of those
+inputs in the JSON needs the installer to run again; the launcher never updates its enrollment
+itself. Replacing Node or rebuilding in place keeps the enrollment while the settings and store
+stay the same.
+
 The launcher requires Windows 10 or Windows Server 2016 or later and a host policy that permits
 nested jobs. Installation checks the native capability before replacing shortcuts or
-configuration. Every click checks actual helper containment, including when the gateway already
-runs. A restricted shell can therefore refuse a warm click while the gateway remains available
-at its existing address. See [Windows launcher troubleshooting](07-troubleshooting.md#windows-launcher).
+configuration. Only a cold start checks actual helper containment again: reusing a running
+gateway starts no process, so a restricted shell that refuses process creation can still reuse
+the gateway but cannot start one. See [Windows launcher troubleshooting](07-troubleshooting.md#windows-launcher).
 
 Use the new desktop shortcut. Once its PWA window opens, remove the old direct Chrome taskbar pin
 and pin the new running GraphGoblin button. Both routes now go through readiness before opening
@@ -127,9 +150,18 @@ launcher refuses to reuse a gateway started by an earlier build and refuses to s
 gateway while an earlier one still writes `gateway.log`. An oversized `gateway.log` left by an
 earlier version is cleared when the new gateway first starts.
 
+Upgrading to the enrolled launch identity is also a coordinated cutover: install the updated build
+and rerun the installer together. A gateway from an earlier build publishes no launch identity, so
+it needs one deliberate shutdown; nothing converts or resets it. A gateway you started by hand
+with the same settings is reused immediately.
+
 Repeated/concurrent clicks reuse one matching gateway. An older build with only plain health, an
 unrelated listener or a different configured store is refused with a diagnostic. Stop an older
-gateway through deliberate shutdown before the first launch of this version. Closing every
+gateway through deliberate shutdown before the first launch of this version. When the PWA is not
+open yet, simultaneous clicks wait briefly for each other so that only one opens its window, and a
+click whose window time runs out while it waits never starts Chrome late; if Chrome cannot be
+started, the message gives the address of the gateway, which keeps running.
+Closing every
 GraphGoblin window leaves gateway execution running. Launching during drain reopens the PWA for
 the existing shutdown controls; it never cancels or forces that drain. See
 [launcher troubleshooting](07-troubleshooting.md#windows-launcher) and
