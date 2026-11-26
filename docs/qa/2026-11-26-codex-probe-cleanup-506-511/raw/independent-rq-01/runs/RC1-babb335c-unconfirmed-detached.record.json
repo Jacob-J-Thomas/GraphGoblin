@@ -1,0 +1,178 @@
+{
+  "caseId": "RC1-babb335c-unconfirmed-detached",
+  "source": "babb335c",
+  "scenario": "unconfirmed-detached",
+  "timeoutMs": 2500,
+  "holdMs": 8000,
+  "binaryKind": "fake",
+  "node": "v22.23.4",
+  "root": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH",
+  "probe": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH\\temp\\gg-codex-probe-debe1509",
+  "elapsedMs": 6751,
+  "result": {
+    "state": "unknown",
+    "ok": false,
+    "problems": [
+      "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight.",
+      "Codex CLI check process did not confirm that it stopped. Check that the Codex CLI starts and responds, then retry preflight.",
+      "Codex readiness check could not remove its temporary folder. Check that the Codex CLI starts and responds, then retry preflight."
+    ],
+    "version": "0.160.0"
+  },
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 58608,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH\\temp\\gg-codex-probe-debe1509",
+      "at": 1441.3
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1651.9
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1652
+    },
+    {
+      "kind": "spawn",
+      "id": 1,
+      "pid": 57460,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH\\temp\\gg-codex-probe-debe1509",
+      "at": 1662.1
+    },
+    {
+      "kind": "exit",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 2000.2
+    },
+    {
+      "kind": "close",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 2000.3
+    },
+    {
+      "kind": "spawn",
+      "id": 2,
+      "pid": 31848,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "resume",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH\\temp\\gg-codex-probe-debe1509",
+      "at": 2011
+    },
+    {
+      "kind": "exit",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2176.1
+    },
+    {
+      "kind": "close",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2176.2
+    },
+    {
+      "kind": "spawn",
+      "id": 3,
+      "pid": 58332,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "login",
+        "status"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH\\temp\\gg-codex-probe-debe1509",
+      "at": 2186.5
+    },
+    {
+      "kind": "kill",
+      "id": 3,
+      "signal": "SIGTERM",
+      "at": 4703
+    },
+    {
+      "kind": "exit",
+      "id": 3,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 4736.6
+    },
+    {
+      "kind": "rm",
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH\\temp\\gg-codex-probe-debe1509",
+      "options": {
+        "recursive": true,
+        "force": true
+      },
+      "at": 6726.3,
+      "outcome": "EBUSY"
+    },
+    {
+      "kind": "close",
+      "id": 3,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 11052.4
+    }
+  ],
+  "rmCalls": [
+    {
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC1-babb335c-unconfirmed-detached-RrSLXH\\temp\\gg-codex-probe-debe1509",
+      "outcome": "EBUSY"
+    }
+  ],
+  "atReturn": {
+    "tempEntries": [
+      "gg-codex-probe-debe1509"
+    ],
+    "probeExists": true,
+    "probeEntries": [
+      "sentinel.txt"
+    ],
+    "helpers": [
+      {
+        "name": "grandchild.pid",
+        "pid": 62908,
+        "alive": true
+      }
+    ]
+  },
+  "afterHelpers": {
+    "tempEntries": [
+      "gg-codex-probe-debe1509"
+    ],
+    "probeExists": true,
+    "probeEntries": [
+      "sentinel.txt"
+    ],
+    "helpersAlive": [],
+    "forcedTermination": [],
+    "turnAttempt": false
+  }
+}

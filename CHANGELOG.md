@@ -77,6 +77,27 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   **Upgrade:** rebuild the API. Preflight output parsers must allow the new Codex warning and
   detail text. No schema, stored format or reset change.
 
+- Codex readiness checks and the MCP listing before each turn now wait for the CLI process they
+  started to close after a deadline or cancellation (#506). The first failure (timeout,
+  cancellation or missing CLI) is kept. The runner asks the process to stop, sends one stronger
+  request after one second if it has not exited, and stops waiting after a separate two-second
+  allowance. Preflight removes its temporary probe folder once, after its checks have closed. On
+  native Windows that removal used to run before a timed-out check had closed, and failed with
+  `EBUSY`, leaving the folder. When a check does not confirm that it stopped, the process may
+  still be using the folder, so preflight leaves it in place and does not try to remove it. In
+  that case, or when the removal after close fails, preflight keeps the check's state and adds a
+  fixed problem: `Codex CLI check process did not confirm that it stopped.` or
+  `Codex readiness check could not remove its temporary folder.` A check that had passed still
+  reports `unknown`. A turn whose MCP listing process did not confirm that it stopped now fails
+  `HARNESS_TERMINATION_UNCONFIRMED` with a fixed message naming the listing, even when the turn
+  was cancelled, rather than ending as cancelled or as an ordinary listing failure; no turn
+  starts. With a custom `cancelGraceMs` shorter than the two-second allowance, a cancelled turn
+  can instead end with the harness's generic termination message and the same code. The Codex
+  live smoke suite now creates its working directory only when it runs with `LIVE=1`, so
+  ordinary test runs no longer leave an empty `graphgoblin-live-*` directory in the temporary
+  folder (#511). Folders left by earlier runs are not removed automatically. No store, schema,
+  API or format change.
+
 - `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
   `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
   template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so

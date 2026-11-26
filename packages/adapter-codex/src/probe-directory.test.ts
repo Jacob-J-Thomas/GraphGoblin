@@ -1,11 +1,12 @@
-import { describe, expect, it, vi, type TestContext } from 'vitest';
+import { describe, expect, it, vi, type MockInstance, type TestContext } from 'vitest';
 import { spawn, type ChildProcess } from 'node:child_process';
 import * as probeFs from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { readinessFailure } from '@graphgoblin/domain';
 import { createCodexHarness } from './index.js';
-import { runCli, type CliCommand, type CliRunner } from './cli.js';
+import { preflightCli, runCli, type CliCommand, type CliResult, type CliRunner } from './cli.js';
 
 // Inject filesystem boundary faults while retaining real exclusive creation and cleanup.
 vi.mock('node:fs/promises', { spy: true });
@@ -82,7 +83,12 @@ function probeCase(prefix: string, body: (probe: ProbeCase) => Promise<void>) {
 }
 
 /** `onStart` runs once the fake CLI for `args` has started. */
-function fixture(probe: ProbeCase, scenario = 'ready', onStart?: (args: string[]) => void) {
+function fixture(
+  probe: ProbeCase,
+  scenario = 'ready',
+  onStart?: (args: string[]) => void,
+  preflightTimeoutMs?: number,
+) {
   const commands: CliCommand[] = [];
   const runner = vi.fn<CliRunner>(async (command, args, timeout) => {
     commands.push(command);
@@ -104,6 +110,7 @@ function fixture(probe: ProbeCase, scenario = 'ready', onStart?: (args: string[]
   const harness = createCodexHarness({
     codexBinary: fileURLToPath(new URL('./fixtures/readiness-cli.mjs', import.meta.url)),
     cliRunner: runner,
+    ...(preflightTimeoutMs ? { preflightTimeoutMs } : {}),
   });
   return { harness, commands, runner };
 }
@@ -211,6 +218,179 @@ describe('Codex readiness probe directory', () => {
         remove.mockRestore();
       }
     }),
+  );
+});
+
+describe('Codex readiness probe settlement (#506)', () => {
+  it(
+    'removes the probe directory only after a timed-out fake CLI has closed, keeping the typed timeout',
+    probeCase('gg-codex-timeout-', async (probe) => {
+      useTempRoot(probe.root);
+      const close = vi.fn();
+      let kill: MockInstance<ChildProcess['kill']> | undefined;
+      // `login status` never answers in the hang scenario: only its deadline ends it.
+      const { harness, commands, runner } = fixture(
+        probe,
+        'hang',
+        (args) => {
+          if (args.join(' ') !== 'login status') return;
+          const child = probe.children.at(-1)!;
+          kill = vi.spyOn(child, 'kill');
+          child.once('close', close);
+        },
+        // Ample for the three answering checks to start under load; the hanging one times out.
+        1000,
+      );
+      expect(await harness.preflight()).toEqual({
+        ...readinessFailure('codex', 'unknown'),
+        version: '0.160.0',
+      });
+      // Every fake CLI had closed before preflight returned.
+      expect(probe.children.filter(isRunning)).toEqual([]);
+      expect(commands).toHaveLength(4);
+      expect(await runner.mock.results[3]?.value).toEqual({
+        code: null,
+        output: '',
+        stdout: '',
+        spawnError: 'timed out after 1000 ms',
+      });
+      // Termination was requested once, the child closed, and only then was its probe removed.
+      expect(kill?.mock.calls).toEqual([['SIGTERM']]);
+      const directory = commands[0]?.cwd ?? '';
+      const removals = vi.mocked(probeFs.rm).mock;
+      const removal = removals.calls.findIndex(([path]) => String(path) === directory);
+      expect(removal).toBeGreaterThanOrEqual(0);
+      const [requested] = kill?.mock.invocationCallOrder ?? [];
+      const [closed] = close.mock.invocationCallOrder;
+      expect(requested).toBeLessThan(closed ?? 0);
+      expect(closed).toBeLessThan(removals.invocationCallOrder[removal] ?? 0);
+      await expect(probeFs.access(directory)).rejects.toMatchObject({ code: 'ENOENT' });
+      expect(await probeFs.readdir(probe.root)).toEqual([]);
+    }),
+    30_000,
+  );
+
+  it(
+    'reports a missing executable without waiting and removes the probe directory',
+    probeCase('gg-codex-missing-', async (probe) => {
+      useTempRoot(probe.root);
+      // A wait for the 15 s deadline would outlast this case's 5 s budget.
+      const result = await preflightCli(
+        { command: join(probe.root, 'graphgoblin-no-such-codex.exe'), prefix: [] },
+        runCli,
+        15_000,
+      );
+      expect(result).toEqual(readinessFailure('codex', 'cli-missing'));
+      expect(await probeFs.readdir(probe.root)).toEqual([]);
+    }),
+  );
+
+  const FLAGS = '--json --model --sandbox --cd --skip-git-repo-check --output-schema --config';
+  const UNKNOWN = readinessFailure('codex', 'unknown').problems[0];
+  const ACTION = ' Check that the Codex CLI starts and responds, then retry preflight.';
+  const NOT_STOPPED = `Codex CLI check process did not confirm that it stopped.${ACTION}`;
+  const PROBE_LEFT = `Codex readiness check could not remove its temporary folder.${ACTION}`;
+  const timedOut = (unconfirmed: boolean): CliResult => ({
+    code: null,
+    output: 'quota PRIVATE_PARTIAL_OUTPUT',
+    stdout: '',
+    spawnError: 'timed out after 10 ms',
+    ...(unconfirmed ? { terminationUnconfirmed: true } : {}),
+  });
+  /** The version and help checks pass; `login status` returns the scenario's result. */
+  const controlledRun = (login: CliResult) =>
+    vi.fn<CliRunner>((_cli, args) =>
+      Promise.resolve(
+        args.includes('--version')
+          ? { code: 0, output: 'codex-cli 0.160.0', stdout: 'codex-cli 0.160.0' }
+          : args.includes('--help')
+            ? { code: 0, output: FLAGS, stdout: FLAGS }
+            : login,
+      ),
+    );
+
+  it.for([
+    {
+      name: 'a timed-out check that did not confirm it stopped',
+      login: timedOut(true),
+      expected: { state: 'unknown', version: '0.160.0', problems: [UNKNOWN, NOT_STOPPED] },
+    },
+    {
+      name: 'a timed-out check that closed',
+      login: timedOut(false),
+      expected: { state: 'unknown', version: '0.160.0', problems: [UNKNOWN] },
+    },
+  ])('retains its probe before confirmed close, given $name', (scenario, context) =>
+    probeCase('gg-codex-retained-', async (probe) => {
+      useTempRoot(probe.root);
+      const run = controlledRun(scenario.login);
+      const result = await preflightCli({ command: process.execPath, prefix: [] }, run, 10);
+      // The typed timeout stays the result; an unconfirmed stop adds only its fixed problem.
+      expect(result).toEqual({ ok: false, ...scenario.expected });
+      const directory = run.mock.calls[0]?.[0].cwd ?? '';
+      expect(basename(directory)).toMatch(/^gg-codex-probe-[a-f0-9]{8}$/);
+      const closed = scenario.login.terminationUnconfirmed === undefined;
+      // A check that may still be running in the probe keeps it: not one removal is attempted.
+      // Once the check has closed, the probe is removed once.
+      const removals = vi.mocked(probeFs.rm).mock.calls.map(([path]) => String(path));
+      expect(removals).toEqual(closed ? [directory] : []);
+      const left = await probeFs.readdir(directory).then(
+        (entries) => entries,
+        (error: NodeJS.ErrnoException) => error.code,
+      );
+      expect(left).toEqual(closed ? 'ENOENT' : []);
+      const text = JSON.stringify(result);
+      for (const hidden of ['PRIVATE', basename(directory)]) expect(text).not.toContain(hidden);
+      // The case's own teardown removes its root, and with it a retained probe.
+    })(context),
+  );
+
+  it.for([
+    {
+      name: 'a timeout whose probe directory stayed',
+      login: timedOut(false),
+      expected: { state: 'unknown', version: '0.160.0', problems: [UNKNOWN, PROBE_LEFT] },
+    },
+    {
+      name: 'a signed-out CLI whose probe directory stayed',
+      login: { code: 1, output: 'Not logged in', stdout: '' },
+      expected: {
+        state: 'auth',
+        version: '0.160.0',
+        authenticated: false,
+        problems: [
+          'Codex sign-in is missing or invalid. Run codex login, then retry preflight.',
+          PROBE_LEFT,
+        ],
+      },
+    },
+    {
+      name: 'a ready CLI whose probe directory stayed',
+      login: { code: 0, output: 'Logged in using ChatGPT', stdout: 'Logged in using ChatGPT' },
+      expected: { state: 'unknown', problems: [PROBE_LEFT] },
+    },
+  ])('keeps the check result of $name and adds a fixed cleanup problem', (scenario, context) =>
+    probeCase('gg-codex-cleanup-', async (probe) => {
+      useTempRoot(probe.root);
+      const run = controlledRun(scenario.login);
+      const remove = vi.spyOn(probeFs, 'rm');
+      remove.mockRejectedValueOnce(
+        Object.assign(new Error('EBUSY: resource busy PRIVATE_REMOVAL'), { code: 'EBUSY' }),
+      );
+      try {
+        const result = await preflightCli({ command: process.execPath, prefix: [] }, run, 10);
+        expect(result).toEqual({ ok: false, ...scenario.expected });
+        const directory = run.mock.calls[0]?.[0].cwd ?? '';
+        // One removal, never retried; the fault leaves the disposable directory to the case.
+        expect(remove.mock.calls.map(([path]) => String(path))).toEqual([directory]);
+        expect(await probeFs.readdir(directory)).toEqual([]);
+        const text = JSON.stringify(result);
+        expect(basename(directory)).toMatch(/^gg-codex-probe-[a-f0-9]{8}$/);
+        for (const hidden of ['PRIVATE', basename(directory)]) expect(text).not.toContain(hidden);
+      } finally {
+        remove.mockRestore();
+      }
+    })(context),
   );
 });
 

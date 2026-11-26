@@ -1,0 +1,36 @@
+The #506/#511 slice is in place, unstaged, in the 11 authorized paths only. Every command I was authorized to run passes: tests (702 passed, 5 skipped), coverage, typecheck, lint, Prettier and the whitespace check. Two gaps remain: the MCP listing (in `isolation.ts`) doesn't report a process that didn't confirm it stopped, and `check:deps`/`check:layers` haven't been run.
+
+## What changed
+
+**#506 – `runCli` and `preflightCli` (`cli.ts`)**
+- `runCli` now handles cancellation itself instead of passing the signal to `spawn`. A timeout or cancellation becomes the first failure and stays the result: a later exit code or error can't replace it, and output arriving after it is drained, not kept.
+- After that first failure it asks the child to stop (`SIGTERM`), sends one `SIGKILL` at 1 s only if the child hasn't exited, and waits for `close` within a separate 2 s allowance. If the child still hasn't closed by then, the result carries a new internal field, `terminationUnconfirmed`. It never looks for descendants, and command deadlines are unchanged.
+- A signal that is already aborted spawns nothing. A child that never started (missing executable) is reported at once. Timers and the abort listener are always cleared.
+- Preflight removes its probe directory once, after the last check has closed, and doesn't retry. If a check didn't confirm it stopped, or the directory couldn't be removed, the check keeps its state and problems and gains a fixed extra problem string. A check that passed becomes `unknown`, as before. No schema change.
+
+**#511 – live suite (`live.test.ts`)**: the `graphgoblin-live-*` directory is now created in `beforeAll`, and the teardown it returns removes it whether the suite passes or fails. A skipped (disabled) suite creates nothing.
+
+**Tests**
+- **`cli.test.ts`**: 12 cases using a fake child and fake timers cover first failure, the single stronger request, the allowance bound, immediate abort and spawn error. Two native cases (timeout and cancellation) check the real process has exited when the call returns.
+- **`probe-directory.test.ts`**: a native hang case checks the order kill → close → probe removal, with the typed timeout kept and nothing left behind. Also a native missing-executable case, and five cleanup-diagnostic cases using an injected removal failure.
+- **`isolation.test.ts`**: an actual listing through the real `runCli` with the turn's signal. On cancel, the listing process closes before the turn settles, and nothing reaches the SDK's argument-recording fake CLI.
+- **`live-collection.test.ts`** (new): runs Vitest itself on `src/live.test.ts` in a child process with its own TEMP. With `LIVE=0`, all 4 cases are skipped and no fixture is created. With `LIVE=1` and only `passes preflight` selected, both the ready and unready outcomes show exactly one fixture during the run and none after. An in-process case checks the controlled adapters refuse every turn.
+- **`fixtures/live-collection-setup.ts`** (new): replaces the harness's preflight and refuses every turn. It doesn't import `vitest`, because the `not-to-dev-dep` dependency rule would reject that in `src/fixtures`. Child runs also set `CODEX_HOME` to an unused path.
+- **`readiness-cli.mjs`**: new `mcp list` branch; the `hang` scenario never answers.
+
+**Docs**: `docs/06`, `docs/10` (including correcting the outdated last sentence of the #466 paragraph) and a CHANGELOG entry.
+
+## Verification
+- **Negative controls**, both since reverted (grep confirms no leftovers):
+  - Putting back the original `runCli` made 13 new tests fail, including the native timeout/cancel, probe-ordering and listing cases.
+  - Putting back the collection-time allocation made the disabled-collection case fail, finding `graphgoblin-live-4MZBKb` left behind. I limited that control to the child run so nothing was created in the real user TEMP.
+- **Coverage**: lines 99.3%, branches 95.76%. The new `runCli`/`preflightCli` code is fully covered. The `cli.ts` lines still uncovered (299, 320, 333) are existing `inspectCli` paths.
+- No real provider session, installed-CLI probe, owner store/configuration or user TEMP listing was used. The original evidence files were not touched.
+
+## Gaps and dependencies
+1. **MCP listing (`isolation.ts`, not mine to edit)**: if a cancelled listing's process doesn't confirm it stopped within 2 s, the turn still ends as an ordinary cancellation. A timed-out listing keeps its existing message. Reporting this would need `isolation.ts` (and possibly `harness.ts`) added to a continuation's paths.
+2. **Build output**: `tsconfig.build.json` includes `src/fixtures/live-collection-setup.ts`, so it gets compiled into `dist/fixtures/`. Nothing imports it, but excluding `src/fixtures/**` in `packages/adapter-codex/tsconfig.build.json` would be cleaner.
+3. **Gates not run**: `pnpm check:deps` and `pnpm check:layers` were outside my commands. The setup file was written to satisfy `not-to-dev-dep` and only imports declared dependencies, but it is unverified.
+4. **Timing**: the native timeout test uses a 1 s preflight deadline and a 30 s test budget. Each child Vitest run took about 4–5 s here; slower hosts are untested.
+5. **Behaviour detail**: `runCli` now reports cancellation with the fixed text `The operation was aborted`, the same as Node's previous AbortError message.
+6. Directories already left by earlier runs are not cleaned up; the CHANGELOG says so.

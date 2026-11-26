@@ -1,0 +1,26 @@
+# Codex owned-process and fixture cleanup
+
+Base: `154e78d54ee485330816d606032280de44d6e891`. Dedicated worktree: `G:/ggq/gg-fu-codex-cleanup-20261124/GraphGoblin`. Issues #506 and #511 are explicitly included in the owner's admitted #567 follow-up batch. The historical parked wording does not supersede the latest dispatch.
+
+## Evidence and bounded outcome
+
+The instrumented compiled current source ran three native Windows fake-CLI timeouts. Each requested termination, returned the typed timeout, attempted its exclusively created directory's removal, received `EBUSY` from `rmdir`, and only then observed child exit/close roughly 5 ms later. The probe directory remained after close. Instrumentation observed the real spawn, kill and filesystem functions without delaying them. The exact original ordering and first failures remain in `timeout-01.stdout.json` through `timeout-03.stdout.json`; the diagnostic removed only its own proven named child after settlement. This is native fake-CLI evidence, not a real-provider frequency estimate.
+
+Actual Vitest collection of `src/live.test.ts` with `LIVE=0` exited successfully with four skipped cases and created one empty `graphgoblin-live-*` directory. It remains inside this packet's disposable native root as evidence. No provider request was enabled.
+
+## Architecture disposition
+
+1. `runCli` owns settling the exact child it spawned. Ordinary completion still resolves from close. Timeout or cancellation preserves the first failure and requests termination, then waits for close within a separate two-second cleanup allowance. If the child remains alive, allow a single stronger termination request within that same allowance; do not extend the total allowance, walk unrelated process trees, or treat a kill request as proof of exit. A missing binary without a child must not wait unnecessarily. Register listeners and timer state safely for immediate error/abort races. Drain bounded existing output semantics and preserve per-turn listing cancellation. This is an orchestration deadline, not a guarantee against arbitrarily stalled synchronous OS calls.
+2. Preserve timeout/auth/missing-binary states and existing public readiness classification. If termination or removal still fails, retain a distinct bounded cleanup diagnostic alongside the original failure; do not replace the primary cause or expose arbitrary CLI output, credentials, paths or raw error messages. Prefer a narrow internal result field and an additional safe existing readiness problem string over a public schema change. A successful inspection whose cleanup fails remains `unknown` as today. Do not retry removal indefinitely. Wait for process settlement before the one ordinary removal; any bounded removal retry requires a demonstrated separate filesystem mechanism, not speculation.
+3. #511 allocates the live fixture during the enabled suite lifecycle, not test collection. Cleanup must run for the allocated fixture on supported suite completion/failure. No directory is allocated when disabled. Keep the live suite's opt-in semantics and test behavior. Independently exercise actual collection with `LIVE=0`, plus an enabled lifecycle with test-controlled adapters and a selected no-turn case; no real Codex/Claude model request or owner configuration is permitted.
+
+Rejected alternatives: ignore leftover directories, sleep a guessed number of milliseconds, broaden filesystem retries, raise command deadlines, skip native assertions, or introduce a general process-supervisor subsystem. Waiting for the actual child close directly addresses the observed race. The two-second cleanup bound is a delegated implementation decision for later owner catalogue review; it is not a claim that every OS failure can be recovered.
+
+## Acceptance and invariants
+
+- Native owned fake CLI: timeout requested, child close observed before probe removal, typed timeout retained, no residue after return. Positive ordinary no-turn readiness, missing executable, existing long-root and collision handling remain intact.
+- Controlled error cases: original timeout/cancellation survives cleanup errors; cleanup allowance is bounded; initial failure is not overridden by a later close code; immediate abort and spawn error do not leak timers or launch later commands.
+- Actual per-turn MCP-listing cancellation must stop before SDK turn submission and settle its owned fake process; existing injected runner controls alone are insufficient if the real runner changes.
+- Disabled Vitest collection produces no fixture. Enabled test-controlled lifecycle allocates and removes only its owned fixture. Preserve declared live skips in ordinary runs.
+- All adapter tests except the installed-owner-CLI probe are safe fake/no-turn cases; broad commands must retain `LIVE=0` and avoid the explicit installed CLI test. Public readiness, code coverage >=90% lines/branches, types/lint and ordinary hosted gates remain required.
+- Claude Opus 5.5 xhigh implements; independent GPT review, separate fresh Claude QA, ordinary CI, fresh Astra MAX final review and verified signed merge follow. No product source has been changed for this preparation.

@@ -1,0 +1,167 @@
+# #506 / #511 review-1 correction and main integration (brief A3)
+
+Author: Claude Opus 5.5 (xhigh), Claude-only window of 2026-11-25. Worktree
+`G:/ggq/gg-fu-codex-cleanup-20261124/GraphGoblin`, branch `codex/gg-fu-codex-cleanup-20261124`.
+Raw command output is under `logs/` beside this file.
+
+## Commits
+
+| Commit | What it is |
+| --- | --- |
+| `babb335c` | The reviewed 12-file candidate, committed unchanged on `154e78d5`. |
+| `49b29cfe` | The R1/R2 correction: the five editable paths only. This is the commit for the targeted re-review. |
+| `46617e29` | `git merge --no-ff origin/main`, with main at `4e1037c9` (101 commits). This is the branch HEAD. |
+
+Before the first commit, all 12 candidate files and the two frozen non-candidate files
+(`harness.ts`, `tsconfig.build.json`) matched the SHA-256 values in
+`review1-correction-preparation-02/AUTHOR-CONTRACT.json`, the raw index matched
+`c221ca00…d055`, and the 12 per-file blob ids of the staged diff matched those in
+`review-01/SOURCE-WITH-NEW-FILES.patch` exactly. That patch lists the two new files last, so the
+whole-patch bytes differ only in file order.
+
+`git diff babb335c 49b29cfe --stat` touches only `CHANGELOG.md`, `docs/06-harness-integration.md`,
+`docs/10-testing-and-quality.md`, `packages/adapter-codex/src/cli.ts` and
+`packages/adapter-codex/src/probe-directory.test.ts`.
+
+## R1 (P2): keep the probe directory when termination is unconfirmed
+
+`preflightCli` (`packages/adapter-codex/src/cli.ts`) used to call `rm` on its probe directory even
+when a check's runner result carried `terminationUnconfirmed`. Now:
+
+- If any check reported `terminationUnconfirmed`, preflight leaves the probe directory in place and
+  makes no `rm` call. The check's typed result is kept, and only the existing fixed not-stopped
+  problem is added (`Codex CLI check process did not confirm that it stopped.` plus the `unknown`
+  action). The removal-failure problem is not added, because no removal ran.
+- Otherwise (the checks closed, or a spawn that never started, such as a missing executable), the
+  single ordinary removal runs as before, through a small `removeProbe` helper. It is not retried,
+  and a failure adds the separate fixed removal-failure problem. A `ready` result still becomes
+  `unknown` in that case.
+- `runCli`'s first failure, timeout/abort/close logic, the single stronger signal, deadlines and
+  all public contracts are unchanged. No CLI output, path or exception text reaches a result.
+
+### Tests (`packages/adapter-codex/src/probe-directory.test.ts`)
+
+- New table `retains its probe before confirmed close, given $name`. It uses the owned
+  `probeCase` temporary fixture, with `TEMP`/`TMP`/`TMPDIR` stubbed to the case root, and a
+  controlled runner:
+  - `a timed-out check that did not confirm it stopped`: the typed `unknown` result with
+    `version: '0.160.0'` and problems `[unknown, not-stopped]`; **zero** adapter `rm` calls; the
+    probe directory still exists and is empty; no `PRIVATE` canary and no probe basename in the
+    result.
+  - `a timed-out check that closed` (the same timeout without `terminationUnconfirmed`): the same
+    typed result with no cleanup problem; exactly one `rm` call, on the probe directory; the
+    directory is gone (`ENOENT`).
+  - The case's own teardown removes its root, and the retained probe with it. Afterwards the
+    disposable TEMP root `G:/ggq/tmp/a3-506-511` held no case residue.
+- The table `keeps the check result of $name and adds a fixed cleanup problem` loses the two rows
+  that combined an unconfirmed stop with a removal (`a timeout whose check did not confirm it
+  stopped`, which expected one removal, and the stale `a timeout with both cleanup failures`). It
+  keeps the confirmed timeout + injected `EBUSY`, signed-out + `EBUSY` and ready + `EBUSY` controls.
+  Every remaining row injects the fault, so the dead `removal` flag was removed. The shared
+  controlled runner moved into a `controlledRun` helper that both tables use.
+- These are unchanged: the native fake-CLI close-before-removal test, the missing-executable test,
+  the long-path, collision and creation-fault tests, and the #466 lifecycle tests.
+
+### Red, then green (targeted selector from the correction contract)
+
+`pnpm --filter @graphgoblin/adapter-codex exec vitest run src/probe-directory.test.ts --testNamePattern='keeps the check result|retains its probe before confirmed close'`
+
+| Log | Source | Result |
+| --- | --- | --- |
+| `logs/01-red-controlled-old-source.log` | new test, `cli.ts` as in `babb335c` | exit 1: 1 failed, 4 passed, 16 skipped. The only failure is `retains its probe before confirmed close, given a timed-out check that did not confirm …` at `expect(removals).toEqual(closed ? [directory] : [])`: the old source made one `rm` call on the probe directory. |
+| `logs/02-green-controlled-fixed-source.log` | test + fix | exit 0: 5 passed, 16 skipped |
+
+## R2 (P3): qualify the cancelled-listing message in docs/06
+
+The listing runs inside `runStreamed`, which the harness wraps in its `cancelGraceMs`-bounded wait
+(`harness.ts` `bounded` and the acknowledgement timer; `client.ts` `isolatedClient`). In the same
+docs/06 paragraph, a cancelled turn now ends as cancelled, or with the listing's own message, only
+when the listing's runner settles before that bound runs out. That holds with the default 5 s,
+which is longer than the runner's two-second allowance. A custom `cancelGraceMs` shorter than the
+allowance can let the bound run out first, and the turn then fails
+`HARNESS_TERMINATION_UNCONFIRMED` with the harness's generic termination message. There is no
+harness or deadline change. The FUP093 classification is unchanged and still documented: the
+listing's error is definitely-not-submitted, the harness reports `delivery-uncertain`, and no SDK
+turn starts.
+
+## Doc alignment
+
+- docs/06: preflight removes the probe once, after the last check has closed. Before, the doc also
+  allowed removal after a spent allowance. A check that did not confirm it stopped leaves the
+  directory with no removal attempt. Each of the two fixed problems is tied to its own condition.
+- docs/10: describes the retained-probe and confirmed-close controls, the red result against the
+  earlier preflight, and the injected-fault table. It also names the case-root removal as the
+  cleanup for a probe directory the adapter left in place.
+- CHANGELOG (#506 entry): a check that did not confirm it stopped leaves the folder with no removal
+  attempt. The entry also carries the short `cancelGraceMs` qualification, and its tail is
+  reflowed so that code spans do not break across lines.
+
+## Checks on the correction commit (`49b29cfe`)
+
+All checks ran with the project Node v22.23.4, pnpm 12.8.1, `TEMP`/`TMP`/`TMPDIR` set to
+`G:/ggq/tmp/a3-506-511`, and `LIVE=0` for the test runs.
+
+| Log | Command | Result |
+| --- | --- | --- |
+| `03-format-write.log` | `pnpm exec prettier --write` on the five editable paths | all unchanged |
+| `04-format-check.log` | `pnpm exec prettier --check` on all 12 candidate paths | pass |
+| — | `git diff --check` | pass |
+| `05-focused-tests.log` | `vitest run src/probe-directory.test.ts src/cli.test.ts src/isolation.test.ts --testNamePattern='^(?!.*actual installed SDK CLI)'` | 3 files, 100 passed, 1 skipped |
+| `06-typecheck.log` | `pnpm --filter @graphgoblin/adapter-codex typecheck` | pass |
+| `07-lint.log` | `pnpm --filter @graphgoblin/adapter-codex lint` | pass |
+| `08-coverage.log` | `pnpm --filter @graphgoblin/adapter-codex exec vitest run --coverage --testNamePattern='^(?!.*actual installed SDK CLI)'` under the heavy-suite lock, HEAD `49b29cfe`, clean tree | exit 0: 19 files passed, 1 skipped; 710 tests passed, 5 skipped. Lines 99.31% (577/581), branches 96% (505/526), statements 98.47%, functions 99.38%. In `cli.ts`, lines are 126/129 and branches 80/88. The new `preflightCli`/`removeProbe` code is fully covered. The uncovered `cli.ts` lines 306, 327 and 340 are existing `inspectCli` paths (299, 320 and 333 before this edit). |
+
+The coverage run waited for the heavy-suite lock while another worker (B2) held it, took it
+atomically, and released it when the run finished.
+
+The nine files the contract froze (`cli.test.ts`, `live-collection-setup.ts`, `readiness-cli.mjs`,
+`live-collection.test.ts`, `live.test.ts`, `harness.ts`, `tsconfig.build.json`,
+`isolation.test.ts`, `isolation.ts`) still match their recorded SHA-256 at the merged HEAD.
+
+## Integration onto main (`46617e29`)
+
+`git fetch origin`, then `git merge --no-ff origin/main` (`4e1037c9`). Main does not touch
+`packages/adapter-codex`, and it changes no lockfile or dependency, so no install was needed.
+
+| Path | Outcome | Resolution |
+| --- | --- | --- |
+| `CHANGELOG.md` | Conflict: both sides added entries at the top of `## Unreleased`. | Union: this change's #506/#511 entry first, then a blank line, then all 11 of main's new entries, byte-for-byte and in main's order. Compared with `origin/main:CHANGELOG.md`, the result adds exactly this entry's 21 lines (20 lines of text and a separating blank line) and removes nothing. Main's own edit to the older #525 entry is kept. |
+| `docs/06-harness-integration.md` | Auto-merged. | Main's change, the #525 explicit-version-read text near line 557, does not overlap. Both #506/#511 paragraphs are present byte-for-byte. The only lines the merge dropped from either side are base lines the other side edited. |
+| `docs/10-testing-and-quality.md` | Auto-merged. | Main's hunks (QA packets, CI, jsonata and probe-listener text) do not overlap. All three #506/#511 paragraphs are present byte-for-byte. The only lines dropped from either side are base lines the other side edited. |
+
+The net `git diff origin/main HEAD` holds exactly the slice's 12 paths (1181+/40-).
+
+| Log | Command (merged HEAD) | Result |
+| --- | --- | --- |
+| `09-merge-format-check.log` | `prettier --check` on the three merged docs and the two corrected sources | pass |
+| — | `git diff --cached --check` on the merged docs | pass |
+| `10-merge-focused-tests.log` | `vitest run src/probe-directory.test.ts src/cli.test.ts src/isolation.test.ts src/live-collection.test.ts src/live.test.ts --testNamePattern='^(?!.*actual installed SDK CLI)'`, `LIVE=0` | 4 files passed, 1 skipped; 104 passed, 5 skipped (the four declared live skips and the installed-CLI case) |
+| `11-merge-typecheck.log` | `pnpm --filter @graphgoblin/adapter-codex typecheck` | pass |
+| `12-merge-lint.log` | `pnpm --filter @graphgoblin/adapter-codex lint` | pass |
+
+## Decisions, caveats and open items
+
+- **The R2 qualification also covers the confirmed-close case.** The docs/06 sentence qualifies
+  both cancelled-turn outcomes: "ends as cancelled" and the listing message. A custom
+  `cancelGraceMs` shorter than the allowance can also preempt a listing whose child closes later
+  than that bound. This follows from reading `harness.ts` (`bounded` plus the acknowledgement
+  timer wrapping `runStreamed`) and the existing docs/06 cancellation paragraph. No test exercises
+  it, and no harness or deadline behaviour changed.
+- **The CHANGELOG carries the qualification too.** The changelog #506 entry promised the listing
+  message "even when the turn was cancelled", so it also got the short `cancelGraceMs`
+  qualification. The correction contract named docs/06 for R2. The changelog addition keeps the
+  changelog consistent with the guide.
+- **Coverage was not re-run after the merge.** The brief asks only for focused tests, typecheck
+  and lint after the merge. Main changes no `adapter-codex` file and no dependency.
+- **The prepared engine was not used.** Per the brief, the correction-contract engine and receipt
+  machinery (`capture-check.py`, root admission, live overage watcher) was not used. Commands
+  ran directly, and their raw output is in `logs/`.
+- **No native process was made to outlive its termination.** The unconfirmed path is controlled:
+  a runner result carrying `terminationUnconfirmed`. It shows the adapter's decision, not that a
+  real process survived its kill. The native close-before-removal assertion is unchanged.
+- **These steps were not run:** `pnpm check:deps`, `pnpm check:layers`, whole-repo `pnpm check`,
+  CI, `pnpm check:qa` (no `docs/qa` packet was written) and the installed-CLI probe. Nothing was
+  pushed.
+- **Still pending:** independent QA of the correction, the targeted opposite-family re-review of
+  `49b29cfe` (the diff `babb335c..49b29cfe`), current-head CI and the reserved fresh Astra MAX
+  final audit.

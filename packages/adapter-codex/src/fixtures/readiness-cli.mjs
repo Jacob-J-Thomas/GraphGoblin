@@ -52,4 +52,10 @@ else if (args.includes('--help')) {
     process.stderr.write(failures[scenario] + ' PRIVATE_MARKER');
     process.exitCode = 1;
   } else print('Logged in using ChatGPT');
+} else if (args[0] === 'mcp' && args[1] === 'list') {
+  // The MCP listing before a turn (#506): it announces itself on stderr; in the hang scenario it
+  // never answers, so only its deadline or the turn's cancellation ends it.
+  process.stderr.write('Listing MCP servers\n');
+  if (scenario === 'hang') setInterval(() => {}, 1000);
+  else print('[]');
 } else throw new Error('Unexpected turn command');

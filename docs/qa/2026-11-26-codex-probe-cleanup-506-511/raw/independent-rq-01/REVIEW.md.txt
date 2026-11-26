@@ -1,0 +1,108 @@
+APPROVED FOR OPPOSITE-FAMILY REVIEW: no FIX-IN-PR findings in the correction `babb335c..49b29cfe` or the full slice `4e1037c9..46617e29`.
+
+# Interim review for #506 and #511 (Claude window, rq-01)
+
+Reviewer: Claude Opus 5.5 (xhigh). I did not write this change. This interim review does not replace the Saturday GPT re-review or the fresh Astra MAX final audit.
+
+- Worktree: `G:/ggq/gg-fu-codex-cleanup-20261124/GraphGoblin`
+- Branch: `codex/gg-fu-codex-cleanup-20261124`
+- HEAD: `46617e29`, clean tree. No commits were created.
+- Commits reviewed:
+  - `babb335c`: the candidate formal review 1 examined.
+  - `49b29cfe`: the R1/R2 correction.
+  - `46617e29`: the merge of `origin/main` at `4e1037c9`.
+- Inputs read:
+  - Issues #506 and #511, with comments.
+  - `COMMON-RULES.md` and `RQ-TEMPLATE.md`.
+  - The review policy.
+  - `AGENTS.md`, `docs/README.md` and `docs/15-issue-workflow.md`.
+  - `ARCHITECTURE.md`.
+  - `review-01/REVIEW.md`.
+  - `review1-correction-preparation-02/CORRECTION-PROMPT.md` and `HANDOFF.md`.
+  - `claude-window-correction-03/CORRECTION-REPORT.md` and its logs.
+
+## Verdict on the two review-1 findings
+
+**R1 (P2), probe removed after unconfirmed termination: resolved.**
+
+- `preflightCli` now computes `cleanup = notStopped ? [CHECK_NOT_STOPPED] : await removeProbe(cwd)`.
+  - If any check reported `terminationUnconfirmed`, there are zero `rm` calls. The directory stays, and only the fixed not-stopped problem is added.
+  - Otherwise the single unretried `rm` runs, and a failure adds the fixed removal problem. `ready` becomes `unknown`.
+- `runCli`, `inspectCli`, deadlines, the stronger-signal logic and the public types are unchanged in the delta. `git diff babb335c 49b29cfe` touches only the 5 contracted paths.
+- No path, CLI output or raw error text reaches a result.
+- `inspectCli` returns on the first `spawnError`. `terminationUnconfirmed` always comes with a `spawnError`, so no later check starts in a directory whose earlier process may still be running. A `ready` result can never carry `notStopped`.
+
+**R1 test check.**
+
+- The new table `retains its probe before confirmed close` pins all of these:
+  - the typed result plus `[UNKNOWN, NOT_STOPPED]`;
+  - zero adapter `rm` calls and an empty retained directory;
+  - for the closed control, one `rm` call and `ENOENT`.
+- `clearMocks` and `restoreMocks` are on in `tooling/vitest.shared.mjs`, so the `vi.mocked(probeFs.rm)` call list is per-case.
+- The author's red log `01-red-controlled-old-source.log` fails at the zero-`rm` assertion, as required.
+- I reproduced R1 natively:
+  - **RC1:** `babb335c`'s `cli.ts`, byte-identical to Git, ran with a real descendant that kept the pipes and the working directory after its parent was killed. It attempted `rm` about 2 s after the kill and got `EBUSY` while the descendant was still running. Close came 4.3 s later.
+  - **Q05:** HEAD, same scenario. It made zero `rm` calls and kept the directory.
+- The stale combined row (unconfirmed stop plus removal failure) is gone. The confirmed-timeout + `EBUSY`, signed-out + `EBUSY` and ready + `EBUSY` controls remain. The dead `removal` flag was removed correctly, since every remaining row injects the fault.
+
+**R2 (P3), `cancelGraceMs` qualification: resolved and accurate.**
+
+- The docs/06 sentence matches `harness.ts`. The abort-started `acknowledgement` timer races `bounded(runStreamed(...))`, and the listing runs inside `isolatedClient.runStreamed`.
+- I confirmed the claim natively (QA cases L2, L3 and L5):
+  - Default 5 s grace: the listing's own message.
+  - `cancelGraceMs` 500 with an unconfirmed listing: the generic harness message, same code.
+  - `cancelGraceMs` 10 with a listing that does close: the generic harness message.
+- L5 also confirms the author's untested caveat: a short grace can pre-empt even a listing that closes.
+
+## Full-slice pass (`git diff 4e1037c9 46617e29`)
+
+I checked each of these and found no new root cause:
+
+- **`runCli`**
+  - First failure is kept.
+  - A synchronous spawn throw rejects with no timer or listener.
+  - A child with no pid fails at once.
+  - Abort listener registration and removal are correct.
+  - Timers are cleared on every settle.
+  - Output after the failure is drained.
+  - `SIGKILL` is sent only while the child has not exited.
+  - A started child's `error` routes through `stop`.
+  - `close` after an unconfirmed settle is a no-op.
+- **Listing mapping** (`configuredServers` / `listingNotStopped`)
+  - The unconfirmed check comes before any output is read.
+  - Only this call's own wording is echoed.
+  - Errors are non-retriable and definitely-not-submitted. The harness reports them as `delivery-uncertain` through the existing engine fold, as formal review 1 found.
+- **#511 lifecycle**
+  - `beforeAll` allocates, and its returned teardown removes the fixture.
+  - `createCodexAdapters` at collection creates nothing on disk (QA N1: TEMP root empty).
+- **Merge `46617e29`**
+  - All 9 `packages/adapter-codex` paths have the same blob ids as at `49b29cfe`.
+  - Main's 101 commits change no `adapter-codex` file and do not touch domain readiness, the engine's inference-failure fold or `harness.ts`.
+  - The CHANGELOG union and the two docs auto-merges keep the slice text.
+- **Repository rules**
+  - Relative `.js` imports are used.
+  - There is no `any`, threshold change or coverage exclusion.
+  - Docs and CHANGELOG are updated.
+  - No commit carries assistant attribution.
+  - Prettier, `git diff --check`, lint and typecheck pass at HEAD (`QA-REPORT.md` G1–G4).
+
+## Observations, not admitted as findings
+
+1. **(P3, NO-CHANGE, by contract) A retained probe directory is never reclaimed.**
+   - Q05: `gg-codex-probe-*`, with the descendant's `sentinel.txt`, was still in TEMP after the descendant ended.
+   - Each unconfirmed preflight leaves one such directory. R1 required exactly this.
+   - The CHANGELOG says leftover folders are not removed automatically.
+   - How often this happens is not established. Q06 suggests the unconfirmed path needs a descendant outside the launcher's process lifetime: a non-detached grandchild with inherited stdio, the structure of the bundled `@openai/codex` launcher (`bin/codex.js` spawns the native binary with `stdio: "inherit"`), ended with its parent on Windows and closed normally. The mechanism, probably libuv's kill-on-close job object, was not established, and the real native binary was not run.
+2. **(Recommendation only) Native regression for an unconfirmed stop.**
+   - The maintained tests cover the unconfirmed preflight and listing paths only with controlled runner results. The correction contract forbade a native process meant to survive termination.
+   - A bounded fixture like QA Q05/L2–L4 would pin the native behaviour: a detached helper that inherits the pipes and lives a few seconds, with its pid recorded and cleanup verified. It would also cover the `cancelGraceMs` race in L3/L5.
+   - This belongs to the orchestrator's catalogue, not to this PR.
+3. **Not re-raised: `dist/fixtures/live-collection-setup.js`.** The build emits the test-only setup module into `dist`. Formal review 1 already assessed the build layout and the explicit setup route, so I am not re-raising it.
+
+## Findings ledger
+
+| Signature | Severity | Disposition | Evidence |
+| --- | --- | --- | --- |
+| *(none admitted)* | | | |
+
+The correction is ready for the targeted opposite-family re-review of `babb335c..49b29cfe`, followed by current-head CI and the Astra MAX final audit.

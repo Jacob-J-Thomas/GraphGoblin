@@ -1,0 +1,99 @@
+{
+  "caseId": "L4-listing-unconfirmed-deadline",
+  "scenario": "listing-unconfirmed",
+  "mode": "deadline",
+  "listingTimeoutMs": 2500,
+  "cancelGraceMs": "default",
+  "node": "v22.23.4",
+  "announcedAt": 1861.1,
+  "result": {
+    "status": "rejected",
+    "at": 6174.6,
+    "name": "Error",
+    "code": "HARNESS_TERMINATION_UNCONFIRMED",
+    "message": "Codex could not list the machine's MCP servers, so the turn did not start: the listing timed out after 2500 ms and its process did not confirm that it stopped; it may still be running.",
+    "retriable": false,
+    "submission": "delivery-uncertain"
+  },
+  "drainedEvents": [
+    {
+      "type": "error",
+      "code": "HARNESS_TERMINATION_UNCONFIRMED",
+      "message": "Codex could not list the machine's MCP servers, so the turn did not start: the listing timed out after 2500 ms and its process did not confirm that it stopped; it may still be running.",
+      "retriable": false,
+      "submission": "delivery-uncertain"
+    }
+  ],
+  "warnings": [
+    {
+      "obj": {
+        "code": "HARNESS_TERMINATION_UNCONFIRMED",
+        "retriable": false
+      },
+      "msg": "codex turn failed: Codex could not list the machine's MCP servers, so the turn did not start: the listing timed out after 2500 ms and its process did not confirm that it stopped; it may still be running."
+    }
+  ],
+  "spawnCount": 1,
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 56140,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\L4-listing-unconfirmed-deadline-3IoZw3\\work",
+      "at": 1645.4
+    },
+    {
+      "kind": "stderr-first",
+      "id": 0,
+      "at": 1861.1
+    },
+    {
+      "kind": "kill",
+      "id": 0,
+      "signal": "SIGTERM",
+      "at": 4157.1
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 4180.1
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 10026
+    }
+  ],
+  "helpersAtSettle": [
+    {
+      "name": "listing-grandchild.pid",
+      "pid": 58464,
+      "alive": true
+    }
+  ],
+  "helpersAliveAfterWait": [],
+  "turnAttempt": false,
+  "leaks": []
+}
