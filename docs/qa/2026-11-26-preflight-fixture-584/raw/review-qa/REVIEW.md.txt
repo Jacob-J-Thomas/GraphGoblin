@@ -1,0 +1,71 @@
+READY: no FIX-IN-PR findings. One P3 follow-up candidate (R1). PR #576 head `c7559bff`, interim Claude review of `a5cd4a51`, `080c1736`, `80d292a3` and `c7559bff`.
+
+# Interim review: PR #576 fixture staging for #584, main merge and CHANGELOG restore
+
+Reviewer: Claude Opus 5.5 (independent of the author). This review does not replace the deferred opposite-family GPT review or the final audit.
+Worktree: `G:/ggq/gg-fu-preflight-20261124/GraphGoblin`, branch `codex/gg-fu-preflight-20261124`, HEAD `c7559bff1c1649f51709c43d7f841cfcbb33f614` (equal to the remote head). Base: `origin/main` `4e1037c9e9922ffa27237fe79850403b6b54fc70`.
+The #545/#546 product change was out of scope. It already passed formal review 1 and independent QA, and production source is unchanged since then (see "Merge and CHANGELOG commits").
+
+## Scope reviewed
+
+| Commit | What it changes | Result |
+| --- | --- | --- |
+| `a5cd4a51` | Moves the merged #584 `fixture` body into `stagedStore(dbFile, rows, migrationsFolder?)`. `fixture` and `pendingFixture` now delegate to it. `pendingFixture` keeps the shipped prefix through `0026_chat` (3 pending). | The file is byte-equal to the FUP-082 checkpoint `d25d6c99…` (scope audit `preflight-catalog.test.ts.txt`). |
+| `080c1736` | The `unsupported` arm now seeds a private `fixture-writer-*/gateway.db` through `fixture(setup)`. It opens the writer on `setup`, sets `format_version = 3`, requires the TRUNCATE checkpoint result busy/log/checkpointed to all be 0, closes the writer, then copies only that main DB to the unused `dbFile` with `COPYFILE_EXCL`. | The prefix and suffix outside the change window hash exactly to the contract's `protectedPrefixSha256 cbdca825…` and `protectedSuffixSha256 abe7a5ce…` (`raw/review/unsupported-change-window.txt`). |
+| `80d292a3` | Merges main `4e1037c9` (#586). | The combined diff names only `CHANGELOG.md`. `git show --remerge-diff` is empty, so the committed result equals the automatic merge. |
+| `c7559bff` | Moves the #545/#546 CHANGELOG entry back to the top of `## Unreleased`. | The entry text is identical (SHA-256 `e4b378b2…`) at `ca0aeeb7`, `8b60c2f2`, `2ac2cb73` (line 1097) and `c7559bff` (line 7). The diff against main is a single 15-line insertion at the top of Unreleased. |
+
+Commit messages carry the repository identity and no assistant attribution. `git diff --check 2ac2cb73 c7559bff -- apps CHANGELOG.md` and `git diff --check origin/main c7559bff -- . ':!docs/qa'` are clean. Hits under `docs/qa` come from the sparse checkout missing that packet's `.gitattributes` (`* -text !eol -whitespace`). They are not real whitespace errors.
+
+## #584 invariant: every writer and reader call site in `apps/api/src/preflight-catalog.test.ts` at `c7559bff`
+
+The invariant: no fixture writer opens a path that preflight inspects. Writers stage on a private path, checkpoint, close, and then only the main DB is copied.
+
+| Line | Call | Path it opens | Path preflight inspects | Verdict |
+| --- | --- | --- | --- | --- |
+| 81 | `stagedStore` writer (`fixture`, `pendingFixture`) | `dir/fixture-writer-*/<name>` | `dbFile`, reached only by `copyFile(staged, dbFile, COPYFILE_EXCL)` after the all-zero check and `close()` | Compliant |
+| 443 | holder in "projects a missing seed from a WAL-backed store" | `dir/gateway.db` (`original`) | `dir/copy/gateway.db` | Compliant. Merged in #577 and unchanged. |
+| 496 | writer in "rejects database changes…" | `dir/gateway.db` | None: the test never runs preflight. Every snapshot of this path is read while the writer is open, and the frozen copies are separate files. | Compliant. Unchanged from main. |
+| 730 | holder in "#546 reads committed WAL frames" | `dir/gateway.db` (`original`, itself a staged copy) | `dir/copy/gateway.db` | Compliant |
+| 786 | unsupported-arm writer | `dir/fixture-writer-*/gateway.db` (`setup`) | `dir/gateway.db`, reached only by `copyFile(setup, dbFile, COPYFILE_EXCL)` after the all-zero check and `close()` | Compliant (new in `080c1736`) |
+| 139, 148, 185 | `openReadOnlyDatabaseClient` (`storedCatalog`, `storedMigrations`, `preMigrationCatalog`) | the inspected path | n/a | Readers, not fixture writers. SQLite `mode=ro` cannot checkpoint or delete the WAL. |
+| startup refusals (381, 585, 709, 848) | product `createContainer` | the inspected path | n/a | Product code, not a fixture. `container.ts:233-247` inspects with a read-only client and refuses before `openDatabase` at line 250. The byte checks after a refusal are therefore not exposed to cleanup from a product writer. |
+
+`storeBytes` lists only `<name>` and `<name>-wal` in `dirname(dbFile)`. The `fixture-writer-*`, `migrations` and `data` subdirectories cannot enter a snapshot.
+
+## Strict "preflight changes no database or WAL bytes" checks
+
+- `storeBytes` and `expectStoreUnchanged` are byte-identical to `origin/main`. `git diff origin/main c7559bff` shows no hunk in either helper. `a5cd4a51` changes only the helper and fixture bodies. `080c1736` is confined to the unsupported setup window by hash.
+- The checks still detect changes. Removing each of the three comparisons in a scratch copy (M01–M03) makes the comparator test fail. Under a modeled late native finalizer, the pre-change unstaged fixtures fail the strict existing-WAL comparison in exactly the six tests these commits changed (M10), and the staged fixtures pass (M09). See `QA-REPORT.md`.
+- Observation, not a weakening: the six changed tests now start with no WAL at the inspected path, so they exercise the absent-WAL branch (a reader may create an empty WAL, but cannot add frames). Before these commits, whether a 0-byte WAL existed beside the inspected path depended on when the in-place writer's cleanup ran. Three tests still cover the strict existing-WAL branch: "initially empty WAL" (L401), the non-empty committed-WAL test in "projects a missing seed…" (L438) and "#546 reads committed WAL frames" (L724).
+
+## Do the fixtures still exercise what the test names claim?
+
+- **Pending-migration store.** `pendingFixture` still migrates through the real shipped prefix to `0026_chat`, asserting 3 later migrations, and seeds the given rows. Each test asserts `WARN Database 3 migration(s) pending`, `preMigrationCatalog == rows` and an unchanged migration ledger. Startup then reaches `pendingMigrations() == 0`. Applying every shipped migration instead (M05) makes all six #546 pending tests fail on the "3 migration(s) pending" line.
+- **Unsupported-format store.** The store is format 4 with `format_version = 3` written in place, and the test asserts `FAIL Database The store is format 3; this build reads only format 4` and startup `STORE_UNSUPPORTED {foundFormat: 3}`. Removing the downgrade (M04) makes the unsupported case fail with exit 0. Replacing TRUNCATE with PASSIVE (M07) fails at the fixture's all-zero gate before the copy. A pre-existing target (M08) fails with `EEXIST`, so the exclusive copy is in force.
+- `stagedStore`'s new strict checkpoint gate on the pending path is a strict addition. The old `pendingFixture` ignored the checkpoint result. Switching to PASSIVE (M06) fails 24 of 31 tests at that gate, every test that builds a store through `stagedStore`.
+
+## Merge and CHANGELOG commits change nothing else
+
+- `git diff 080c1736 c7559bff` touches none of `preflight-catalog.test.ts`, `preflight.ts`, `preflight.test.ts`, `docs/11-security-and-distribution.md` or `docs/guide/01-install-and-first-run.md`.
+- `git diff origin/main c7559bff --stat` lists 47 paths: CHANGELOG (+15), `preflight-catalog.test.ts`, `preflight.test.ts`, `preflight.ts`, the two docs and the 41-file `docs/qa/2026-11-24-preflight-defaults-catalog/` packet. That is the PR's own file set. Main's #586 changes appear only on the main side.
+
+## Findings
+
+| ID | Sev | Disposition | Finding |
+| --- | --- | --- | --- |
+| R1 | P3 | DEFER-ISSUE (candidate; the orchestrator decides) | **Nothing enforces the #584 invariant; it holds only by convention.** A plain revert of both staging changes passes the whole file (M11: 31/31) because the race rarely fires in a single run. The first adaptation's scope also missed the unsupported arm, which surfaced only through the author's own risk note. A future fixture writer on an inspected path would land green and flake later. The outcome needed is a deterministic guard that fails when a fixture writer's path equals a path later given to preflight or `storeBytes`, or an explicit decision to keep convention only. This is outside the bounded fixture contract ("no new generic abstraction") and does not block. |
+
+No P1 or P2 findings. Nothing introduced by these commits needs a change in this PR.
+
+## Other observations (no finding)
+
+- The all-zero checkpoint check is duplicated in `stagedStore` and the unsupported arm. The contract chose that over a new helper. NO-CHANGE.
+- `migrationPrefix()` now runs before `mkdir(dirname(dbFile))`. Both write under `dir`, so this is harmless.
+- **Provenance.** The prepared unsupported-arm contract named the evidence directory `fixture584-unsupported-preparation-01/claude-continuation-01/`, which does not exist. `080c1736` was authored in the B3 `claude-window-01` session instead. Its content still matches the contract's guarded window exactly. B3's brief asked for a `REPORT.md`, but that folder holds only logs `01`–`17`. Its patch logs `11` and `12` match the commits except for the abbreviated index-hash width.
+- **QA packet (orchestrator item, not a defect).** In `docs/qa/2026-11-24-preflight-defaults-catalog/MANIFEST.json`, `correctedFileHashes` still binds `apps/api/src/preflight-catalog.test.ts` to `e5adea91…`. HEAD is now `c65f9751…`, after the #577 integration and these two commits, and `CHANGELOG.md` has moved too. B3 deliberately left the packet for after this QA. It must record the fixture delta and this evidence before publication.
+- **Author coverage.** Both local API coverage attempts failed outside this file: `subloop-restart.test.ts` (WMI store-ownership verification) and a worker access violation (`0xC0000005`) in `classifiers.test.ts`. `preflight-catalog.test.ts` passed 31/31 in both. Hosted CI owns coverage.
+
+## Raw review evidence
+
+`raw/review/`: `a5cd4a51.patch.txt`, `080c1736.patch.txt`, `c7559bff.patch.txt`, `merge-80d292a3-check.txt`, `diff-stat-and-checks.txt`, `unsupported-change-window.txt`, `changelog-entry-identity.txt`, `changelog-vs-main.diff.txt`, `writer-call-sites.txt`.

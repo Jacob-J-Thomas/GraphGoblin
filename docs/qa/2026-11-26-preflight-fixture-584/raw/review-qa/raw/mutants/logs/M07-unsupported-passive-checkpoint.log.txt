@@ -1,0 +1,68 @@
+
+ RUN  v5.0.3 G:/ggq/gg-fu-preflight-20261124/GraphGoblin/apps/api
+
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > accepts a missing shipped codex seed without storing it 1208ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > accepts a missing shipped claude seed without storing it 265ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN) 221ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL) 226ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves codex unknown-model defaults (effort=low, status=FAIL) 192ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL) 195ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves claude gpt-6-luna defaults (effort=low, status=FAIL) 242ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL) 176ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL) 177ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves codex gpt-5.5 defaults (effort=none, status=FAIL) 188ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves rows and migrations with an initially absent WAL 141ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > preserves rows and migrations with an initially empty WAL 151ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > projects a missing seed from a WAL-backed store without checkpointing or writing it 226ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > offline startup catalog admission > rejects database changes, existing WAL changes or removal, and new WAL frames 1835ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a migrated store (effort=none, status=FAIL) 165ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a migrated store (effort=low, status=ok) 226ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a migrated store (effort=undefined, status=WARN) 216ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a missing store (effort=none, status=FAIL) 26ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a missing store (effort=low, status=ok) 126ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a missing store (effort=undefined, status=WARN) 130ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a empty store (effort=none, status=FAIL) 43ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a empty store (effort=low, status=ok) 167ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a empty store (effort=undefined, status=WARN) 135ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > admits a stored-only Codex model as startup does, without changing the store 355ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > admits a stored disabled Codex row as startup does, without changing the store 346ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > admits stored Codex efforts without the config… as startup does, without changing the store 296ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > admits a stored disabled Claude row as startup does, without changing the store 335ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > admits a shipped seed the store lacks as startup does, without changing the store 333ms
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > reads committed WAL frames without changing the database or the existing WAL 327ms
+ × ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > reports the inspection limit of an existing unsupported store instead of a seed-backed result 122ms
+   → expected { busy: +0, log: 1, checkpointed: 1 } to deeply equal { busy: +0, log: +0, checkpointed: +0 }
+ ✓ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > reports the inspection limit of an existing corrupt store instead of a seed-backed result 37ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts > a current store with pending migrations (#546) > reports the inspection limit of an existing unsupported store instead of a seed-backed result
+AssertionError: expected { busy: +0, log: 1, checkpointed: 1 } to deeply equal { busy: +0, log: +0, checkpointed: +0 }
+
+- Expected
++ Received
+
+  {
+    "busy": 0,
+-   "checkpointed": 0,
+-   "log": 0,
++   "checkpointed": 1,
++   "log": 1,
+  }
+
+ ❯ ../../../../tmp/preflight-rq-01/mut/cases/M07-unsupported-passive-checkpoint.test.ts:796:14
+    794|             log: checkpoint?.['log'],
+    795|             checkpointed: checkpoint?.['checkpointed'],
+    796|           }).toEqual({ busy: 0, log: 0, checkpointed: 0 });
+       |              ^
+    797|         } finally {
+    798|           writer.close();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 30 passed (31)
+   Start at  22:18:10
+   Duration  13.37s (tests 67%, import 21%, transform 11%)
+

@@ -1,0 +1,17 @@
+# Preflight inference defaults and pending catalog checks
+
+This packet covers [#545](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/545) and [#546](https://github.com/Jacob-J-Thomas/GraphGoblin/issues/546). An unsupported supplied Codex effort fails the default-model check. Omitting effort produces a warning and leaves the later run requirement explicit. For a readable current-format store with pending migrations, preflight inspects stored values with guarded projection of the pending catalog. If the catalog cannot be inspected, the result marks defaults unverified.
+
+## Evidence from the original reviewed candidate
+
+- The [original public process baseline](raw/baseline/public-entry.json) records pre-correction behavior on disposable fixtures. The [author report](raw/author/report.md.txt) records the scoped API build and 97 focused tests.
+- [Formal review 1](raw/review-01/report.md.txt) passed the [exact original patch](raw/review-01/original-source.patch) with zero introduced blockers. Its separate base and candidate controls both retained native SQLite handles before garbage collection and released them afterward. These controls establish the scope of the observed pre-existing behavior.
+- [Independent Claude QA](raw/qa-original/report.md.txt) passed the four admitted checks on the original six-file candidate, including ten real-process scenarios and all 97 focused tests. Native startup and preflight used owned disposable stores, fake harnesses and disabled provider discovery. The [comparison](raw/qa-original/PUBLIC-ENTRY-COMPARISON.json) uses the retained baseline without regenerating it. Some scenarios have no paired baseline. The native process stderr was empty. The small build and focused-test stderr files contain only the invoked Turbo and Vitest command echoes. [Native result](raw/qa-original/NATIVE-RESULT.json) · [Focused result](raw/qa-original/FOCUSED-RESULT.json)
+
+## Exact guide correction
+
+The original guide overstated how little preflight touches the filesystem. The revised wording says preflight leaves settings and database rows unchanged and runs no migrations. It can create and remove a temporary directory writability probe, and opening an existing database may create or update SQLite sidecar files. The original product review and QA are bound to patch `9d58186982ab043a02ad810953ec58fe609a03e69756555a7cdd0c9ff22dffaa`. The corrected patch `a6c9fe72bbe094c1dd60b136f5fa556e7c55c74fc52e39e7f379cd3150fe672a` differs from that candidate by the [single approved replacement](raw/doc-correction/expected-replacement.json) in the install guide. All five other changed files match the original candidate byte for byte. Product tests were carried forward on that basis. [Exact delta binding](raw/doc-correction/final-source-binding.json)
+
+The [first correction attempt](raw/doc-correction/quota-attempt.exit.json) hit the ordinary five-hour quota before making any change. The [successful correction](raw/doc-correction/report.md.txt) used actual Claude Opus 5.5 at xhigh on ordinary Max. Scoped Prettier and `git diff --check` passed. The [provider receipt readback](raw/doc-correction/provider-attestation.json) records zero permission denials, no API key and no observed overage. The exact-byte file inventory is in the [manifest](MANIFEST.json).
+
+Fresh target integration, hosted CI, final review and applicable owner acceptance remain pending.

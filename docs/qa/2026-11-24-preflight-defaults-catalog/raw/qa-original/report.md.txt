@@ -1,0 +1,85 @@
+# QA verdict: PASS for GraphGoblin #545 and #546
+
+**Patch SHA-256:** `9d58186982ab043a02ad810953ec58fe609a03e69756555a7cdd0c9ff22dffaa`. All four runs reported this SHA with `sourceUnchanged: true`. The wrapper also checks HEAD `d2df8600…`, the branch, the Git index, staged files and untracked files, and stops if any differ. It didn't stop, but it doesn't print those values, so I'm relying on it not failing.
+
+All criteria pass. I found no defects. The PASS only covers these four checks; CI, coverage, lint and typecheck, the broad API tests, merge, publication, deployment and Mac were not run.
+
+## Results of each command (run in order, 250 s timeout)
+
+| Check | Result |
+|---|---|
+| build (`pnpm build --filter=@graphgoblin/api --force`) | Exit 0. 7 of 7 tasks ran, none from cache, in 4.3 s. A 52-byte stderr was saved but not shown to me. |
+| native (real processes on the built app) | Exit 0. All 10 scenarios matched. Empty stderr. Built files hash the same as after the build. Evidence file `CANDIDATE-PUBLIC-ENTRY.json`, sha256 `51d264b2…6fae`. |
+| focused (3 preflight test files) | Exit 0. 3 of 3 files and **97 of 97 tests** passed, none skipped. That matches the expected 97. A 94-byte stderr was not shown to me. |
+| diff (`git diff --check`) | Exit 0, no output. |
+
+## #545: Codex effort in `GG_DEFAULTS` (real processes)
+
+| Case | Preflight exit | Default model line | Harness codex | Startup |
+|---|---|---|---|---|
+| Migrated store, effort `none` | **1** | FAIL: effort "none" is not supported by gpt-5.5 (EFFORT_UNSUPPORTED); start refuses it | ok | **Exit 1**, never listened, stderr names EFFORT_UNSUPPORTED |
+| Migrated store, effort `low` | 0 | ok: supports effort low | ok | Listened, shut down cleanly, exit 0 |
+| Migrated store, effort omitted | 0 | WARN: effort is not set; runs need a supported effort from the loop or Settings defaults | ok | Listened, exit 0 |
+| Missing store, effort `low` | 0 | ok: in the default catalog seeded on first start, supports effort low | ok | Listened, exit 0 |
+
+- **Harness readiness stays separate:** Harness codex stays ok while the effort check fails.
+- **No substitution:** the configured effort shows up unchanged in each line, and nothing is filled in when it's omitted.
+- **Compared with the supplied baseline:** in the old build, all three migrated cases exited 0 with an ok line that didn't mention effort.
+- **Pending owner review:** the omitted-effort WARN matches FUP-010, which is the orchestrator's decision and hasn't been reviewed by the owner yet.
+
+## #546: format-4 store, migrated through 0026_chat, 3 migrations pending (real processes)
+
+Every pending store shows **WARN Database: 3 migration(s) pending**.
+
+| Case | Preflight exit | Default model line | Startup | Supplied baseline |
+|---|---|---|---|---|
+| Stored row disabled (gpt-6-luna, its shipped seed is enabled) | 0 | **WARN**: in the model catalog but disabled | Not run by the script | ok, checked against the shipped seed |
+| Model only in stored rows | 0 | ok: supports effort low | Listened, exit 0 | **Exit 1**, model not found |
+| Shipped seed missing from the store (gpt-6.1-terra) | 0 | ok: supports effort medium, read without inserting the row | Listened, exit 0 | No baseline row |
+| Stored efforts narrowed to `[low]`, config asks for `high` | **1** | FAIL: EFFORT_UNSUPPORTED | **Exit 1**, EFFORT_UNSUPPORTED | No baseline row |
+| Format 3 store (unsupported) | **1** | Database FAIL ("format 3", plus the reset command). Default model WARN: not checked until the database is current and readable | Exit 1 | ok, checked against the shipped seed |
+| Non-SQLite file (unreadable) | **1** | Database FAIL (SQLITE_NOTADB). Default model WARN: not checked | Exit 1 | ok, checked against the shipped seed |
+
+Stores that weren't refused were migrated by the normal startup after preflight had inspected them.
+
+## Read-only results (real processes; DB and WAL compared by sha256 and size)
+
+| Store | WAL before preflight | DB file | WAL file |
+|---|---|---|---|
+| Pending, disabled row / stored-only model | **16,512 bytes** | Identical | Byte-identical |
+| Pending, missing seed / narrowed effort | **8,272 bytes** | Identical | Byte-identical |
+| Migrated ×3, unsupported | Empty file (0 bytes) | Identical | Identical |
+| Unreadable | No WAL | Identical | Still absent or empty |
+| Missing | No WAL | **Still absent after preflight**, before startup | Still absent or empty |
+
+Both the non-empty WAL case and the absent or empty case are covered. For the non-empty WALs, another process was still holding the store open with uncheckpointed changes. The disabled warning could only have come from those WAL frames, so preflight read them without checkpointing them. That last point is my inference from how the fixture was set up.
+
+## What each kind of evidence covers
+
+- **Real processes:** `main.js --preflight` and normal startup, including startup's model-catalog check, the read-only SQLite connection, a real migration prefix, and clean shutdown through `/system/shutdown`. Codex was a fake CLI that throws if asked to run a turn. Ollama was off, and the Claude binary was missing on purpose.
+- **Focused tests only:**
+  - Empty stores.
+  - A configured, disabled Claude row (FAIL, and startup still accepts it).
+  - Claude reported as not checked for an unreadable store.
+  - Startup accepting a stored disabled Codex row.
+  - `GET /system/preflight`.
+  - Ollama discovery being deferred, with fetch intercepted.
+  - The data-directory writability probe, and the lock being shared with a running container.
+  - A check that the comparison itself catches DB or WAL changes.
+  - The store directory holding exactly the DB, `-shm` and `-wal` files.
+  - No pending migrations left after startup.
+- **Source only:** the test files use temporary directories, Ollama off or a mocked fetch, and fake harnesses. I read the candidate's source excerpts, not the patch itself, so "existing behaviour preserved" (for example the `wx` probe) rests on the passing tests and the current source, not on a diff against the base.
+- **Docs:** `docs/11`, the install guide and the CHANGELOG match what I observed. One small point: the guide says preflight "changes nothing", while `docs/11` correctly mentions the shared-memory file, the empty WAL and the probe file.
+
+## Remaining limits (no defects found)
+
+1. **Startup not run for the disabled-row case:** the native script doesn't start the server for it, so startup accepting a disabled stored Codex row is only shown by tests.
+2. **Physical checks only compare DB and WAL bytes:** the shared-memory file and other directory entries aren't compared. For the missing store, only the database file's absence was checked physically; the data directory staying absent is shown only by tests.
+3. **Same-process connection lifetime:** the earlier review found that the SQLite library can keep a connection open until garbage collection, in both the base and the candidate. My physical evidence ends each preflight process, so it says nothing about that issue. The tests run in one process, and their byte checks don't prove the connection was released.
+4. **"No provider turn" is inferred:** it rests on the fake CLI throwing on turn commands and no run being started, not on a process trace. No live models, accounts or Ollama were used.
+5. **Unread logs and truncated output:**
+   - The baseline JSON came from the packet; I didn't regenerate it.
+   - Two of the #546 cases have no baseline row.
+   - The test summary was cut to its last 24 lines, so I saw the totals but not all 97 test names.
+   - The small stderr outputs from build and focused weren't readable with the four allowed commands.
+6. **Possible difference for already-migrated stores (source observation only):** preflight reads the full catalog, while startup uses the read made before migrations. The Codex results matched in the real-process runs, and other row shapes weren't tested.

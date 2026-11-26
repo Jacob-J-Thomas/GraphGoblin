@@ -1,0 +1,122 @@
+[
+  {
+    name: 'migrated-none',
+    preflight: 1,
+    checks: [
+      'ok      Database        reachable and migrated',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'FAIL    Default model   GG_DEFAULTS.byHarness.codex.effort "none" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists'
+    ],
+    startup: 1,
+    listened: undefined,
+    startupError: 'GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).'
+  },
+  {
+    name: 'migrated-low',
+    preflight: 0,
+    checks: [
+      'ok      Database        reachable and migrated',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'ok      Default model   gpt-5.5 (codex) is in the model catalog and supports effort low'
+    ],
+    startup: 0,
+    listened: true,
+    startupError: ''
+  },
+  {
+    name: 'migrated-omitted',
+    preflight: 0,
+    checks: [
+      'ok      Database        reachable and migrated',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'WARN    Default model   gpt-5.5 (codex) is in the model catalog, but GG_DEFAULTS.byHarness.codex.effort is not set; runs need a supported effort from the loop or Settings defaults'
+    ],
+    startup: 0,
+    listened: true,
+    startupError: ''
+  },
+  {
+    name: 'pending-disabled',
+    preflight: 0,
+    checks: [
+      'WARN    Database        3 migration(s) pending; they are applied on the next start',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'WARN    Default model   gpt-6-luna is in the model catalog but disabled'
+    ],
+    startup: undefined,
+    listened: undefined,
+    startupError: undefined
+  },
+  {
+    name: 'pending-stored-only',
+    preflight: 0,
+    checks: [
+      'WARN    Database        3 migration(s) pending; they are applied on the next start',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'ok      Default model   fixture-only-codex-model (codex) is in the model catalog and supports effort low'
+    ],
+    startup: 0,
+    listened: true,
+    startupError: ''
+  },
+  {
+    name: 'pending-missing-seed',
+    preflight: 0,
+    checks: [
+      'WARN    Database        3 migration(s) pending; they are applied on the next start',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'ok      Default model   gpt-6.1-terra (codex) is in the model catalog and supports effort medium'
+    ],
+    startup: 0,
+    listened: true,
+    startupError: ''
+  },
+  {
+    name: 'pending-stored-effort',
+    preflight: 1,
+    checks: [
+      'WARN    Database        3 migration(s) pending; they are applied on the next start',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'FAIL    Default model   GG_DEFAULTS.byHarness.codex.effort "high" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists'
+    ],
+    startup: 1,
+    listened: undefined,
+    startupError: 'GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).'
+  },
+  {
+    name: 'missing',
+    preflight: 0,
+    checks: [
+      'WARN    Database        the database does not exist yet; it is created and migrated on first start',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'ok      Default model   gpt-5.5 (codex) is in the default catalog seeded on first start and supports effort low'
+    ],
+    startup: 0,
+    listened: true,
+    startupError: ''
+  },
+  {
+    name: 'unsupported',
+    preflight: 1,
+    checks: [
+      'FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir "G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported-data"',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'WARN    Default model   The configured Codex model and effort are not checked until the database is current and readable'
+    ],
+    startup: 1,
+    listened: undefined,
+    startupError: 'GraphGoblin did not start: this build cannot open the store in data directory G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported-data.'
+  },
+  {
+    name: 'unreadable',
+    preflight: 1,
+    checks: [
+      'FAIL    Database        not reachable: SQLITE_NOTADB: file is not a database',
+      'ok      Harness codex   codex 0.160.0 is installed and logged in',
+      'WARN    Default model   The configured Codex model and effort are not checked until the database is current and readable'
+    ],
+    startup: 1,
+    listened: undefined,
+    startupError: 'LibsqlError: SQLITE_NOTADB: file is not a database'
+  }
+]

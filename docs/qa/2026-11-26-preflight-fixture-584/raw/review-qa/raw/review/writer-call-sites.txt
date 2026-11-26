@@ -1,0 +1,19 @@
+3:  copyFile,
+5:  mkdtemp,
+21:  openDatabase,
+34:  dir = await mkdtemp(join(tmpdir(), 'gg-preflight-catalog-'));
+80:  const staged = join(await mkdtemp(join(dir, 'fixture-writer-')), basename(dbFile));
+81:  const handle = openDatabase({
+98:  await copyFile(staged, dbFile, constants.COPYFILE_EXCL);
+172:      copyFile(join(source, `${entry.tag}.sql`), join(folder, `${entry.tag}.sql`)),
+411:      await copyFile(original, dbFile);
+443:    const holder = openDatabase({ url: pathToFileURL(original).href });
+450:        await copyFile(`${original}${suffix}`, join(copy, `gateway.db${suffix}`));
+476:    await copyFile(original, dbFile);
+496:    const writer = openDatabase({ url: pathToFileURL(dbFile).href });
+511:        await copyFile(`${dbFile}${suffix}`, `${frozenFile}${suffix}`);
+730:    const holder = openDatabase({ url: pathToFileURL(original).href });
+737:        await copyFile(`${original}${suffix}`, join(copy, `gateway.db${suffix}`));
+784:        const setup = join(await mkdtemp(join(dir, 'fixture-writer-')), basename(dbFile));
+786:        const writer = openDatabase({ url: pathToFileURL(setup).href });
+800:        await copyFile(setup, dbFile, constants.COPYFILE_EXCL);

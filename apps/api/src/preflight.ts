@@ -2,6 +2,7 @@ import {
   CODEX_PLUGIN_OBSERVABILITY_NOTICE,
   readinessDetail,
   readinessMessage,
+  validateHarnessDefaults,
 } from '@graphgoblin/domain';
 import { randomUUID } from 'node:crypto';
 import { open, readFile, stat, unlink } from 'node:fs/promises';
@@ -12,6 +13,8 @@ import { createCodexAdapters } from '@graphgoblin/adapter-codex';
 import {
   HarnessReadinessStateSchema,
   OllamaConnectionSchema,
+  type HarnessDefaults,
+  type HarnessModelDefaults,
   type OllamaConnection,
   type HarnessId,
 } from '@graphgoblin/contracts';
@@ -29,6 +32,7 @@ import {
   openReadOnlyDatabaseClient,
   pendingMigrationCount,
   projectStartupModelCatalog,
+  readPreMigrationModelCatalog,
   type Database,
   type ModelCatalogEntry,
 } from '@graphgoblin/infrastructure/sqlite';
@@ -75,11 +79,17 @@ export interface PreflightSources {
   ollamaDeferredReason?: string;
   /** Migrations still to apply, or `'missing'` when the database file does not exist yet. Throws when unreachable. */
   pendingMigrations(): Promise<number | 'missing'>;
+  /** An existing store with no data yet: like a missing one, its first start seeds the catalog. */
+  emptyStore?: boolean;
   /** The Jev API key, if set. Only called once the database is migrated. */
   jevKey(): Promise<string | undefined>;
   /** Built-in catalog availability; no provider call. Only read after migration. */
   jevEnabled(): Promise<boolean>;
-  /** The model catalog. Only called once the database is migrated. */
+  /**
+   * The model catalog start admits `GG_DEFAULTS` against: a current store's rows, read before any
+   * pending migrations, plus the shipped models it does not store yet; the shipped catalog for a
+   * missing or empty store. Not called when the database check failed.
+   */
   catalog(): Promise<ModelCatalogEntry[]>;
 }
 
@@ -270,14 +280,17 @@ function ollamaOnly(config: ApiConfig): boolean {
   );
 }
 
+const NO_DEFAULTS: HarnessDefaults = { byHarness: {} };
+
 function checkDefaultModel(
-  model: string | undefined,
+  defaults: HarnessModelDefaults | undefined,
   catalog: ModelCatalogEntry[],
-  seeded: boolean,
+  firstStart: boolean,
 ): PreflightCheck {
+  const model = defaults?.model;
   const entry = catalog.find((e) => e.harness === 'codex' && e.model === model);
-  const where = seeded ? 'the model catalog' : 'the default catalog seeded on first start';
-  if (!entry) {
+  const where = firstStart ? 'the default catalog seeded on first start' : 'the model catalog';
+  if (!defaults || !entry) {
     return check(
       'default-model',
       'Default model',
@@ -285,14 +298,48 @@ function checkDefaultModel(
       `GG_DEFAULTS.byHarness.codex.model "${model}" is not in ${where}; pick a listed harness model and enable it in Settings`,
     );
   }
+  // Start's own GG_DEFAULTS validation: it refuses an effort the model does not offer.
+  const [refused] = validateHarnessDefaults({
+    loopDefaults: NO_DEFAULTS,
+    ownerDefaults: NO_DEFAULTS,
+    processDefaults: { byHarness: { codex: defaults } },
+    catalog,
+  });
+  if (refused) {
+    return check(
+      'default-model',
+      'Default model',
+      'fail',
+      `GG_DEFAULTS.byHarness.codex.effort "${String(defaults.effort)}" is not supported by ${model} in ${where} (${refused.resolution.code}); start refuses it. Pick an effort the model lists`,
+    );
+  }
   if (!entry.enabled) {
     return check('default-model', 'Default model', 'warn', `${model} is in ${where} but disabled`);
+  }
+  // Start accepts an omitted effort; a run then needs one from its loop or Settings defaults.
+  if (defaults.effort === undefined) {
+    return check(
+      'default-model',
+      'Default model',
+      'warn',
+      `${model} (codex) is in ${where}, but GG_DEFAULTS.byHarness.codex.effort is not set; runs need a supported effort from the loop or Settings defaults`,
+    );
   }
   return check(
     'default-model',
     'Default model',
     'ok',
-    `${model} (${entry.harness}) is in ${where}`,
+    `${model} (${entry.harness}) is in ${where} and supports effort ${defaults.effort}`,
+  );
+}
+
+/** A store the database check could not inspect has no catalog to check defaults against. */
+function uninspectedDefaults(id: string, label: string, harness: string): PreflightCheck {
+  return check(
+    id,
+    label,
+    'warn',
+    `The configured ${harness} model and effort are not checked until the database is current and readable`,
   );
 }
 
@@ -304,9 +351,13 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
   checks.push((await readMasterKey(config)).check);
 
   let migrated = false;
+  // Start's catalog is known for a missing, empty or current store, not after a failed check.
+  let inspected = true;
+  let firstStart = sources.emptyStore === true;
   try {
     const pending = await sources.pendingMigrations();
     if (pending === 'missing') {
+      firstStart = true;
       checks.push(
         check(
           'database',
@@ -329,6 +380,7 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
       checks.push(check('database', 'Database', 'ok', 'reachable and migrated'));
     }
   } catch (error) {
+    inspected = false;
     checks.push(
       check(
         'database',
@@ -371,12 +423,16 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
   }
 
   try {
-    const catalog = migrated ? await sources.catalog() : DEFAULT_MODEL_CATALOG;
+    const catalog = inspected ? await sources.catalog() : undefined;
     if (!ollamaOnly(config))
-      checks.push(checkDefaultModel(config.defaults.byHarness.codex?.model, catalog, migrated));
+      checks.push(
+        catalog
+          ? checkDefaultModel(config.defaults.byHarness.codex, catalog, firstStart)
+          : uninspectedDefaults('default-model', 'Default model', 'Codex'),
+      );
     const ollama = config.defaults.byHarness.ollama;
     if (ollama?.model !== undefined) {
-      const entry = catalog.find((row) => row.harness === 'ollama' && row.model === ollama.model);
+      const entry = catalog?.find((row) => row.harness === 'ollama' && row.model === ollama.model);
       if (!migrated || !entry)
         checks.push(
           check(
@@ -417,22 +473,28 @@ export async function runPreflight(sources: PreflightSources): Promise<Preflight
     }
     const defaults = config.defaults.byHarness.claude;
     if (defaults) {
-      const entry = catalog.find((row) => row.harness === 'claude' && row.model === defaults.model);
-      const problem = !entry
-        ? 'The configured Claude model is not in the catalog'
-        : !defaults.effort || !entry.efforts.includes(defaults.effort)
-          ? 'Configure an explicit supported Claude reasoning effort'
-          : !entry.enabled
-            ? 'The configured Claude model is disabled'
-            : undefined;
-      checks.push(
-        check(
-          'default-model.claude',
-          'Claude default model',
-          problem ? 'fail' : 'ok',
-          problem ?? 'Exact Claude model and effort are configured',
-        ),
-      );
+      if (!catalog)
+        checks.push(uninspectedDefaults('default-model.claude', 'Claude default model', 'Claude'));
+      else {
+        const entry = catalog.find(
+          (row) => row.harness === 'claude' && row.model === defaults.model,
+        );
+        const problem = !entry
+          ? 'The configured Claude model is not in the catalog'
+          : !defaults.effort || !entry.efforts.includes(defaults.effort)
+            ? 'Configure an explicit supported Claude reasoning effort'
+            : !entry.enabled
+              ? 'The configured Claude model is disabled'
+              : undefined;
+        checks.push(
+          check(
+            'default-model.claude',
+            'Claude default model',
+            problem ? 'fail' : 'ok',
+            problem ?? 'Exact Claude model and effort are configured',
+          ),
+        );
+      }
       if (!sources.harnesses.claude)
         checks.push(
           check(
@@ -546,6 +608,24 @@ async function inspectDatabase(url: string): Promise<DatabaseState> {
   }
 }
 
+/** What startup's guard and the migration ledger say about an open store, read once. */
+type StoreInspection =
+  { state: 'fresh' | 'current'; pending: number } | { state: 'refused'; error: unknown };
+
+async function inspectStore(handle: InspectedDatabase): Promise<StoreInspection> {
+  try {
+    // A store start would refuse is reported as such, never as migrations it would apply.
+    const state = await guardCurrentStore(handle.client);
+    return { state, pending: await handle.pendingMigrations() };
+  } catch (error) {
+    return { state: 'refused', error };
+  }
+}
+
+function asError(error: unknown): Error {
+  return error instanceof Error ? error : new Error(String(error));
+}
+
 /** Never initializes the singleton or guesses over saved settings in an unverified store. */
 async function inspectedOllamaConnection(
   database: DatabaseState,
@@ -627,30 +707,42 @@ export async function configPreflightSources(
     return {
       ...base,
       pendingMigrations: () =>
-        kind === 'missing'
-          ? Promise.resolve('missing' as const)
-          : Promise.reject(failure instanceof Error ? failure : new Error(String(failure))),
+        kind === 'missing' ? Promise.resolve('missing' as const) : Promise.reject(asError(failure)),
       jevKey: () => Promise.resolve(undefined),
       jevEnabled: () => Promise.resolve(true),
-      catalog: () => Promise.resolve(DEFAULT_MODEL_CATALOG),
+      catalog: () =>
+        kind === 'missing'
+          ? Promise.resolve(DEFAULT_MODEL_CATALOG)
+          : Promise.reject(asError(failure)),
       close: () => undefined,
     };
   }
   const { handle } = database;
+  const store = await inspectStore(handle);
   return {
     ...base,
-    // A store start would refuse is reported as such, never as migrations it would apply.
-    pendingMigrations: async () => {
-      await guardCurrentStore(handle.client);
-      return handle.pendingMigrations();
-    },
+    ...(store.state === 'fresh' ? { emptyStore: true } : {}),
+    pendingMigrations: () =>
+      store.state === 'refused'
+        ? Promise.reject(asError(store.error))
+        : Promise.resolve(store.pending),
     jevKey: () =>
       key
         ? new SqliteSecrets(handle.db, { now: () => new Date() }, key, LOCAL_OWNER).resolve(
             JEV_SECRET,
           )
         : Promise.resolve(undefined),
-    catalog: async () => projectStartupModelCatalog(await new SqliteModelCatalog(handle.db).list()),
+    catalog: async () => {
+      if (store.state === 'refused') throw asError(store.error);
+      if (store.state === 'fresh') return DEFAULT_MODEL_CATALOG;
+      // Startup's projection: stored rows win, and shipped models the store lacks exist in memory
+      // only. A store with pending migrations may lack discovery tables; read it as startup does.
+      return projectStartupModelCatalog(
+        store.pending === 0
+          ? await new SqliteModelCatalog(handle.db).list()
+          : await readPreMigrationModelCatalog(handle.db),
+      );
+    },
     jevEnabled: async () =>
       (await new SqliteClassifierModels(handle.db).findOne(LOCAL_OWNER, 'jev'))?.enabled ?? true,
     close: () => handle.close(),

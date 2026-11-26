@@ -8,6 +8,7 @@ import { FakeHarness } from '@graphgoblin/engine/testing';
 import { CODEX_PLUGIN_OBSERVABILITY_NOTICE } from '@graphgoblin/domain';
 import {
   DEFAULT_MODEL_CATALOG,
+  UnsupportedStoreError,
   openDatabase,
   openReadOnlyDatabaseClient,
 } from '@graphgoblin/infrastructure/sqlite';
@@ -17,6 +18,7 @@ import {
   checkDataDir,
   checkNode,
   assertCreatable,
+  configPreflightSources,
   formatPreflight,
   readMasterKey,
   runPreflight,
@@ -27,6 +29,8 @@ import {
 import { createTestApp } from './testing/test-app.js';
 
 const KEY = Buffer.alloc(32, 7).toString('base64');
+/** Every container and CLI environment here is the test's own; none starts or probes Ollama. */
+const OLLAMA_OFF = { GG_OLLAMA_ENABLED: 'false' };
 
 let dir: string;
 
@@ -52,7 +56,7 @@ function byId(report: PreflightReport, id: string) {
 
 function config(overrides: Partial<ApiConfig> = {}): ApiConfig {
   return {
-    ...loadConfig({ GG_DATA_DIR: dir, GG_DB_URL: ':memory:', GG_MASTER_KEY: KEY }),
+    ...loadConfig({ GG_DATA_DIR: dir, GG_DB_URL: ':memory:', GG_MASTER_KEY: KEY, ...OLLAMA_OFF }),
     ...overrides,
   };
 }
@@ -71,7 +75,7 @@ function sources(overrides: Partial<PreflightSources> = {}): PreflightSources {
 }
 
 it('allows read-only CLI preflight alongside a container without changing its lock', async () => {
-  const env = { GG_DATA_DIR: dir, GG_MASTER_KEY: KEY };
+  const env = { GG_DATA_DIR: dir, GG_MASTER_KEY: KEY, ...OLLAMA_OFF };
   const container = await createContainer(loadConfig(env), { startTimers: false });
   await container.start();
   const lockPath = join(dir, 'graphgoblin.lock');
@@ -432,6 +436,150 @@ describe('runPreflight', () => {
     });
   });
 
+  it.each([
+    {
+      effort: 'none',
+      status: 'fail',
+      message:
+        'GG_DEFAULTS.byHarness.codex.effort "none" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists',
+    },
+    {
+      effort: 'low',
+      status: 'ok',
+      message: 'gpt-5.5 (codex) is in the model catalog and supports effort low',
+    },
+    {
+      effort: undefined,
+      status: 'warn',
+      message:
+        'gpt-5.5 (codex) is in the model catalog, but GG_DEFAULTS.byHarness.codex.effort is not set; runs need a supported effort from the loop or Settings defaults',
+    },
+  ] as const)(
+    'checks the Codex default effort as start does (effort=$effort)',
+    async ({ effort, status, message }) => {
+      const report = await runPreflight(
+        sources({
+          config: config({
+            defaults: { byHarness: { codex: { model: 'gpt-5.5', ...(effort ? { effort } : {}) } } },
+          }),
+        }),
+      );
+      expect(byId(report, 'default-model')).toEqual({
+        id: 'default-model',
+        label: 'Default model',
+        status,
+        message,
+      });
+      expect(report.ok).toBe(status !== 'fail');
+      // A refused declaration is configuration, not a harness prerequisite.
+      expect(byId(report, 'harness.codex')).toMatchObject({ state: 'ready', status: 'ok' });
+    },
+  );
+
+  it('keeps the disabled Codex warning and still refuses an effort the disabled model lacks', async () => {
+    const catalog = () =>
+      Promise.resolve(
+        DEFAULT_MODEL_CATALOG.map((entry) =>
+          entry.model === 'gpt-5.5' ? { ...entry, enabled: false } : entry,
+        ),
+      );
+    const omitted = await runPreflight(
+      sources({
+        config: config({ defaults: { byHarness: { codex: { model: 'gpt-5.5' } } } }),
+        catalog,
+      }),
+    );
+    expect(byId(omitted, 'default-model')).toMatchObject({
+      status: 'warn',
+      message: 'gpt-5.5 is in the model catalog but disabled',
+    });
+    const unsupported = await runPreflight(
+      sources({
+        config: config({ defaults: { byHarness: { codex: { model: 'gpt-5.5', effort: 'max' } } } }),
+        catalog,
+      }),
+    );
+    expect(byId(unsupported, 'default-model')).toMatchObject({
+      status: 'fail',
+      message: expect.stringContaining('(EFFORT_UNSUPPORTED); start refuses it'),
+    });
+  });
+
+  it('checks defaults against the catalog of a store with pending migrations', async () => {
+    const catalog = vi.fn(() =>
+      Promise.resolve(
+        DEFAULT_MODEL_CATALOG.map((entry) =>
+          entry.model === 'gpt-6-luna' ? { ...entry, enabled: false } : entry,
+        ),
+      ),
+    );
+    const report = await runPreflight(
+      sources({ pendingMigrations: () => Promise.resolve(3), catalog }),
+    );
+    expect(catalog).toHaveBeenCalledExactlyOnceWith();
+    expect(report.ok).toBe(true);
+    expect(byId(report, 'database')).toMatchObject({ status: 'warn', message: /3 migration/ });
+    expect(byId(report, 'default-model')).toMatchObject({
+      status: 'warn',
+      message: 'gpt-6-luna is in the model catalog but disabled',
+    });
+    expect(byId(report, 'jev')).toMatchObject({
+      status: 'warn',
+      message: 'not checked until the database is migrated; Jev is optional',
+    });
+    const empty = await runPreflight(
+      sources({ emptyStore: true, pendingMigrations: () => Promise.resolve(30) }),
+    );
+    expect(byId(empty, 'default-model')).toMatchObject({
+      status: 'ok',
+      message:
+        'gpt-6-luna (codex) is in the default catalog seeded on first start and supports effort low',
+    });
+  });
+
+  it.each([
+    new UnsupportedStoreError('The store is format 3; this build reads only format 4', 3),
+    new Error('SQLITE_NOTADB: file is not a database'),
+  ])('does not check defaults against a catalog it cannot inspect: %s', async (failure) => {
+    const catalog = vi.fn(() => Promise.resolve(DEFAULT_MODEL_CATALOG));
+    const report = await runPreflight(
+      sources({
+        config: config({
+          defaults: {
+            byHarness: {
+              codex: { model: 'gpt-6-luna', effort: 'low' },
+              claude: { model: 'claude-opus-5-5', effort: 'high' },
+            },
+          },
+        }),
+        pendingMigrations: () => Promise.reject(failure),
+        catalog,
+      }),
+    );
+    expect(catalog).not.toHaveBeenCalled();
+    expect(report.ok).toBe(false);
+    expect(byId(report, 'database')?.status).toBe('fail');
+    expect(byId(report, 'default-model')).toEqual({
+      id: 'default-model',
+      label: 'Default model',
+      status: 'warn',
+      message:
+        'The configured Codex model and effort are not checked until the database is current and readable',
+    });
+    expect(byId(report, 'default-model.claude')).toEqual({
+      id: 'default-model.claude',
+      label: 'Claude default model',
+      status: 'warn',
+      message:
+        'The configured Claude model and effort are not checked until the database is current and readable',
+    });
+    // Harness prerequisites do not depend on the catalog.
+    expect(byId(report, 'harness.claude')).toMatchObject({
+      status: 'fail',
+      message: 'The configured Claude harness is unavailable',
+    });
+  });
+
   it('formats a readable table', async () => {
     const report = await runPreflight(sources({ jevKey: () => Promise.resolve(undefined) }));
     const text = formatPreflight(report);
@@ -461,7 +609,7 @@ describe('graphgoblin-api --preflight', () => {
   function cli(env: Record<string, string>, harness = new FakeHarness()) {
     let out = '';
     return runPreflightCli({
-      env,
+      env: { ...OLLAMA_OFF, ...env },
       harnesses: { codex: harness },
       nodeVersion: '22.14.0',
       write: (text) => {
@@ -485,7 +633,7 @@ describe('graphgoblin-api --preflight', () => {
   });
 
   it('checks an installation that has started once', async () => {
-    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false' };
+    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false', ...OLLAMA_OFF };
     const container = await createContainer(loadConfig(env), {
       harnesses: { codex: new FakeHarness() },
       deciders: [],
@@ -522,7 +670,11 @@ describe('graphgoblin-api --preflight', () => {
 
   it('warns about a database under directories start will create, and start creates them', async () => {
     const dbPath = join(dir, 'elsewhere', 'deeper', 'gg.db');
-    const env = { GG_DATA_DIR: join(dir, 'data'), GG_DB_URL: pathToFileURL(dbPath).href };
+    const env = {
+      GG_DATA_DIR: join(dir, 'data'),
+      GG_DB_URL: pathToFileURL(dbPath).href,
+      ...OLLAMA_OFF,
+    };
     const before = await cli(env);
     expect(before.code).toBe(0);
     expect(before.out).toMatch(/WARN\s+Database\s+the database does not exist yet/);
@@ -548,6 +700,23 @@ describe('graphgoblin-api --preflight', () => {
     });
     expect(blocked.code).toBe(1);
     expect(blocked.out).toMatch(/FAIL\s+Database\s+not reachable: .*not a directory/);
+    expect(blocked.out).toMatch(
+      /WARN\s+Default model\s+.*not checked until the database is current/,
+    );
+    // The catalog source never substitutes the shipped catalog for a store it cannot reach.
+    const blockedSources = await configPreflightSources(
+      loadConfig({
+        GG_DATA_DIR: dir,
+        GG_DB_URL: pathToFileURL(join(dir, 'blocker', 'sub', 'gg.db')).href,
+        ...OLLAMA_OFF,
+      }),
+      { harnesses: { codex: new FakeHarness() } },
+    );
+    try {
+      await expect(blockedSources.catalog()).rejects.toThrow(/not a directory/);
+    } finally {
+      blockedSources.close();
+    }
     const unreadable = await cli({ GG_DATA_DIR: dir, GG_DB_URL: 'file:bad%00name.db' });
     expect(unreadable.out).toMatch(/FAIL\s+Database\s+not reachable/);
     const remote = await cli({ GG_DATA_DIR: dir, GG_DB_URL: 'file://remote-host/gg.db' });
@@ -557,7 +726,7 @@ describe('graphgoblin-api --preflight', () => {
 
   it('opens an existing database named by a percent-encoded file URL', async () => {
     const dbPath = join(dir, 'with space', 'gg db.sqlite');
-    const env = { GG_DATA_DIR: dir, GG_DB_URL: pathToFileURL(dbPath).href };
+    const env = { GG_DATA_DIR: dir, GG_DB_URL: pathToFileURL(dbPath).href, ...OLLAMA_OFF };
     expect(env.GG_DB_URL).toContain('%20');
     const container = await createContainer(loadConfig(env), {
       harnesses: { codex: new FakeHarness() },
@@ -575,7 +744,7 @@ describe('graphgoblin-api --preflight', () => {
   });
 
   it('fails on a store start would refuse, naming it and the reset, without changing it', async () => {
-    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false' };
+    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false', ...OLLAMA_OFF };
     const container = await createContainer(loadConfig(env), {
       harnesses: { codex: new FakeHarness() },
       deciders: [],
@@ -590,6 +759,11 @@ describe('graphgoblin-api --preflight', () => {
       `The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir "${dir}"`,
     );
     expect(report.out).toMatch(/FAIL\s+Database\s+The store is format 3/);
+    // The shipped catalog is not what start would use for this store, so nothing is admitted.
+    expect(report.out).toMatch(
+      /WARN\s+Default model\s+The configured Codex model and effort are not checked until the database is current and readable/,
+    );
+    expect(report.out).not.toMatch(/ok\s+Default model/);
     const inspection = openReadOnlyDatabaseClient(join(dir, 'graphgoblin.db'));
     try {
       expect(
@@ -598,10 +772,18 @@ describe('graphgoblin-api --preflight', () => {
     } finally {
       inspection.close();
     }
+    const refused = await configPreflightSources(loadConfig(env), {
+      harnesses: { codex: new FakeHarness() },
+    });
+    try {
+      await expect(refused.catalog()).rejects.toBeInstanceOf(UnsupportedStoreError);
+    } finally {
+      refused.close();
+    }
   });
 
   it('leaves every byte of a store it refuses untouched, write-ahead log included', async () => {
-    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false' };
+    const env = { GG_DATA_DIR: dir, GG_SWAGGER_UI: 'false', ...OLLAMA_OFF };
     const container = await createContainer(loadConfig(env), {
       harnesses: { codex: new FakeHarness() },
       deciders: [],
@@ -642,6 +824,9 @@ describe('graphgoblin-api --preflight', () => {
     const report = await cli({ GG_DATA_DIR: copy, GG_MASTER_KEY: KEY, GG_SWAGGER_UI: 'false' });
     expect(report.code).toBe(1);
     expect(report.out).toContain('the migration ledger is behind the store structure');
+    expect(report.out).toMatch(
+      /WARN\s+Default model\s+.*not checked until the database is current/,
+    );
     // A mutable connection would have checkpointed the log into the database and removed it.
     expect((await readdir(copy)).sort()).toEqual([
       'graphgoblin.db',
@@ -654,6 +839,10 @@ describe('graphgoblin-api --preflight', () => {
   it('reports an in-memory database as unmigrated and bad configuration as a failure', async () => {
     const memory = await cli({ GG_DATA_DIR: dir, GG_DB_URL: ':memory:', GG_MASTER_KEY: KEY });
     expect(memory.out).toMatch(/WARN\s+Database\s+\d+ migration/);
+    // An empty store's first start seeds the shipped catalog, as a missing one's does.
+    expect(memory.out).toMatch(
+      /ok\s+Default model\s+gpt-6-luna \(codex\) is in the default catalog seeded on first start and supports effort low/,
+    );
     const bad = await cli({ GG_PORT: 'nope' });
     expect(bad.code).toBe(1);
     expect(bad.out).toMatch(/FAIL\s+configuration\s+invalid configuration/);

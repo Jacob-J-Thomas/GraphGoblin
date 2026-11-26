@@ -1,0 +1,40 @@
+
+ RUN  v5.0.3 G:/ggq/gg-fu-preflight-20261124/GraphGoblin/apps/api
+
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > accepts a missing shipped codex seed without storing it 988ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > accepts a missing shipped claude seed without storing it 245ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN) 224ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=high, status=FAIL) 220ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex unknown-model defaults (effort=low, status=FAIL) 178ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex claude-opus-5-5 defaults (effort=high, status=FAIL) 183ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude gpt-6-luna defaults (effort=low, status=FAIL) 190ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=none, status=FAIL) 168ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves claude claude-opus-5-5 defaults (effort=low, status=FAIL) 166ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves codex gpt-5.5 defaults (effort=none, status=FAIL) 166ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves rows and migrations with an initially absent WAL 139ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > preserves rows and migrations with an initially empty WAL 146ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > projects a missing seed from a WAL-backed store without checkpointing or writing it 156ms
+ ✓ src/preflight-catalog.test.ts > offline startup catalog admission > rejects database changes, existing WAL changes or removal, and new WAL frames 1743ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a migrated store (effort=none, status=FAIL) 202ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a migrated store (effort=low, status=ok) 236ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a migrated store (effort=undefined, status=WARN) 228ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a missing store (effort=none, status=FAIL) 23ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a missing store (effort=low, status=ok) 122ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a missing store (effort=undefined, status=WARN) 129ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a empty store (effort=none, status=FAIL) 40ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a empty store (effort=low, status=ok) 145ms
+ ✓ src/preflight-catalog.test.ts > Codex GG_DEFAULTS effort (#545) > matches startup for a empty store (effort=undefined, status=WARN) 144ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > admits a stored-only Codex model as startup does, without changing the store 354ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > admits a stored disabled Codex row as startup does, without changing the store 342ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > admits stored Codex efforts without the config… as startup does, without changing the store 259ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > admits a stored disabled Claude row as startup does, without changing the store 335ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > admits a shipped seed the store lacks as startup does, without changing the store 345ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > reads committed WAL frames without changing the database or the existing WAL 347ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > reports the inspection limit of an existing unsupported store instead of a seed-backed result 127ms
+ ✓ src/preflight-catalog.test.ts > a current store with pending migrations (#546) > reports the inspection limit of an existing corrupt store instead of a seed-backed result 37ms
+
+ Test Files  1 passed (1)
+      Tests  31 passed (31)
+   Start at  22:14:40
+   Duration  12.88s (tests 66%, import 22%, transform 12%)
+

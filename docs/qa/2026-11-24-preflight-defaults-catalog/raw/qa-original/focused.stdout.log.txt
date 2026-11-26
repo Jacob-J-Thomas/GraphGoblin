@@ -1,0 +1,37 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90mG:/ggq/gg-fu-preflight-20261124/GraphGoblin/apps/api[39m
+
+ [32m✓[39m src/preflight-ollama.test.ts [2m([22m[2m18 tests[22m[2m)[22m[33m 3971[2mms[22m[39m
+   [32m✓[39m system preflight with the native container harness map [2m(4)[22m
+     [33m[2m✓[22m[39m keeps unused Ollama offline diagnostic from failing a Codex gateway[33m 1515[2mms[22m[39m
+   [32m✓[39m CLI Ollama source resolution is read-only [2m(8)[22m
+     [33m[2m✓[22m[39m defers an existing pending store with zero Ollama HTTP and zero writes[33m 459[2mms[22m[39m
+ [32m✓[39m src/preflight.test.ts [2m([22m[2m48 tests[22m[2m)[22m[33m 5564[2mms[22m[39m
+   [33m[2m✓[22m[39m allows read-only CLI preflight alongside a container without changing its lock[33m 1632[2mms[22m[39m
+   [32m✓[39m graphgoblin-api --preflight [2m(9)[22m
+     [33m[2m✓[22m[39m checks an installation that has started once[33m 674[2mms[22m[39m
+     [33m[2m✓[22m[39m warns about a database under directories start will create, and start creates them[33m 580[2mms[22m[39m
+     [33m[2m✓[22m[39m opens an existing database named by a percent-encoded file URL[33m 653[2mms[22m[39m
+     [33m[2m✓[22m[39m fails on a store start would refuse, naming it and the reset, without changing it[33m 484[2mms[22m[39m
+     [33m[2m✓[22m[39m leaves every byte of a store it refuses untouched, write-ahead log included[33m 545[2mms[22m[39m
+   [32m✓[39m GET /system/preflight [2m(2)[22m
+     [33m[2m✓[22m[39m reports on the running installation and requires credentials when keys are required[33m 528[2mms[22m[39m
+ [32m✓[39m src/preflight-catalog.test.ts [2m([22m[2m31 tests[22m[2m)[22m[33m 10221[2mms[22m[39m
+   [32m✓[39m offline startup catalog admission [2m(14)[22m
+     [33m[2m✓[22m[39m accepts a missing shipped codex seed without storing it[33m 1153[2mms[22m[39m
+     [33m[2m✓[22m[39m accepts a missing shipped claude seed without storing it[33m 513[2mms[22m[39m
+     [33m[2m✓[22m[39m preserves codex gpt-6.1-terra defaults (effort=medium, status=WARN)[33m 308[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects database changes, existing WAL changes or removal, and new WAL frames[33m 1951[2mms[22m[39m
+   [32m✓[39m a current store with pending migrations (#546) [2m(8)[22m
+     [33m[2m✓[22m[39m admits a stored-only Codex model as startup does, without changing the store[33m 371[2mms[22m[39m
+     [33m[2m✓[22m[39m admits a stored disabled Codex row as startup does, without changing the store[33m 354[2mms[22m[39m
+     [33m[2m✓[22m[39m admits stored Codex efforts without the config… as startup does, without changing the store[33m 311[2mms[22m[39m
+     [33m[2m✓[22m[39m admits a stored disabled Claude row as startup does, without changing the store[33m 375[2mms[22m[39m
+     [33m[2m✓[22m[39m admits a shipped seed the store lacks as startup does, without changing the store[33m 333[2mms[22m[39m
+     [33m[2m✓[22m[39m reads committed WAL frames without changing the database or the existing WAL[33m 355[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m97 passed[39m[22m[90m (97)[39m
+[2m   Start at [22m 19:56:25
+[2m   Duration [22m 15.74s[2m (tests 54%, import 31%, transform 15%)[22m
+
