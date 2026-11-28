@@ -9,6 +9,9 @@ expected gateway fingerprint, or serializes on the store and port, before it obs
 gateway. It supersedes the warm-click part of
 [ADR-0086](ADR-0086-windows-helper-job-lifetime.md): warm reuse starts no helper, so only a cold
 start needs, and proves, helper containment. Their other decisions are unchanged.
+[ADR-0092](ADR-0092-configured-windows-helper-allowance.md) later gives the cold start's
+enrollment and ownership checks `max(15, StartupTimeoutSeconds)` seconds each and makes that the
+held-store retry cap; the installer enrollment keeps the 15-second work allowance described here.
 
 ## Context
 

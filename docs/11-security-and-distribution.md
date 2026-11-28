@@ -7,11 +7,25 @@ WMI's service, providers and the detached gateway are outside that lifetime. Thi
 capability and enrolls the gateway's launch identity through one contained helper run. A warm
 click that reuses a matching gateway starts no helper and creates no process (ADR-0090); every
 cold start verifies actual containment again. Failure refuses a fresh spawn with closed text. Both output streams drain concurrently, stdout is capped
-at 256 KiB and strict protocol validation, root exit, EOFs and empty-job accounting share a
-15-second initial work budget. Failed checks use one further two-second cleanup allowance before
-operator presentation; synchronous OS calls can exceed the observed wall-clock bound. Held-store
-rechecks reserve that cleanup time and retain prior held guidance when no conclusive free sample
-fits. These limits do not relax the shared WMI creation-identity policy or prove staleness.
+at 256 KiB and strict protocol validation, root exit, EOFs and empty-job accounting share one work
+budget per check: `max(15, StartupTimeoutSeconds)` seconds on a cold click (60 seconds in the
+default installation) and 15 seconds for the installer's enrollment inside its 40-second stage
+(ADR-0092). Failed checks use one further two-second cleanup allowance before operator
+presentation; synchronous OS calls can exceed the observed wall-clock bound. Held-store rechecks
+share the remaining release wait, are capped by the same allowance, reserve that cleanup time and
+retain prior held guidance when no conclusive free sample fits. These limits do not relax the
+shared WMI creation-identity policy or prove staleness.
+
+Helper refusals keep their closed codes and guidance and add one measured observation: the stage
+(enrollment or ownership), the outcome (timed out, exit code, invalid or oversized output, or
+unconfirmed cleanup), the launcher-measured elapsed time, the check's allowance and the stdout and
+stderr byte counts. Raw helper output never appears. A held refusal after an inconclusive retry
+keeps its owner reason and safety advice and appends that retry's observation. A successful check
+that takes at least five seconds leaves one closed `slow-check` record with the same integers in
+`launcher.log`; a note that cannot be written never affects the launch. Helper checks, the
+existing-store release wait, gateway readiness and the PWA window are separate phases, so
+`StartupTimeoutSeconds` is not one end-to-end launch deadline. No ownership or stored-data
+protocol changes.
 
 Caller admission fixes an absolute monotonic work cutoff before argument/environment preparation.
 Native setup, creation admission, reads, validation and result consumption use that same cutoff;

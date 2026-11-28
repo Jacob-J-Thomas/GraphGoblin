@@ -105,6 +105,16 @@ public static class NativeChecks
         Check(huge != null && huge.Length <= LauncherLog.RecordBytes && huge[huge.Length - 1] == (byte)'\n', "A launcher record exceeded 4 KiB.");
         var parsed = (System.Collections.Generic.Dictionary<string, object>)new System.Web.Script.Serialization.JavaScriptSerializer().DeserializeObject(new UTF8Encoding(false, true).GetString(huge));
         Check((string)parsed["code"] == "startup-failed-logged" && (int)parsed["childExit"] == 74, "A launcher record is not complete JSON.");
+        // Slow-success note (ADR-0092): closed check names, fixed text and integers only.
+        byte[] slow = LauncherLog.BuildSlowCheck(DateTime.UtcNow, 7, "ownership", 16012, 25000, 17, 300000);
+        var note = (System.Collections.Generic.Dictionary<string, object>)new System.Web.Script.Serialization.JavaScriptSerializer().DeserializeObject(new UTF8Encoding(false, true).GetString(slow));
+        Check(slow.Length <= LauncherLog.RecordBytes && slow[slow.Length - 1] == (byte)'\n' && note.Count == 10 &&
+            (string)note["outcome"] == "slow-check" && (string)note["stage"] == "gateway" && (string)note["check"] == "ownership" &&
+            (int)note["pid"] == 7 && (int)note["elapsedMs"] == 16012 && (int)note["allowanceMs"] == 25000 &&
+            (int)note["stdoutBytes"] == 17 && (int)note["stderrBytes"] == 300000 &&
+            (string)note["message"] == "The read-only ownership check succeeded slowly.", "A slow-check note is not the closed record.");
+        Check(LauncherLog.BuildSlowCheck(DateTime.UtcNow, 7, "enrollment", 5000, 15000, 0, 0) != null && LauncherLog.BuildSlowCheck(DateTime.UtcNow, 7, canary, 5000, 15000, 0, 0) == null, "A slow-check note accepted an open check name.");
+        LauncherLog.RecordSlowCheck(null, "ownership", 5000, 15000, 0, 0); // a dropped note never throws
         string[] closed = Gateway.ClosedOwnership("Store ownership could not be verified (malformed or incomplete owner record): " + canary);
         Check(closed[1] == "Store ownership could not be verified (malformed or incomplete owner record)", "Known ownership detail was not closed.");
         Check(!Gateway.ClosedOwnership("Store ownership could not be verified (" + canary + ")")[1].Contains("CANARY"), "Unknown ownership detail leaked.");
@@ -126,11 +136,15 @@ public static class NativeChecks
         bool refused = false;
         try { LogRoot.Admit(shared); } catch (IOException) { refused = true; }
         Check(refused, "A root readable by Users was admitted.");
+        LauncherLog.RecordSlowCheck(Path.Combine(shared, "GraphGoblin.exe.json"), "ownership", 5000, 15000, 0, 0);
+        Check(!File.Exists(Path.Combine(shared, LauncherLog.Active)), "A slow-check note was written to an unsafe root.");
 
         string rootPath = PrivateDirectory(work, "private-root");
         var root = LogRoot.Admit(rootPath);
         Check(root.LauncherMutex.StartsWith(@"Global\GraphGoblin.LauncherLog.") && root.GatewayPipe.StartsWith(@"\\.\pipe\GraphGoblin.GatewayLog."), "Root keys are malformed.");
         string active = Path.Combine(root.Path, LauncherLog.Active), previous = Path.Combine(root.Path, LauncherLog.Previous);
+        LauncherLog.RecordSlowCheck(Path.Combine(rootPath, "GraphGoblin.exe.json"), "enrollment", 5000, 15000, 0, 0);
+        Check(LauncherLog.Append(root, slow) && File.ReadAllLines(active).Length == 2 && File.ReadAllText(active).EndsWith(Encoding.UTF8.GetString(slow)), "Slow-check notes did not use the bounded launcher pair.");
         byte[] record = LauncherLog.Build(DateTime.UtcNow, 7, StartupOutcome.ForChildExit(70, root.Path), "gateway", @"C:\cfg\x.json");
         File.WriteAllBytes(active, Lines(LauncherLog.SlotBytes - record.Length));
         Check(LauncherLog.Append(root, record) && new FileInfo(active).Length == LauncherLog.SlotBytes && !File.Exists(previous), "The exact 256 KiB slot edge rotated or failed.");
@@ -228,6 +242,10 @@ public static class NativeChecks
             "setInterval(()=>process.stderr.write('PRIVATE_CANARY'.repeat(1024)),1)",
         };
         string[] codes = { "helper-invalid", "helper-invalid", "helper-invalid", "helper-refused", "helper-invalid", "helper-timeout" };
+        // Measured diagnostics (ADR-0092): stage, fixed outcome, launcher-measured integers only.
+        const string invalidOutcome = "returned invalid or oversized output";
+        string[] outcomes = { invalidOutcome, invalidOutcome, invalidOutcome, "exited with code 17", invalidOutcome, "timed out" };
+        long[] stdoutCounts = { 1, 262145, 16, 0, -1, 0 }; // -1: anything beyond the 256 KiB cap
         for (int i = 0; i < scripts.Length; i++) {
             var clock = Stopwatch.StartNew();
             try { run(scripts[i], 1200); throw new Exception("Invalid helper succeeded."); }
@@ -236,6 +254,13 @@ public static class NativeChecks
                 Check(!Program.Present(refused, "gateway", @"C:\fixture\launcher.json").Contains("PRIVATE_CANARY"), "Helper output reached presentation.");
                 Check(!Encoding.UTF8.GetString(LauncherLog.Build(DateTime.UtcNow, 1, refused, "gateway", @"C:\fixture\launcher.json")).Contains("PRIVATE_CANARY"), "Helper output reached the bounded log.");
                 if (i == 3) Check(refused.ChildExit == 17, "Natural nonzero status was lost.");
+                var seen = System.Text.RegularExpressions.Regex.Match(refused.Observation ?? "",
+                    @"\A\(identity check (.+) after (\d+) ms of its 1200 ms allowance; stdout (\d+) bytes, stderr (\d+) bytes\)\z");
+                Check(seen.Success && refused.Message.Contains(refused.Observation) && seen.Groups[1].Value == outcomes[i],
+                    "A helper failure lacks its measured stage, outcome or allowance at case " + i + ".");
+                long elapsed = long.Parse(seen.Groups[2].Value), stdoutBytes = long.Parse(seen.Groups[3].Value), stderrBytes = long.Parse(seen.Groups[4].Value);
+                Check(stdoutCounts[i] >= 0 ? stdoutBytes == stdoutCounts[i] : stdoutBytes > HelperProcess.OutputBytes, "The stdout byte count is wrong at case " + i + ": " + stdoutBytes);
+                if (i == 5) Check(elapsed >= 1200 && stderrBytes > 0, "A timeout lost its elapsed time or stderr count.");
             }
             Check(clock.ElapsedMilliseconds < 4500, "A helper exceeded work plus shared cleanup allowance.");
         }
@@ -288,14 +313,16 @@ public static class NativeChecks
                 Console.WriteLine("helper-fixture " + mode + " cleanup-confirmed elapsed-ms=" + elapsed.ElapsedMilliseconds);
             }
         } finally { if (!sentinel.HasExited) { sentinel.Kill(); sentinel.WaitForExit(2000); } }
-        // Synthetic latency, deliberately separate from real WMI. Four serial five-second
-        // probes cannot fit the preserved initial cap, even if each would eventually succeed.
+        // Synthetic latency, deliberately separate from real WMI. At the 15-second floor (the
+        // installer's enrollment allowance, and a cold click whose StartupTimeoutSeconds is 15 or
+        // less) four serial five-second probes still cannot fit, even if each would succeed.
+        // Larger configured allowances are driven through the public CLI (ADR-0092).
         var fourProbes = Stopwatch.StartNew();
         try {
             run("let n=0;const t=setInterval(()=>{if(++n===4){clearInterval(t);process.stdout.write('ok')}},5000)", HelperProcess.WorkMilliseconds);
-            throw new Exception("Four slow probes escaped the initial work cap.");
+            throw new Exception("Four slow probes escaped the 15-second work floor.");
         } catch (LauncherFailure refused) { Check(refused.Code == "helper-timeout", "Synthetic four-probe timeout was misclassified."); }
-        Check(fourProbes.ElapsedMilliseconds >= 15000 && fourProbes.ElapsedMilliseconds < 18000, "The initial work cap changed.");
+        Check(fourProbes.ElapsedMilliseconds >= 15000 && fourProbes.ElapsedMilliseconds < 18000, "The 15-second work floor changed.");
     }
 
     /// <summary>The same immutable cutoff and operation guard used by caller preparation.</summary>
@@ -305,9 +332,16 @@ public static class NativeChecks
             try { operation(); throw new Exception("Expired work was accepted."); }
             catch (LauncherFailure refused) { Check(refused.Code == "helper-timeout", "The work cutoff changed its closed refusal."); }
         };
+        // ADR-0092: a cold click's allowance is max(15, StartupTimeoutSeconds) seconds; the
+        // installer's enrollment keeps the 15-second floor.
+        Check(HelperProcess.ConfiguredAllowance(1) == 15000 && HelperProcess.ConfiguredAllowance(15) == 15000 &&
+            HelperProcess.ConfiguredAllowance(16) == 16000 && HelperProcess.ConfiguredAllowance(25) == 25000 &&
+            HelperProcess.ConfiguredAllowance(60) == 60000 && HelperProcess.ConfiguredAllowance(300) == 300000 &&
+            HelperProcess.WorkMilliseconds == 15000, "The configured helper allowance is not max(15, StartupTimeoutSeconds) seconds.");
+        long floor = HelperProcess.ConfiguredAllowance(1);
         foreach (long finishedAt in new long[] { 249, 250, 251 }) {
             long clock = 0;
-            var work = HelperProcess.WorkDeadline.Recheck(() => clock, 2250);
+            var work = HelperProcess.WorkDeadline.Recheck(() => clock, 2250, floor);
             Check(work.Remaining == 250, "A retry did not preserve the two-second cleanup reserve.");
             Func<string> read = () => work.Within("ownership", () => { clock = finishedAt; return "free"; });
             if (finishedAt < 250) Check(read() == "free", "On-time free work was refused.");
@@ -315,33 +349,56 @@ public static class NativeChecks
         }
         foreach (long enteredAt in new long[] { 250, 251 }) {
             long clock = 0; int calls = 0;
-            var work = HelperProcess.WorkDeadline.Recheck(() => clock, 2250);
+            var work = HelperProcess.WorkDeadline.Recheck(() => clock, 2250, floor);
             clock = enteredAt;
             timeout(() => work.Within("ownership", () => { calls++; return "free"; }));
             Check(calls == 0, "Expired admission ran preparation or helper work.");
         }
         long now = 0; int creations = 0;
-        var setup = HelperProcess.WorkDeadline.Recheck(() => now, 2250);
+        var setup = HelperProcess.WorkDeadline.Recheck(() => now, 2250, floor);
         timeout(() => setup.Within("ownership", () => { now = 250; setup.Check("ownership"); creations++; return "free"; }));
         Check(creations == 0, "Preparation crossing expiry admitted native creation.");
         now = 0;
-        var omittedSetup = HelperProcess.WorkDeadline.Recheck(() => now, 2250);
+        var omittedSetup = HelperProcess.WorkDeadline.Recheck(() => now, 2250, floor);
         now = 50;
         Check(omittedSetup.Remaining == 200, "Preparation was rebased out of the work cutoff.");
         timeout(() => omittedSetup.Within("ownership", () => { now += 225; return "free"; }));
         now = 0;
-        var returnedLate = HelperProcess.WorkDeadline.Recheck(() => now, 2250);
+        var returnedLate = HelperProcess.WorkDeadline.Recheck(() => now, 2250, floor);
         timeout(() => returnedLate.Within("ownership", () => { now = 249; returnedLate.Check("ownership"); now = 250; return "free"; }));
+        // A 40-second startup timeout: the configured 40-second cap cannot outlast the shared
+        // release window, so the retry ends at the window's end less the cleanup reserve.
         now = 1000;
-        var capped = HelperProcess.WorkDeadline.Recheck(() => now, 40000);
-        Check(capped.Remaining == 15000, "A retry widened the initial 15-second work cap.");
+        var configured = HelperProcess.WorkDeadline.Recheck(() => now, 40000, HelperProcess.ConfiguredAllowance(40));
+        Check(configured.Remaining == 37000 && configured.Allowance == 37000, "A configured retry did not end at the release window less the cleanup reserve.");
+        now = 37999; configured.Check("ownership");
+        now = 38000; timeout(() => configured.Check("ownership"));
+        // The cap still binds whenever it is the earlier cutoff.
+        now = 1000;
+        var capped = HelperProcess.WorkDeadline.Recheck(() => now, 40000, floor);
+        Check(capped.Remaining == 15000, "A retry exceeded its allowance cap.");
         now = 15999; capped.Check("ownership");
         now = 16000; timeout(() => capped.Check("ownership"));
-        var initial = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
-        Check(initial.Remaining <= 15000, "The initial deadline exceeded its work cap.");
+        var initial = HelperProcess.WorkDeadline.Start(HelperProcess.ConfiguredAllowance(25));
+        Check(initial.Allowance == 25000 && initial.Remaining > 15000 && initial.Remaining <= 25000, "The initial deadline did not follow the configured allowance.");
+        var installer = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
+        Check(installer.Allowance == 15000 && installer.Remaining <= 15000, "The installer enrollment deadline exceeded 15 seconds.");
         now = 250;
-        var noReserve = HelperProcess.WorkDeadline.Recheck(() => now, 2000);
+        var noReserve = HelperProcess.WorkDeadline.Recheck(() => now, 2000, floor);
         Check(noReserve.Remaining == 0 && noReserve.Expired, "An exhausted cleanup reserve granted new work.");
+        // Measured diagnostics count from the check's own admission, not the release clock's origin.
+        now = 1000;
+        var measured = HelperProcess.WorkDeadline.Recheck(() => now, 9000, floor);
+        measured.StdoutBytes = 64; measured.StderrBytes = 300000;
+        now = 6999; measured.Check("ownership");
+        now = 8000;
+        try { measured.Check("ownership"); throw new Exception("An expired measured check was accepted."); }
+        catch (LauncherFailure refused) {
+            const string observation = "(ownership check timed out after 7000 ms of its 6000 ms allowance; stdout 64 bytes, stderr 300000 bytes)";
+            Check(refused.Code == "helper-timeout" && refused.Observation == observation &&
+                refused.Message == "The read-only ownership check exceeded its work budget " + observation + ". Check PowerShell and Windows Management Instrumentation availability. No gateway was started.",
+                "A timeout lost its closed measured text.");
+        }
     }
 
     /// <summary>Deterministic decision evidence, not a delayed-kernel-cleanup experiment.</summary>

@@ -2104,7 +2104,16 @@ test(
         for (const record of records.filter((entry) => entry.req || entry.res))
           for (const key of Object.keys(record.req ?? record.res))
             assert.ok(['method', 'route', 'statusCode'].includes(key), `access field ${key}`);
-        await assert.rejects(lstat(join(install, 'launcher.log')), { code: 'ENOENT' });
+        // Successful clicks record no refusal. A real helper check that happened to take five
+        // seconds or more on a loaded host may leave only its closed slow-check note (ADR-0092).
+        const notes = await readFile(join(install, 'launcher.log'), 'utf8').catch((error) => {
+          if (error.code === 'ENOENT') return '';
+          throw error;
+        });
+        assert.deepEqual(
+          logRecords(notes).filter((record) => record.outcome !== 'slow-check'),
+          [],
+        );
       },
     );
     try {
@@ -4076,6 +4085,13 @@ test(
             result.stderr,
             /Do not stop an unrelated process or delete an unverified lock/,
           );
+          // The stalled retry's measured observation follows the retained guidance (ADR-0092).
+          if (scenario === 'stalled-recheck')
+            assert.match(
+              result.stderr,
+              /\. The last ownership recheck was inconclusive \(ownership check timed out after \d+ ms of its \d+ ms allowance; stdout 0 bytes, stderr 0 bytes\); the last verified held result was retained\./,
+            );
+          else assert.doesNotMatch(result.stderr, /recheck was inconclusive/);
           assert.equal((await launcherRecords()).at(-1).code, 'store-held');
         }
       }

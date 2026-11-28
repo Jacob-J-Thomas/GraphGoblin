@@ -23,10 +23,12 @@ pass; a build-only check does not establish test execution.
 
 The native helper lifetime checks (#459, ADR-0086) exercise clean completion, large stderr
 floods, ordinary delayed children, invalid UTF-8, oversized/malformed protocol, natural nonzero
-exit and bounded work. Generation-specific handshakes retain exact native handles to nested
-members that ignore parent exit and broken pipes, with stdout, stderr, both or neither inherited.
-The Node fixture uses detached children so Node's own child-job cleanup cannot impersonate the
-launcher's collection. The checks require the launcher's distinctive job exit code within one
+exit and bounded work. Each closed outcome must also carry its measured stage, outcome, elapsed
+time, allowance and exact byte counts, and no helper output (ADR-0092). Four serial five-second
+probes still time out at the 15-second floor. Generation-specific handshakes retain exact native
+handles to nested members that ignore parent exit and broken pipes, with stdout, stderr, both or
+neither inherited. The Node fixture uses detached children so Node's own child-job cleanup cannot
+impersonate the launcher's collection. The checks require the launcher's distinctive job exit code within one
 shared cleanup allowance, while a same-executable sentinel and a separate helper survive.
 Controlled ownership fixtures verify a too-short retry window, a shortened stalled recheck and
 a conclusive held-to-free transition, preserving lock bytes and file identities on refusal.
@@ -44,8 +46,12 @@ completion. Original native evidence and its remaining limits stay distinct.
 
 D167 controls exercise the immutable caller work cutoff through the shared production guard:
 before/equal/after expiry, setup charged before helper entry, validation or return crossing the
-cutoff, the 15-second cap and reserved cleanup interval. A compiled helper entry given an expired
-deadline cannot create its marker child; a controlled-clock validation reaching equality refuses.
+cutoff, the retry cap and reserved cleanup interval. Under ADR-0092 they also pin the configured
+allowance, `max(15, StartupTimeoutSeconds)` seconds, a retry ending at the release window less
+the reserve (37,999/38,000 ms for a 40-second timeout), a smaller cap still binding
+(15,999/16,000 ms), the installer's 15-second deadline and one exact measured timeout text,
+counted from the retry's own admission. A compiled helper entry given an expired deadline
+cannot create its marker child; a controlled-clock validation reaching equality refuses.
 These establish deadline decisions and controlled entry behavior, not an OS scheduling race.
 The ordinary helper, strict protocol, held-store and cleanup controls retain their own scopes.
 
@@ -92,6 +98,22 @@ multi-record write, and its rollback after a short write, keep no encoded copy b
 status and closes them, records only the outcome, status and parser code (no canary in any string
 or decoded byte array) and then serves an ordinary request; ordinary construction keeps Fastify's
 default handler as the control.
+
+The same command also runs `windows-launcher-helper.acceptance.mjs`, one file at a time to reduce
+timing contention. It drives the public launcher CLI (#458, ADR-0092) with disposable stub
+checkouts, helpers, stores and ports; its configurations carry an enrollment computed for their
+exact inputs, so no helper runs before the click. In #458's reproduction the enrollment and
+ownership checks each answer after 16 seconds under a 25-second startup timeout; the click starts
+the matching stub gateway and leaves one closed slow-check note per check in `launcher.log`.
+About 256 KiB of stderr before each valid answer still reaches the spawn. A valid answer padded
+past the 256 KiB stdout cap, a malformed enrollment and an ownership helper exiting 7 refuse at
+once. An ownership helper that answers and then hangs, and a descendant holding the helper's
+inherited stdout and stderr after its root exits, refuse at the 15-second floor with neither left
+running. Each refusal's text and launcher record name the stage, outcome, measured time,
+allowance and exact byte counts, and a canary written to both streams appears in neither. A
+failed held-store retry keeps the held reason and lock location and appends its own observation.
+Strict ownership JSON, held-retry budgets, retained guidance after a stalled or malformed retry
+and real WMI stay with the native suite and are not repeated there.
 
 Warm discovery (#566, ADR-0090) has API unit tests that pin the launch projection and digest with
 a golden vector and its exhaustive `ApiConfig` decisions. They check equality across Node and

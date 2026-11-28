@@ -4,6 +4,23 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Windows launcher cold starts follow the configured startup timeout
+  ([ADR-0092](docs/decisions/ADR-0092-configured-windows-helper-allowance.md)): the enrollment
+  and initial ownership checks each allow `max(15, StartupTimeoutSeconds)` seconds, 60 in the
+  default installation, instead of the fixed 15 seconds kept by the #459 entry below, so a valid
+  check that answers in 16 seconds under a 25-second timeout now succeeds. Held-store rechecks
+  still share the store-release wait and use the same allowance as their cap; the installer's own
+  enrollment keeps 15 seconds. Concurrent draining of both streams, bounded exit and EOF waits and
+  descendant collection stay with the private-job helper (#459, ADR-0086). Helper refusals keep
+  their codes and guidance and add the check, the outcome, the launcher-measured time, the
+  allowance and the stdout and stderr byte counts, never helper output; a held refusal after a
+  failed recheck appends that recheck's observation. A successful check that takes five seconds
+  or more leaves one closed `slow-check` record in `launcher.log`. Unknown ownership remains
+  protected. This integrates PR #460 onto the current launcher. **Upgrade:** rebuild and
+  reinstall the launcher by rerunning `install-windows-launcher.ps1` from the updated checkout;
+  the launcher configuration, enrollment and shortcuts keep their format. The store, API and
+  stored formats need no migration, reset or manual change. Part of #458.
+
 - API startup keeps its original failure when lock or container cleanup also fails (#560), and
   Windows store recovery reports two more situations precisely (#542, #537). A failed write,
   attestation or close of a newly created lock record now closes its handle once and removes the

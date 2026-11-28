@@ -258,10 +258,13 @@ namespace GraphGoblin.Desktop
         public readonly int ChildExit;
         public readonly string LogFolder;
         public readonly string Lock;
+        /// <summary>A measured helper check's closed observation (ADR-0092); already in the text.</summary>
+        public readonly string Observation;
         public LauncherFailure(string code, string text) : this(code, text, null, null, 0) { }
-        public LauncherFailure(string code, string text, string logFolder, string lockPath, int childExit) : base(text)
+        public LauncherFailure(string code, string text, string logFolder, string lockPath, int childExit) : this(code, text, logFolder, lockPath, childExit, null) { }
+        public LauncherFailure(string code, string text, string logFolder, string lockPath, int childExit, string observation) : base(text)
         {
-            Code = code; LogFolder = logFolder; Lock = lockPath; ChildExit = childExit;
+            Code = code; LogFolder = logFolder; Lock = lockPath; ChildExit = childExit; Observation = observation;
         }
     }
 
@@ -948,6 +951,26 @@ namespace GraphGoblin.Desktop
             return null;
         }
 
+        /// <summary>
+        /// One closed slow-success note (ADR-0092): fixed text, the closed check name and
+        /// launcher-measured integers only. Null for any other check name.
+        /// </summary>
+        public static byte[] BuildSlowCheck(DateTime time, int pid, string check, long elapsedMilliseconds, long allowanceMilliseconds, long stdoutBytes, long stderrBytes)
+        {
+            if (check != "enrollment" && check != "ownership") return null;
+            var json = new JavaScriptSerializer();
+            var record = new StringBuilder();
+            record.Append("{\"time\":").Append(json.Serialize(time.ToUniversalTime().ToString("o", CultureInfo.InvariantCulture)))
+                .Append(",\"pid\":").Append(pid.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"outcome\":\"slow-check\",\"stage\":\"gateway\",\"check\":\"").Append(check).Append('"')
+                .Append(",\"elapsedMs\":").Append(elapsedMilliseconds.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"allowanceMs\":").Append(allowanceMilliseconds.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"stdoutBytes\":").Append(stdoutBytes.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"stderrBytes\":").Append(stderrBytes.ToString(CultureInfo.InvariantCulture))
+                .Append(",\"message\":\"The read-only ").Append(check).Append(" check succeeded slowly.\"}\n");
+            return new UTF8Encoding(false).GetBytes(record.ToString());
+        }
+
         /// <summary>Best effort. Never throws and never blocks longer than one bounded mutex wait.</summary>
         public static void Record(string configFile, Exception error, string stage)
         {
@@ -955,6 +978,19 @@ namespace GraphGoblin.Desktop
             {
                 string directory = Path.GetDirectoryName(Path.GetFullPath(configFile));
                 byte[] record = Build(DateTime.UtcNow, Process.GetCurrentProcess().Id, error, stage, configFile);
+                if (record == null) return;
+                Append(LogRoot.Admit(directory), record);
+            }
+            catch (Exception) { }
+        }
+
+        /// <summary>The slow-success note, under the same rules; a dropped note never fails a launch.</summary>
+        public static void RecordSlowCheck(string configFile, string check, long elapsedMilliseconds, long allowanceMilliseconds, long stdoutBytes, long stderrBytes)
+        {
+            try
+            {
+                string directory = Path.GetDirectoryName(Path.GetFullPath(configFile));
+                byte[] record = BuildSlowCheck(DateTime.UtcNow, Process.GetCurrentProcess().Id, check, elapsedMilliseconds, allowanceMilliseconds, stdoutBytes, stderrBytes);
                 if (record == null) return;
                 Append(LogRoot.Admit(directory), record);
             }
@@ -1069,17 +1105,32 @@ namespace GraphGoblin.Desktop
     /// </summary>
     public static class HelperProcess
     {
-        public const int WorkMilliseconds = 15000, CleanupMilliseconds = 2000, OutputBytes = 262144;
+        /// <summary>
+        /// WorkMilliseconds is the installer enrollment's fixed allowance and the cold-start
+        /// minimum; a cold click allows <see cref="ConfiguredAllowance"/> (ADR-0092).
+        /// </summary>
+        public const int WorkMilliseconds = 15000, CleanupMilliseconds = 2000, OutputBytes = 262144, SlowCheckMilliseconds = 5000;
+
+        /// <summary>A cold click's per-check work allowance: max(15, StartupTimeoutSeconds) seconds.</summary>
+        public static int ConfiguredAllowance(int startupTimeoutSeconds)
+        {
+            return (int)Math.Min(int.MaxValue, Math.Max(WorkMilliseconds, startupTimeoutSeconds * 1000L));
+        }
 
         /// <summary>One caller-admitted cutoff, including preparation; never restart its clock.</summary>
         public sealed class WorkDeadline
         {
             readonly Func<long> elapsedMilliseconds;
-            readonly long expiresAt;
+            readonly long admittedAt, expiresAt;
+            /// <summary>Bytes the launcher read from this check's helper pipes; counts, never content.</summary>
+            internal long StdoutBytes, StderrBytes;
 
-            internal WorkDeadline(Func<long> elapsedMilliseconds, long expiresAt)
+            internal WorkDeadline(Func<long> elapsedMilliseconds, long expiresAt) : this(elapsedMilliseconds, 0, expiresAt) { }
+
+            internal WorkDeadline(Func<long> elapsedMilliseconds, long admittedAt, long expiresAt)
             {
                 this.elapsedMilliseconds = elapsedMilliseconds;
+                this.admittedAt = admittedAt;
                 this.expiresAt = expiresAt;
             }
 
@@ -1089,16 +1140,28 @@ namespace GraphGoblin.Desktop
                 return new WorkDeadline(() => clock.ElapsedMilliseconds, milliseconds);
             }
 
-            internal static WorkDeadline Recheck(Func<long> elapsedMilliseconds, long releaseMilliseconds)
+            /// <summary>The earlier of admission plus the allowance and the release end less the cleanup reserve.</summary>
+            internal static WorkDeadline Recheck(Func<long> elapsedMilliseconds, long releaseMilliseconds, long allowanceMilliseconds)
             {
                 long admittedAt = elapsedMilliseconds();
-                return new WorkDeadline(elapsedMilliseconds,
-                    Math.Min(admittedAt + WorkMilliseconds, releaseMilliseconds - CleanupMilliseconds));
+                return new WorkDeadline(elapsedMilliseconds, admittedAt,
+                    Math.Min(admittedAt + allowanceMilliseconds, releaseMilliseconds - CleanupMilliseconds));
             }
 
             internal long Remaining { get { return Math.Max(0, expiresAt - elapsedMilliseconds()); } }
             internal bool Expired { get { return elapsedMilliseconds() >= expiresAt; } }
-            internal void Check(string stage) { if (Expired) throw Timeout(stage); }
+            /// <summary>Launcher-measured time since this check was admitted, on its own clock.</summary>
+            internal long Elapsed { get { return Math.Max(0, elapsedMilliseconds() - admittedAt); } }
+            /// <summary>This check's whole work window from admission to its cutoff.</summary>
+            internal long Allowance { get { return Math.Max(0, expiresAt - admittedAt); } }
+            internal void Check(string stage) { if (Expired) throw Timeout(stage, this); }
+
+            /// <summary>Closed diagnostic: the stage, a fixed outcome and launcher-measured integers.</summary>
+            internal string Observation(string stage, string outcome)
+            {
+                return "(" + stage + " check " + outcome + " after " + Integer(Elapsed) + " ms of its " + Integer(Allowance) +
+                    " ms allowance; stdout " + Integer(StdoutBytes) + " bytes, stderr " + Integer(StderrBytes) + " bytes)";
+            }
 
             internal T Within<T>(string stage, Func<T> operation)
             {
@@ -1108,6 +1171,8 @@ namespace GraphGoblin.Desktop
                 return result;
             }
         }
+
+        static string Integer(long value) { return value.ToString(CultureInfo.InvariantCulture); }
         public const uint TerminationExit = 0xE0470459;
         const int Pending = 997, Incomplete = 996, BrokenPipe = 109, PipeConnected = 535;
 
@@ -1155,7 +1220,31 @@ namespace GraphGoblin.Desktop
         [DllImport("kernel32.dll")] static extern IntPtr LocalFree(IntPtr value);
 
         static LauncherFailure Containment() { return new LauncherFailure("helper-containment", "Windows could not start an isolated launcher check. Verify the configured runtime and the host's job policy. Windows 10 or Windows Server 2016 or later with compatible nested jobs is required. No gateway was started."); }
+        /// <summary>Raised inside one read only; Read replaces it with the measured outcome before returning.</summary>
         static LauncherFailure Invalid() { return new LauncherFailure("helper-invalid", "The read-only launcher check returned an invalid or oversized response. No gateway was started."); }
+
+        // Measured closed outcomes (ADR-0092). Each keeps its code and fixed guidance and adds only
+        // the stage, a fixed outcome and launcher-measured integers; never helper output.
+        static LauncherFailure Invalid(string stage, WorkDeadline work)
+        {
+            string seen = work.Observation(stage, "returned invalid or oversized output");
+            return new LauncherFailure("helper-invalid", "The read-only launcher check returned an invalid or oversized response " + seen + ". No gateway was started.", null, null, 0, seen);
+        }
+        static LauncherFailure Timeout(string stage, WorkDeadline work)
+        {
+            string seen = work.Observation(stage, "timed out");
+            return new LauncherFailure("helper-timeout", "The read-only " + stage + " check exceeded its work budget " + seen + ". Check PowerShell and Windows Management Instrumentation availability. No gateway was started.", null, null, 0, seen);
+        }
+        static LauncherFailure Refused(string stage, WorkDeadline work, int code)
+        {
+            string seen = work.Observation(stage, "exited with code " + Integer(code));
+            return new LauncherFailure("helper-refused", "The Node 22 runtime, launcher configuration or store ownership could not be checked " + seen + ". Check the configured runtime, GG_* overrides and read permissions on the store's lock files.", null, null, code, seen);
+        }
+        static LauncherFailure Unconfirmed(string stage, WorkDeadline work)
+        {
+            string seen = work.Observation(stage, "ended without confirmed cleanup");
+            return new LauncherFailure("helper-cleanup-unconfirmed", "Windows could not confirm that all processes for this launcher check stopped " + seen + ". No gateway was started.", null, null, 0, seen);
+        }
         static SafeFileHandle NewJob()
         {
             SafeFileHandle job = CreateJobObject(IntPtr.Zero, null);
@@ -1258,7 +1347,8 @@ namespace GraphGoblin.Desktop
                 Marshal.StructureToPtr(new Overlapped { signal = signal }, operation, false);
             }
             public void CloseWriter() { if (Writer != null) { Writer.Dispose(); Writer = null; } }
-            public void Drain(MemoryStream retained)
+            /// <summary>One bounded step. Every byte read is counted, including bytes beyond the cap.</summary>
+            public void Drain(MemoryStream retained, ref long counted)
             {
                 if (Eof) return;
                 uint count;
@@ -1280,6 +1370,7 @@ namespace GraphGoblin.Desktop
                     }
                 }
                 if (count == 0) { Eof = true; return; }
+                counted += count;
                 if (retained != null) {
                     if (retained.Length + count > OutputBytes) throw Invalid();
                     retained.Write(bytes, 0, (int)count);
@@ -1311,11 +1402,15 @@ namespace GraphGoblin.Desktop
             }
         }
 
-        /// <summary>Validate raw decoded output inside the work window; return its trimmed form.</summary>
+        /// <summary>
+        /// Validate raw decoded output inside the work window; return its trimmed form. The
+        /// deadline records this check's pipe byte counts for its closed diagnostics.
+        /// </summary>
         public static string Read(string executable, string arguments, string directory, SortedDictionary<string, string> environment, string stage, WorkDeadline work, Func<string, bool> validate)
         {
             SafeFileHandle job = null; Pipe output = null, error = null; ChildProcess child = null;
             LauncherFailure failure = null; bool success = false, exited = false; int exitCode = 0; string result = null;
+            work.StdoutBytes = 0; work.StderrBytes = 0;
             try {
                 work.Check(stage);
                 job = NewJob(); output = new Pipe(); error = new Pipe();
@@ -1344,14 +1439,14 @@ namespace GraphGoblin.Desktop
                     while (true) {
                         work.Check(stage);
                         if (!exited && child.TryGetExit(out exitCode)) { exited = true; child.Dispose(); child = null; }
-                        output.Drain(retained);
+                        output.Drain(retained, ref work.StdoutBytes);
                         work.Check(stage);
-                        error.Drain(null);
+                        error.Drain(null, ref work.StderrBytes);
                         work.Check(stage);
                         if (!exited && child.TryGetExit(out exitCode)) { exited = true; child.Dispose(); child = null; }
                         if (exited && output.Eof && error.Eof && Empty(job)) {
                             work.Check(stage);
-                            if (exitCode != 0) throw Refused(exitCode);
+                            if (exitCode != 0) throw Refused(stage, work, exitCode);
                             string decoded;
                             try { decoded = new UTF8Encoding(false, true).GetString(retained.GetBuffer(), 0, (int)retained.Length); }
                             catch (DecoderFallbackException) { throw Invalid(); }
@@ -1372,12 +1467,13 @@ namespace GraphGoblin.Desktop
             catch (LauncherFailure refused) {
                 failure = refused;
                 if (refused.Code == "helper-invalid") {
-                    if (work.Expired) failure = Timeout(stage);
-                    else if (exited && exitCode != 0) failure = Refused(exitCode);
+                    if (work.Expired) failure = Timeout(stage, work);
+                    else if (exited && exitCode != 0) failure = Refused(stage, work, exitCode);
+                    else failure = Invalid(stage, work);
                 }
             }
             catch (EntryPointNotFoundException) { failure = Containment(); }
-            catch (Exception) { failure = Invalid(); }
+            catch (Exception) { failure = Invalid(stage, work); }
             finally {
                 // This finally finishes before the caller releases mutexes, logs or shows a dialog.
                 bool confirmed = true;
@@ -1400,7 +1496,7 @@ namespace GraphGoblin.Desktop
                 foreach (var pipe in new[] { output, error }) if (pipe != null) {
                     if (pipe.Complete()) pipe.Dispose(); else pipe.TransferCompletion();
                 }
-                if (!confirmed) failure = new LauncherFailure("helper-cleanup-unconfirmed", "Windows could not confirm that all processes for this launcher check stopped. No gateway was started.");
+                if (!confirmed) failure = Unconfirmed(stage, work);
             }
             if (failure != null) throw failure;
             return result;
@@ -1421,8 +1517,6 @@ namespace GraphGoblin.Desktop
                 Thread.Sleep(1);
             }
         }
-        static LauncherFailure Timeout(string stage) { return new LauncherFailure("helper-timeout", "The read-only " + stage + " check exceeded its work budget. Check PowerShell and Windows Management Instrumentation availability. No gateway was started."); }
-        static LauncherFailure Refused(int code) { return new LauncherFailure("helper-refused", "The Node 22 runtime, launcher configuration or store ownership could not be checked. Check the configured runtime, GG_* overrides and read permissions on the store's lock files.", null, null, code); }
     }
 
     public sealed class Gateway
@@ -1469,6 +1563,17 @@ namespace GraphGoblin.Desktop
         string ReadHelper(string argument, string stage, HelperProcess.WorkDeadline work, Func<string, bool> validate)
         {
             return ReadHelper(config, argument, stage, work, validate);
+        }
+
+        /// <summary>
+        /// A successful click-time check that took at least five seconds leaves one closed note in
+        /// launcher.log (ADR-0092). The note is best effort and never changes the launch.
+        /// </summary>
+        void NoteSlow(string stage, HelperProcess.WorkDeadline work)
+        {
+            long elapsed = work.Elapsed;
+            if (elapsed >= HelperProcess.SlowCheckMilliseconds)
+                LauncherLog.RecordSlowCheck(configFile, stage, elapsed, work.Allowance, work.StdoutBytes, work.StderrBytes);
         }
 
         /// <summary>
@@ -1747,13 +1852,18 @@ namespace GraphGoblin.Desktop
             enter("configuration");
             config.ValidateStartup();
             enter("gateway");
-            var fresh = ReadEnrollment(config, HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds));
+            // Cold checks follow the configured startup allowance, never below 15 s (ADR-0092).
+            int allowance = HelperProcess.ConfiguredAllowance(config.StartupTimeoutSeconds);
+            var enrollmentWork = HelperProcess.WorkDeadline.Start(allowance);
+            var fresh = ReadEnrollment(config, enrollmentWork);
+            NoteSlow("enrollment", enrollmentWork);
             if (!fresh.Matches(enrollment))
                 throw new LauncherFailure("settings-drift", "GraphGoblin's current effective gateway settings differ from this launcher's enrollment (for example a changed default, serving root, store target or protocol). Re-run install-windows-launcher.ps1 to enroll the current settings deliberately. No gateway was started.");
             var sampleClock = Stopwatch.StartNew();
-            var ownershipWork = HelperProcess.WorkDeadline.Start(HelperProcess.WorkMilliseconds);
+            var ownershipWork = HelperProcess.WorkDeadline.Start(allowance);
             bool held = StoreHasLiveOwner(ownershipWork);
             long sampleMilliseconds = sampleClock.ElapsedMilliseconds;
+            NoteSlow("ownership", ownershipWork);
             while (held)
             {
                 long work = RecheckWork(releaseClock);
@@ -1761,12 +1871,13 @@ namespace GraphGoblin.Desktop
                 Thread.Sleep((int)Math.Min(200, Math.Max(0, work)));
                 if (ObserveLocked() == Seen.Ready) return;
                 var retryWork = HelperProcess.WorkDeadline.Recheck(() => releaseClock.ElapsedMilliseconds,
-                    (long)config.StartupTimeoutSeconds * 1000);
+                    (long)config.StartupTimeoutSeconds * 1000, allowance);
                 if (retryWork.Remaining < Math.Max(200, sampleMilliseconds)) throw HeldFailure(null);
                 sampleClock.Restart();
                 try { held = StoreHasLiveOwner(retryWork); }
                 catch (LauncherFailure failure) { throw HeldFailure(failure); }
                 sampleMilliseconds = sampleClock.ElapsedMilliseconds;
+                NoteSlow("ownership", retryWork);
             }
             LogRoot root = AdmitLogRoot(releaseClock);
             enter("configuration");
@@ -1828,12 +1939,18 @@ namespace GraphGoblin.Desktop
         }
 
         long ReleaseRemaining(Stopwatch clock) { return Math.Max(0, (long)config.StartupTimeoutSeconds * 1000 - clock.ElapsedMilliseconds); }
-        long RecheckWork(Stopwatch clock) { return Math.Min(HelperProcess.WorkMilliseconds, ReleaseRemaining(clock) - HelperProcess.CleanupMilliseconds); }
+        long RecheckWork(Stopwatch clock) { return Math.Min(HelperProcess.ConfiguredAllowance(config.StartupTimeoutSeconds), ReleaseRemaining(clock) - HelperProcess.CleanupMilliseconds); }
+        /// <summary>
+        /// The last held result with its full guidance. An inconclusive retry's measured observation
+        /// is appended; it never replaces the held reason (unconfirmed cleanup still leads).
+        /// </summary>
         LauncherFailure HeldFailure(LauncherFailure inconclusive)
         {
             string guidance = ownership.Text + ". No second gateway was started. Do not stop an unrelated process or delete an unverified lock.";
             if (inconclusive != null && inconclusive.Code == "helper-cleanup-unconfirmed")
                 return new LauncherFailure(inconclusive.Code, inconclusive.Message + " " + guidance, null, ownership.Lock, 0);
+            if (inconclusive != null && inconclusive.Observation != null)
+                guidance += " The last ownership recheck was inconclusive " + inconclusive.Observation + "; the last verified held result was retained.";
             return new LauncherFailure(ownership.Code, guidance, null, ownership.Lock, 0);
         }
 

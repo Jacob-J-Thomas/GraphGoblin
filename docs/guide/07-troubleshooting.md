@@ -8,19 +8,27 @@ the enclosing shell or management tool's job policy. Only enrollment and cold st
 check; a click that reuses a running matching gateway starts no process. A known missing or
 invalid runtime has its own Node-path guidance.
 
-Identity and initial ownership checks each allow 15 seconds of work, followed by at most two
-seconds for helper cleanup. Synchronous Windows calls have separate limits. Slow but legitimate
-WMI work can reach that cap; it never proves a lock stale. Later held-store checks reserve cleanup
-time and keep the last held reason if another complete sample cannot fit. Let deliberate startup
-or shutdown finish, then click again. Do not stop unrelated processes or delete an unverified lock.
+On a cold start the enrollment and initial ownership checks each allow the configured startup
+timeout, at least 15 seconds (60 seconds in the default installation), followed by at most two
+seconds for helper cleanup; the installer's own enrollment allows 15 seconds. Synchronous Windows
+calls have separate limits. Slow but legitimate WMI work can reach that allowance; it never proves
+a lock stale. Later held-store checks share the remaining store-release wait, reserve cleanup time
+and keep the last held reason if another complete sample cannot fit. Let deliberate startup or
+shutdown finish, then click again. Do not stop unrelated processes or delete an unverified lock.
 "Windows could not confirm that all processes for this launcher check stopped" takes precedence
 if cleanup could not be verified. No new gateway starts after that refusal. Raw helper output is
-never displayed or copied into launcher logs.
+never displayed or copied into launcher logs. Every helper refusal ends its first sentence with a
+measured observation such as
+`(ownership check timed out after 60004 ms of its 60000 ms allowance; stdout 0 bytes, stderr 0 bytes)`:
+the check, what happened, the time the launcher measured, the allowance and how many bytes the
+launcher read from the helper's stdout and stderr (ADR-0092).
 
 The launcher reports the failed step in a dialog (stderr with `--ensure-gateway`) and records a
-closed JSON record in `launcher.log` next to its configuration. A gateway it started writes its
-private server log, including run failure details, to `gateway.log` in the same folder. The default
-location is `%LOCALAPPDATA%\GraphGoblin\Launcher`. Each log keeps two files, `gateway.log` and
+closed JSON record in `launcher.log` next to its configuration. A check that succeeded but took
+five seconds or more leaves a `slow-check` record there with the same integers; it is a note, not
+a failure. A gateway it started writes its private server log, including run failure details, to
+`gateway.log` in the same folder. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
+Each log keeps two files, `gateway.log` and
 `gateway.log.1` (4 MiB each) and `launcher.log` and `launcher.log.1` (256 KiB each); older records
 roll off. Under sustained pressure or a write fault the gateway drops log records rather than
 waiting, and a `gateway log records dropped` record counts them (ADR-0081).
@@ -106,6 +114,20 @@ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
 - **Port is occupied but the configured gateway is not ready:** something accepts connections on
   the port without answering as GraphGoblin, even after the launcher waited for other clicks.
   Check what listens there; the launcher never starts a second gateway or stops that process.
+- **Read-only enrollment or ownership check exceeded its work budget:** the observation names the
+  check that timed out, the time the launcher measured and its allowance. A slow machine can spend
+  much of it loading Node modules before an ownership check queries PowerShell. Check system load
+  and the configured runtime, and for an ownership check also PowerShell and Windows Management
+  Instrumentation. A timeout never proves a store is free.
+- **Store remains held after an inconclusive recheck:** the launcher keeps the last verified owner
+  and its lock location, refuses a second gateway and appends the failed recheck's observation.
+  Let that owner's deliberate shutdown finish or inspect it; do not stop unrelated processes or
+  delete unverified locks. An incomplete final retry can simply mean the release wait ended,
+  rather than a PowerShell or WMI failure.
+- **Check exited with a code or returned an invalid or oversized response:** the observation names
+  the check, the exit code where there is one and how many bytes it wrote. Check the supported
+  Node runtime, the built checkout and the `GG_*` settings. The helper's output itself is never
+  shown or logged, and no gateway starts when a check's result cannot be validated.
 - **Port belongs to another or differently configured service:** check the configured checkout,
   Node runtime, port, `GG_DB_URL`, store and GG_* overrides. The launcher refuses plain health from
   older builds too, including a gateway from before the launch identity: stop it once through its

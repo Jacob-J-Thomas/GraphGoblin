@@ -4,6 +4,9 @@ Status: Selected under delegated coordinator authority (D160); consolidated owne
 [ADR-0090](ADR-0090-windows-launcher-warm-discovery.md) supersedes the warm-click sentences below:
 warm reuse starts no helper, so an incompatible host refuses only a cold start. The job, pipe,
 deadline and cleanup decisions are unchanged for every helper that still runs.
+[ADR-0092](ADR-0092-configured-windows-helper-allowance.md) supersedes the fixed 15,000 ms
+initial and retry caps marked below: a cold click's checks allow `max(15, StartupTimeoutSeconds)`
+seconds and retries use that allowance as their cap; the installer enrollment keeps 15 seconds.
 
 ## Context
 
@@ -44,7 +47,9 @@ that same clock/cutoff through native creation and result consumption. No inner 
 rebases elapsed setup time out of the allowance. Equality at the cutoff is expired. The
 initial identity and ownership checks each retain main's 15,000 ms cap. Four sequential 5,000 ms
 WMI lookups across locks and guards can exceed it; a legitimate slow first check therefore still
-refuses. Exhaustion never means stale ownership. Synchronous Windows creation is charged when
+refuses. _(Superseded by [ADR-0092](ADR-0092-configured-windows-helper-allowance.md): cold
+checks allow `max(15, StartupTimeoutSeconds)` seconds; only the installer enrollment keeps
+15,000 ms.)_ Exhaustion never means stale ownership. Synchronous Windows creation is charged when
 it returns and cannot itself be interrupted by the launcher.
 
 After a held result, subsequent ownership checks reserve 2,000 ms of the remaining release
@@ -53,6 +58,8 @@ reserve. A retry starts only if it can fit the previous completed sample's measu
 200 ms, whichever is larger, recalculated after the capped sleep and port probe. A responsive
 matching gateway may be reused. The retry's absolute cutoff is the earlier of admission plus
 15,000 ms or the existing release-window end minus 2,000 ms, in the same monotonic clock.
+_(Superseded by [ADR-0092](ADR-0092-configured-windows-helper-allowance.md): the 15,000 ms
+retry cap is the configured allowance; the reserve, sample rule and cutoff structure remain.)_
 Only a valid, in-budget free sample permits a fresh startup; expiry before result consumption
 cannot clear the last held outcome. Compiled shared-clock boundary checks establish that
 decision, not an OS scheduling reproduction.
@@ -87,7 +94,9 @@ exception or configuration value reaches the dialog, bounded log or typed native
 WMI's service, a queried process, provider sessions and the gateway are outside this job. No
 permissions, store formats, lock policy or supervision service change. Held PR #460's wider
 initial allowance and slow-success diagnostics remain excluded; a later reconciliation must
-rebase onto this job and ADR-0081 under its own owner decision.
+rebase onto this job and ADR-0081 under its own owner decision. _(That reconciliation is
+[ADR-0092](ADR-0092-configured-windows-helper-allowance.md), which also adds measured integers
+to these closed failures.)_
 
 Native acceptance uses disposable stores and ports, generation-specific exact fixture handles,
 parent-death-insensitive descendants, same-executable survivors, separate stream inheritance,
