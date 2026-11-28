@@ -1,8 +1,10 @@
+import { spawnSync } from 'node:child_process';
 import {
   mkdtemp,
   readFile,
   readdir,
   realpath,
+  rename,
   rm,
   writeFile,
   mkdir,
@@ -221,6 +223,103 @@ describe('assemble', () => {
       );
       expect(await snapshot(outDir)).toEqual(before);
       expect(await readdir(scratch)).not.toContain('.marketplace.graphgoblin-build');
+    },
+    fileIoTimeout,
+  );
+
+  /** A copy of the plugin source assembled once, with a snapshot of that marketplace. */
+  async function assembledCopy() {
+    const copy = join(scratch, 'source 漢', 'plugin', 'graphgoblin');
+    await cp(pluginDir, copy, { recursive: true });
+    const outDir = join(scratch, 'marketplace');
+    const mcpEntry = join(scratch, 'main.js');
+    await assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+    const assemble = () => assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+    return { copy, outDir, before: await snapshot(outDir), assemble };
+  }
+
+  it(
+    'refuses a folder without SKILL.md in the skills folder, naming it, before reading skills',
+    async () => {
+      const { copy, outDir, before, assemble } = await assembledCopy();
+      await mkdir(join(copy, 'skills', 'references'));
+      await writeFile(join(copy, 'skills', 'references', 'note.md'), 'supporting reference');
+      await mkdir(join(copy, 'skills', 'empty'));
+      await expect(assemble()).rejects.toThrow(
+        `Unsupported plugin source entries in "${copy}": "skills/empty/", "skills/references/". This builder packages only ".codex-plugin/plugin.json", ".mcp.json", "skills/`,
+      );
+      expect(await snapshot(outDir)).toEqual(before);
+      expect(await readdir(scratch)).not.toContain('.marketplace.graphgoblin-build');
+    },
+    fileIoTimeout,
+  );
+
+  it(
+    'refuses a link at an entry it reads before following or reading it',
+    async () => {
+      const { copy, outDir, before, assemble } = await assembledCopy();
+      // A junction needs no Windows symlink privilege but can only target a folder, which reading
+      // through it fails on. Elsewhere the link targets text that the loader would reject if it
+      // read it. Either way only a refusal made before the read produces the expected message.
+      const linkType = process.platform === 'win32' ? 'junction' : 'file';
+      const elsewhere = join(scratch, 'elsewhere');
+      await mkdir(join(elsewhere, 'run-loop'), { recursive: true });
+      await writeFile(join(elsewhere, 'run-loop', 'SKILL.md'), 'not a skill');
+      const unread = join(scratch, 'unread.txt');
+      await writeFile(unread, 'not a plugin file');
+      const target = process.platform === 'win32' ? elsewhere : unread;
+      const missing = join(scratch, 'missing');
+      const link = (entry: string) =>
+        `: "${entry}" (link, not followed). This builder packages only`;
+      const manifest = `Unsupported plugin source entry "${join(copy, '.codex-plugin', 'plugin.json')}": the plugin manifest must be a regular file, and links are not followed`;
+      const cases = [
+        ['.mcp.json', target, link('.mcp.json')],
+        ['.mcp.json', missing, link('.mcp.json')],
+        ['skills/run-loop/SKILL.md', target, link('skills/run-loop/SKILL.md')],
+        ['skills/run-loop/SKILL.md', missing, link('skills/run-loop/SKILL.md')],
+        ['skills', elsewhere, link('skills')],
+        ['.codex-plugin/plugin.json', target, manifest],
+        ['.codex-plugin/plugin.json', missing, manifest],
+      ] as const;
+      const aside = join(scratch, 'aside');
+      for (const [entry, linked, refusal] of cases) {
+        const path = join(copy, ...entry.split('/'));
+        await rename(path, aside);
+        await symlink(linked, path, linkType);
+        await expect(assemble(), `${entry} linked to ${linked}`).rejects.toThrow(refusal);
+        await rm(path);
+        await rename(aside, path);
+      }
+      expect(await snapshot(outDir)).toEqual(before);
+      expect(await readFile(unread, 'utf8')).toBe('not a plugin file');
+    },
+    fileIoTimeout,
+  );
+
+  // Node cannot create a FIFO itself; POSIX hosts (CI) use mkfifo, Windows has no FIFO files.
+  it.skipIf(process.platform === 'win32')(
+    'refuses a FIFO at an entry it reads without opening it',
+    async () => {
+      const { copy, outDir, before, assemble } = await assembledCopy();
+      const cases = [
+        ['.mcp.json', ': ".mcp.json". This builder packages only'],
+        ['skills/run-loop/SKILL.md', ': "skills/run-loop/SKILL.md". This builder packages only'],
+        [
+          '.codex-plugin/plugin.json',
+          `Unsupported plugin source entry "${join(copy, '.codex-plugin', 'plugin.json')}": the plugin manifest must be a regular file`,
+        ],
+      ] as const;
+      const aside = join(scratch, 'aside');
+      for (const [entry, refusal] of cases) {
+        const path = join(copy, ...entry.split('/'));
+        await rename(path, aside);
+        expect(spawnSync('mkfifo', [path]).status).toBe(0);
+        // Opening a FIFO that has no writer blocks, so a read would hang instead of refusing.
+        await expect(assemble(), entry).rejects.toThrow(refusal);
+        await rm(path);
+        await rename(aside, path);
+      }
+      expect(await snapshot(outDir)).toEqual(before);
     },
     fileIoTimeout,
   );
