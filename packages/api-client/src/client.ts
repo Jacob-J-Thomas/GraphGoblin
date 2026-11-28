@@ -40,7 +40,13 @@ function isAbort(error: unknown, request: Request): boolean {
   return request.signal.aborted || (error instanceof Error && error.name === 'AbortError');
 }
 
-/** Transport failures surface as `GraphGoblinApiError` with `status` 0; aborts pass through. */
+/**
+ * A `fetch` rejection, a failure before any response headers arrived, surfaces as
+ * `GraphGoblinApiError` with `status` 0 and `NETWORK_ERROR`; aborts pass through. openapi-fetch
+ * calls `onError` for that rejection only: a body that fails after the headers arrived is read
+ * later, so raw `client.GET` and the other methods surface that native error unchanged. Only
+ * `runs.get` and `runs.observation` classify it, as `RESPONSE_INTERRUPTED` (see `readJson`).
+ */
 const networkErrors: Middleware = {
   onError({ error, request }) {
     if (isAbort(error, request) || error instanceof GraphGoblinApiError) return undefined;

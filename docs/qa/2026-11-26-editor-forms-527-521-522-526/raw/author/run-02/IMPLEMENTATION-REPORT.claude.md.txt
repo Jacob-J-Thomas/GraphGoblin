@@ -1,0 +1,53 @@
+All four fixes (#527, #521, #522, #526) are implemented and unstaged in the worktree, and every authorized check passes. One gap blocks a clean freeze: four browser e2e assertions now contradict #526's rule, and those files are outside my write paths. Nothing was committed or stashed.
+
+## What changed
+
+**#527 — the `__proto__` member is refused before the form takes the value**
+- In `structure.tsx`, the record-value check keeps the existing explicit schema reason first, including #429's Codex message.
+- Only when that check names no rule does a new fallback walk the value's own entries. It stops at the first own `__proto__` member and returns `<path>: This member name cannot be saved. Rename or remove it.` (for example `properties.__proto__` or `anyOf.1.__proto__`).
+- The text stays in the existing held-input channel with the Discard button. Nothing narrowed is reported, and the last complete schema is kept exactly.
+- Discard now puts focus back in the editor after its button disappears. This applies to every JSON field's Discard, not only Variables.
+
+**#521 — a nested issue shows on the Value that owns it**
+- `SchemaForm` now keeps each issue's raw path segments, so a record matches issues to its entries exactly. A sibling entry named `a.b` no longer takes member `b` of entry `a`, either in its message or its focus.
+- The new context replaces `RecordKeyIssueContext` (now removed). The Value shows the first nested issue as `<path from the value>: <message>` through the existing field error, marked invalid and described by it. It is never turned into held text.
+- Each Value lists its nested issue paths as data, and `focusIssuePath` checks that list after an exact Key match and before the old parent-path fallback. Paths are only compared as strings.
+
+**#522 — JSON view validates as it opens**
+- `JsonText` checks the opening text with the same validator as typed text. An invalid result shows at once and disables Apply.
+- It holds and reports nothing, adds no undo step, offers no Discard, and the structured editor stays one click away.
+- Text that only differs by whitespace or key order stays passive. Cancel restores the passive message with focus on Cancel. If Apply's forced recheck refuses the committed content, it stays passive.
+
+**#526 — the indicator shows held input separately from the draft**
+- Derived only from `fieldErrors`; save state, drafts, API and IndexedDB are untouched.
+- The same status element gains a second, wrapping segment: "Field input kept in this window only". While it is shown, "All changes saved" becomes "Draft saved", and device/offline wording names the draft (e.g. "Draft kept in this window only"). Idle never becomes saved.
+- One polite announcement fires when held input begins: inside the node dialog's notice slot while the dialog is open, on the page otherwise. Further typing, moving between dialog and page, and the end of held input announce nothing; the region empties when held input ends.
+
+## Files touched
+- **Source:** `forms/fields/structure.tsx`, `forms/fields/shared.tsx`, `forms/SchemaForm.tsx`, `forms/fields/json.tsx`, `editor/focus-field.ts`, `editor/EditorPage.tsx`, `editor/EditorToolbar.tsx`, `editor/save-status.ts` (all under `apps/web/src`).
+- **Tests:** `forms/fields.test.tsx`, `forms/json-sections.test.tsx`, `forms/codex-override-value.test.tsx`, `editor/EditorToolbar.test.tsx`, `editor/save-status.test.ts`, `editor/EditorPage.device.test.tsx`, and new `editor/EditorPage.held-input.test.tsx`.
+- **Docs:** `docs/09-frontend-and-pwa.md`.
+- **Changed existing test:** "keeps held text that later validation finds equal to the section…" in `json-sections.test.tsx`. Under #522, typing text equal to the section is now passive, so the test now starts from restored held input, as after an undo remount.
+
+## Commands run
+- `node --version` → v22.23.4
+- `pnpm --filter @graphgoblin/web typecheck` → pass
+- The combined seven-file test command → 117 passed. The per-issue commands also passed as I worked.
+- `...test src/editor/EditorPage.publish.test.tsx src/editor/EditorPage.rename.test.tsx` → 45 passed
+- `pnpm --filter @graphgoblin/web lint` → 0 errors; 5 existing warnings in `runs/` files I didn't touch
+- `prettier --write` and then `--check` on the listed files → clean
+- `git --no-pager diff --check` → clean; `git status --short` → the 15 modified files plus the new test file
+
+## Open gaps
+- **E2e files that need updating:** these assert "All changes saved" while a field holds input, which #526 now forbids. I found them by reading only; the specs were not run.
+  - `apps/web/e2e/issue-170-qa.spec.ts:1127`
+  - `apps/web/e2e/issue-170-qa.spec.ts:1152`
+  - `apps/web/e2e/issue-170-qa.spec.ts:1371-1373`
+  - `apps/web/e2e/rename-references.spec.ts:674`, and possibly later `saved(page)` calls in that test.
+
+  I didn't check the other e2e specs exhaustively.
+- **Red baseline not executed:** I couldn't run the new tests against the d2df base because stash/checkout aren't allowed. From reading the old code they should fail there, but that is not shown by a run.
+- **Suites not run (outside the command list):** `forms/JsonText.test.tsx`, `forms/structure.test.tsx`, `editor/EditorPage.test.tsx`, `editor/EditorPage.undo.test.tsx`, `editor/focus-field.test.ts` and the coverage gate. I read the riskiest of these and found no conflicting assertions.
+- **Real browser not checked:** screen-reader output of the dialog announcement and the narrow-width wrapping are for the browser QA.
+
+**Note for QA:** the code editor echoes a programmatic text replacement through `onChange`, so Discard reports the committed value once. This is existing behaviour, and it is never a narrowed value.

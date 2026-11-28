@@ -1,0 +1,376 @@
+{
+  "id": "526-B",
+  "issue": 526,
+  "title": "Device storage blocked by older tab: held vs saved draft, narrow layout, window-only draft, recovery and reload",
+  "expected": "Draft saved + window-only segment, server PUT, stable status element, no overflow at 900 px, Draft kept in this window only when schema-invalid, recovery and reload show the server draft only.",
+  "steps": [
+    "An older-version tab holds a version 1 IndexedDB connection (device storage blocked).",
+    "Type unfinished JSON into Variables value 1, then a valid neighbour edit (Description).",
+    "Back at 1440 px, make the whole draft schema-invalid too (add a Subloop node without its loop) while blocked.",
+    "Close the older tab: storage recovers; reload shows the server draft, without the window-only text."
+  ],
+  "checks": [
+    {
+      "label": "device notice visible",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "SQL variables unchanged",
+      "actual": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "string",
+          "title": "last complete topic"
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "PUT payload: description new, variables last complete, no held text",
+      "actual": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 526 a long loop name that wraps the toolbar while an older tab blocks device storage 11",
+          "description": "accepted neighbour while device blocked",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "string",
+              "title": "last complete topic"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "status: Draft saved + window-only field input",
+      "actual": {
+        "whole": "Draft saved . Field input kept in this window only",
+        "draft": "Draft saved",
+        "held": ". Field input kept in this window only"
+      },
+      "pass": true
+    },
+    {
+      "label": "status element identity stable (same focus target)",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "narrow layout",
+      "actual": {
+        "viewport": 900,
+        "docScroll": 900,
+        "right": 522,
+        "clientWidth": 332,
+        "scrollWidth": 332,
+        "parts": [
+          {
+            "id": "draft-state",
+            "top": 106,
+            "left": 190,
+            "right": 279
+          },
+          {
+            "id": "held-input-state",
+            "top": 106,
+            "left": 291,
+            "right": 522
+          }
+        ]
+      },
+      "observation": true
+    },
+    {
+      "label": "status fits the 900 px viewport, no overflow",
+      "actual": {
+        "viewport": 900,
+        "docScroll": 900,
+        "right": 522,
+        "clientWidth": 332,
+        "scrollWidth": 332,
+        "parts": [
+          {
+            "id": "draft-state",
+            "top": 106,
+            "left": 190,
+            "right": 279
+          },
+          {
+            "id": "held-input-state",
+            "top": 106,
+            "left": 291,
+            "right": 522
+          }
+        ]
+      },
+      "pass": true
+    },
+    {
+      "label": "schema-invalid draft while blocked: \"Draft kept in this window only\" + held segment",
+      "actual": {
+        "whole": "Draft kept in this window only . Field input kept in this window only",
+        "draft": "Draft kept in this window only",
+        "held": ". Field input kept in this window only"
+      },
+      "pass": true
+    },
+    {
+      "label": "status after recovery",
+      "actual": {
+        "whole": "Draft saved on this device only . Field input kept in this window only",
+        "draft": "Draft saved on this device only",
+        "held": ". Field input kept in this window only"
+      },
+      "observation": true
+    },
+    {
+      "label": "reloaded Value 1 = last complete server value",
+      "actual": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "expected": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "pass": true
+    },
+    {
+      "label": "reloaded description",
+      "actual": "accepted neighbour while device blocked",
+      "pass": true
+    },
+    {
+      "label": "after reload: no held segment",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "status after reload",
+      "actual": {
+        "whole": "Unsaved changes",
+        "draft": "Unsaved changes",
+        "held": null
+      },
+      "observation": true
+    }
+  ],
+  "screenshots": [
+    "526-B-blocked-narrow.png",
+    "526-B-blocked-window-only-draft.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:28:13.780Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 526 a long loop name that wraps the toolbar while an older tab blocks device storage 11",
+          "description": "accepted neighbour while device blocked",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "string",
+              "title": "last complete topic"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 6726,
+  "consoleErrors": [],
+  "trace": "526-B-trace.zip"
+}

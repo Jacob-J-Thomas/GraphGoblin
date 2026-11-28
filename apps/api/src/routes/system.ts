@@ -11,14 +11,18 @@ import {
 import type { Container } from '../container.js';
 import { PreflightReportSchema, containerPreflightSources, runPreflight } from '../preflight.js';
 import { API_VERSION, type ApiInstance } from '../types.js';
-import { instanceIdentity } from '../instance-identity.js';
+import { instanceIdentity, launchIdentity, launchPaths } from '../instance-identity.js';
 
 const ShutdownSnapshotSchema = ShutdownStateSchema.extend({ controlToken: z.string() });
 
 const PreflightSchema = HarnessPreflightSchema.extend({ harness: HarnessIdSchema });
 
 export function registerSystemRoutes(app: ApiInstance, container: Container): void {
-  const identity = instanceIdentity(container.config);
+  // Both digests are captured once from the loaded effective configuration and one observation of
+  // its store and serving paths, so an alias changed between two resolutions cannot split them.
+  const paths = launchPaths(container.config);
+  const identity = instanceIdentity(container.config, paths);
+  const launch = launchIdentity(container.config, paths);
   app.get(
     '/system/storage',
     {
@@ -101,6 +105,7 @@ export function registerSystemRoutes(app: ApiInstance, container: Container): vo
     },
     (_request, reply) => {
       reply.header('X-GraphGoblin-Instance', identity);
+      reply.header('X-GraphGoblin-Launch-Identity', launch);
       reply.header('X-GraphGoblin-Pid', process.pid);
       reply.header('X-GraphGoblin-Phase', container.shutdown.state().phase);
       return { status: 'ok' as const };

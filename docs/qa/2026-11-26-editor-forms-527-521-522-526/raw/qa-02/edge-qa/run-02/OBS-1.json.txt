@@ -1,0 +1,188 @@
+{
+  "id": "OBS-1",
+  "issue": 0,
+  "title": "Observation outside the slice: clearing a required Variables Value",
+  "expected": "Recorded only.",
+  "steps": [
+    "Select all in Variables value 1 (required, marked *) and press Backspace; wait 2 s."
+  ],
+  "checks": [
+    {
+      "label": "field state after clearing",
+      "actual": {
+        "invalid": null,
+        "label": "Variables value 1",
+        "description": "",
+        "focused": true
+      },
+      "observation": true
+    },
+    {
+      "label": "status after clearing",
+      "actual": {
+        "whole": "All changes saved",
+        "draft": "All changes saved",
+        "held": null
+      },
+      "observation": true
+    },
+    {
+      "label": "PUTs",
+      "actual": [
+        {
+          "status": 200,
+          "variables": {
+            "other": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      ],
+      "observation": true
+    },
+    {
+      "label": "stored variables",
+      "actual": {
+        "other": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "observation": true
+    },
+    {
+      "label": "header texts",
+      "actual": [
+        "GraphGoblin Chat Loops Runs Events Settings",
+        "Undo edit variables Redo Loops / QA obs clear value 14 draft only All changes saved Open in Runs Publish the loop first: runs start from a published version. Ready to publish Publish"
+      ],
+      "observation": true
+    },
+    {
+      "label": "Variables keys after reload",
+      "actual": [
+        "other"
+      ],
+      "observation": true
+    }
+  ],
+  "screenshots": [
+    "OBS-1-cleared.png",
+    "OBS-1-cleared-reloaded.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:28:20.612Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA obs clear value 14",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "other": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 3262,
+  "consoleErrors": [],
+  "trace": "OBS-1-trace.zip"
+}

@@ -1,0 +1,114 @@
+
+ RUN  v5.0.3 G:/ggq/gg-fu-api-client-561-20261124/GraphGoblin/packages/api-client
+
+ ✓ src/resources.test.ts > sends the import name separately from the original export 44ms
+ ✓ src/resources.test.ts > forwards explicit deletion review and confirmation through the generated API 3ms
+ ✓ src/resources.test.ts > forwards list cancellation to the request without requiring it from existing callers 5ms
+ ✓ src/resources.test.ts > previews through the generated endpoint and forwards body and cancellation 2ms
+ ✓ src/resources.test.ts > exposes opaque cursors and carries every unchanged filter into following history requests 3ms
+ ✓ src/resources.test.ts > passes an inclusive event anchor with filters and a bounded limit 1ms
+ ✓ src/resources.test.ts > forwards run observation cancellation to GET without cancelling the run 2ms
+ ✓ src/resources.test.ts > carries opaque browser cursors, exact thread boundaries and cancellation to run reads 2ms
+ ✓ src/resources.test.ts > sends an explicit missing-session choice through the generated client endpoint 2ms
+ ✓ src/sse-completion.test.ts > stream completion contract > delivers historical terminals, resumes and delivery audits before authoritative completion 50ms
+ ✓ src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 387 without retry or cursor advance 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > resolves an empty consumed-cursor response at 487 without retry or cursor advance 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > retries EOF after a terminal event from that cursor until completion is authoritative 3ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal at cursor 0 5ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects an initial corruption problem as typed fatal at cursor 8 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion { without consuming its id 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion {} without consuming its id 2ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion null without consuming its id 1ms
+ ✓ src/sse-completion.test.ts > stream completion contract > rejects malformed completion {"after":999} without consuming its id 1ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > synthesises a code for non-problem bodies, preferring the body text 72ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > formats a message without detail 1ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > leaves detail empty when neither body nor status text has one 1ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > wraps transport failures as NETWORK_ERROR with status 0 15ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > describes non-Error transport failures 3ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > builds a distinct status-0 RESPONSE_INTERRUPTED error that keeps the native cause 1ms
+ ✓ src/sse.test.ts > SseParser > parses id, event, and multi-line data; ignores comments and unknown fields 4ms
+ ✓ src/sse.test.ts > SseParser > handles CRLF and CR endings, including a CRLF split across chunks 1ms
+ ✓ src/sse.test.ts > SseParser > buffers partial lines and drops frames without data 0ms
+ ✓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at data-newline without advancing the resume cursor 26ms
+ ✓ src/sse.test.ts > subscribeRunEvents > discards complete JSON in a partial frame at id-prefix without advancing the resume cursor 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects a fatal stream control STORED_EVENT_INVALID without advancing the cursor or retrying 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects malformed stream controls without consuming their id 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports partial data without an id, then retries a slow control from the complete cursor 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports a typed SSE_SLOW_CONSUMER problem and retries from the last delivered id 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports a typed SSE_REPLAY_FAILED problem and retries from the last delivered id 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > provides the received JSON size to batch consumers without another serialization 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > accepts exhausted completion and closes without reconnecting 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > delivers validated events in order, skips replays, and stops after authoritative completion 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports each accepted connection through onOpen, before and without any event 3ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reports invalid frames, advances past their id, and keeps going 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > retries refused connections and retryable statuses with capped exponential backoff 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > gives up after maxAttempts consecutive failures 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects without retrying on non-retryable statuses and on a missing body 4ms
+ ✓ src/sse.test.ts > subscribeRunEvents > tolerates an unreadable error body 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > rejects when onEvent throws 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects after a stream error mid-read and resets backoff after progress 1ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops quietly when closed or aborted, including before it starts 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > stops when closed from inside onEvent or while waiting to retry 25ms
+ ✓ src/sse.test.ts > subscribeRunEvents > ends quietly when the stream finishes after close() aborts the read 2ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > classifies a native fixed-length 200 body interrupted after its headers as RESPONSE_INTERRUPTED 86ms
+ ✓ src/errors.test.ts > GraphGoblinApiError > passes aborts and existing API errors through unchanged 6ms
+ ✓ src/errors.test.ts > createGraphGoblinClient > sends default headers and extra headers, and strips trailing slashes 18ms
+ ✓ src/errors.test.ts > unwrap > returns data on success, undefined for 204, and throws problem details otherwise 2ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting headers without cancelling the run 55ms
+ ✓ src/sse.test.ts > subscribeRunEvents > aborts a stalled real HTTP stream while awaiting body without cancelling the run 34ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > classifies a native chunked 200 body interrupted after its headers as RESPONSE_INTERRUPTED 35ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > returns a complete fixed-length JSON body 10ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > returns a complete chunked JSON body 7ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > keeps complete malformed fixed-length JSON a SyntaxError 8ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > keeps complete malformed chunked JSON a SyntaxError 8ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > keeps a complete 409 a typed refusal and a truncated 409 a raw, non-offline error 33ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > rejects a default abort before headers with the identical reason 16ms
+ ✓ src/sse.test.ts > subscribeRunEvents > reconnects over real HTTP after the server drops the connection 53ms
+ ✓ src/sse.test.ts > defaultSleep > waits, and resolves early on abort 22ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > rejects a explicit-reason abort before headers with the identical reason 10ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > rejects a default abort after headers with the identical reason 18ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > rejects a explicit-reason abort after headers with the identical reason 7ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > returns undefined for 204, Content-Length 0 and an empty chunked 200 11ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > follows a redirect and reads the native response it returned without replacing it 26ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > decodes a byte-order mark and multi-byte characters split across chunks 110ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > classifies a native response passed through a wrapping fetch unchanged 31ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > leaves a synthetic Response failure raw even when it imitates a native socket error 3ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > leaves a native body re-wrapped in a new Response raw 30ms
+ ✓ src/body.test.ts > runs.get successful-body boundary > leaves a body locked or used by middleware raw 8ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > classifies a native fixed-length 200 body interrupted after its headers as RESPONSE_INTERRUPTED 23ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > classifies a native chunked 200 body interrupted after its headers as RESPONSE_INTERRUPTED 29ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > returns a complete fixed-length JSON body 3ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > returns a complete chunked JSON body 4ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > keeps complete malformed fixed-length JSON a SyntaxError 5ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > keeps complete malformed chunked JSON a SyntaxError 6ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > keeps a complete 409 a typed refusal and a truncated 409 a raw, non-offline error 29ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > rejects a default abort before headers with the identical reason 3ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > rejects a explicit-reason abort before headers with the identical reason 4ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > rejects a default abort after headers with the identical reason 4ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > rejects a explicit-reason abort after headers with the identical reason 5ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > returns undefined for 204, Content-Length 0 and an empty chunked 200 9ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > follows a redirect and reads the native response it returned without replacing it 22ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > decodes a byte-order mark and multi-byte characters split across chunks 107ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > classifies a native response passed through a wrapping fetch unchanged 16ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > leaves a synthetic Response failure raw even when it imitates a native socket error 1ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > leaves a native body re-wrapped in a new Response raw 29ms
+ ✓ src/body.test.ts > runs.observation successful-body boundary > leaves a body locked or used by middleware raw 8ms
+ ✓ src/body.test.ts > readJson controls > classifies only a GET read failure and keeps the identical native cause 56ms
+ ✓ src/body.test.ts > readJson controls > rethrows the identical read rejection after a default abort 5ms
+ ✓ src/body.test.ts > readJson controls > rethrows the identical read rejection after a explicit-reason abort 9ms
+ ✓ src/body.test.ts > readJson controls > reads the very Response fetch returned, keeping its metadata 7ms
+ ✓ src/body.test.ts > readJson controls > reads a result without a body, such as HEAD or 204, as undefined 1ms
+ ✓ src/body.test.ts > boundaries outside runs.get and runs.observation > leaves raw client.GET, other resources and writes with their native body failure 82ms
+ ✓ src/body.test.ts > boundaries outside runs.get and runs.observation > returns a parseAs stream body unread and leaves its failure to the caller 24ms
+ ✓ src/body.test.ts > boundaries outside runs.get and runs.observation > keeps an SSE body interruption on the subscription retry path 29ms
+
+ Test Files  5 passed (5)
+      Tests  100 passed (100)
+   Start at  01:37:04
+   Duration  3.32s (import 44%, transform 41%, tests 14%, worker 1%)
+
+  Transform  transforming modules took 4.29s · 41% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             on CI this only helps when the cache directory is persisted between runs
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+

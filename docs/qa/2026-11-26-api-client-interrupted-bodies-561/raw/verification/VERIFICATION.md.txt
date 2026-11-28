@@ -1,0 +1,177 @@
+# FAIL
+
+#561 unfiltered verification, run to resolve review finding V1 (brief B6), with the branch then merged with `origin/main`. Worker: Claude Opus 5.5 (xhigh). Worktree: `G:/ggq/gg-fu-api-client-561-20261124/GraphGoblin`. Branch: `codex/gg-fu-api-client-561-20261124`. Nothing was pushed.
+
+**What V1 now shows.** The evidence gap V1 described is closed: every check below was run with its full output saved and its raw exit code recorded. The verification itself does not pass. The **MCP downstream typecheck fails on the reviewed candidate**. `packages/api-client/src/body.ts` uses two type names, `ResponseType` and `ReadableStreamReadResult`, that only the DOM library defines. `apps/mcp` type-checks the api-client *source* with `lib: ["ES2023"]` and `types: ["node"]`, where neither name exists. The repository typecheck (`pnpm typecheck`) and CI fail the same way after the merge. This is a production defect (FIX-IN-PR). The brief and the verification contract did not allow any source edit, so I made none. The contract's forced build was not reached, because the contract stops at the first failing stage.
+
+## 1. Candidate binding and commit (task 1)
+
+- Before committing, every hash matched the reviewed state:
+  - all 8 candidate files matched the contract's `changedFilesSha256`, and the frozen copies in `review-561-01/frozen-source/` are byte-identical;
+  - all 22 protected inputs matched;
+  - the raw index matched `5aaabc8c…` (identical to `RAW-INDEX.bin`);
+  - HEAD was `154e78d5`, the tree `f0667024`, and nothing was staged.
+- `git diff --full-index --binary HEAD` produced exactly `TRACKED-SOURCE-PATCH.diff` (sha256 `5618823e…`). It is saved here as `PRECOMMIT-TRACKED-PATCH.diff`.
+- Commit `34a5d3019c02668f42bfd1ff7c7f90e97767bbf3`, "Classify interrupted run response bodies as offline errors", contains exactly the 8 files. It has no attribution and uses the configured identity, Jacob-J-Thomas.
+  - Every staged blob equals `git hash-object --no-filters` of the reviewed working-tree bytes. All files are LF (`text=auto eol=lf`), so no EOL conversion happened.
+  - `git diff --full-index --binary 154e78d5 34a5d301` over the 6 tracked files hashes to `5618823e…` again.
+  - The tree is `36dddcad`.
+
+## 2. Unfiltered contract run at `34a5d301` (task 2)
+
+These are the commands, order and deadlines from `verification-561-02-preparation/VERIFICATION-CONTRACT.json`. They ran through `run-verification.py` (v1, sha256 `4441a5ef…`) with the owned-Job helper `owned_process.py`, an exact copy (`73da0fe8…`).
+
+How each stage ran:
+- stdout and stderr went to files opened before the process was created, with no pipes;
+- each stage ran in a Windows Job set to kill everything when the Job closes;
+- after the direct child exited, a separate settlement window of at most 2 s checked for leftover processes;
+- the source state was captured before and after each stage.
+
+Environment:
+- only non-secret OS variables, plus an owned profile under `G:/ggq/tmp/b6-561/profile-unfiltered-01`, which also holds TEMP;
+- Node `v22.23.4` first on PATH;
+- exactly one each of `ProgramFiles=C:\Program Files`, `ProgramFiles(x86)=C:\Program Files (x86)` and `ProgramW6432=C:\Program Files`;
+- `GG_OLLAMA_ENABLED=false` and `GG_OLLAMA_URL=http://127.0.0.1:1`;
+- no `GG_CODEX_BINARY`, `GG_CLAUDE_BINARY`, provider keys or `NODE_OPTIONS`.
+
+Result: `unfiltered-01/RESULT.json` (sha256 `31456da0…`), with `passed: false` and `sourceUnchanged: true`.
+
+| Stage | Command (`pnpm …`) | Raw exit | Totals | Time / deadline | Owned-Job settlement | Raw logs (sha256) | Verdict |
+|---|---|---|---|---|---|---|---|
+| client | `--filter @graphgoblin/api-client exec vitest run src/body.test.ts src/errors.test.ts src/resources.test.ts src/sse.test.ts src/sse-completion.test.ts --reporter=verbose` | 0 | Files 5/5, Tests 100/100 (100 ✓ lines, 0 ✗) | 5.3 s / 120 s | quiescent in 31 ms, 0 active | stdout `2d412953…`, stderr empty | PASS |
+| web | `--filter @graphgoblin/web exec vitest run src/api/queries.reconnect.test.tsx src/runs/RunInspectorPage.offline.test.tsx --reporter=verbose` | 0 | Files 2/2, **Tests 72/72** (38 queries.reconnect + 34 offline; contract minimum 60) | 72.0 s / 120 s | quiescent in 15 ms | stdout `35144611…`, stderr empty | PASS |
+| web-types | `--filter @graphgoblin/web typecheck` | 0 | — | 51.5 s / 180 s | quiescent in 31 ms | stdout empty, stderr `38ac890c…` (only the `$ tsc -p tsconfig.json --noEmit` echo) | PASS |
+| mcp-types | `--filter @graphgoblin/mcp typecheck` | **1** (tsc 2) | 3 errors | 25.7 s / 180 s | quiescent in 31 ms | stdout `2907dcf5…`, stderr `34578aea…` | **FAIL** |
+| build | `build --force` | not run | — | — / 240 s | — | — | **NOT REACHED** (stops at first failure) |
+
+The complete mcp-types stdout:
+
+```
+../../packages/api-client/src/body.ts(7,42): error TS2552: Cannot find name 'ResponseType'. Did you mean 'Response'?
+../../packages/api-client/src/body.ts(7,66): error TS2552: Cannot find name 'ResponseType'. Did you mean 'Response'?
+../../packages/api-client/src/body.ts(41,16): error TS2304: Cannot find name 'ReadableStreamReadResult'.
+```
+
+### Mapping to the V1 items in `review-561-01/REVIEW.md`
+
+- **Final focused client selection.** Resolved: 5 files and 100 tests passed, exit 0, with the full stream saved.
+- **Both web files with complete totals.** Resolved: 2/2 files and 72/72 tests, exit 0. The author's `head -60` capture had cut this off at 60 lines.
+- **Web downstream typecheck.** PASS.
+- **MCP downstream typecheck.** FAIL, a new finding (below).
+- **Full forced build.** Not run, because the contract stops at the first failure. See section 4.
+
+## 3. Finding: MCP typecheck fails on DOM-only type names (FIX-IN-PR, production)
+
+**Established by evidence:**
+- `apps/mcp/tsconfig.json` extends `tsconfig.base.json`, which sets `customConditions: ["development"]`. It also sets `lib: ["ES2023"]` and `types: ["node"]`. So `tsc -p tsconfig.json` resolves `@graphgoblin/api-client` to `src/index.ts` and type-checks `body.ts` without the DOM library.
+- The api-client and web configs both include `DOM`, which is why their checks pass.
+- `@types/node@22.20.5` declares neither `ResponseType` nor `ReadableStreamReadResult` globally. In `undici-types` (the package `@types/node` uses for its fetch types), `ResponseType` is only a module export.
+- Running the two halves of MCP's `typecheck` script separately (`diagnostics/`):
+  - `tsc -b tsconfig.build.json` exits **0**. Project references substitute api-client's built declarations.
+  - `tsc -p tsconfig.json` exits **2**, with the same three errors (stdout `2907dcf5…`, byte-identical to the stage log).
+- After the merge, `pnpm typecheck --continue` shows 20/21 tasks succeeding. The only failure is `@graphgoblin/mcp#typecheck`, with the same three errors (section 5). CI's typecheck gate would fail.
+- `apps/web` and `apps/mcp` are the only workspace consumers of `@graphgoblin/api-client`.
+
+**Suggested correction (not applied; checked only in isolation):**
+- In `body.ts`, type the set as `ReadonlySet<Response['type']>` and `new Set<Response['type']>(…)`.
+- Type the chunk without the DOM alias, for example `let chunk: Awaited<ReturnType<typeof reader.read>>;`.
+- A standalone probe (`diagnostics/type-name-probe/`) shows:
+  - those forms compile under both `lib es2023` + `types node` and `lib es2023,dom,dom.iterable`;
+  - the original forms fail under the Node-only library with the same three errors.
+
+This was not compiled inside the real package. A correction needs its own author change, review, and a re-run of this verification from the start.
+
+## 4. Forced build and a harness defect in the contract's environment
+
+- The contract's `build --force` stage was not reached.
+- After the merge, the first typecheck and lint attempts used the same constructor (`post-merge/pm-typecheck/`, `post-merge/pm-lint/`). Turbo refused to start within 0.8 s with `x Global config path not found.` and exit 1.
+- **Cause, in the harness:** the constructor sets `USERPROFILE` to `<profile>/home` and `APPDATA` to a sibling `<profile>/roaming`. Turbo looks up the RoamingAppData known folder, which Windows expands as `%USERPROFILE%\AppData\Roaming`. That folder did not exist.
+  - `run-verification-v2.py` (sha256 `ca05f0f1…`) changes only this: it creates `home\AppData\Roaming` and `home\AppData\Local` and points `APPDATA`/`LOCALAPPDATA` at them.
+  - With v2, turbo ran normally (section 5).
+- **Inference, not tested:** the preparation's `packet.environment()` uses the same `home`/`roaming`/`local` layout as v1. So its own `build --force` stage would probably have failed for this harness reason if it had been reached. Any rerun of that contract should use the v2 layout.
+- In the new profile, Turbo printed its anonymous-telemetry notice. `TURBO_TELEMETRY_DISABLED` was not set.
+- I did not run a forced build after the merge. The brief's task 3 does not list it, and the heavy-suite lock was held throughout by B7-479 (`pnpm build, web coverage, Edge e2e`, taken 04:45 UTC, still held at 07:5x UTC). Whether the full build passes is **unverified** at both the frozen base and the merged head. The MCP `tsc -b tsconfig.build.json` that a build runs does pass (section 3).
+
+## 5. Merge with `origin/main` and post-merge re-run (task 3)
+
+- `git fetch origin`: nothing new. `origin/main` = `4e1037c9e9922ffa27237fe79850403b6b54fc70`; the branch was 101 behind.
+- `git merge --no-ff origin/main`:
+  - `docs/07-api-and-streaming.md` merged automatically, in separate hunks.
+  - `CHANGELOG.md` conflicted at the top of "Unreleased". I resolved it as a union: the #561 entry first, then every main-side entry unchanged.
+- Checks on the merged result:
+  - Against `origin/main:CHANGELOG.md`, the merged file only adds the 10 #561 lines.
+  - Against the candidate, the only removed lines are main's own 2-line edit to an older entry.
+  - The merged index differs from `origin/main` only in the 8 candidate paths.
+  - The five api-client source/test files are blob-identical to the candidate.
+  - `body.ts` does not exist on main. Main made no changes in `packages/api-client`, `apps/mcp` or the tsconfigs.
+- Merge commit `93749e1ab07d404a5ac9543f85f529692042199b` (parents `34a5d301`, `4e1037c9`). Git's default message, including its `# Conflicts: CHANGELOG.md` lines, is kept. The tree is `43fce630`.
+- `pnpm install` was not needed: `pnpm-lock.yaml`, `pnpm-workspace.yaml` and every workspace `package.json` except the root are unchanged. The root only gained the `check:qa`, `test:macos-launcher` and `test:macos-coverage` scripts.
+- The plan is `POST-MERGE-PLAN.json` (sha256 `fbe7e77f…`). Each stage ran as its own wrapper invocation, so one failure does not hide later results.
+- The api-client emitter tests (`src/generated.test.ts`, `scripts/generate.test.ts`) stay excluded, as in the contract. `emitOpenApi` builds its own config, in which `GG_OLLAMA_ENABLED` defaults to true (127.0.0.1:11434).
+
+| Stage | Command (`pnpm …`) | Raw exit | Totals | Time / deadline | Settlement | Raw logs (sha256) | Verdict |
+|---|---|---|---|---|---|---|---|
+| pm-client | `--filter @graphgoblin/api-client exec vitest run` on 10 files (body, classifiers, contract, errors, ollama, resources, sse-completion, sse, templates, wait) | 0 | Files 10/10, Tests 146/146 | 18.8 s / 300 s | quiescent | stdout `8d050df5…`, stderr empty | PASS |
+| pm-web | `--filter @graphgoblin/web exec vitest run src/api/queries.reconnect.test.tsx src/lib/utils.test.ts src/runs/` | 0 | Files 34/34, Tests 419/419 | 185.5 s / 600 s | quiescent | stdout `ce2fe1f1…`, stderr `5ab6a60b…` (jsdom "Not implemented: navigation to another Document") | PASS |
+| pm-typecheck (v1 env) | `typecheck --continue` | 1 | — | 0.7 s | quiescent | stderr: `Global config path not found.` | HARNESS FAIL (section 4) |
+| pm-lint (v1 env) | `lint --continue` | 1 | — | 0.8 s | quiescent | stderr: `Global config path not found.` | HARNESS FAIL (section 4) |
+| **pm-typecheck-v2** | `typecheck --continue` | **2** | Tasks 20/21 successful, 6 cached; failed: `@graphgoblin/mcp#typecheck` (same 3 errors) | 109.4 s / 900 s | quiescent | stdout `bb894c0b…`, stderr `51d51e85…` | **FAIL** |
+| pm-lint-v2 | `lint --continue` | 0 | Tasks 13/13, 0 cached; 0 errors, 5 warnings | 160.0 s / 900 s | quiescent | stdout `3b9b9229…`, stderr `4ae7b6df…` | PASS |
+| pm-format | `format:check` | 0 | "All matched files use Prettier code style!" | 84.2 s / 300 s | quiescent | stdout `17aa973d…`, stderr `72ecfbf4…` | PASS |
+
+- The pm-web selection is the whole `src/runs/` directory plus `queries.reconnect` and `lib/utils`. It covers every web consumer of `runs.get` and `runs.observation`: `queries.ts`, `follow-run-attempts.ts`, `RunInspectorPage.tsx` and `RunsPage.tsx`, and the status-0 helpers in `lib/utils.ts`.
+- The 5 lint warnings (`@eslint-react/naming-convention-ref-name`) are in `RunInspectorPage.tsx` and `inspector/SessionRecoveryControls.tsx`. Both files come from main; #561 changes no web file.
+- Every stage left the source unchanged (`sourceUnchanged: true`, empty porcelain status at HEAD `93749e1a`).
+
+## 6. Deviations, decisions and limits
+
+- **Separate wrapper invocations.** I wrote my own wrapper (`run-verification.py`) instead of invoking the preparation's `run-check.py`. That script writes only into the claimed preparation folder, and it requires that preparation's root admission, actor launch file and the uncommitted 8-file state. The brief requires a commit first.
+  - My wrapper mirrors the contract's commands, deadlines, environment constructor, owned-Job settlement and pass rule.
+  - Its source-state check binds HEAD, tree, branch, porcelain status and the 8 candidate hashes. It does not bind the raw index, because the commit changes it.
+- **Build stage.** The contract's stop-on-first-failure rule was honoured, so `build --force` did not run. I did not run it out of sequence before the merge: the heavy lock was held, and the failure already settles the verdict.
+- **Diagnostics.** I ran three extra commands to locate the failure: `tsc -b` and `tsc -p` in `apps/mcp`, and the standalone type-name probe. All are read-only with respect to the source. `tsc -b` writes ignored `dist/` output.
+- **v2 wrapper.** The v1 harness failure for turbo is kept as evidence (`post-merge/pm-typecheck/`, `post-merge/pm-lint/`). v2 changes only the profile folder layout.
+- **Heavy-suite lock.** I never took the lock. Every suite I ran was focused tests, typecheck, lint or prettier; none is on COMMON-RULES' heavy list. B7-479 held the lock the whole time.
+- **Owner resources.** I touched no owner store, service, browser profile or port. Every temp/profile path is under `G:/ggq/tmp/b6-561/`, and nothing was written to C:.
+- **Out of scope and still pending:**
+  - source correction of `body.ts`, its review and a full re-verification;
+  - forced full build;
+  - full ≥90% package coverage;
+  - api-client emitter tests (`generated.test.ts`, `generate.test.ts`) in a venue where Ollama is safely disabled;
+  - current-target CI;
+  - the independent built Node+Edge QA, which is combined with #562/#563;
+  - opposite-family review and the Astra MAX final audit.
+
+  No QA packet was written, as the brief instructs.
+
+## Files
+
+All paths are relative to `G:/ggq/delivery-evidence/2026-11-24-followups/inspector-561-562-563-556/claude-window-verification-03/`:
+
+- `VERIFICATION.md`: this report.
+- `PRECOMMIT-TRACKED-PATCH.diff`: sha256 `5618823e…`.
+- `run-verification.py` (v1) and `run-verification-v2.py`.
+- `owned_process.py`: exact copy.
+- `POST-MERGE-PLAN.json`.
+- `unfiltered-01/`: `RESULT.json`, plus `PROCESS.json`, `PROCESS-EXIT.json`, `stdout.log` and `stderr.log` for each stage, and the runtime logs.
+- Wrapper logs: `unfiltered-01.wrapper.{stdout,stderr}.log` and `unfiltered-01.wrapper.exit.txt`.
+- `post-merge/<stage>/`: the same layout for pm-client, pm-web, pm-typecheck, pm-lint, pm-typecheck-v2, pm-lint-v2 and pm-format, plus `WRAPPER-EXITS.txt`, `WRAPPER-EXITS-v2.txt` and the wrapper logs.
+- `diagnostics/`: the MCP `tsc -b` / `tsc -p` logs and exit files, and `type-name-probe/`.
+
+## Addendum: correction-01 (2026-11-26, at the orchestrator's instruction)
+
+The orchestrator accepted the MCP typecheck finding as FIX-IN-PR and assigned this worker to apply it as the correction author.
+
+- **Commit.** `9673af09e8706864a6115e4065b0d1938a5cab09`, "Use runtime-neutral types in the api-client body reader". It sits on top of merge `93749e1a`, changes only `packages/api-client/src/body.ts` (`Response['type']`, and `Awaited<ReturnType<typeof reader.read>>`), and has no attribution.
+- **Re-verification.** Everything ran with the v2 environment layout:
+  - `tsc -p` in `apps/mcp` and in `packages/api-client`: both exit 0.
+  - `pnpm typecheck --continue`: 21/21 tasks.
+  - api-client tests: 10 files, 146 tests.
+  - web selection: 34 files, 419 tests.
+  - `pnpm lint --continue`: 13/13 tasks, 0 errors.
+  - `pnpm format:check`: PASS.
+- **Heavy stages, run under the lock.**
+  - `pnpm build --force`: 12/12 tasks, 0 cached.
+  - api-client `test:coverage`: 12 files, 148 tests; statements 99.47%, branches 97.44%, functions 100%, lines 100%.
+
+Everything above passes. The full record is in `correction-01/CORRECTION.md`. The FAIL verdict at the top of this file stands for the reviewed candidate `34a5d301` and is kept unchanged as history.

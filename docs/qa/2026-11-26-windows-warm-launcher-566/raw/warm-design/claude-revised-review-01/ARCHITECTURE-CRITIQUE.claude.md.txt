@@ -1,0 +1,86 @@
+# CHANGES REQUIRED
+
+Option B is sound. One immutable enrollment, a probe before any startup mutex, and a fresh cold full fingerprint with exact child PID meet #566 without runtime writes. The five amendments below are ranked. This review uses only the supplied source; it is not sign-off and claims no runtime result.
+
+## 1 (P2). Moving browser handoff outside the locks removes its only de-duplication
+
+- **Anchors:** Launch §3 ("Release startup locks… Keep existing PWA identity/window reuse coordination"); `Launcher.cs` 188–203 and 1639–1645.
+- **Failure sequence:**
+  1. Today the only coordination is that `OpenPwa` runs inside the store and port mutexes.
+  2. Under B, warm clicks skip those mutexes and cold clicks release them first.
+  3. Two clicks with no PWA window can both see `FindWindow` return zero, and both call `Process.Start(ChromeProxy)`.
+  4. The design's "keep existing coordination" therefore keeps nothing. Whether Chrome merges the two launches is unverified.
+- **Amendment:** Add a session-local window mutex keyed by proxy, profile and app ID.
+  - Hold it only around find, start and wait, bounded by `WindowTimeoutSeconds`.
+  - Re-run `FindWindow` after acquiring it.
+  - It never covers gateway work, so it is not a startup mutex.
+- **Check:** On native GUI, two concurrent clicks with the PWA closed produce one window. With a stub proxy, the second proxy start begins only after the first window wait ends, and neither click waits on store or port mutexes.
+
+## 2 (P2). The pre-lock probe can refuse another click's half-started child
+
+- **Anchors:** Launch §1 ("unusable occupied service refuses"); `Launcher.cs` 1154–1159. The comment there admits transport failures while a child is binding, but tolerates them only when `spawnedPid` is set.
+- **Failure sequence:**
+  1. Click A spawns a child, which binds the port.
+  2. Click B's lock-free `/healthz` hits that transient `WebException`.
+  3. B shows `listener-not-ready` while A succeeds.
+  4. The all-quiet assertion for concurrent clicks (`acceptance.mjs` 723–725) becomes racy.
+- **Amendment:** Before taking any lock, only a full match hands off, and only a definitive header or phase mismatch refuses. Transport failures go to the locked path, which re-probes before refusing.
+- **Check:**
+  - Positive: a fixture holds the launch mutex while a listener accepts TCP but stalls HTTP. The click must not refuse until the mutex is released, then refuses with no spawn.
+  - Negative: the plain-200 listener (908–921) still refuses immediately.
+
+## 3 (P2). The launch projection must keep protocol gating and be pinned
+
+- **Anchors:** Identity ¶1; `instance-identity.ts` 9–13 and 25–45; the acceptance item "stale protocol"; `config.ts` 126–164.
+- **Failure sequence:**
+  - Warm routing no longer compares `X-GraphGoblin-Instance`. A future `INSTANCE_PROTOCOL` bump (like #438's) would therefore not refuse an earlier gateway that already sends the launch header.
+  - "All remaining currently hashed" settings implies spreading `publicConfig`. Every build that adds an `ApiConfig` field or changes a default would then become an unreviewed refusal before cold spawn.
+- **Amendment:**
+  - Define an explicit, versioned, ordered field list that includes `INSTANCE_PROTOCOL`, pinned by a golden vector.
+  - Document that a projection-changing build refuses cold start with reinstall guidance, while the old running gateway stays reusable warm.
+  - `bundledGoblinDist()` and `bundledWebDist()` were not supplied. If either depends on build presence, treat that presence as a serving selection and test it.
+- **Check:** Changing exec path, Node version or entry location leaves the vector unchanged. Changing protocol, `requireApiKey`, database or `goblinDist` changes it.
+
+## 4 (P2). #544 cannot tell "no admission attempt" from "attempt denied and ignored"
+
+- **Anchors:** Cutover ¶3; `Launcher.cs` 973–976; ADR-0086 "Every click actually starts the identity helper"; #544 acceptance bullet 2.
+- **Failure sequence:**
+  1. Under an active-process limit, any helper creation is denied before helper user code runs.
+  2. So "no helper marker" plus success looks identical whether no attempt happened or a regression attempted the helper and swallowed the denial.
+- **Amendment:**
+  - Record the outer job's own creation-denial observable (active-process-limit notification or job accounting).
+  - Require it to fire during the cold `helper-containment` control, proving it is sensitive, and to stay absent during the warm click.
+  - If sensitivity cannot be shown on the runner, claim only "no helper code ran".
+  - Supersede ADR-0086's sentence and #544 bullet 2 explicitly.
+- **Check:** The cold denial records at least one event. The warm click records zero, with the same PID, identical lock bytes and a live sibling.
+
+## 5 (P3). The locator extraction and Repo-anchor pin are unnecessary
+
+- **Anchors:** Identity ¶3 and the write boundary; `db.ts` 172–192; `Launcher.cs` 1087–1089, 427 and 443–451; ADR-0064's sidecar lock.
+- **Why it is surplus:**
+  - Helper and gateway both run with the working directory set to Repo. `databaseFilePath` therefore already returns an absolute lookup that embeds the configured Repo spelling and keeps decoding, localhost and drive rules.
+  - Opening that string verbatim refuses a retargeted Repo, data or database alias.
+  - A working-directory flag only matters if C# re-parses the URL, which would be a second parser.
+- **Amendment:**
+  - Enroll `databaseFilePath(dbUrl)` and the `canonicalPath` from the same snapshot.
+  - C# opens the enrolled strings with `NativeFiles.Open` and `FinalPath` and requires them to exist. A serving owner already holds the data-directory and sidecar locks, so no C# copy of the nearest-ancestor rule is needed.
+  - Drop the `db.ts` edit.
+  - The #501 seam then narrows to the `ApiConfig` shape, the default `dbUrl` (`config.ts` 146) and `databaseFilePath` semantics, all caught by item 3's golden vector.
+- **Check:**
+  - Positive: with a relative `file:` URL under a Repo junction, an unchanged junction opens the same PID.
+  - Negative: a retargeted junction refuses and the gateway survives.
+  - The `packages/infrastructure` diff stays empty.
+
+## Sound as proposed
+
+- Cold readiness still requires the fresh full fingerprint and the exact child PID.
+- The C# binding rejects case-insensitive duplicate keys. This matters because `ChildEnvironment` (123–135) collapses keys case-insensitively, last value winning.
+- A non-file database surfaces only its kind.
+- Config file identity and bytes are re-read after the locks and before spawn.
+- An old gateway without the new header gets one deliberate stop.
+
+## Known limits
+
+- The store readback is a point-in-time configuration check. It is not atomic against path retargeting.
+- Health headers can be replayed by any local listener.
+- Whether Chrome merges duplicate launches, and how job notifications behave on the hosted runner, are unverified.

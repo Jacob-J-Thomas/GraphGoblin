@@ -1,0 +1,601 @@
+{
+  "node": "v22.23.4",
+  "venue": "win32",
+  "entry": "G:\\ggq\\gg-r542\\GraphGoblin\\apps\\api\\dist\\main.js",
+  "contenders": 5,
+  "rounds": [
+    {
+      "round": 1,
+      "dataDir": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data",
+      "checks": [
+        {
+          "what": "exactly one contender listened",
+          "ok": true,
+          "detail": [
+            "exited",
+            "listening",
+            "exited",
+            "exited",
+            "exited"
+          ]
+        },
+        {
+          "what": "every other contender exited with code 1",
+          "ok": true,
+          "detail": [
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            }
+          ]
+        },
+        {
+          "what": "every refusal is one ownership explanation line",
+          "ok": true,
+          "detail": [
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "Store ownership could not be verified (WMI returned no valid process creation identity): G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock.reclaim; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying",
+            "Store ownership could not be verified (WMI returned no valid process creation identity): G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock.reclaim; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying"
+          ]
+        },
+        {
+          "what": "no loser printed a stack or filesystem failure",
+          "ok": true
+        },
+        {
+          "what": "the directory lock record names the listening process",
+          "ok": true,
+          "detail": {
+            "record": 66284,
+            "winner": 66284
+          }
+        },
+        {
+          "what": "the database lock record names the listening process",
+          "ok": true
+        },
+        {
+          "what": "read-only status reports the store held",
+          "ok": true,
+          "detail": {
+            "state": "held",
+            "detail": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "path": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock"
+          }
+        },
+        {
+          "what": "winner drained and exited 0",
+          "ok": true,
+          "detail": {
+            "drain": 202,
+            "exit": {
+              "code": 0,
+              "signal": null
+            }
+          }
+        },
+        {
+          "what": "all contender processes settled (no live PID remains)",
+          "ok": true,
+          "detail": []
+        },
+        {
+          "what": "no lock record, guard or staging left",
+          "ok": true,
+          "detail": [
+            "store.db",
+            "store.db-shm",
+            "store.db-wal"
+          ]
+        },
+        {
+          "what": "store is free afterwards",
+          "ok": true
+        }
+      ],
+      "settleMs": 5728,
+      "drainStatus": 202,
+      "remaining": [
+        "store.db",
+        "store.db-shm",
+        "store.db-wal"
+      ],
+      "outcomes": [
+        {
+          "index": 0,
+          "pid": 55328,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 1,
+          "pid": 66284,
+          "listened": true,
+          "stderr": "",
+          "stdoutLines": 6
+        },
+        {
+          "index": 2,
+          "pid": 14708,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 3,
+          "pid": 56820,
+          "listened": false,
+          "stderr": "Store ownership could not be verified (WMI returned no valid process creation identity): G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock.reclaim; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 4,
+          "pid": 49344,
+          "listened": false,
+          "stderr": "Store ownership could not be verified (WMI returned no valid process creation identity): G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-1\\data\\graphgoblin.lock.reclaim; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying\n",
+          "stdoutLines": 0
+        }
+      ],
+      "pass": true
+    },
+    {
+      "round": 2,
+      "dataDir": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data",
+      "checks": [
+        {
+          "what": "exactly one contender listened",
+          "ok": true,
+          "detail": [
+            "listening",
+            "exited",
+            "exited",
+            "exited",
+            "exited"
+          ]
+        },
+        {
+          "what": "every other contender exited with code 1",
+          "ok": true,
+          "detail": [
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            }
+          ]
+        },
+        {
+          "what": "every refusal is one ownership explanation line",
+          "ok": true,
+          "detail": [
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying"
+          ]
+        },
+        {
+          "what": "no loser printed a stack or filesystem failure",
+          "ok": true
+        },
+        {
+          "what": "the directory lock record names the listening process",
+          "ok": true,
+          "detail": {
+            "record": 65116,
+            "winner": 65116
+          }
+        },
+        {
+          "what": "the database lock record names the listening process",
+          "ok": true
+        },
+        {
+          "what": "read-only status reports the store held",
+          "ok": true,
+          "detail": {
+            "state": "held",
+            "detail": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "path": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock"
+          }
+        },
+        {
+          "what": "winner drained and exited 0",
+          "ok": true,
+          "detail": {
+            "drain": 202,
+            "exit": {
+              "code": 0,
+              "signal": null
+            }
+          }
+        },
+        {
+          "what": "all contender processes settled (no live PID remains)",
+          "ok": true,
+          "detail": []
+        },
+        {
+          "what": "no lock record, guard or staging left",
+          "ok": true,
+          "detail": [
+            "store.db",
+            "store.db-shm",
+            "store.db-wal"
+          ]
+        },
+        {
+          "what": "store is free afterwards",
+          "ok": true
+        }
+      ],
+      "settleMs": 4841,
+      "drainStatus": 202,
+      "remaining": [
+        "store.db",
+        "store.db-shm",
+        "store.db-wal"
+      ],
+      "outcomes": [
+        {
+          "index": 0,
+          "pid": 65116,
+          "listened": true,
+          "stderr": "",
+          "stdoutLines": 6
+        },
+        {
+          "index": 1,
+          "pid": 48400,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 2,
+          "pid": 65264,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 3,
+          "pid": 45856,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 4,
+          "pid": 66404,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-2\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        }
+      ],
+      "pass": true
+    },
+    {
+      "round": 3,
+      "dataDir": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data",
+      "checks": [
+        {
+          "what": "exactly one contender listened",
+          "ok": true,
+          "detail": [
+            "listening",
+            "exited",
+            "exited",
+            "exited",
+            "exited"
+          ]
+        },
+        {
+          "what": "every other contender exited with code 1",
+          "ok": true,
+          "detail": [
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            }
+          ]
+        },
+        {
+          "what": "every refusal is one ownership explanation line",
+          "ok": true,
+          "detail": [
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying"
+          ]
+        },
+        {
+          "what": "no loser printed a stack or filesystem failure",
+          "ok": true
+        },
+        {
+          "what": "the directory lock record names the listening process",
+          "ok": true,
+          "detail": {
+            "record": 65320,
+            "winner": 65320
+          }
+        },
+        {
+          "what": "the database lock record names the listening process",
+          "ok": true
+        },
+        {
+          "what": "read-only status reports the store held",
+          "ok": true,
+          "detail": {
+            "state": "held",
+            "detail": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "path": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock"
+          }
+        },
+        {
+          "what": "winner drained and exited 0",
+          "ok": true,
+          "detail": {
+            "drain": 202,
+            "exit": {
+              "code": 0,
+              "signal": null
+            }
+          }
+        },
+        {
+          "what": "all contender processes settled (no live PID remains)",
+          "ok": true,
+          "detail": []
+        },
+        {
+          "what": "no lock record, guard or staging left",
+          "ok": true,
+          "detail": [
+            "store.db",
+            "store.db-shm",
+            "store.db-wal"
+          ]
+        },
+        {
+          "what": "store is free afterwards",
+          "ok": true
+        }
+      ],
+      "settleMs": 6868,
+      "drainStatus": 202,
+      "remaining": [
+        "store.db",
+        "store.db-shm",
+        "store.db-wal"
+      ],
+      "outcomes": [
+        {
+          "index": 0,
+          "pid": 65320,
+          "listened": true,
+          "stderr": "",
+          "stdoutLines": 6
+        },
+        {
+          "index": 1,
+          "pid": 32144,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 2,
+          "pid": 64456,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 3,
+          "pid": 63984,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 4,
+          "pid": 59012,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-3\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        }
+      ],
+      "pass": true
+    },
+    {
+      "round": 4,
+      "dataDir": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data",
+      "checks": [
+        {
+          "what": "exactly one contender listened",
+          "ok": true,
+          "detail": [
+            "listening",
+            "exited",
+            "exited",
+            "exited",
+            "exited"
+          ]
+        },
+        {
+          "what": "every other contender exited with code 1",
+          "ok": true,
+          "detail": [
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            },
+            {
+              "code": 1,
+              "signal": null
+            }
+          ]
+        },
+        {
+          "what": "every refusal is one ownership explanation line",
+          "ok": true,
+          "detail": [
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "Store ownership could not be verified (WMI returned no valid process creation identity): G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock.reclaim; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying",
+            "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying"
+          ]
+        },
+        {
+          "what": "no loser printed a stack or filesystem failure",
+          "ok": true
+        },
+        {
+          "what": "the directory lock record names the listening process",
+          "ok": true,
+          "detail": {
+            "record": 66740,
+            "winner": 66740
+          }
+        },
+        {
+          "what": "the database lock record names the listening process",
+          "ok": true
+        },
+        {
+          "what": "read-only status reports the store held",
+          "ok": true,
+          "detail": {
+            "state": "held",
+            "detail": "another GraphGoblin process holds this store; check its port/configuration or let startup/shutdown finish",
+            "path": "G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock"
+          }
+        },
+        {
+          "what": "winner drained and exited 0",
+          "ok": true,
+          "detail": {
+            "drain": 202,
+            "exit": {
+              "code": 0,
+              "signal": null
+            }
+          }
+        },
+        {
+          "what": "all contender processes settled (no live PID remains)",
+          "ok": true,
+          "detail": []
+        },
+        {
+          "what": "no lock record, guard or staging left",
+          "ok": true,
+          "detail": [
+            "store.db",
+            "store.db-shm",
+            "store.db-wal"
+          ]
+        },
+        {
+          "what": "store is free afterwards",
+          "ok": true
+        }
+      ],
+      "settleMs": 6972,
+      "drainStatus": 202,
+      "remaining": [
+        "store.db",
+        "store.db-shm",
+        "store.db-wal"
+      ],
+      "outcomes": [
+        {
+          "index": 0,
+          "pid": 66740,
+          "listened": true,
+          "stderr": "",
+          "stdoutLines": 6
+        },
+        {
+          "index": 1,
+          "pid": 67292,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 2,
+          "pid": 66588,
+          "listened": false,
+          "stderr": "Store ownership could not be verified (WMI returned no valid process creation identity): G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock.reclaim; inspect the owner record and running GraphGoblin processes; resolve the ownership uncertainty before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 3,
+          "pid": 58312,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        },
+        {
+          "index": 4,
+          "pid": 67452,
+          "listened": false,
+          "stderr": "another GraphGoblin process holds G:\\ggq\\tmp\\rq-542-qa\\runs\\contention-2026-11-26T09-38-16-493Z\\round-4\\data\\graphgoblin.lock.reclaim; check its port/configuration; wait for the owning process to finish or stop it before retrying\n",
+          "stdoutLines": 0
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "pass": true
+}

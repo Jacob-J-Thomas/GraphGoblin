@@ -11,9 +11,10 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { openAdvanced } from '../__fixtures__/advanced.js';
-import { setCode } from '../__fixtures__/codemirror.js';
+import { getCode, setCode } from '../__fixtures__/codemirror.js';
 import { Row } from './fields/shared.js';
 import { descriptionOf, type Schema } from './introspect.js';
+import type { ParseError } from './parse-errors.js';
 import { SchemaForm } from './SchemaForm.js';
 
 function Harness({
@@ -347,5 +348,161 @@ describe('form controls in the schema-driven form', () => {
     expect(row).toHaveAttribute('data-field', 'note');
     expect(within(row).getByText('Note').tagName).toBe('LABEL');
     expect(within(row).getByText('Free text')).toBeInTheDocument();
+  });
+});
+
+/**
+ * A declared variable's JSON Schema with an own member named "__proto__" (#527). JSON parses it as
+ * an own member; the form keeps values by assignment, which loses it, and the schema's record
+ * parse skips it, so it names no rule. The Value holds the text as typed instead of reporting it
+ * narrowed, until the member is renamed or the text discarded.
+ */
+describe('a variable whose JSON Schema has an own member "__proto__" (#527)', () => {
+  const VariablesForm = z.object({ variables: VariableDeclarationsSchema });
+  const TOPIC = {
+    type: 'object',
+    description: 'The topic',
+    properties: { name: { type: 'string' } },
+  };
+  const OTHER = { type: 'number', minimum: 0 };
+  const MESSAGE = 'This member name cannot be saved. Rename or remove it.';
+
+  function Variables({
+    spy,
+    report,
+  }: {
+    spy: (value: unknown) => void;
+    report: (path: string, error: ParseError | undefined) => void;
+  }) {
+    const [value, setValue] = useState<unknown>({ variables: { topic: TOPIC, other: OTHER } });
+    const [errors, setErrors] = useState<Record<string, ParseError>>({});
+    return (
+      <SchemaForm
+        schema={VariablesForm}
+        value={value}
+        label="Variables form"
+        onChange={(next) => {
+          setValue(next);
+          spy(next);
+        }}
+        parseErrors={errors}
+        onParseError={(path, error) => {
+          report(path, error);
+          setErrors((previous) => {
+            const { [path]: _removed, ...rest } = previous;
+            return error ? { ...rest, [path]: error } : rest;
+          });
+        }}
+      />
+    );
+  }
+
+  /** Every value the form reported, as JSON text, so a lost own member cannot hide. */
+  const reports = (spy: ReturnType<typeof vi.fn>) =>
+    spy.mock.calls.map(([value]) => JSON.stringify(value));
+  /** Typed JSON text as the form reports it: parsed, then serialized compactly in its order. */
+  const renamedJson = (text: string) => JSON.stringify(JSON.parse(text) as unknown);
+
+  it.each([
+    [
+      'in a nested object',
+      '{"type":"object","properties":{"__proto__":{"type":"string"},"name":{"type":"string"}}}',
+      'properties.__proto__',
+    ],
+    [
+      'in an object inside an array',
+      '{"anyOf":[{"type":"string"},{"__proto__":{"type":"number"},"title":"n"}]}',
+      'anyOf.1.__proto__',
+    ],
+    ['at the top of the value', '{"__proto__":{"type":"string"},"type":"object"}', '__proto__'],
+  ])(
+    'holds the Value %s as typed, reports no narrowed value, and takes it whole once renamed',
+    (_where, text, path) => {
+      const spy = vi.fn();
+      const report = vi.fn();
+      render(<Variables spy={spy} report={report} />);
+      const message = `${path}: ${MESSAGE}`;
+      setCode('Variables value 1', text);
+      // Held exactly as typed, with feedback naming the member: invalid, described and visible.
+      expect(getCode('Variables value 1')).toBe(text);
+      const value = code('Variables value 1');
+      expect(value).toHaveAttribute('aria-invalid', 'true');
+      expect(value).toHaveAccessibleDescription(expect.stringContaining(message));
+      expect(screen.getByText(message)).toBeVisible();
+      expect(screen.getByRole('button', { name: 'Discard the unparsed text' })).toBeVisible();
+      expect(report).toHaveBeenLastCalledWith('variables.topic', {
+        message,
+        text,
+        input: 'unparsed text',
+      });
+      // Nothing was reported: no narrowed value, so no shortened draft.
+      expect(spy).not.toHaveBeenCalled();
+      // A neighbour stays editable beside the last complete schema, kept byte for value.
+      setCode('Variables value 2', '{"type":"integer"}');
+      expect(reports(spy).at(-1)).toBe(
+        JSON.stringify({ variables: { topic: TOPIC, other: { type: 'integer' } } }),
+      );
+      expect(getCode('Variables value 1')).toBe(text);
+      expect(code('Variables value 1')).toHaveAttribute('aria-invalid', 'true');
+      // Renamed, the whole value is taken as typed, and the hold ends.
+      const renamed = text.replace('"__proto__"', '"proto_member"');
+      setCode('Variables value 1', renamed);
+      expect(code('Variables value 1')).not.toHaveAttribute('aria-invalid');
+      expect(report).toHaveBeenLastCalledWith('variables.topic', undefined);
+      expect(reports(spy).at(-1)).toBe(
+        JSON.stringify({
+          variables: { topic: JSON.parse(renamed) as unknown, other: { type: 'integer' } },
+        }),
+      );
+      // Every report carried the last complete schema or the whole renamed one, never a narrowed
+      // copy of the held text.
+      const topics = spy.mock.calls.map(([reported]) =>
+        JSON.stringify((reported as { variables: { topic: unknown } }).variables.topic),
+      );
+      expect(new Set(topics)).toEqual(new Set([JSON.stringify(TOPIC), renamedJson(renamed)]));
+    },
+  );
+
+  it('discards held text back to the last complete schema and returns focus to the Value', async () => {
+    const user = userEvent.setup();
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(<Variables spy={spy} report={report} />);
+    const text = '{"type":"object","properties":{"__proto__":{"type":"string"}}}';
+    setCode('Variables value 1', text);
+    await user.click(screen.getByRole('button', { name: 'Discard the unparsed text' }));
+    // The button left with the held text; focus stays in the field, on its editor.
+    expect(screen.queryByRole('button', { name: 'Discard the unparsed text' })).toBeNull();
+    expect(code('Variables value 1')).toHaveFocus();
+    expect(JSON.parse(getCode('Variables value 1'))).toEqual(TOPIC);
+    expect(code('Variables value 1')).not.toHaveAttribute('aria-invalid');
+    expect(report).toHaveBeenLastCalledWith('variables.topic', undefined);
+    // The editor echoes the restored text; whatever the form reports is the last complete value.
+    for (const json of reports(spy))
+      expect(json).toBe(JSON.stringify({ variables: { topic: TOPIC, other: OTHER } }));
+  });
+
+  it('takes literal mentions and other member names as ordinary values', () => {
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(<Variables spy={spy} report={report} />);
+    const accepted = {
+      type: 'object',
+      description: 'Never name a member "__proto__".',
+      enum: ['__proto__'],
+      properties: {
+        constructor: { type: 'string' },
+        prototype: { type: 'number' },
+        __proto: { type: 'boolean' },
+        proto__: { type: 'null' },
+      },
+    };
+    setCode('Variables value 1', JSON.stringify(accepted));
+    expect(code('Variables value 1')).not.toHaveAttribute('aria-invalid');
+    expect(screen.queryByRole('button', { name: 'Discard the unparsed text' })).toBeNull();
+    expect(report).not.toHaveBeenCalledWith('variables.topic', expect.anything());
+    expect(reports(spy).at(-1)).toBe(
+      JSON.stringify({ variables: { topic: accepted, other: OTHER } }),
+    );
   });
 });

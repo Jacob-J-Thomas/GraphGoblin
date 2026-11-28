@@ -1,0 +1,30 @@
+{
+  "derivedBy": "P-editor publication worker, read from the Playwright trace of the failed run-1 test; the trace itself is kept outside the repository",
+  "traceSource": "G:/ggq/delivery-evidence/2026-11-24-followups/editor-forms-527-521-522-526/claude-window-publication-01/logs/e2e-786-failure/trace.zip",
+  "traceSha256": "f0769ed3c8156c6ea4202901cc69af68bf56d65f51ae081d482056b79043cfcf",
+  "test": "e2e/issue-170-qa.spec.ts:786 inference session policies: named key errors stay visible; switching variants removes stale keys and history restores them",
+  "head": "d56c1dfff808e048b4bfb977060eefc6761161ab",
+  "failure": "after page.reload() the Conversation select held 'resume-named'; expected 'fresh' (spec line 843)",
+  "draftPutsUtc": [
+    { "at": "08:52:45.244", "status": 200, "session": { "policy": "resume-previous" }, "bodySha1": "d676992fd3feee1394cf477d53352040762b3efe" },
+    { "at": "08:52:46.375", "status": 200, "session": { "policy": "resume-named", "key": "authored-session" }, "bodySha1": "9615e3a8614c1e2657f1ec33ad5f863b6ac4a2e2" },
+    { "at": "08:52:47.326", "status": 200, "session": { "policy": "fresh" }, "bodySha1": "6632343481472fb5d7c3573be65e1c33b7a5dc3f" },
+    { "at": "08:52:48.836", "status": 200, "session": { "policy": "resume-named", "key": "authored-session" }, "bodySha1": "9615e3a8614c1e2657f1ec33ad5f863b6ac4a2e2", "note": "after the reload; byte-identical body to the second PUT" }
+  ],
+  "stepsUtc": [
+    { "at": "08:52:47.669", "step": "Press Control+z (undo to resume-named)" },
+    { "at": "08:52:47.778", "step": "Press Control+Shift+z (redo to fresh)" },
+    { "at": "08:52:47.866", "step": "poll server session equals fresh: passed on first read" },
+    { "at": "08:52:47.872", "step": "Reload" },
+    { "at": "08:52:48.425", "step": "expect Conversation toHaveValue fresh: failed after 10 s" }
+  ],
+  "observed": "No PUT was sent for the undo or redo. About 94 ms after the redo the page reloaded, and the reloaded editor sent the undo state (resume-named) to the server, replacing the saved fresh state.",
+  "notEstablished": [
+    "Where the restored state was read from. The pattern matches a device copy of the undo state outliving the redo, but IndexedDB contents were not captured.",
+    "Whether the same window exists on the base d2df8600 or on main 4e1037c9 alone; neither the slice nor the merged main commits change autosave or device-draft code."
+  ],
+  "reruns": {
+    "repeatEach5": "5 of 5 passed (e2e-786-repeat5.log.txt)",
+    "fullRun2": "46 of 46 passed (e2e-edge-run2.log.txt)"
+  }
+}

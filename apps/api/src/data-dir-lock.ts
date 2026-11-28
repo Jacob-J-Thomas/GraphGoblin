@@ -13,7 +13,15 @@ import {
   writeFile,
 } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
+import { inspect, type InspectOptions } from 'node:util';
 import { canonicalPath } from './canonical-path.js';
+import {
+  cleanupStep,
+  vettedCode,
+  withStartupCleanup,
+  type RetainedOwnership,
+  type StartupCleanupFailure,
+} from './startup-cleanup.js';
 import { ownWindowsProcessIdentity, windowsProcessIdentity } from './windows-process-identity.js';
 
 const heldPaths = new Set<string>();
@@ -69,7 +77,9 @@ function hasCode(error: unknown, code: string): boolean {
   return error instanceof Error && 'code' in error && error.code === code;
 }
 
-function pidState(pid: number): { state: 'alive' | 'dead' } | { state: 'unknown'; reason: string } {
+function pidState(
+  pid: number,
+): { state: 'alive' | 'dead' } | { state: 'unknown'; reason: string; error: unknown } {
   try {
     process.kill(pid, 0);
     return { state: 'alive' };
@@ -77,7 +87,7 @@ function pidState(pid: number): { state: 'alive' | 'dead' } | { state: 'unknown'
     // Permission denied and unrecognised errors cannot establish that the owner died.
     if (hasCode(error, 'ESRCH')) return { state: 'dead' };
     const reason = error instanceof Error && 'code' in error ? String(error.code) : 'unknown error';
-    return { state: 'unknown', reason: `PID liveness probe failed (${reason})` };
+    return { state: 'unknown', reason: `PID liveness probe failed (${reason})`, error };
   }
 }
 
@@ -143,9 +153,11 @@ async function lockFileState(path: string, token?: string): Promise<OwnerState> 
     record = await readFile(path, 'utf8');
   } catch (error) {
     if (hasCode(error, 'ENOENT')) return { state: 'absent' };
-    // Only recovery markers have immutable names. A main owner record can be replaced in place.
-    if (token !== undefined && (await removedConcurrently(path, error))) return { state: 'absent' };
-    throw error;
+    // Main owner record reads keep their errors: the record can be replaced in place.
+    if (token === undefined) throw error;
+    // Only recovery markers have immutable names, so only their disappearance is established.
+    if (await removedConcurrently(path, error)) return { state: 'absent' };
+    throw filesystemFailure(error, 'observed-marker-read', path);
   }
   const owner = parseOwnerRecord(record, token);
   if (!owner) return unknown('malformed or incomplete owner record');
@@ -176,21 +188,70 @@ async function removeStale(path: string): Promise<boolean> {
 const markerPattern =
   /^([0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12})\.json$/;
 
-type CleanupOperation =
+/** Closed labels for recovery filesystem operations whose failure is reported. */
+type OwnershipOperation =
+  | 'observed-marker-read'
+  | 'recovery-marker-read'
   | 'stale-marker-unlink'
   | 'recovery-marker-unlink'
   | 'recovery-directory-remove'
   | 'staging-marker-unlink'
   | 'staging-directory-remove';
 
-function filesystemFailure(error: unknown, operation: CleanupOperation, path: string): Error {
-  const code = error instanceof Error && 'code' in error ? String(error.code) : 'UNKNOWN';
+/** Read-only checks that can fail while a Windows guard-directory removal failure is classified. */
+type RecoveryProbe =
+  | 'recovery-directory-lookup'
+  | 'successor-inspection'
+  | 'successor-liveness'
+  | 'successor-identity';
+
+/** A failed probe, not a decision: a credible mismatch or an unverifiable shape adds no entry. */
+interface RecoveryProbeFailure {
+  readonly operation: RecoveryProbe;
+  readonly code: string;
+  /** Not enumerable: inspectable in code, but its text stays out of printed output. */
+  readonly cause: unknown;
+}
+type ProbeReport = (failure: RecoveryProbeFailure) => void;
+
+const probeFailure = (
+  operation: RecoveryProbe,
+  cause: unknown,
+  code = vettedCode(cause),
+): RecoveryProbeFailure =>
+  Object.defineProperty({ operation, code, cause }, 'cause', { enumerable: false });
+
+/**
+ * Probe evidence whose labels and codes print in full however deeply the failure is nested: a
+ * rollback's cause or an aggregate entry lies below `util.inspect`'s default depth, where entries
+ * would otherwise print as `[Object]`. Raw causes stay non-enumerable and are never printed.
+ */
+function printableEvidence(probes: readonly RecoveryProbeFailure[]): RecoveryProbeFailure[] {
+  const shown = probes.map(({ operation, code }) => ({ operation, code }));
+  return Object.defineProperty([...probes], inspect.custom, {
+    value: (_depth: number, options: InspectOptions) => inspect(shown, { ...options, depth: null }),
+  });
+}
+
+/**
+ * A labelled filesystem failure: the original error is its cause, `code` is vetted, and the marker
+ * token comes from the operated path's own name (its original provenance). Probe failures that
+ * could not resolve a directory-removal failure are attached as secondary evidence.
+ */
+function filesystemFailure(
+  error: unknown,
+  operation: OwnershipOperation,
+  path: string,
+  probes: readonly RecoveryProbeFailure[] = [],
+): Error {
+  const code = vettedCode(error);
   return Object.assign(
     new Error(`Store ownership ${operation} failed (${code}): ${path}`, { cause: error }),
     {
       code,
       operation,
       markerToken: markerPattern.exec(basename(path))?.[1] ?? null,
+      ...(probes.length ? { probeFailures: printableEvidence(probes) } : {}),
     },
   );
 }
@@ -211,7 +272,7 @@ async function removedConcurrently(path: string, error: unknown): Promise<boolea
 }
 
 /** Whether this call removed the marker itself, rather than observing its absence. */
-async function removeMarker(path: string, operation: CleanupOperation): Promise<boolean> {
+async function removeMarker(path: string, operation: OwnershipOperation): Promise<boolean> {
   try {
     await unlink(path);
     return true;
@@ -260,21 +321,34 @@ function samePhysicalEntry(a: BigIntStats, b: BigIntStats): boolean {
   return a.dev === b.dev && a.ino === b.ino && a.birthtimeNs === b.birthtimeNs;
 }
 
-/** Read-only classification of a Windows acquisition failure. Any uncertainty keeps EPERM. */
+/** A guard this caller observed: a stale guard during acquisition, or its own published guard. */
+type ObservedGuard = { directory: BigIntStats; marker?: string };
+
+/**
+ * Read-only classification of a Windows guard-removal failure. Any uncertainty keeps EPERM. It
+ * inspects the physical path, never the in-process `heldPaths` shortcut, so a release can classify
+ * the path its own guard occupied. `report` receives failed probes only.
+ */
 async function hasLiveRecoverySuccessor(
   path: string,
   directory: BigIntStats,
-  stale: StaleRecovery,
+  previous: ObservedGuard,
   ownToken: string,
+  report?: ProbeReport,
 ): Promise<boolean> {
   if (
     !directory.isDirectory() ||
     directory.isSymbolicLink() ||
     directory.ino === 0n ||
-    stale.directory.ino === 0n ||
-    samePhysicalEntry(directory, stale.directory)
+    previous.directory.ino === 0n ||
+    samePhysicalEntry(directory, previous.directory)
   )
     return false;
+  const alive = (pid: number): boolean => {
+    const state = pidState(pid);
+    if (state.state === 'unknown') report?.(probeFailure('successor-liveness', state.error));
+    return state.state === 'alive';
+  };
   try {
     const entries = await readdir(path, { withFileTypes: true });
     const entry = entries[0];
@@ -284,7 +358,7 @@ async function hasLiveRecoverySuccessor(
       !entry?.isFile() ||
       !token ||
       token === ownToken ||
-      entry.name === stale.marker
+      entry.name === previous.marker
     )
       return false;
 
@@ -312,12 +386,14 @@ async function hasLiveRecoverySuccessor(
       !owner ||
       owner.pid === process.pid ||
       !validWindowsCreationTime(owner.windowsCreationTime) ||
-      pidState(owner.pid).state !== 'alive'
+      !alive(owner.pid)
     )
       return false;
     const current = await windowsProcessIdentity(owner.pid);
-    if (current.identity !== owner.windowsCreationTime || pidState(owner.pid).state !== 'alive')
-      return false;
+    // An unavailable identity is a failed probe; a different identity is a credible mismatch.
+    if (current.identity === undefined)
+      report?.(probeFailure('successor-identity', current.reason, 'UNKNOWN'));
+    if (current.identity !== owner.windowsCreationTime || !alive(owner.pid)) return false;
 
     // The directory, sole marker and record must survive the asynchronous process identity probe.
     const names = await readdir(path);
@@ -333,22 +409,33 @@ async function hasLiveRecoverySuccessor(
       !finalDirectory.isSymbolicLink() &&
       samePhysicalEntry(directory, finalDirectory)
     );
-  } catch {
+  } catch (error) {
+    report?.(probeFailure('successor-inspection', error));
     return false;
   }
 }
 
-function probeRecoveryDirectory(path: string) {
-  return lstat(path, { bigint: true }).catch((error: unknown) =>
-    hasCode(error, 'ENOENT') ? 'absent' : undefined,
-  );
+function probeRecoveryDirectory(
+  path: string,
+  report?: ProbeReport,
+): Promise<BigIntStats | 'absent' | undefined> {
+  return lstat(path, { bigint: true }).catch((error: unknown) => {
+    if (hasCode(error, 'ENOENT')) return 'absent';
+    report?.(probeFailure('recovery-directory-lookup', error));
+    return undefined;
+  });
+}
+
+/** What a Windows guard-removal `EPERM` may establish about the path this caller observed. */
+interface GuardRemoval {
+  previous: ObservedGuard;
+  token: string;
+  /** A verified successor is ordinary contention for acquisition; this caller's release completes. */
+  successor: 'held' | 'released';
 }
 
 /** Whether this call removed the empty directory at `path`. */
-async function removeEmptyRecovery(
-  path: string,
-  acquisition?: { stale: StaleRecovery; token: string },
-): Promise<boolean> {
+async function removeEmptyRecovery(path: string, removal?: GuardRemoval): Promise<boolean> {
   try {
     await rmdir(path);
     return true;
@@ -356,17 +443,56 @@ async function removeEmptyRecovery(
     // A newly published owner's marker makes its directory nonempty. Never remove it.
     if (hasCode(error, 'ENOENT') || hasCode(error, 'ENOTEMPTY') || hasCode(error, 'EEXIST'))
       return false;
+    const probes: RecoveryProbeFailure[] = [];
     if (process.platform === 'win32' && hasCode(error, 'EPERM')) {
-      const directory = await probeRecoveryDirectory(path);
+      const report: ProbeReport = (failure) => {
+        probes.push(failure);
+      };
+      const directory = await probeRecoveryDirectory(path, report);
       if (directory === 'absent') return false;
-      if (directory && acquisition) {
-        if (await hasLiveRecoverySuccessor(path, directory, acquisition.stale, acquisition.token))
-          throw held(path);
+      // At most one physical distinction for this removal opportunity; rmdir is never repeated.
+      if (directory && removal) {
+        if (
+          await hasLiveRecoverySuccessor(path, directory, removal.previous, removal.token, report)
+        ) {
+          if (removal.successor === 'held') throw held(path);
+          // The successor holds its own guard. This caller's exclusive main record stays in place.
+          return false;
+        }
         // A short-lived successor can release while its process creation time is being queried.
-        if ((await probeRecoveryDirectory(path)) === 'absent') return false;
+        if ((await probeRecoveryDirectory(path, report)) === 'absent') return false;
       }
     }
-    throw filesystemFailure(error, 'recovery-directory-remove', path);
+    throw filesystemFailure(error, 'recovery-directory-remove', path, probes);
+  }
+}
+
+/** A non-following physical directory with a usable identity, or undefined. */
+async function physicalDirectory(path: string): Promise<BigIntStats | undefined> {
+  const info = await lstat(path, { bigint: true }).catch(() => undefined);
+  return info?.isDirectory() && !info.isSymbolicLink() && info.ino !== 0n ? info : undefined;
+}
+
+/**
+ * The identity of this caller's just-published guard, observed (lstat, sole own marker, lstat)
+ * while its immutable marker is still present. The staged identity is only a consistency check.
+ * Unknown, unstable or inconsistent identities give undefined, which never proves a successor.
+ * Never throws: publication has already completed.
+ */
+async function publishedGuard(
+  path: string,
+  name: string,
+  staged: BigIntStats,
+): Promise<BigIntStats | undefined> {
+  try {
+    const before = await physicalDirectory(path);
+    if (!before || !samePhysicalEntry(staged, before)) return undefined;
+    const names = await readdir(path);
+    if (names.length !== 1 || names[0] !== name) return undefined;
+    const after = await physicalDirectory(path);
+    return after && samePhysicalEntry(before, after) ? after : undefined;
+  } catch {
+    return undefined;
   }
 }
 
@@ -387,6 +513,8 @@ async function acquireRecovery(
   let reclaimed = false;
   try {
     await writeFile(stagedMarker, record, { flag: 'wx', mode: 0o600 });
+    // Windows only: consistency evidence for the published guard's identity, never a requirement.
+    const staged = process.platform === 'win32' ? await physicalDirectory(staging) : undefined;
     for (let attempt = 0; attempt < recoveryAttempts; attempt++) {
       const observed = await observeRecovery(path);
       if (observed.state === 'marker-absent') {
@@ -416,38 +544,12 @@ async function acquireRecovery(
           }
           reclaimed = true;
         }
-        if (await removeEmptyRecovery(path, { stale: observed, token })) reclaimed = true;
+        if (await removeEmptyRecovery(path, { previous: observed, token, successor: 'held' }))
+          reclaimed = true;
       }
       try {
         // Both contenders publish NONEMPTY directories: rename cannot overwrite an owner.
         await rename(staging, path);
-        published = true;
-        heldPaths.add(path);
-        let releasing: Promise<ReleaseOutcome> | undefined;
-        return {
-          reclaimed,
-          release() {
-            releasing ??= (async (): Promise<ReleaseOutcome> => {
-              let outcome: ReleaseOutcome;
-              try {
-                const marker = join(path, name);
-                if ((await readFile(marker, 'utf8')) === record) {
-                  outcome = (await removeMarker(marker, 'recovery-marker-unlink'))
-                    ? 'removed'
-                    : 'missing';
-                  await removeEmptyRecovery(path);
-                } else outcome = 'kept';
-              } catch (error) {
-                if (!hasCode(error, 'ENOENT')) throw error;
-                outcome = 'missing';
-              }
-              // A failed release still owns its marker. Keep the in-process hold fail-closed.
-              heldPaths.delete(path);
-              return outcome;
-            })();
-            return releasing;
-          },
-        };
       } catch (error) {
         if (
           !['EEXIST', 'ENOTEMPTY', 'EPERM', 'EACCES', 'ENOTDIR'].some((code) =>
@@ -455,7 +557,44 @@ async function acquireRecovery(
           )
         )
           throw error;
+        continue;
       }
+      published = true;
+      heldPaths.add(path);
+      const own = staged && (await publishedGuard(path, name, staged));
+      let releasing: Promise<ReleaseOutcome> | undefined;
+      return {
+        reclaimed,
+        release() {
+          releasing ??= (async (): Promise<ReleaseOutcome> => {
+            const marker = join(path, name);
+            let current: string | undefined;
+            try {
+              current = await readFile(marker, 'utf8');
+            } catch (error) {
+              if (!hasCode(error, 'ENOENT'))
+                throw filesystemFailure(error, 'recovery-marker-read', marker);
+            }
+            let outcome: ReleaseOutcome = current === undefined ? 'missing' : 'kept';
+            if (current === record) {
+              const removed = await removeMarker(marker, 'recovery-marker-unlink');
+              outcome = removed ? 'removed' : 'missing';
+              // Only after removing its exact marker may this release classify a successor, and
+              // only against the identity captured while that marker was present.
+              await removeEmptyRecovery(
+                path,
+                removed && own
+                  ? { previous: { directory: own, marker: name }, token, successor: 'released' }
+                  : undefined,
+              );
+            }
+            // A failed release still owns its marker. Keep the in-process hold fail-closed.
+            heldPaths.delete(path);
+            return outcome;
+          })();
+          return releasing;
+        },
+      };
     }
     throw held(path);
   } catch (error) {
@@ -547,11 +686,58 @@ interface FileHold extends Hold {
   readonly verifyOwnedArtifact?: AttestedDataDirLock['verifyOwnedArtifact'];
 }
 
+/** A record write, attestation or close failure after exclusive creation, and its cleanup result. */
+interface RecordFailure {
+  readonly failure: {
+    readonly primary: unknown;
+    readonly cleanup: StartupCleanupFailure[];
+    readonly retained: RetainedOwnership[];
+  };
+}
+
+/**
+ * Remove this acquisition's own record once, after its setup failed. A complete record is matched
+ * by its exact random-token bytes, a partial one by the physical identity its handle reported, at
+ * the configured path without following links. The check and unlink are not atomic; the held
+ * recovery guard and exclusive creation keep conforming writers off the path meanwhile. True when
+ * the record is proven gone or the path proven foreign (and kept); false retains ownership.
+ */
+async function removeOwnRecord(
+  path: string,
+  proof: string | BigIntStats | undefined,
+  cleanup: StartupCleanupFailure[],
+): Promise<boolean> {
+  if (proof === undefined || (typeof proof !== 'string' && (!proof.isFile() || proof.ino === 0n)))
+    return false;
+  try {
+    const current = await lstat(path, { bigint: true });
+    if (
+      !current.isFile() ||
+      (typeof proof === 'string'
+        ? (await readFile(path, 'utf8')) !== proof
+        : !samePhysicalEntry(proof, current))
+    )
+      return true;
+  } catch (error) {
+    if (hasCode(error, 'ENOENT')) return true;
+    cleanup.push(cleanupStep('main-record-lookup', error));
+    return false;
+  }
+  try {
+    await unlink(path);
+    return true;
+  } catch (error) {
+    if (hasCode(error, 'ENOENT')) return true;
+    cleanup.push(cleanupStep('main-record-unlink', error));
+    return false;
+  }
+}
+
 async function acquireFile(
   path: string,
   record: string,
   attestation?: AttestLocalArtifact,
-): Promise<FileHold> {
+): Promise<FileHold | RecordFailure> {
   let reclaimed = false;
   const file = await open(path, 'wx', 0o600).catch(async (error: unknown) => {
     if (!hasCode(error, 'EEXIST')) throw error;
@@ -563,19 +749,45 @@ async function acquireFile(
   });
   heldPaths.add(path);
   let acquired: OwnedWriterArtifact | undefined;
+  let written = false;
+  let primary: { error: unknown } | undefined;
   try {
     await file.writeFile(record, 'utf8');
+    written = true;
     if (attestation) {
       const { dev, ino } = await file.stat({ bigint: true });
       acquired = { path, dev, ino };
     }
   } catch (error) {
-    heldPaths.delete(path);
-    await file.close();
-    await unlink(path);
-    throw error;
-  } finally {
-    await file.close();
+    primary = { error };
+  }
+  const cleanup: StartupCleanupFailure[] = [];
+  // A complete record proves itself by its random token. A partial one can be matched only by the
+  // handle's identity, which must be read before the handle closes.
+  const identity =
+    primary && !written
+      ? await file.stat({ bigint: true }).catch((error: unknown) => {
+          cleanup.push(cleanupStep('main-record-identity', error));
+          return undefined;
+        })
+      : undefined;
+  try {
+    await file.close(); // The only close, whatever happened before it.
+  } catch (error) {
+    if (primary) cleanup.push(cleanupStep('main-record-close', error));
+    else primary = { error };
+  }
+  if (primary) {
+    const settled = await removeOwnRecord(path, written ? record : identity, cleanup);
+    // Only proven removal, absence or foreign replacement ends the in-process reservation.
+    if (settled) heldPaths.delete(path);
+    return {
+      failure: {
+        primary: primary.error,
+        cleanup,
+        retained: settled ? [] : [{ resource: 'lock-record', path }],
+      },
+    };
   }
   let releasing: Promise<ReleaseOutcome> | undefined;
   let releaseStarted = false;
@@ -646,7 +858,7 @@ export async function acquireDataDirLock(
     });
     // Take the guard even if the main file is missing after a crash during reclamation.
     const recovery = await acquireRecovery(`${path}${RECLAIM_GUARD_SUFFIX}`, record, token);
-    const file = await acquireFile(path, record, attestation).catch(async (error: unknown) => {
+    const created = await acquireFile(path, record, attestation).catch(async (error: unknown) => {
       try {
         await recovery.release();
       } catch (cleanup) {
@@ -654,6 +866,15 @@ export async function acquireDataDirLock(
       }
       throw error;
     });
+    if ('failure' in created) {
+      const { primary, cleanup, retained } = created.failure;
+      // Release the guard once; a failure follows the record's own cleanup, behind the primary.
+      await recovery.release().catch((error: unknown) => {
+        cleanup.push(cleanupStep('recovery-release', error));
+      });
+      throw withStartupCleanup(primary, cleanup, retained);
+    }
+    const file = created;
     try {
       await recovery.release();
     } catch (cleanup) {
@@ -685,6 +906,25 @@ export async function acquireDataDirLock(
   }
 }
 
+/**
+ * The deliberate refusal of a SQLite file with several hard links: a complete operator explanation
+ * naming the canonical database. File-name locks cannot establish one owner across hard-link
+ * aliases. It is neither a held nor an unverifiable owner: the refusal comes before the database
+ * lock or its guard is inspected or created.
+ */
+export class HardLinkedDatabaseRefusedError extends Error {
+  override readonly name = 'HardLinkedDatabaseRefusedError';
+  /** The canonical database path that was refused. */
+  readonly database: string;
+
+  constructor(database: string) {
+    super(
+      `database ${database} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
+    );
+    this.database = database;
+  }
+}
+
 /** A shared external SQLite file has one owner even when data directories differ. */
 export function acquireDatabaseLock(
   databaseFile: string,
@@ -700,10 +940,7 @@ export async function acquireDatabaseLock(
     if (hasCode(error, 'ENOENT')) return undefined;
     throw error;
   });
-  if (info && info.nlink > 1)
-    throw new Error(
-      `database ${file} has multiple hard links; use one ordinary SQLite file so GraphGoblin can establish exclusive ownership`,
-    );
+  if (info && info.nlink > 1) throw new HardLinkedDatabaseRefusedError(file);
   const name = databaseLockFileName(basename(file));
   return attestation
     ? acquireDataDirLock(dirname(file), name, attestation)

@@ -41,7 +41,12 @@ export function AppShell({
 }) {
   return (
     <div className="flex min-h-screen flex-col bg-surface-app text-default">
-      <header className="hairline-accent relative z-20 flex h-14 shrink-0 items-center gap-8 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4">
+      {/* At least 56 px, growing with its content instead of a fixed row: where enlarged text
+          or a narrow viewport cannot hold the logo and the navigation side by side, the
+          navigation wraps under the logo (below 640 px, Menu moves to a row of its own at the
+          right, and its panel opens under the header's actual bottom edge). A row that fits is
+          the same 56 px row as before (#563). */}
+      <header className="hairline-accent relative z-20 flex min-h-14 shrink-0 flex-wrap items-center gap-8 gap-y-0 bg-surface-inverse px-6 text-inverse max-sm:gap-2 max-sm:px-4 max-sm:py-1.5">
         <Logo />
         <MainNav items={nav} />
       </header>

@@ -1,0 +1,87 @@
+{
+  "name": "B2-readonly-close-behind-store-refusal",
+  "issue": "#560",
+  "system": "read-only SQLite close behind a store refusal via shell startup",
+  "checks": [
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "store refusal explanation printed first as before (its usual lines), no stack",
+      "ok": false,
+      "detail": [
+        "GraphGoblin did not start: this build cannot open the store in data directory G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data.",
+        "  Database: G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\\store.db",
+        "  Found:    no valid format marker",
+        "  Requires: format 4",
+        "  Reason:   The store has no format marker; an older GraphGoblin build wrote it",
+        "No stored data was changed. This build does not convert stores from other formats.",
+        "To keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):",
+        "  node apps/api/dist/main.js --reset --data-dir \"G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\"",
+        "cleanup also failed: readonly-database-close (EIO); ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data"
+      ]
+    },
+    {
+      "what": "one detail line last",
+      "ok": true,
+      "detail": {
+        "last": "cleanup also failed: readonly-database-close (EIO); ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data",
+        "expected": "cleanup also failed: readonly-database-close (EIO); ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data"
+      }
+    },
+    {
+      "what": "close error text not printed",
+      "ok": true
+    },
+    {
+      "what": "read-only client closed once",
+      "ok": true
+    },
+    {
+      "what": "both leases kept after an unconfirmed read-only close",
+      "ok": true
+    },
+    {
+      "what": "database bytes unchanged",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "GraphGoblin did not start: this build cannot open the store in data directory G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data.\n  Database: G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\\store.db\n  Found:    no valid format marker\n  Requires: format 4\n  Reason:   The store has no format marker; an older GraphGoblin build wrote it\nNo stored data was changed. This build does not convert stores from other formats.\nTo keep that data, run the GraphGoblin build that wrote it. To start fresh, stop every GraphGoblin process using the data directory, then list what a reset would remove (this removes nothing):\n  node apps/api/dist/main.js --reset --data-dir \"G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\"\ncleanup also failed: readonly-database-close (EIO); ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B2-readonly-close-behind-store-refusal\\data\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:ab8b5a45-1278-4d5d-b0aa-fe9253976c53.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "unlink:90a8ffa9-a5e9-47f6-93c9-29a528bba4b5.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "readonly-database-close"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":59292,\"startedAt\":\"2026-11-26T09:36:06.494Z\",\"windowsCreationTime\":\"134401593606856670\",\"token\":\"ab8b5a45-1278-4d5d-b0aa-fe9253976c53\"}"
+    },
+    {
+      "path": "store.db",
+      "type": "file",
+      "size": 8192
+    },
+    {
+      "path": "store.db.graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":59292,\"startedAt\":\"2026-11-26T09:36:09.182Z\",\"windowsCreationTime\":\"134401593606856670\",\"token\":\"90a8ffa9-a5e9-47f6-93c9-29a528bba4b5\"}"
+    }
+  ],
+  "ms": 8784,
+  "pass": false
+}

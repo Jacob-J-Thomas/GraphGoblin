@@ -1,0 +1,146 @@
+TAP version 13
+# {"evidence":"windows-launcher-observation","seq":87,"at":"2026-11-26T09:18:46.896Z","type":"case-end","case":"installer","subtest":1,"result":"fail","elapsedMs":10704,"failedSubtests":0,"failureKind":"assertion","failureCode":"ERR_ASSERTION","failureExit":null,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":86,"at":"2026-11-26T09:18:46.891Z","type":"child","case":"installer","subtest":1,"child":14,"tool":"launcher","mode":"read-shortcut-id","outcome":"exit-zero","exitCode":0,"errorCode":null,"signal":null,"killed":false,"timeoutMs":null,"elapsedMs":155,"stdoutBytes":38,"stderrBytes":0,"diagnostic":"none"}
+# Subtest: Windows PowerShell 5.1 installer validates before replacing native launcher files
+    # Subtest: public first install and same-path reinstall persist changed settings and every shortcut
+    not ok 1 - public first install and same-path reinstall persist changed settings and every shortcut
+      ---
+      duration_ms: 10705.9734
+      type: 'test'
+      location: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\tooling\\scripts\\windows-launcher-evidence.mjs:983:27'
+      failureType: 'testCodeFailure'
+      error: |-
+        Expected values to be strictly deep-equal:
+        + actual - expected
+        ... Skipped lines
+        
+          {
+            ChromeAppId: 'emmodkfokbdfahoaemkgoijaaeaohobg',
+            ChromeProfile: 'Default',
+            ChromeProxy: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\chrome_proxy.exe',
+            DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store',
+        ...
+              Database: 'file',
+        +     Inputs: '5ab0c6868cdd6812c6373b6cdf559c657159fd6a6b54c8589cda2ec76e72abbe',
+        +     Launch: 'v1:fd3ead9a4a309a89a4897a573931137638688a16ee3c747210f1be1ab41207eb',
+        -     Inputs: 'f6902087fb65958604e9ce0e5fe1bd665438fab7ffcfbeacb258fba3f10df91d',
+        -     Launch: 'v1:3a4504d718e22cd0be0559149c65ee1e402f5a739e3babd42b02c0d13de7c554',
+              Lookup: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store\\graphgoblin.db',
+              Target: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store\\graphgoblin.db',
+              Version: 1
+            },
+            Environment: null,
+        
+      code: 'ERR_ASSERTION'
+      name: 'AssertionError'
+      expected:
+        Repo: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\'
+        Node: 'C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe'
+        DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store'
+        Port: 4830
+        ChromeProxy: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\chrome_proxy.exe'
+        ChromeProfile: 'Default'
+        ChromeAppId: 'emmodkfokbdfahoaemkgoijaaeaohobg'
+        IconLocation: ',0'
+        PwaAppUserModelId: 'Chrome.PwaFixture'
+        LauncherAppUserModelId: 'GraphGoblin.9d66ec88f5b84c5ced440113'
+        Environment: ~
+        StartupTimeoutSeconds: 60
+        WindowTimeoutSeconds: 30
+        Enrollment:
+          Version: 1
+          Launch: 'v1:3a4504d718e22cd0be0559149c65ee1e402f5a739e3babd42b02c0d13de7c554'
+          DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store'
+          Database: 'file'
+          Lookup: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store\\graphgoblin.db'
+          Target: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store\\graphgoblin.db'
+          Inputs: 'f6902087fb65958604e9ce0e5fe1bd665438fab7ffcfbeacb258fba3f10df91d'
+      actual:
+        Repo: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\'
+        Node: 'C:\\Users\\98jak\\.claude\\codex-runs\\GraphGoblin\\runtime\\node-v22.23.4-win-x64\\node.exe'
+        DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store'
+        Port: 4830
+        ChromeProxy: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\chrome_proxy.exe'
+        ChromeProfile: 'Default'
+        ChromeAppId: 'emmodkfokbdfahoaemkgoijaaeaohobg'
+        IconLocation: ',0'
+        PwaAppUserModelId: 'Chrome.PwaFixture'
+        LauncherAppUserModelId: 'GraphGoblin.9d66ec88f5b84c5ced440113'
+        Environment: ~
+        StartupTimeoutSeconds: 60
+        WindowTimeoutSeconds: 30
+        Enrollment:
+          Version: 1
+          Launch: 'v1:fd3ead9a4a309a89a4897a573931137638688a16ee3c747210f1be1ab41207eb'
+          DataDir: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store'
+          Database: 'file'
+          Lookup: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store\\graphgoblin.db'
+          Target: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\.tmp\\windows-launcher-installer-mrD1on\\store\\graphgoblin.db'
+          Inputs: '5ab0c6868cdd6812c6373b6cdf559c657159fd6a6b54c8589cda2ec76e72abbe'
+      operator: 'deepStrictEqual'
+      stack: |-
+        file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1434:16
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher.acceptance.mjs:1412:5
+        async #run (file:///G:/ggq/gg-followups-20261124/GraphGoblin/tooling/scripts/windows-launcher-evidence.mjs:960:14)
+        async Test.run (node:internal/test_runner/test:1054:7)
+        async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+      ...
+    # Subtest: a later output held with read-only sharing restores every previous file
+    ok 2 - a later output held with read-only sharing restores every previous file
+      ---
+      duration_ms: 5440.1849
+      type: 'test'
+      ...
+    # Subtest: long staging paths refuse compilation with InstallDir guidance and keep installed files
+    ok 3 - long staging paths refuse compilation with InstallDir guidance and keep installed files
+      ---
+      duration_ms: 7686.6707
+      type: 'test'
+      ...
+    # Subtest: a non-resource compiler failure keeps the generic redacted refusal
+    ok 4 - a non-resource compiler failure keeps the generic redacted refusal
+      ---
+      duration_ms: 2842.0014
+      type: 'test'
+      ...
+    # Subtest: zero-argument defaults select the Chrome Apps source and publish separate Desktop and Programs links
+    ok 5 - zero-argument defaults select the Chrome Apps source and publish separate Desktop and Programs links
+      ---
+      duration_ms: 4797.2294
+      type: 'test'
+      ...
+    # Subtest: a Desktop-only default source collides with the Desktop output and keeps sentinels
+    ok 6 - a Desktop-only default source collides with the Desktop output and keeps sentinels
+      ---
+      duration_ms: 1109.9826
+      type: 'test'
+      ...
+    # Subtest: without a default source no destination or stage is published
+    ok 7 - without a default source no destination or stage is published
+      ---
+      duration_ms: 747.0621
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-observation","seq":116,"at":"2026-11-26T09:19:19.296Z","type":"case-end","case":"installer","subtest":0,"result":"fail","elapsedMs":81784,"failedSubtests":1,"failureKind":"subtests","failureCode":null,"failureExit":null,"failureSignal":null}
+# {"evidence":"windows-launcher-observation","seq":114,"at":"2026-11-26T09:19:19.248Z","type":"child","case":"installer","subtest":0,"child":70,"tool":"launcher","mode":"ensure-gateway","outcome":"exit-zero","exitCode":0,"errorCode":null,"signal":null,"killed":false,"timeoutMs":30000,"elapsedMs":9724,"stdoutBytes":0,"stderrBytes":0,"diagnostic":"none"}
+    1..7
+not ok 1 - Windows PowerShell 5.1 installer validates before replacing native launcher files
+  ---
+  duration_ms: 81787.6201
+  type: 'test'
+  location: 'G:\\ggq\\gg-followups-20261124\\GraphGoblin\\tooling\\scripts\\windows-launcher.acceptance.mjs:818:1'
+  failureType: 'subtestsFailed'
+  error: '1 subtest failed'
+  code: 'ERR_TEST_FAILURE'
+  ...
+1..1
+# tests 8
+# suites 0
+# pass 6
+# fail 2
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 82033.8415

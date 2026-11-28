@@ -1,0 +1,162 @@
+$ node --test --test-concurrency=1 tooling/scripts/windows-launcher.acceptance.mjs tooling/scripts/windows-launcher-helper.acceptance.mjs
+TAP version 13
+# Subtest: drains a full stderr pipe while the identity helper is running
+ok 1 - drains a full stderr pipe while the identity helper is running
+  ---
+  duration_ms: 768.7382
+  type: 'test'
+  ...
+# Subtest: allows a slow identity helper within the configured startup budget
+ok 2 - allows a slow identity helper within the configured startup budget
+  ---
+  duration_ms: 16238.799
+  type: 'test'
+  ...
+# Subtest: bounds a hung identity helper and identifies its stage
+ok 3 - bounds a hung identity helper and identifies its stage
+  ---
+  duration_ms: 15118.6419
+  type: 'test'
+  ...
+# Subtest: rejects oversized stdout without pipe deadlock or logging its content
+ok 4 - rejects oversized stdout without pipe deadlock or logging its content
+  ---
+  duration_ms: 172.4453
+  type: 'test'
+  ...
+# Subtest: reports helper exit status without disclosing stderr
+ok 5 - reports helper exit status without disclosing stderr
+  ---
+  duration_ms: 160.7481
+  type: 'test'
+  ...
+# Subtest: distinguishes ownership timeout after a successful identity check
+ok 6 - distinguishes ownership timeout after a successful identity check
+  ---
+  duration_ms: 15192.35
+  type: 'test'
+  ...
+# Subtest: bounds inherited output handles after the helper exits
+ok 7 - bounds inherited output handles after the helper exits
+  ---
+  duration_ms: 20277.3777
+  type: 'test'
+  ...
+# Subtest: allows slow ownership success before starting the matching gateway
+ok 8 - allows slow ownership success before starting the matching gateway
+  ---
+  duration_ms: 16594.233
+  type: 'test'
+  ...
+# Subtest: preserves held ownership with flooded stderr and does not start a gateway
+ok 9 - preserves held ownership with flooded stderr and does not start a gateway
+  ---
+  duration_ms: 1199.2777
+  type: 'test'
+  ...
+# Subtest: sanitizes malformed ownership JSON including parser errors
+ok 10 - sanitizes malformed ownership JSON including parser errors
+  ---
+  duration_ms: 290.2588
+  type: 'test'
+  ...
+# Subtest: native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+    # Subtest: concurrent cold starts create one gateway and later clicks reuse its PID
+    ok 1 - concurrent cold starts create one gateway and later clicks reuse its PID
+      ---
+      duration_ms: 13802.9013
+      type: 'test'
+      ...
+    # Subtest: wrong store and changed gateway settings are refused without stopping the live gateway
+    ok 2 - wrong store and changed gateway settings are refused without stopping the live gateway
+      ---
+      duration_ms: 5238.9915
+      type: 'test'
+      ...
+    # Subtest: same database under a different data directory cannot acquire a second gateway
+    ok 3 - same database under a different data directory cannot acquire a second gateway
+      ---
+      duration_ms: 4539.574
+      type: 'test'
+      ...
+# {"evidence":"native-shell-shortcut-cold-route","beforePid":"27104","afterPid":"42016"}
+    # Subtest: normal drain releases ownership and a shell shortcut cold start runs the launcher
+    ok 4 - normal drain releases ownership and a shell shortcut cold start runs the launcher
+      ---
+      duration_ms: 7575.1609
+      type: 'test'
+      ...
+    # Subtest: native HWND COM relaunch command preserves the cold launcher route
+    ok 5 - native HWND COM relaunch command preserves the cold launcher route
+      ---
+      duration_ms: 7983.707
+      type: 'test'
+      ...
+    # Subtest: cross-process HWND metadata survives stamper exit and relaunches
+    ok 6 - cross-process HWND metadata survives stamper exit and relaunches
+      ---
+      duration_ms: 6660.2224
+      type: 'test'
+      ...
+    # Subtest: plain-health HTTP listener is refused and kept alive
+    ok 7 - plain-health HTTP listener is refused and kept alive
+      ---
+      duration_ms: 1688.7596
+      type: 'test'
+      ...
+    # Subtest: a silent TCP listener never permits a gateway spawn across repeated clicks
+    ok 8 - a silent TCP listener never permits a gateway spawn across repeated clicks
+      ---
+      duration_ms: 24631.3721
+      type: 'test'
+      ...
+    # Subtest: malformed store ownership is preserved and refused before starting a gateway
+    ok 9 - malformed store ownership is preserved and refused before starting a gateway
+      ---
+      duration_ms: 3277.4318
+      type: 'test'
+      ...
+    # Subtest: reused live PID in both locks and guards permits exactly one cold gateway
+    ok 10 - reused live PID in both locks and guards permits exactly one cold gateway
+      ---
+      duration_ms: 10791.4158
+      type: 'test'
+      ...
+# {"evidence":"protected-system-pid-reuse","selected":{"pid":1088,"name":"csrss.exe","windowsCreationTime":"134388595618752230","deniedOperation":"Process.HasExited","errorCode":5},"gatewayPid":"38848"}
+    # Subtest: a protected system PID with a different verified identity is recovered without touching that process
+    ok 11 - a protected system PID with a different verified identity is recovered without touching that process
+      ---
+      duration_ms: 13829.6052
+      type: 'test'
+      ...
+# {"evidence":"windows-launcher-native","artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-TmlBmu"}
+    # Subtest: matching and unknown identities preserve locks, guards and the live process
+    ok 12 - matching and unknown identities preserve locks, guards and the live process
+      ---
+      duration_ms: 12593.1722
+      type: 'test'
+      ...
+    1..12
+ok 11 - native Windows launcher readiness, reuse, races, refusals, detached lifetime and shell route
+  ---
+  duration_ms: 112865.6871
+  type: 'test'
+  ...
+# {"evidence":"independent-api-lock-contention","trial":1,"results":[{"status":"refused","pid":42796,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":36668,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":31360,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":41152},{"status":"refused","pid":42624,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-1\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-1"}
+# {"evidence":"independent-api-lock-contention","trial":2,"results":[{"status":"acquired","pid":36076},{"status":"refused","pid":39092,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":41536,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":32884,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":44312,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-2\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-2"}
+# {"evidence":"independent-api-lock-contention","trial":3,"results":[{"status":"refused","pid":35216,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":36444,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"refused","pid":27532,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"},{"status":"acquired","pid":10108},{"status":"refused","pid":38676,"error":"another GraphGoblin process holds C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-3\\\\graphgoblin.lock.reclaim; check its port/configuration or let startup/shutdown finish"}],"artifacts":"C:\\\\Users\\\\98jak\\\\.codex\\\\worktrees\\\\windows-launcher-timeouts\\\\GraphGoblin\\\\.tmp\\\\windows-launcher-contention-PHpkn0\\\\trial-3"}
+# Subtest: independent API processes never share ownership while reclaiming a reused PID
+ok 12 - independent API processes never share ownership while reclaiming a reused PID
+  ---
+  duration_ms: 6566.9148
+  type: 'test'
+  ...
+1..12
+# tests 24
+# suites 0
+# pass 24
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 212223.9806

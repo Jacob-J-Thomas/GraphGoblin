@@ -1,0 +1,62 @@
+{
+  "name": "B1m-managed-unknown-primary",
+  "issue": "#560",
+  "system": "managed classification of an unknown (invalid key) primary with retained leases",
+  "checks": [
+    {
+      "what": "managed exit 74, no shell output",
+      "ok": true,
+      "detail": 74
+    },
+    {
+      "what": "cause store-unavailable at stage store",
+      "ok": true,
+      "detail": [
+        {
+          "level": 50,
+          "time": 1795685805676,
+          "pid": 59064,
+          "msg": "GraphGoblin startup failed",
+          "stage": "store",
+          "cause": "store-unavailable",
+          "detail": "The store could not be opened.",
+          "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+        }
+      ]
+    },
+    {
+      "what": "no text leak",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 74,
+    "signal": null,
+    "listened": false,
+    "stderr": "",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:3da166cc-ba97-4f08-b53b-fc3eaaf6a920.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "unlink:fa7277f4-8836-4cc7-ab70-01181d46b1e1.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "database-close"
+    ]
+  },
+  "managedRecords": [
+    {
+      "level": 50,
+      "time": 1795685805676,
+      "pid": 59064,
+      "msg": "GraphGoblin startup failed",
+      "stage": "store",
+      "cause": "store-unavailable",
+      "detail": "The store could not be opened.",
+      "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+    }
+  ],
+  "ms": 10169,
+  "pass": true
+}

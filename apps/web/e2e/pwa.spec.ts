@@ -1,3 +1,4 @@
+import type { TestInfo } from '@playwright/test';
 import {
   ageWorkboxRegistration,
   ensureControlledPage,
@@ -533,6 +534,55 @@ test('cold offline Loops reload recovers on reconnect without navigating', async
   }
 });
 
+const cleanupDiagnostic = 'guarded-update cleanup error';
+const cleanupDiagnosticLimit = 2_000;
+
+/**
+ * Run a guarded-update test body, then its maintained cleanup once (#555). After a test timeout
+ * Playwright disposes `request` before it closes the page's context, so a pending page wait
+ * rejects only when the reset request has no context left; thrown from `finally`, that reset error
+ * replaced the body's. A body error stays the test error, the same object with the same stack, and
+ * a cleanup error after it is reported beside it as a bounded secondary diagnostic. After a
+ * passing body, a cleanup error is the test failure, as before.
+ */
+async function bodyThenCleanup(
+  body: () => Promise<void>,
+  cleanup: () => Promise<void>,
+): Promise<void> {
+  // Taken now: test.info() is unavailable once the runner has finished the test.
+  const info = test.info();
+  try {
+    await body();
+  } catch (bodyError) {
+    try {
+      await cleanup();
+    } catch (cleanupError) {
+      await reportCleanupError(info, cleanupError);
+    }
+    throw bodyError;
+  }
+  await cleanup();
+}
+
+/**
+ * Report a cleanup error on stderr and as a text attachment, which the list reporter prints with
+ * a failure. Neither needs a test fixture. Reporting never throws in place of the body error.
+ */
+async function reportCleanupError(info: TestInfo, error: unknown): Promise<void> {
+  try {
+    const text = (error instanceof Error ? (error.stack ?? error.message) : String(error)).slice(
+      0,
+      cleanupDiagnosticLimit,
+    );
+    console.error(
+      `${cleanupDiagnostic} (secondary; the body error remains the test error):\n${text}`,
+    );
+    await info.attach(cleanupDiagnostic, { body: text, contentType: 'text/plain' });
+  } catch {
+    // The worker may already be detached from the runner; the body error still propagates.
+  }
+}
+
 test('another tab’s unresolved voice upload vetoes update activation until that tab closes', async ({
   page,
   context,
@@ -555,76 +605,211 @@ test('another tab’s unresolved voice upload vetoes update activation until tha
       }),
     );
   });
-  try {
-    await dirty.goto('/app/loops');
-    await expect(dirty.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
-    await ensureControlledPage(dirty);
-    await page.bringToFront();
-    const toast = await showWaitingWorker(page, request);
-    const initial = await page.evaluateHandle(async () => {
-      const registration = await navigator.serviceWorker.getRegistration('/app/');
-      if (!registration?.active || !registration.waiting) throw new Error('missing update pair');
-      return {
-        active: registration.active,
-        waiting: registration.waiting,
-        controller: navigator.serviceWorker.controller,
-        document: performance.timeOrigin,
-      };
-    });
-    const navigation: string[] = [];
-    page.on('framenavigated', (frame) => {
-      if (frame === page.mainFrame()) navigation.push(frame.url());
-    });
-    const sharedLeases = () =>
-      page.evaluate(async () => {
-        const name = `graphgoblin-chat-update-v1:${new URL('/app/', location.origin).href}`;
-        return (
-          (await navigator.locks.query()).held?.filter(
-            (lock) => lock.name === name && lock.mode === 'shared',
-          ).length ?? 0
-        );
-      });
-    await expect.poll(sharedLeases).toBe(2);
-    expect(messages).toHaveLength(0);
-    await toast.getByRole('button', { name: 'Update', exact: true }).click();
-    await expect(
-      toast.getByText(
-        'Finish or discard voice drafts and resolve pending messages in all open tabs before updating.',
-        { exact: true },
-      ),
-    ).toBeVisible();
-    await expect(toast.getByRole('button', { name: 'Update', exact: true })).toBeEnabled();
-    expectGuardedApply(messages, page);
-    // Crossing the worker acknowledgement deadline must never expire a live dirty tab as safe.
-    await page.waitForTimeout(2_100);
-    expect(
-      await page.evaluate(async (initial) => {
+  await bodyThenCleanup(
+    async () => {
+      await dirty.goto('/app/loops');
+      await expect(dirty.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+      await ensureControlledPage(dirty);
+      await page.bringToFront();
+      const toast = await showWaitingWorker(page, request);
+      const initial = await page.evaluateHandle(async () => {
         const registration = await navigator.serviceWorker.getRegistration('/app/');
-        return (
-          registration?.active === initial.active &&
-          registration.waiting === initial.waiting &&
-          navigator.serviceWorker.controller === initial.controller &&
-          performance.timeOrigin === initial.document
-        );
-      }, initial),
-    ).toBe(true);
-    expect(navigation).toHaveLength(0);
-    await expect.poll(sharedLeases).toBe(2);
-    await initial.dispose();
-    await dirty.close();
-    await expect.poll(sharedLeases).toBe(1);
-    const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
-    await toast.getByRole('button', { name: 'Update', exact: true }).click();
-    await reloaded;
-    await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
-    await expect(toast).toBeHidden();
-    await expectGuardedWorker(page, 'active');
-    expectGuardedApply(messages, page, 2);
-    expect(navigation).toHaveLength(1);
-  } finally {
-    if (!dirty.isClosed()) await dirty.close();
-    await control(request, '/worker/reset');
-  }
+        if (!registration?.active || !registration.waiting) throw new Error('missing update pair');
+        return {
+          active: registration.active,
+          waiting: registration.waiting,
+          controller: navigator.serviceWorker.controller,
+          document: performance.timeOrigin,
+        };
+      });
+      const navigation: string[] = [];
+      page.on('framenavigated', (frame) => {
+        if (frame === page.mainFrame()) navigation.push(frame.url());
+      });
+      const sharedLeases = () =>
+        page.evaluate(async () => {
+          const name = `graphgoblin-chat-update-v1:${new URL('/app/', location.origin).href}`;
+          return (
+            (await navigator.locks.query()).held?.filter(
+              (lock) => lock.name === name && lock.mode === 'shared',
+            ).length ?? 0
+          );
+        });
+      await expect.poll(sharedLeases).toBe(2);
+      expect(messages).toHaveLength(0);
+      await toast.getByRole('button', { name: 'Update', exact: true }).click();
+      await expect(
+        toast.getByText(
+          'Finish or discard voice drafts and resolve pending messages in all open tabs before updating.',
+          { exact: true },
+        ),
+      ).toBeVisible();
+      await expect(toast.getByRole('button', { name: 'Update', exact: true })).toBeEnabled();
+      expectGuardedApply(messages, page);
+      // Crossing the worker acknowledgement deadline must never expire a live dirty tab as safe.
+      await page.waitForTimeout(2_100);
+      expect(
+        await page.evaluate(async (initial) => {
+          const registration = await navigator.serviceWorker.getRegistration('/app/');
+          return (
+            registration?.active === initial.active &&
+            registration.waiting === initial.waiting &&
+            navigator.serviceWorker.controller === initial.controller &&
+            performance.timeOrigin === initial.document
+          );
+        }, initial),
+      ).toBe(true);
+      expect(navigation).toHaveLength(0);
+      await expect.poll(sharedLeases).toBe(2);
+      await initial.dispose();
+      await dirty.close();
+      await expect.poll(sharedLeases).toBe(1);
+      const reloaded = page.waitForEvent('framenavigated', (frame) => frame === page.mainFrame());
+      await toast.getByRole('button', { name: 'Update', exact: true }).click();
+      await reloaded;
+      await expect(page.getByRole('heading', { name: 'Loops', exact: true })).toBeVisible();
+      await expect(toast).toBeHidden();
+      await expectGuardedWorker(page, 'active');
+      expectGuardedApply(messages, page, 2);
+      expect(navigation).toHaveLength(1);
+    },
+    async () => {
+      if (!dirty.isClosed()) await dirty.close();
+      await control(request, '/worker/reset');
+    },
+  );
+});
+
+// Controls for bodyThenCleanup (#555). Owned request contexts stand in for torn-down fixtures, so
+// the errors are Playwright's own: one disposed without a reason, as the runner disposes
+// `request`, and one with a reason, as it closes the page's context. Playwright rejects a later
+// call there with the same TargetClosedError, carrying that reason, that a pending page wait
+// receives. Each reset goes to a disposed context and never reaches the E2E server.
+const cleanupDiagnostics = () =>
+  test.info().attachments.filter((attachment) => attachment.name === cleanupDiagnostic);
+
+test('guarded-update-error-precedence: a body error stays primary when cleanup fails after teardown', async ({
+  playwright,
+}) => {
+  const ownedRequest = await playwright.request.newContext();
+  const bodyRequest = await playwright.request.newContext();
+  await ownedRequest.dispose();
+  await bodyRequest.dispose({ reason: 'guarded-update-error-precedence teardown' });
+  const steps: string[] = [];
+  let primary: unknown;
+  let primaryStack: string | undefined;
+  let secondary: unknown;
+  const rejection = await bodyThenCleanup(
+    async () => {
+      steps.push('body');
+      try {
+        await bodyRequest.get('/app/loops');
+      } catch (error) {
+        primary = error;
+        primaryStack = error instanceof Error ? error.stack : undefined;
+        throw error;
+      }
+    },
+    async () => {
+      steps.push('cleanup');
+      try {
+        await control(ownedRequest, '/worker/reset');
+      } catch (error) {
+        secondary = error;
+        throw error;
+      }
+    },
+  ).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  expect(steps).toEqual(['body', 'cleanup']);
+  expect(primary).toBeInstanceOf(Error);
+  expect(rejection).toBe(primary);
+  expect(rejection).toHaveProperty('stack', primaryStack);
+  expect(rejection).toHaveProperty(
+    'message',
+    'apiRequestContext.get: guarded-update-error-precedence teardown',
+  );
+  expect(secondary).toBeInstanceOf(Error);
+  expect(secondary).not.toBe(primary);
+  const secondaryMessage = (secondary as Error).message.split('\n')[0]!;
+  expect(secondaryMessage).toMatch(/^apiRequestContext\.post: /);
+  const diagnostics = cleanupDiagnostics();
+  expect(diagnostics).toHaveLength(1);
+  expect(diagnostics[0]!.contentType).toBe('text/plain');
+  expect(diagnostics[0]!.body?.toString()).toContain(secondaryMessage);
+  expect(test.info().errors).toHaveLength(0);
+});
+
+test('guarded-update-error-precedence: a body error is unchanged when cleanup succeeds', async () => {
+  const steps: string[] = [];
+  const primary = new Error('guarded-update-error-precedence body');
+  const primaryStack = primary.stack;
+  await expect(
+    bodyThenCleanup(
+      () => {
+        steps.push('body');
+        return Promise.reject(primary);
+      },
+      () => {
+        steps.push('cleanup');
+        return Promise.resolve();
+      },
+    ),
+  ).rejects.toBe(primary);
+  expect(primary.stack).toBe(primaryStack);
+  expect(steps).toEqual(['body', 'cleanup']);
+  expect(cleanupDiagnostics()).toHaveLength(0);
+});
+
+test('guarded-update-error-precedence: a cleanup error fails a passing body', async ({
+  playwright,
+}) => {
+  const ownedRequest = await playwright.request.newContext();
+  await ownedRequest.dispose();
+  const steps: string[] = [];
+  let secondary: unknown;
+  const rejection = await bodyThenCleanup(
+    () => {
+      steps.push('body');
+      return Promise.resolve();
+    },
+    async () => {
+      steps.push('cleanup');
+      try {
+        await control(ownedRequest, '/worker/reset');
+      } catch (error) {
+        secondary = error;
+        throw error;
+      }
+    },
+  ).then(
+    () => undefined,
+    (error: unknown) => error,
+  );
+  expect(steps).toEqual(['body', 'cleanup']);
+  expect(secondary).toBeInstanceOf(Error);
+  expect(rejection).toBe(secondary);
+  expect(cleanupDiagnostics()).toHaveLength(0);
+});
+
+test('guarded-update-error-precedence: a passing body and cleanup pass', async () => {
+  const steps: string[] = [];
+  await expect(
+    bodyThenCleanup(
+      () => {
+        steps.push('body');
+        return Promise.resolve();
+      },
+      () => {
+        steps.push('cleanup');
+        return Promise.resolve();
+      },
+    ),
+  ).resolves.toBeUndefined();
+  expect(steps).toEqual(['body', 'cleanup']);
+  expect(cleanupDiagnostics()).toHaveLength(0);
 });
 
 test('a legacy active worker requires all app windows to close before the guarded update activates', async ({

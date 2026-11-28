@@ -1,0 +1,295 @@
+FAIL (the maintained installer selection fails on every venue at the #498 reinstall subtest, a P2 test defect; the #566/#544 headless native arm passes; #499 link cases are venue-limited locally; CFAPI not run)
+
+# W2 independent native QA: integrated Windows launcher candidate
+
+QA agent: Claude Opus 5.5 (xhigh), independent of the author and the integrator. Brief
+`BRIEF-W2-windows-native-qa.md`, `COMMON-RULES.md` and `RQ-TEMPLATE.md` (phases 2 and 3).
+Contract: `warm-566-544-independent-qa-preparation-01/INDEPENDENT-QA-CONTRACT.md` (native headless
+arm only) and `warm-566-independent-qa-runner-preparation-01/NATIVE-QA-BRIEF.md`.
+Window: 2026-11-26 04:09Z to 04:41Z. A usage-limit interruption followed. The run resumed at
+07:32Z and finished at 09:19Z, after installer run 2. No completed selection was repeated after
+the interruption.
+Nothing was committed and no source was modified. All paths below are relative to this folder
+unless stated otherwise.
+
+## 1. Binding (task 1)
+
+| Item | Value |
+| --- | --- |
+| Worktree / branch | `G:/ggq/gg-followups-20261124/GraphGoblin`, `codex/gg-followups-20261124` (sparse: `/*`, `!/docs/qa/`) |
+| HEAD | `9f11b6e6bf0f7bff1e3674ad1edfe17a8fdf682d`, parent `ac007e38` (the brief's HEAD). The diff `ac007e38..9f11b6e6` is `docs/10-testing-and-quality.md` +25 only: the docs-only commit the brief allowed for. PR #589 has the same head. |
+| `git status` | Clean before and after every run (`raw/*/meta.json`: `statusPorcelain` empty, HEAD unchanged) |
+| Built API | `apps/api/dist`: 354 files, tree digest `0a00c318…7862`. `tsc -b tsconfig.build.json --dry --verbose` reports the api project and all 6 referenced packages "up to date" (`raw/verify-api-dist-tsc-dry/`). `main.js` `77340d74…`, `windows-log/guard.js` `dab82269…`, `data-dir-lock.js` `8603e0ca…` |
+| Built identity helper | `apps/api/dist/instance-identity.js` `3877c553…` (full hashes in `BIND.json`) |
+| Built web | `apps/web/dist`: 28 files, tree digest `690bddfb…25a0`. `index.html` `7b04fab7…` was written 03:53:08Z (W1 build); no file under `apps/web/src` is newer |
+| Launcher sources | `Launcher.cs` `283b8f2c…c167`, `NativeChecks.cs` `76fde70b…c47b` (same as W1). `install-windows-launcher.ps1` `22cb48ac…`. `windows-launcher.acceptance.mjs` `a523d999…` |
+| Compiled launchers | The suites compile their own (csc output is not deterministic, so hashes differ from W1's `native-compile/outputs.sha256`). Readiness fixture `GraphGoblin.exe` `f4ff0935…f4f1`, `NativeChecks.exe` `917e99de…e545`. Installer fixture `fixture.exe` `bad5280d…f7f8`. Installer-compiled, installed `GraphGoblin.exe` `5964ff97…f92` |
+| Runtime and tools | Node v22.23.4 (`node.exe` `dccc52de…`), pnpm 12.8.1, csc (Framework64 v4.0.30319) `eca02e6b…`, Windows PowerShell 5.1.26100.9818, Windows 10.0.26300.9974 |
+| Host prerequisites | `whoami /priv` lists no SeCreateSymbolicLinkPrivilege. `AppModelUnlock\AllowDevelopmentWithoutDevLicense` is absent (Developer Mode off). No host setting was changed. |
+
+## 2. Environment and safety
+
+- **Wrapper.** `scripts/run_selection.py` runs each selection once, with stdout and stderr captured
+  in full to `raw/<label>/`. It does not retry.
+- **Inherited environment.** Names matching a case-insensitive deny list were removed. Names
+  removed (values never recorded): `AZURE_OPENAI_*` (5), `CLAUDECODE`, `CLAUDE_*` (9),
+  `GITHUB_PAT`, `IDENTITY_ENDPOINT`, `IMDS_ENDPOINT`, `INTELLIGENCEHUB_DBCONNECTIONSTRING`,
+  `JEV_API_KEY`. No `GG_*` was inherited, and the wrapper asserts none survives. `CI` is unset,
+  so the CI evidence writer stays off.
+- **Scoped locations.** `TEMP`/`TMP`, `XDG_*` and the npm cache point under
+  `G:/ggq/tmp/w2-windows-native-qa/runs/<label>/`. Node 22.23.4 is first on `PATH`.
+- **Provider-free gateways.** Every real gateway the suite starts is provider-free: the suite's
+  `configuration()` and `manualGateway()` call `assertProviderFree` (`GG_OLLAMA_ENABLED=false`, one
+  `GG_*` spelling). The launch digest projects `ollamaEnabled`
+  (`apps/api/src/instance-identity.ts:126`). So each passing `health().launch ===
+  Enrollment.Launch` assertion also attests that the running gateway's effective setting equals
+  the enrolled `false`. This is an inference from the digest projection; I did not read any
+  gateway's in-process value.
+- **Ports.** The suite pool is 4830-4849 (default `GG_TEST_PORT_START`). That range is outside
+  every Windows excluded range (`BIND.json`). There were no listeners on 4747, 4748, 7443, 11434
+  or the pool before or after any run. The installer default-discovery subtest writes
+  `Port: 4747` into a fixture config and derives an app ID from it; it never connects to or binds
+  that port (suite comment and source).
+- **Fixture location and residue.** The suite places its fixtures in the worktree's git-ignored
+  `.tmp/` (on G:), not in TEMP. This is maintained suite behaviour. New fixture directories:
+  `.tmp/windows-launcher-GOhBxT` (readiness), `.tmp/windows-launcher-installer-4zCR3C` (run 1) and
+  `.tmp/windows-launcher-installer-mrD1on` (run 2). The suite does not remove them; I left them for the orchestrator. No new
+  `%SystemDrive%` residue appeared.
+- **Process settlement.** After each run, no process command line named my fixtures. The only
+  leftovers were my own: `tail.exe` processes from expired log monitors, and two unacquired
+  run-2 lock waiters, stopped and replaced while A4 held the lock (`raw/SEQUENCE-2.log`). I
+  stopped each one after verifying its exact command line and creation time. Nothing was killed by name, and no host permission, owner shortcut, store,
+  browser or service was touched.
+- **Heavy-suite lock.** Held 04:35:18Z to 04:40:32Z for sequence 1 (`raw/SEQUENCE-1.log`) and
+  09:17:56Z to 09:19:19Z for run 2 (`raw/SEQUENCE-2.log`). It was created and removed by W2 only. I waited for
+  RQ-538 and then B7 rather than removing their locks.
+
+## 3. Native headless arm: the four contract selections, once each (task 2)
+
+| # | Command (exact contract argv) | Result | Raw |
+| --- | --- | --- | --- |
+| 1 | `pnpm.cmd --filter @graphgoblin/api exec vitest run src/instance-identity.test.ts` | exit 0, 1 file, **22/22 passed**, 8.8 s. The default reporter prints counts only, not test names. | `raw/1-api-identity/` |
+| 2 | `pnpm.cmd --filter @graphgoblin/tooling exec vitest run launcher-identity.test.mjs` | exit 0, 1 file, **2/2 passed**, 41.1 s. The file has exactly two `it` blocks, including the #494 wrapper-entry check. | `raw/2-launcher-identity/` |
+| 3 | `pnpm.cmd exec node --test --test-name-pattern=native.Windows.launcher.readiness tooling/scripts/windows-launcher.acceptance.mjs` | exit 0, TAP **20/20 ok** (parent plus 19 subtests), 0 skipped or cancelled, 194.1 s within the 420 s parent bound. All 20 titles required by `COMMANDS.json` `native-readiness.tapRule` are present and ok, and the required marker `noAttemptGate: "witnessed"` is present. | `raw/3-native-readiness/` (`tap-qualified.json`) |
+| 4 | `pnpm.cmd exec node --test --test-name-pattern=Windows.PowerShell tooling/scripts/windows-launcher.acceptance.mjs` (run 1) | exit 1, TAP 10 tests: **6 ok, 4 not ok**, 67.5 s. See below. | `raw/4-windows-powershell-run1/` |
+
+### #544 calibration (selection 3): all contract requirements observed
+
+From the `windows-launcher-active-process-limit` record (`raw/3-native-readiness/tap-qualified.json`):
+
+1. **Compatible control.** The control's owned outer job has no limit: flags `0x2000`
+   (kill-on-close), active limit 0. It was held for the measurement. The control click exited 0,
+   quiet, with 0 denials and 11 admitted processes (launcher, helpers, gateway). The test also
+   asserted the gateway's PID, creation identity, image, command line and both lease records
+   (`ownedAliasGateway`), plus an unrelated owned sibling.
+2. **Quota job and cold refusal.**
+   - The quota job reads back flags `0x2008` with **active limit 3**. Setup holds exactly the
+     fixture and its sibling.
+   - **Setup sensitivity probe:** the filler was admitted, giving a full slot of 3. Plain and
+     `JOB_LIST` creation were both refused with error 1816 (`refused:1816`). The fenced observer
+     reported 2 denials.
+   - **Cold click:** exit 1, stderr "Windows could not start an isolated launcher check…No gateway
+     was started.". The observer reported **denied 1**, and only the launcher PID was admitted.
+     The test asserted the cold port was unbound and the cold DataDir absent. `calibration:
+     "observed"`.
+3. **Warm click and settlement.**
+   - The warm click, under the same job and observer, exited 0 with empty stdout and stderr,
+     **denied 0**, and only the launcher PID admitted.
+   - The test asserted the same health (PID, identity and launch), the same lease bytes and the
+     same gateway owner afterwards.
+   - **Final probe:** denial still observed (2). The sibling survived.
+   - **Release:** `drained-pid-listener-leases`. The control was released explicitly
+     (`code 0`, sibling alive and settled).
+   - `noAttemptGate: "witnessed"`, no `firstFailure`.
+
+### Installer run 1 (selection 4): failures recorded as they occurred
+
+| Subtest | Result | First failure |
+| --- | --- | --- |
+| public first install and same-path reinstall persist changed settings and every shortcut | **not ok** | `ERR_ASSERTION` at `acceptance.mjs:1434`: the cross-install equality differs only in `Enrollment.Inputs`/`Launch`. A test defect (`REVIEW.md` F1), reproduced by hosted CI at the same head |
+| a later output held with read-only sharing restores every previous file | ok | |
+| long staging paths refuse compilation with InstallDir guidance and keep installed files | ok | |
+| a non-resource compiler failure keeps the generic redacted refusal | ok | |
+| zero-argument defaults select the Chrome Apps source and publish separate Desktop and Programs links | ok | |
+| a Desktop-only default source collides with the Desktop output and keeps sentinels | ok | |
+| without a default source no destination or stage is published | ok | |
+| a PWA source or existing output observed as a reparse point is refused before its digest | **not ok** | `EPERM: operation not permitted, symlink` at link creation, 2.3 ms, before any installer call. **Failed venue prerequisite**, not a product result, never a pass or a skip |
+| the late source check re-observes the original selected lexical leaf as a link to the same target | **not ok** | `EPERM … symlink` at link creation, 4.4 ms. Failed venue prerequisite |
+| (parent) Windows PowerShell 5.1 installer validates before replacing native launcher files | **not ok** | `subtestsFailed` (3). The parent body itself passed: the first install, enrollment shape, credential refusals and the final gateway start all completed (`ensure-gateway` exit 0) |
+
+## 4. Installer run 2 with only the link-EPERM subtests skipped (task 4)
+
+### Command and venue decision
+
+The command is the same as run 1 plus exactly two Node 22 `--test-skip-pattern` arguments. They
+name the only subtests whose first failure in run 1 was EPERM at link creation:
+
+- `a PWA source or existing output observed as a reparse point is refused before its digest`
+- `the late source check re-observes the original selected lexical leaf as a link to the same target`
+
+This is the orchestrator's venue decision. docs/10 (`9f11b6e6`) says a skip is never a pass and
+never a substitute for the link cases, so **this run is supplementary native evidence for the
+other subtests only**. Run 1 remains the record for the installer selection.
+
+**Verifying the skip.** I first checked, on a throwaway test file of my own, that a multi-word
+skip pattern passes intact through `pnpm.cmd`. In Node 22, a skip-pattern match omits the test
+from the TAP entirely; it is not reported as `skipped`. The run-2 TAP contains neither link title
+(0 matches).
+
+### Result
+
+Lock 09:17:56Z to 09:19:19Z. Exit 1. TAP 8 tests: **6 ok, 2 not ok**, 81.8 s within the 120 s
+parent bound (`raw/5-windows-powershell-run2-link-subtests-skipped/`).
+
+| Subtest | Run 1 | Run 2 |
+| --- | --- | --- |
+| public first install and same-path reinstall persist changed settings and every shortcut | not ok (F1) | **not ok (F1 again):** the same assertion, with only `Enrollment.Inputs`/`Launch` differing (`f6902087…`/`3a4504d7…` vs `5ab0c686…`/`fd3ead9a…`) |
+| a later output held with read-only sharing restores every previous file | ok | ok |
+| long staging paths refuse compilation with InstallDir guidance and keep installed files | ok | ok |
+| a non-resource compiler failure keeps the generic redacted refusal | ok | ok |
+| zero-argument defaults select the Chrome Apps source and publish separate Desktop and Programs links | ok | ok |
+| a Desktop-only default source collides with the Desktop output and keeps sentinels | ok | ok |
+| without a default source no destination or stage is published | ok | ok |
+| a PWA source or existing output observed as a reparse point… | not ok (EPERM, venue) | excluded by skip pattern |
+| the late source check re-observes… | not ok (EPERM, venue) | excluded by skip pattern |
+| (parent) | not ok (3 failed) | not ok (1 failed). The parent body passed again, including the final `ensure-gateway` exit 0 |
+
+The reinstall result in run 2 is the brief-mandated second run, not a re-run made to replace
+run 1's record. Both observations are kept.
+
+## 5. Supplementary #536 check (not a maintained selection)
+
+- **Method.** 240 native `--stage-shortcut` calls with the installer-compiled launcher and the
+  config from run 1's fixture (`installed space α`). Outputs went only to
+  `G:/ggq/tmp/w2-windows-native-qa/536-stage/`. Each shortcut was read back with
+  `--read-shortcut-id` and `--inspect-shortcut`. The script is `scripts/stage_shortcut_536.py`.
+- **Result.** **240/240 passed:** exit 0, empty stdout and stderr, AppUserModelID equal to the
+  config's `LauncherAppUserModelId`, and the expected target and arguments. Stage time ranged
+  140-781 ms (median 172).
+- **Negative controls.** A non-`.lnk` output and a relative output were both refused with
+  "Invalid staged shortcut or final launcher path." and no file was created
+  (`raw/6-stage-shortcut-536-x240/`).
+- **Limit.** The original diagnosis saw 1 failure in 80 at `bea0be1b`. If that rate still held,
+  0/240 would occur about 4.9% of the time ((79/80)^240). This result is consistent with the fix
+  but does not prove it, and the historical cause stays unresolved.
+- **Run 1 corroboration.** Every installer path that stages shortcuts completed shortcut
+  preparation without "Could not prepare a launcher shortcut."
+
+## 6. #566 startup and warm checks against the architecture (task 3)
+
+**Exercised by the selections run here:**
+
+| Contract/architecture check | Where | Result |
+| --- | --- | --- |
+| Installed identity protocol and configured target equality | API file (22 tests, including the golden vector and protocol decisions, per source titles); readiness "concurrent cold starts…" (`health.launch === Enrollment.Launch`, and `Enrollment.Inputs` equal to the suite's independent digest); installer parent (enrollment keys and shape, `Inputs` digest) | pass |
+| Expected inequality across protected settings and store/database retarget | readiness "wrong store and changed gateway settings…" (DataDir, `GG_REQUIRE_API_KEY`, `GG_DB_URL`); "same database under a different data directory…"; "a live gateway is refused after its relative database alias is retargeted (#566)"; API "changes the launch digest for store, database, API-key, serving roots and protocol" | pass |
+| Preserved full cold fingerprint with actual child PID | API protocol-2 byte and serialization tests; readiness cold start (lock-record PID equals the `/healthz` PID). The launcher's internal child-PID readiness comparison is observed only through its outcome | pass (outcome level) |
+| Same live PID in matching manual reuse | "a matching manual start is reused without a spawn (#566)" | pass |
+| Usable `/healthz` and `/app/` | every health assertion; "a definite missing web shell is refused before the startup locks, while ambiguity waits (#566)" (404/410 refused without locks; a hanging `/app/` waits and then refuses) | pass |
+| No startup-helper admission for warm reuse | #544 record above; "warm reuse needs no runtime, checkout files or startup mutex, and edits need re-enrollment (#566)" (runtime and checkout junctions removed, startup mutexes held, reuse under 10 s) | pass |
+| Safe mismatch and refusal | plain-health listener refused and kept alive; silent TCP listener never spawns; edits need re-enrollment; malformed ownership preserved; protected system PID untouched; matching and unknown identities preserve locks | pass |
+| Bounded transient re-probe | "an inconclusive warm probe is re-probed under the startup locks (#566)" (marker: 2 connections, 1 health probe, both closed) | pass |
+| Config replacement and deletion protection | "a configuration edited or removed during the lock wait is refused (#566)" | pass |
+| Deliberate drain and relaunch | "normal drain releases ownership and a shell shortcut cold start runs the launcher" (marker: PID 59872 → 26552) | pass |
+| Window route (actual evidence tier: native fixture HWND, not Chrome) | "native HWND COM relaunch command…", "cross-process HWND metadata survives stamper exit…" | pass |
+| Installer controls | installer selection (sections 3 and 4) | see per-issue table |
+
+**Not exercised by any selection run here (unexercised until a separate observation):**
+
+- **Real Chrome/PWA GUI behaviour:** shortcut and window deduplication of overlapping clicks,
+  foreground return of the same HWND, post-readiness browser refusal and its diagnostic, and the
+  PWA-only window mutex under real Chrome. The GUI arm is out of scope.
+- **Old gateway without the launch header** (cutover requires one deliberate stop): I found no
+  case in these selections.
+- **Draining or failed-shutdown gateway** reopened for observation, and a matched closing phase
+  leading to a bounded locked re-probe: I found no case in these selections.
+- **Equality across an actual in-place Node or build replacement.** Only different runtime and
+  checkout spellings (junctions) and the API projection tests cover this.
+- **Checkout-alias case** (junction and directory symlink, #493) and the **review1 selection**
+  (owned cleanup, cancellation, case-only target, Jev sentinel, expired window deadline). These
+  are outside the four contract selections. Hosted CI at the same head reports both ok (section 7);
+  that is a readback, not my execution.
+
+## 7. Hosted CI readback (supplementary, not executed by me)
+
+PR #589 run 45753412843 at `9f11b6e6`, job "Windows launcher": 50 tests, 48 pass, 2 fail. The
+failures are the same #498 reinstall subtest (same `Enrollment.Inputs`/`Launch` difference) and
+its parent. Copy: `raw/ci-hosted-run45753412843-windows-job/job-139686296647.log` (SHA-256
+`8e62dcb0…0bd7`).
+
+The same job reports the following ok on hosted `windows-latest`:
+
+- both #499 link subtests;
+- the readiness parent and its 19 subtests, including #544 with `calibration: "observed"` and
+  `noAttemptGate: "witnessed"` on the hosted outer-job policy;
+- the Junction and SymbolicLink checkout cases;
+- the lock-contention case;
+- the bounded-logs case;
+- the review1 selection.
+
+The other six jobs (Browser, Coverage, Gates, Repository checks, Template image, macOS launcher)
+passed.
+
+## 8. #499 Cloud Files run: skipped, because the procedure is not clear enough to repeat under a new folder
+
+The brief allowed a CFAPI run only if the existing tooling has a clear register/unregister
+procedure. It does not, for reuse under a new folder:
+
+- **Compiled-in binding.** The provider's root path, nonce, provider GUID and the root's NTFS
+  file indices are compiled into `cf499.exe` (`public-install-matrix-499/OwnedRoot.h`). A new
+  folder needs a new `OwnedRoot.h` and a Visual Studio and SDK rebuild. No retained script
+  prepares a new root: `run-fixture.py` has no prepare verb, and `run-matrix.py` only reads
+  `PREPARED-MATRIX-ROOT.json`.
+- **Writes into historical evidence.** The controllers write journals and outputs into their own
+  historical evidence folders, which I may not modify. They also bind to source `631d16e3` and a
+  frozen manifest.
+- **Self-authorization.** Activation requires an exact coordinator approval file, which I would
+  have to write myself.
+- **Unbounded failure path.** The first qualification's cleanup failed and needed a separately
+  reviewed recovery. Its failure path is "retain and adjudicate", which I cannot bound in this
+  brief.
+
+Repeating it would mean authoring new provider tooling, not reusing a procedure. So the following
+remain **not established** on this candidate:
+
+- placeholder non-hydration under the new early source check;
+- refusal of a placeholder source or output, with no stage left;
+- the reparse and attribute bits seen by Windows PowerShell 5.1 and by the bundled pwsh 7
+  (interim review F2).
+
+## 9. Per-issue table
+
+| Issue | Verdict here | Native evidence (my execution) | Limits / open |
+| --- | --- | --- | --- |
+| #566 warm launcher | **PASS WITH LIMITS** (headless arm) | API identity 22/22; launcher identity 2/2; readiness 20/20 with every required title. Section 6 maps it to the architecture. | GUI/PWA arm not run (out of scope). Header-less-gateway cutover, draining or closing-phase reopen, and real in-place build replacement are unexercised. Child-PID readiness is observed only through its outcome. |
+| #544 maintained containment regression | **PASS** | Calibrated, sensitive witness under active limit 3: cold refusal denied 1, warm reuse denied 0 with only the launcher admitted, final probe denied 2. Same gateway, leases and sibling preserved; owned release completed. | Acceptance criterion 1 asks for the hosted outer-job policy. Hosted CI at the same head shows `calibration: observed`, `noAttemptGate: witnessed` (readback only). |
+| #498 reinstall, rollback and stage cleanup | **FAIL** | Rollback under a read-only sharing hold passed (both runs). Per-install assertions passed for both the warn and debug installs: persisted settings, links, AppUserModelID, unchanged source and aliases, empty store, no stage. | The cross-install equality fails on every venue (F1, test defect, reproduced by hosted CI). The pinned-shortcut publication assertion (`:1438`) never ran. |
+| #532 compiler path length | **PASS** | The long staging path refuses with `-InstallDir` guidance and keeps installed files; the non-resource compiler failure keeps the generic redacted refusal (both runs). | The short fresh and reinstall success controls are the per-install part of the F1 subtest. Those passed, but the subtest as a whole is not ok. |
+| #520 default shortcut discovery | **PASS** | All three default-discovery subtests ok in both runs: Chrome Apps source, Desktop-only collision, missing source. | Uses the suite's isolated folder resolver, not real Windows special-folder resolution (by design). |
+| #536 shortcut identity before the single save | **PASS WITH LIMITS** | Every installer path that stages shortcuts in both runs completed preparation. 240/240 native `--stage-shortcut` calls passed with AppUserModelID, target and argument readback; 2 negative controls refused. | No dedicated maintained regression. 0/240 is consistent with the fix but not proof: about a 4.9% chance under the old 1/80 rate. The historical cause is unresolved. |
+| #494 identity helper inert import | **PASS** | `launcher-identity.test.mjs` 2/2, including the real wrapper-entry import through a junction alias. | Raw output has counts only. The test's own scratch witness is removed by the test. |
+| #499 reparse-point and cloud-placeholder refusal | **INCOMPLETE** (local venue) | Both link subtests failed locally at link creation (EPERM, a venue prerequisite, not an installer result). | Hosted CI at the same head shows both ok (readback only). The CFAPI run was not performed (section 8), so placeholder refusal, non-hydration and the PS 5.1 vs pwsh 7 attribute view are not established. #499 stays "Part of". |
+
+## 10. Not established
+
+- **#498 pinned shortcut.** A passing #498 reinstall regression, and so the pinned-shortcut
+  publication check at `:1438`, is blocked by F1 until the test is corrected and re-run.
+- **#499 link subtests.** Not executed by me on a venue that can create file symbolic links. The
+  hosted CI result is a readback.
+- **#499 Cloud Files.** Placeholder refusal, non-hydration under the new early source check, and
+  no stage after refusal were not tested, and neither was the reparse and attribute view under
+  PS 5.1 versus the bundled pwsh 7 (interim review F2). A standard PowerShell 7 install is
+  absent from this host.
+- **#566 GUI/PWA arm:** real Chrome PWA install, window deduplication, foreground return, browser
+  refusal and its diagnostic, and the PWA-only window mutex.
+- **#566 architecture cases with no native case in these selections:** cutover from a header-less
+  old gateway, observation of a draining or failed-shutdown gateway, and equality across a real
+  Node or build replacement.
+- **Checkout-alias case (#493) and the review1 selection.** Not run here; hosted CI readback only.
+- **Gateway's effective `GG_OLLAMA_ENABLED`.** Not read from inside the gateway. It is inferred
+  from launch-digest equality.
+- **Per-test titles for the two vitest selections.** The contract commands use the default
+  reporter, which prints counts only.
+- **Hosted outer-job policy for #544 and full-suite hosted CI.** My own execution was local only.
+  The opposite-family GPT review, the Astra MAX final audit and owner acceptance are separate
+  gates.

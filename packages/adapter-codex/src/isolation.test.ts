@@ -1,12 +1,18 @@
+import { spawn, type ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { fileURLToPath } from 'node:url';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createTestEngine, singleNodeLoop } from '@graphgoblin/engine/testing';
-import type { CliResult, CliRunner } from './cli.js';
+import { runCli, type CliResult, type CliRunner } from './cli.js';
 import { CodexHarness } from './harness.js';
+import { configuredServers } from './isolation.js';
 import { CodexStructured } from './structured.js';
+
+// Observe the listing processes the adapter's own runner starts; the SDK spawns its turns itself.
+vi.mock('node:child_process', { spy: true });
 
 // Plugins inherit CLI configuration; other extensions stay isolated (ADR-0067). The real SDK spawns
 // `<codexBinary> mcp list --json` (the harness's listing) and `<codexBinary> exec ...` (the turn);
@@ -464,5 +470,184 @@ describe('the MCP listing before each turn', () => {
     const session = harness.start(request(directory), new AbortController().signal);
     await session.cancel();
     await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('settles the actual listing process and submits no turn when the run is cancelled during it (#506)', async () => {
+    const directory = await workspace();
+    const argv = join(directory, 'argv.json');
+    const hanging = fileURLToPath(new URL('./fixtures/readiness-cli.mjs', import.meta.url));
+    let listed!: (child: ChildProcess) => void;
+    const listing = new Promise<ChildProcess>((resolve) => {
+      listed = resolve;
+    });
+    const harness = new CodexHarness({
+      // A turn the SDK did submit would reach the argument-recording fake CLI.
+      codexBinary: process.execPath,
+      env: { ...inherited, NODE_OPTIONS: `--import=${preload}`, GG_FAKE_CODEX_ARGV: argv },
+      // The adapter's own runner lists, with the turn's signal, on a fake CLI that never answers.
+      cliRunner: (cli, args, timeoutMs, signal) => {
+        const spawned = vi.mocked(spawn).mock.results.length;
+        const result = runCli({ ...cli, prefix: [hanging, 'hang'] }, args, timeoutMs, signal);
+        const started = vi.mocked(spawn).mock.results[spawned];
+        if (started?.type === 'return') listed(started.value);
+        return result;
+      },
+    });
+    const session = harness.start(request(directory), new AbortController().signal);
+    const child = await listing;
+    // The fake has started listing.
+    await new Promise((resolve) => child.stderr?.once('data', resolve));
+    const closed = vi.fn();
+    const settled = vi.fn();
+    child.once('close', closed);
+    void session.result.then(settled, settled);
+    await session.cancel();
+    await expect(session.result).rejects.toMatchObject({ name: 'AbortError' });
+    // The listing process closed before the turn settled; nothing was submitted.
+    expect(closed).toHaveBeenCalledOnce();
+    expect(settled).toHaveBeenCalledOnce();
+    expect(closed.mock.invocationCallOrder[0]).toBeLessThan(settled.mock.invocationCallOrder[0]!);
+    expect(child.exitCode !== null || child.signalCode !== null).toBe(true);
+    expect(vi.mocked(spawn)).toHaveBeenCalledOnce();
+    const events: unknown[] = [];
+    for await (const event of session.events) events.push(event);
+    expect(events).toEqual([]);
+    expect(existsSync(argv)).toBe(false);
+  }, 30_000);
+
+  // #506: after its cleanup allowance the runner reports a listing process that did not confirm
+  // that it stopped. That outranks the listing's ordinary failure and the turn's cancellation. The
+  // controlled runner below supplies that result directly; it starts no process, so these cases
+  // check the adapter's mapping, not that any real process outlived its kill.
+  describe('when the listing process does not confirm that it stopped', () => {
+    const CANARY = 'C:/Users/canary-owner/.codex/private-canary';
+    const unconfirmed = (spawnError: string): CliResult => ({
+      code: null,
+      output: `WARNING: output-canary ${CANARY}\nError: failed to load configuration ${CANARY}`,
+      stdout: '[{"name":"stdout_canary"}]',
+      spawnError,
+      terminationUnconfirmed: true,
+    });
+    const notStopped = (first: string) =>
+      `Codex could not list the machine's MCP servers, so the turn did not start: the listing ${first} and its process did not confirm that it stopped; it may still be running.`;
+
+    /** The actual harness listing through `runner`; a submitted turn would reach the recording fake CLI. */
+    async function recordingHarness(runner: CliRunner) {
+      const directory = await workspace();
+      const argv = join(directory, 'argv.json');
+      const log = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() };
+      const calls: Parameters<CliRunner>[] = [];
+      const harness = new CodexHarness({
+        codexBinary: process.execPath,
+        env: { ...inherited, NODE_OPTIONS: `--import=${preload}`, GG_FAKE_CODEX_ARGV: argv },
+        logger: log,
+        cliRunner: (...args) => {
+          calls.push(args);
+          return runner(...args);
+        },
+      });
+      const session = harness.start(request(directory), new AbortController().signal);
+      return { argv, log, calls, session };
+    }
+
+    /** The turn reports `message` as unconfirmed termination, with nothing submitted or leaked. */
+    async function expectUnconfirmed(
+      { argv, log, calls, session }: Awaited<ReturnType<typeof recordingHarness>>,
+      message: string,
+    ) {
+      // The listing's own error says nothing was submitted (the `configuredServers` cases below).
+      // The harness's shared evidence fold reports every unconfirmed termination as delivery
+      // uncertain (docs/05); that mapping is the harness's, unchanged here.
+      const failure = {
+        code: 'HARNESS_TERMINATION_UNCONFIRMED',
+        message,
+        retriable: false,
+        submission: 'delivery-uncertain',
+      };
+      const error = await session.result.then(
+        () => undefined,
+        (reason: unknown) => reason,
+      );
+      expect(error).toMatchObject(failure);
+      const events: unknown[] = [];
+      for await (const event of session.events) events.push(event);
+      // No session and no submission marker: the SDK never started a turn.
+      expect(events).toEqual([{ type: 'error', ...failure }]);
+      expect(existsSync(argv)).toBe(false);
+      expect(calls).toHaveLength(1);
+      expect(calls[0]![1]).toEqual(LISTING);
+      expect(vi.mocked(spawn)).not.toHaveBeenCalled();
+      expect(log.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ code: 'HARNESS_TERMINATION_UNCONFIRMED', retriable: false }),
+        `codex turn failed: ${message}`,
+      );
+      // The fixed message carries none of the CLI's output, a path or the runner's own words.
+      const reported = [
+        (error as Error).message,
+        JSON.stringify(events),
+        JSON.stringify(log.warn.mock.calls),
+      ];
+      for (const text of reported) expect(text).not.toMatch(/canary|Users|EPERM/i);
+    }
+
+    it.each([
+      ['its deadline', 'timed out after 15000 ms', 'timed out after 15000 ms'],
+      ['an error of the started process', `spawn EPERM ${CANARY}`, 'failed'],
+      ['an error worded like a deadline', `timed out after 15000 ms at ${CANARY}`, 'failed'],
+    ] as const)(
+      'fails the turn as unconfirmed termination after %s, without starting it',
+      async (_case, spawnError, first) => {
+        const harness = await recordingHarness(() => Promise.resolve(unconfirmed(spawnError)));
+        await expectUnconfirmed(harness, notStopped(first));
+      },
+    );
+
+    it('fails a cancelled turn as unconfirmed termination rather than as cancelled', async () => {
+      const harness = await recordingHarness(
+        (_cli, _args, _timeoutMs, signal) =>
+          new Promise((resolve) =>
+            signal?.addEventListener(
+              'abort',
+              () => resolve(unconfirmed('The operation was aborted')),
+              { once: true },
+            ),
+          ),
+      );
+      // The listing is waiting on the turn's own signal when the turn is cancelled.
+      expect(harness.calls).toHaveLength(1);
+      expect(harness.calls[0]![3]?.aborted).toBe(false);
+      const cancelled = harness.session.cancel();
+      await expect(cancelled).rejects.toMatchObject({
+        code: 'HARNESS_TERMINATION_UNCONFIRMED',
+        message: notStopped('was cancelled'),
+      });
+      await expectUnconfirmed(harness, notStopped('was cancelled'));
+    });
+
+    it.each([
+      ['The operation was aborted', 'was cancelled'],
+      ['timed out after 250 ms', 'timed out after 250 ms'],
+      // Not this call's deadline, so not the runner's own words for it.
+      ['timed out after 15000 ms', 'failed'],
+      [`spawn EPERM ${CANARY}`, 'failed'],
+    ] as const)(
+      'refuses the listing after %j as non-retriable and before submission',
+      async (spawnError, first) => {
+        const run: CliRunner = () => Promise.resolve(unconfirmed(spawnError));
+        const listing = configuredServers(
+          { command: 'codex', prefix: [] },
+          run,
+          250,
+          undefined,
+          undefined,
+        );
+        await expect(listing).rejects.toMatchObject({
+          code: 'HARNESS_TERMINATION_UNCONFIRMED',
+          message: notStopped(first),
+          retriable: false,
+          submission: 'definitely-not-submitted',
+        });
+      },
+    );
   });
 });

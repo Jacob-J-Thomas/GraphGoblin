@@ -1,0 +1,99 @@
+# CHANGES REQUIRED
+
+The architecture is sound and should stay one bounded candidate. Five amendments are needed; each is marked **⚠**.
+
+## #527: bounded refusal, not lossless
+
+A lossless route is out of bounds. Two pieces of source block it:
+- RHF `cloneObject` writes `copy[key] = …` (index.esm.mjs 67–70), which drops an own `__proto__`.
+- `JsonSchemaSchema = z.record(...)` (common.ts 25) skips a top-level `__proto__` at the API.
+
+Fixing either needs a form-library or contract change, which the draft excludes.
+
+**Cause:** `entryValueRefusal` detects the loss (structure.tsx 838) but only returns schema issues. The Variables schema accepts the value, so it is taken and the member is dropped silently.
+
+**Design:**
+- Append `?? lossRefusal(value)` to both return branches, after the schema messages, so the Codex #429 text is unchanged.
+- `lossRefusal` walks own keys with `Object.keys`, `Object.hasOwn` and descriptors, never assigning, and compares against `stripUnset` output. It lists up to three diverging paths, then "; and N more":
+  - `properties.__proto__: this member name can't be saved. Rename or remove it.`
+  - Any other divergence, such as the unset sentinel string: `<path>: this value can't be saved as written. Change or remove it.`
+- Reuse the existing held path: no `onChange`, a `HelpText` with tone bad under Value, an invalid contenteditable, and the existing Discard button.
+- ⚠ Discard unmounts its own button, so focus drops to the page body. Call the existing `focusEditor()` afterwards.
+
+## #521: nested member feedback
+
+**Design:**
+- SchemaForm's `Issue` keeps the original `segments` beside `path`.
+- RecordField uses the record's schema-key prefix (n segments), which is dot-free for every current record. An issue belongs to a row's Value when `String(segments[n]) === key` and it has more than n+1 segments.
+- The row's Value gets a scoped `FieldIssuesContext` provider mapping `path` to a member message. An exact Value issue still wins, and the existing Key suppression and #429 order are unchanged.
+- This reuses Row's `FieldError`, placed below the control, plus `aria-describedby` and `aria-invalid` on the contenteditable.
+- **Copy:** `features.web_search: <schema message>`, member-relative and joined with `; `, at most three.
+- Held text still renders only through JsonText.
+
+**⚠ Focus:** `focusField` walks string prefixes. An issue at `[a,b,c]` with a sibling key `a.b` therefore focuses the wrong row.
+- Add `data-member-issues` (a JSON array of joined paths) to the Value wrapper.
+- `focusIssuePath` checks it after `data-key-issue` and before the prefix fallback, comparing strings only.
+
+## #522: passive diagnostic on opening JSON
+
+**Design:**
+- In JsonText, when the editor is explicit and `ownError === undefined`, compute `passive = validateText(text, schema, validateValue)`. Memoize it on `validationVersion`.
+- Render `shown = error ?? passive.error` in the same `HelpText`, with the same id, without Discard.
+- Drive `invalid` and Apply's `disabled` from `shown`.
+- Keep `error`, the report effect (194–205) and `onHeldChange` held-only. Opening then creates no parse-error entry, history step, revision or header warning, and **Use structured editor** stays available.
+
+**⚠ Ordering bug:** `onChange` checks for an error before checking sameness (245–247). Reformatting an invalid section therefore becomes held text, which contradicts the docs. Parse first; if the result is `sameJson` with the section, call `fail(next, undefined)` and let the passive diagnostic show.
+
+**Cancel:** behaviour is unchanged. It restores the formatted text, the passive rule stays visible, and focus stays on Cancel.
+
+## #526: header status
+
+**Design:** count `fieldErrors` entries across scopes and pass `held` to EditorToolbar. The existing `save-state` span becomes `flex-wrap gap-x-3 gap-y-1` with two `whitespace-nowrap` segments:
+1. **Complete draft:** the existing label and icon. When the state is `saved` or `idle` and `held > 0`, show check-circle with **Draft saved**.
+2. **When held:** the `alert` icon in warn colour, then **1 field kept in this window only** or **N fields kept in this window only**, in `text-sm text-muted`.
+
+**Layout and focus:** the segments wrap between each other on narrow headers, and the Undo/Redo slot is unaffected. Add `tabIndex={-1}` so the focus fallback reads both segments.
+
+**⚠ Announcement:** the toolbar is inert under the node dialog, so a live region placed there would be silent.
+- Use one visually hidden `role="status"` beside the NodeEditorDialog mount, outside the inert frame.
+- Announce only changes between none and some held fields, after one second of stability:
+  - **1 field kept in this window only. Complete or discard it to save it.**
+  - **Unfinished input cleared.**
+- Add no dialog notice.
+
+**⚠ Verification gap:** the draft asks for an announcement but has no check that it is audible with the dialog open (see the last blocker below).
+
+## Verification
+
+**#527**
+- Write a failing mounted Variables test on main first. It deep-compares the whole entered object with the form output.
+- After the fix, confirm the refusal is shown and the request log contains no edit.
+- Correct the member to `"proto"`, then deep-compare the whole value with siblings across `onChange`, the request body and the reloaded Value.
+- Cover the nested case, the unchanged Codex `__proto__` message and incomplete text.
+
+**#521**
+- Use rows `a` (invalid nested member) and `a.b` (valid).
+- Feedback and accessibility attributes appear on `a` only, and the issue click focuses `a`.
+- Correcting the member clears the feedback and saves.
+- Key `a`, an unrelated Value, the top-level refused Key, group counts and the saved values are unchanged.
+
+**#522**
+- Open from valid and invalid configurations.
+- Opening adds no store entry, history step or revision.
+- A sibling fix clears the passive diagnostic without a keystroke.
+- Apply still rechecks.
+- Cover remount and dialog hide.
+- A held descendant still refuses opening.
+
+**#526**
+- Test in Loop settings and the node dialog.
+- A neighbouring edit's PUT excludes the held text, and reload shows no held segment.
+- With the device unavailable, the header shows **Kept in this window only** plus the held segment.
+- Correction, discard and undo each clear the segment.
+- Offline, conflict and name-conflict copy is unchanged.
+- Check a 320 px width with a 120-character name.
+
+## Remaining blockers
+
+- **#527 reproduction:** the implementation is gated on the failing test on main. It also depends on `sameJson` comparing own keys. Decisive check: `sameJson(stripUnset(JSON.parse('{"__proto__":{}}')), JSON.parse('{"__proto__":{}}'))` must be `false`.
+- **#526 inert boundary:** the boundary is not in the supplied source. Decisive check: with the dialog open, the accessibility tree contains the status region and it announces once.

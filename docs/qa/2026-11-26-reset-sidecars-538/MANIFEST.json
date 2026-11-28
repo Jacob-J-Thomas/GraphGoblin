@@ -1,0 +1,303 @@
+{
+  "issue": 538,
+  "source": {
+    "branch": "codex/gg-fu-reset-sidecars-538-20261125",
+    "base": "14ea69842025c627f704b436727385d78e08768c",
+    "implementation": "230640ae579e12c511894a9a586d82ce6d682202",
+    "reviewFixes": "7e8169571b3acec899aa1f509f01d64922320f76",
+    "mergeOfMain": "a93580d87119de2fdf7a2ff622b66ed054cb44a0",
+    "mainMerged": "4e1037c9e9922ffa27237fe79850403b6b54fc70",
+    "changedFilesSha256AtMerge": {
+      "CHANGELOG.md": "0c538f30341187cac8712112e2d2991c58fcd0f45c928a505b3ef2007058dced",
+      "apps/api/src/reset/reset-sidecars.test.ts": "f525ed2f9e1f669408949072e0d13f7d0102e6aeeacce158f8f51f2aa885eaf1",
+      "apps/api/src/reset/reset.ts": "581b8eee7b412a5166d61883c2ae4c08bad44248ef98495a73d6f985c047fd42",
+      "docs/decisions/ADR-0042-explicit-resets-replace-conversion.md": "b71b8b57a9db4f85ec578b566409af58ed4d4ecc220d90b3e7dc88be4cfebe04",
+      "docs/guide/08-offline-upgrade.md": "ec11ef0ca122ed89780aa5c57cf5e222171f4a963a73c3d21ee44b26f615e045"
+    }
+  },
+  "nativeVerifierInputsSha256": {
+    "AUTHOR-CONTRACT.json": "a179da9204bf6ec04859ec7cb2616e4a5070a8550fa2b0a5da4291d787194fcd",
+    "ROOT-ADMISSION.json": "7de338aa579fcee869552f77714b0a6bcbd233c6169cbbdacf1a31759e5c3e68",
+    "verify-native-candidate.mjs (original in author-preparation-02)": "cd49e1af1684c2d0bebb1ea3bfb1d458d1a26b289dbc13790c3d117af6d33989"
+  },
+  "members": [
+    {
+      "path": ".gitattributes",
+      "bytes": 30,
+      "sha256": "ade2a2a7ab909c0b6e4136eb1912a0c1a9082f3158056ba71046a8cb8ae4635a",
+      "tier": "packet attributes"
+    },
+    {
+      "path": "README.md",
+      "bytes": 11780,
+      "sha256": "378e4e974fc5e0345ede659d2b33b7cc42ad69cc9422f86ee1f690291b36c330",
+      "tier": "packet page"
+    },
+    {
+      "path": "raw/author-followup/followup-focused-reset-run1.log.txt",
+      "bytes": 506,
+      "sha256": "93c7fa7958f8c7ce4c70e4e05a7e8bb5904e4f6dbe6f54dcffa4a3b02d4a1cf3",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/followup-focused-reset-run1.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author-followup/followup-focused-reset-run2.log.txt",
+      "bytes": 506,
+      "sha256": "0da4185079447c52688f78b2962fe88672af16a863e75da4ec3594f150537064",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/followup-focused-reset-run2.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author-followup/followup-gates.log.txt",
+      "bytes": 175,
+      "sha256": "a661ac1f81e2726951b835fcab8fd504f92f1b6a2b1a7b25c95bcad222233393",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/followup-gates.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author-followup/post-merge-gates.log.txt",
+      "bytes": 521,
+      "sha256": "77f1cb9d45ba816ec324cb4d04664dc2bba85736aad1fdd292e6b92b05b63c04",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/post-merge-gates.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/AUTHOR-REPORT.md.txt",
+      "bytes": 16300,
+      "sha256": "de95ee15468b8b1b64d29c8c590a1e36f3c530dcc9c6bc52eb2c904a10e86f43",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/AUTHOR-REPORT.md",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/NATIVE-CANDIDATE-RESULT.json",
+      "bytes": 25618,
+      "sha256": "1f7fa1fd38c032412118098394963c0b79cd44cf1a9042f9cdda9092df49e2a1",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/native-author-evidence-01/NATIVE-CANDIDATE-RESULT.json",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/coverage-api.log.txt",
+      "bytes": 232418,
+      "sha256": "967b5f5b9b4c18bbef75f6e1ca381f4defd5bdac0bfc4e9b9fcd3aedf800c52b",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/coverage-api.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/coverage-summary.api.json",
+      "bytes": 27113,
+      "sha256": "734c100f6d525c1134812bc65e8f67cd1cf7c6c6e4a467fd23b8c252bc28f3dd",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/coverage-summary.api.json",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/final-gates.log.txt",
+      "bytes": 342,
+      "sha256": "2ae716d21bf5ddd6e202e0b6651bc54c9ce4170d6f4967ccd6a1f77eb7fe5526",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/final-gates.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/native-verifier.exit.txt",
+      "bytes": 7,
+      "sha256": "2e49c847bca922700d59ef91af1fd8505927b737d97c83e87661ce9fac1ad41d",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/native-verifier.exit.txt",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/native-verifier.stderr.log.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/native-verifier.stderr.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/native-verifier.stdout.log.txt",
+      "bytes": 121,
+      "sha256": "1a7e4ede887ccb305d4f02d2bc1ae3649ddf191cfd3d85faf9d4b55298cb60f3",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/native-verifier.stdout.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/author/verify-native-candidate.mjs",
+      "bytes": 7914,
+      "sha256": "cd49e1af1684c2d0bebb1ea3bfb1d458d1a26b289dbc13790c3d117af6d33989",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-author-02/verify-native-candidate.mjs",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/DIAG-D1-loop-alone.json",
+      "bytes": 183,
+      "sha256": "2f8773bc56663d60c27bc6cfb43766376e415e8b2dd35d4a0eab4fe644494cce",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/DIAG-D1-loop-alone.json",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/DIAG-D2-loop-with-reader-churn.json",
+      "bytes": 186,
+      "sha256": "5d80d9206d7748069cd986b54af44aeb95aef1ac1a78a9444ab98d5971a9fde1",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/DIAG-D2-loop-with-reader-churn.json",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/FILESYSTEM-CAPABILITIES.txt",
+      "bytes": 1556,
+      "sha256": "33989639a10639a7c60f170ffd4592a3703daac12987aa756ea32d540ebfd365",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/FILESYSTEM-CAPABILITIES.txt",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/QA-CLI-RESULT.json",
+      "bytes": 597175,
+      "sha256": "bb221a64b0f2f100f71992a148e78beae8b15178aa70333c4dc3f618ba40964a",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/QA-CLI-RESULT.json",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/QA-CONTROLLED-RESULT.json",
+      "bytes": 23455,
+      "sha256": "6f7a957daf9f96a74ce3239e2b58c73c0efe89c32cb896b4049651d0237baa4a",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/QA-CONTROLLED-RESULT.json",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/QA-REPORT.md.txt",
+      "bytes": 17611,
+      "sha256": "c664a08e7664b5b4301330575416b29a16e5e077b289ed6cb90a98d3cd76a87d",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/QA-REPORT.md",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/REVIEW.md.txt",
+      "bytes": 9847,
+      "sha256": "988c8fe286a837e9825456fa1418f5987552a3e288348d36524a597c7736dc7b",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/REVIEW.md",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/api-build.log.txt",
+      "bytes": 2227,
+      "sha256": "40be856681d73012e5aae78f3ff451ca493e25eed6b8b3374c55abe1bb4adf37",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/api-build.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/case-table.generated.txt",
+      "bytes": 8527,
+      "sha256": "62a1c4eec1fc4f3cd31c43dbd18ac65afd1045d0b380dde6aa11d901fb5c4271",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/case-table.generated.txt",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/diag-d1.attempt0-harness-cjs-error.stderr.log.txt",
+      "bytes": 2110,
+      "sha256": "a2e917a5dd2ba6a5ced589a7d49e2acad87f7be15de922f4c07af29597479ac2",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/diag-d1.attempt0-harness-cjs-error.stderr.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/diag-d1.stdout.log.txt",
+      "bytes": 25,
+      "sha256": "c456d1680a391c8c1aa9ebbf1ad21a8878ac1172ee9ab678f17ce3b1a076b1a9",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/diag-d1.stdout.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/diag-d2-churn.stdout.log.txt",
+      "bytes": 53,
+      "sha256": "c42db767a1d76ded6a23bcc104ac671ea2997579b6e8aad049412891cfab056b",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/diag-d2-churn.stdout.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/diag-d2.stdout.log.txt",
+      "bytes": 38,
+      "sha256": "fa03db7037520412e4d6ba60650a8e796dce0288107a70985fcc73b154b1b540",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/diag-d2.stdout.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/focused-reset-tests.FAILURE-CONTEXT.txt",
+      "bytes": 721,
+      "sha256": "64dba6af59db91418afe94f2837caa19af01e2f1db15258038fee7a62f3db368",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/focused-reset-tests.FAILURE-CONTEXT.txt",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/focused-reset-tests.diagnostic-rerun-01.log.txt",
+      "bytes": 365,
+      "sha256": "7012fb0ce43ccadd75321eee3c2e8310878cd207abb212311775806ffe3160c2",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/focused-reset-tests.diagnostic-rerun-01.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/focused-reset-tests.log.txt",
+      "bytes": 1208,
+      "sha256": "881138bb3e879de4c3ceff6c3d2078af28dfb9de67d77ca39e58a4ec36221a20",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/focused-reset-tests.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/gates.log.txt",
+      "bytes": 196,
+      "sha256": "e330c01d1cd36e93603a3433a73fb1e85f48c8b236023de53ce88ab2f87bb9ac",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/gates.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/oos-reserved-root-listedname.log.txt",
+      "bytes": 1273,
+      "sha256": "988bc2dbc034782c9b8bf186e95a13424c4f7cd874440daa67f681c58322a816",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/oos-reserved-root-listedname.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/qa-cli.stdout.log.txt",
+      "bytes": 86,
+      "sha256": "11e5927cd16e68c5a726f334c564b8bf69712650bfd5687761ae3f58ffc40eb0",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/qa-cli.stdout.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/qa-controlled.stdout.log.txt",
+      "bytes": 86,
+      "sha256": "25ba6e263eb22d1ac6248ae0267b8dd652aae0d8af6da846f3c7d764592805e8",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/qa-controlled.stdout.log",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/scripts/diag-journal-loop.mts",
+      "bytes": 2377,
+      "sha256": "6cf7345fd8784519031f080a5958cf98042c9359e8e0800f12abc5f282d92270",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/scripts/diag-journal-loop.mts",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/scripts/diag-reader-churn.mts",
+      "bytes": 1359,
+      "sha256": "c4efca5476d33a05b242f613c5dc5bc40efe9175840e280f63c3dd1f18bd0d14",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/scripts/diag-reader-churn.mts",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/scripts/hold-lock.mjs",
+      "bytes": 941,
+      "sha256": "d984b12cb40afcbdc84b8b0e475c42e68fcd5fb34526e0bf8f81f447e2f842a1",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/scripts/hold-lock.mjs",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/scripts/qa-538-cli.mjs",
+      "bytes": 34450,
+      "sha256": "c118700f6144c498362dd4f9f9f9fb46069a44b26d721a4efb9a3276eb1f8667",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/scripts/qa-538-cli.mjs",
+      "tier": "retained original"
+    },
+    {
+      "path": "raw/review-qa/scripts/qa-538-controlled.mjs",
+      "bytes": 14265,
+      "sha256": "4ca99b8bcbf3553220719e1ec2df2abbe54dfbaf83b6f6af5abb294d53c2db19",
+      "source": "G:/ggq/delivery-evidence/2026-11-24-followups/reset-538-489/claude-window-rq-01/scripts/qa-538-controlled.mjs",
+      "tier": "retained original"
+    }
+  ]
+}

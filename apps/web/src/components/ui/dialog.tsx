@@ -62,7 +62,12 @@ export interface DialogProps {
   icon?: ReactNode;
   /** Shown after the title, before the close button: controls about the whole dialog. */
   actions?: ReactNode;
-  /** Actions pinned under the scrolling body. */
+  /**
+   * Actions pinned under the scrolling body, given as its direct children (a fragment). The footer
+   * is the row: it wraps them onto further lines where a narrow sheet or enlarged text cannot hold
+   * them side by side. A row nested inside it would not wrap, and the dialog would clip its last
+   * actions (#563).
+   */
   footer?: ReactNode;
   children: ReactNode;
   /** The close button's accessible name. */

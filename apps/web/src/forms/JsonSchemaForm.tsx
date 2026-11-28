@@ -455,6 +455,14 @@ function PropertyField({
 }
 
 /**
+ * The submit button's label wraps onto further lines, growing the button, where a narrow column or
+ * enlarged text cannot hold it on one, instead of widening the form and its card or being cut
+ * short (#563). A label that fits is the same one-line, 36 px button (44 px on a coarse pointer).
+ */
+const WRAPPING_SUBMIT =
+  'h-auto min-h-9 py-1.5 [&>span]:whitespace-normal pointer-coarse:h-auto pointer-coarse:min-h-11';
+
+/**
  * A form for a JSON Schema: the wait node's `inputSchema` or a manual trigger's input. Object
  * schemas get one field per property, drawn with the controls SchemaForm uses (text and number
  * inputs, Yes / No segments for a boolean, with Not set unless it is required, a segmented control
@@ -638,7 +646,7 @@ export function JsonSchemaForm({
         </ul>
       ) : null}
       <div>
-        <Button type="submit" disabled={busy}>
+        <Button type="submit" className={WRAPPING_SUBMIT} disabled={busy}>
           {submitLabel}
         </Button>
       </div>

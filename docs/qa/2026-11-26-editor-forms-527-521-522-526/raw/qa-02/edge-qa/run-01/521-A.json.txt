@@ -1,0 +1,128 @@
+{
+  "id": "521-A",
+  "issue": 521,
+  "title": "Nested override key error on owning Value; issue links focus it (dialog and canvas); correct, save, publish",
+  "expected": "Owning Value invalid + described, sibling/keys clean, focus lands in owning Value, correction saves and publish succeeds.",
+  "steps": [
+    "Type {\"outer\":{\"team docs\":true}} into Config overrides value 1 (key \"example\"); sibling key \"example.outer\" stays valid.",
+    "Move focus to Label, open the dialog issue badge, choose the team docs issue.",
+    "Close the dialog; choose the issue from the canvas node badge.",
+    "Correct the member; the Value clears, the draft saves to the server, Publish succeeds."
+  ],
+  "checks": [
+    {
+      "label": "owning Value described by relative path + rule",
+      "actual": "outer.team docs: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+      "pass": true
+    },
+    {
+      "label": "message visible under the Value",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "sibling Value and both Keys clean",
+      "actual": {
+        "sibling": {
+          "invalid": null,
+          "label": "Config overrides value 2",
+          "description": "",
+          "focused": false
+        },
+        "key1": {
+          "invalid": null,
+          "label": "Config overrides key 1",
+          "description": "",
+          "focused": false
+        },
+        "key2": {
+          "invalid": null,
+          "label": "Config overrides key 2",
+          "description": "",
+          "focused": false
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "no held-input segment (schema diagnostic, not held text)",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "Settings tab text",
+      "actual": "Settings 1 error",
+      "observation": true
+    },
+    {
+      "label": "issue row text",
+      "actual": "Error SCHEMA Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype. config.harnessOptions.configOverrides.example.outer.team docs",
+      "observation": true
+    },
+    {
+      "label": "focus in owning Value 1 (not sibling \"example.outer\")",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "sibling not focused",
+      "actual": false,
+      "pass": true
+    },
+    {
+      "label": "canvas badge issue opens the node with focus in owning Value 1",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "Value clean after correction",
+      "actual": "",
+      "pass": true
+    },
+    {
+      "label": "SQL configOverrides after correction (sibling kept)",
+      "actual": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "expected": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "pass": true
+    },
+    {
+      "label": "no PUT ever carried the invalid nested key",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "ordinary publish succeeds after correction",
+      "actual": {
+        "current": null,
+        "alerts": []
+      },
+      "pass": false
+    }
+  ],
+  "screenshots": [
+    "521-A-marked.png",
+    "521-A-focus-dialog-badge.png",
+    "521-A-focus-canvas-badge.png",
+    "521-A-first-failure.png"
+  ],
+  "verdict": "FAIL",
+  "failure": "Error: CHECK FAILED: ordinary publish succeeds after correction: {\"current\":null,\"alerts\":[]}",
+  "stack": "Error: CHECK FAILED: ordinary publish succeeds after correction: {\"current\":null,\"alerts\":[]}\n    at Object.check (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:219:22)\n    at case521 (file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:507:5)\n    at async file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:904:22",
+  "durationMs": 2728,
+  "consoleErrors": [],
+  "trace": "521-A-trace.zip"
+}

@@ -1,0 +1,62 @@
+**Verdict: not independently confirmed (INCOMPLETE).** I ran the native check once. Its receipt reports success: `exitCode: 0`, no timeout, no controller error, `sourceUnchanged: true`. But I could only see the first ~2 KB of its 103.6 KB output. The tool saved the rest to `C:\Users\98jak\.claude\projects\G--ggq-delivery-evidence-2026-11-24-followups-plugin-native-diagnosis-02-native-only-qa-03\6aba56ac-ac07-4bef-a359-9a9a64b580df\tool-results\bru37uz78.txt`. Reading that file would take a second command, which the single-command allowlist doesn't permit, so I didn't read it. The contract says missing evidence can't be filled in from a partial view, so I can't sign PASS. Nothing I saw shows a failure either.
+
+## Run
+- The exact allowlisted command ran once, in the foreground, with a 600 s timeout. I didn't rerun it, and the wrapper would refuse a second attempt anyway.
+- The tool display showed no exit code for the wrapper itself. From the wrapper's code, exit 0 + unchanged + no timeout means it returned 0, but I didn't see that directly.
+
+## What I saw in the receipt
+| Field | Value |
+|---|---|
+| startedAt / finishedAt | 2026-11-25T10:28:59.068562Z / 10:29:03.386128Z (about 4.3 s, after the 10:10:20Z reset floor) |
+| exitCode / timedOut / controllerError | 0 / false / null |
+| sourceUnchanged | true (the wrapper sets this from the same before/after check that it records as `afterBindingVerified`) |
+| patchSha256 | `d1e99a06…5a65c9`, matches the frozen patch |
+| bindingSha256 (QA03 BINDINGS.json) | `2dff1104aa2f614e5cd183e2d7912cbcb18607cf0506842887cbd6a43e085fb7` |
+| Before snapshot | head `d2df8600…`, branch `codex/gg-fu-plugin-builders-20261124`, manifest `a7d440ef…`, index `ed2daa04…`, no staged or untracked paths |
+| Changed-file hashes | 8 of the 11 were visible, and all 8 match the original freeze. The other 3 were cut off. |
+
+## What I couldn't see
+- **Stream hashes:** the `native.stdout.log` / `native.stderr.log` hashes and byte counts, the visible `afterBindingVerified` field, and the driver hash and 116-file count in the snapshot. The supplied binding does list 116 runtime files; I counted them.
+- **The whole results file:** `NATIVE-PLUGIN-RESULTS.json`, including:
+  - the plugin-add receipt and installed path
+  - artifact and installed-cache inventories before and after
+  - the installed `.mcp.json` hash
+  - app-server PID and exit
+  - the 14 tools, 2 templates and empty resources
+  - the protocol counts: initialisations, session name, request and reply IDs, `tools/call` count, server-initiated requests, ping
+  - the mapping of the two GETs to the `resources/list` interval
+- **Raw app-server logs:** the full stderr diagnostics and stdout, with their hashes.
+
+## What exit 0 means, from the driver's code (not something I saw)
+The driver (`native-plugin-logging.mjs`, supplied hash `7e121cd5…`) only exits 0 if all of these checks passed:
+- Plugin installed and enabled, the 3 skills present, and MCP server `graphgoblin` loaded.
+- The installed path is inside the disposable Codex home, and the installed config hash equals the generated one: command `node`, `env_vars` `GG_API_URL`/`GG_API_KEY`, no literal `env`.
+- Artifact and installed inventories are byte-identical before and after.
+- The app-server exited 0 with no forced stop.
+- Status listed exactly 1 server, with 14 tools, the 2 exact URI templates and `resources: []`.
+- Every stderr line parsed as JSON.
+- Exactly 1 client initialisation whose peer info names graphgoblin, 0 server-side initialisations, and 1 session context.
+- 1 session span opened and 1 closed.
+- Exactly one each of `tools/list`, `resources/templates/list` and `resources/list`. Unique IDs, one matching typed success reply for each, no errors or orphans, no unknown requests, no server-initiated requests, no `tools/call`, and any ping answered.
+- `resources/list` returned `resources: []`.
+- No gateway request before `mcpServerStatus/list`.
+- Exactly 2 requests, both `GET /runs?limit=20`, both during the status phase and inside the `resources/list` request-to-result window.
+
+This is the driver checking itself. I didn't inspect the values.
+
+## Evidence tiers
+- **Reused build and unit tests (QA01):** the forced 11-task build and the 60 tests were not rerun. The wrapper's pre-launch check requires their receipts to show exit 0 with matching stream hashes. The launch went ahead, so that check passed. That's inferred from the wrapper's code; I didn't see it.
+- **QA02 direct control:** historical. It had 14 tools, 2 templates, empty resources, and two GETs matched to request ID 3 / PID 49164. I don't count these as new native reads.
+- **New native install, status and logs:** the driver reports success, but I didn't inspect the data (see above).
+- **Not observed by design:** the native MCP child's PID and OS exit. App-server exit and the closing of the logical session are separate things and don't prove the child exited.
+
+## Results by issue
+- **#464:** unchanged. Met at the maintained-test level in QA01, with faults injected through mocks.
+- **#465:** the native Codex gate reports success in this run, but my check is incomplete, so it isn't closable on my evidence.
+- **#468:** unchanged from QA01. The tests pass, and Claude 2.1.323 strict validation passed on structure only, with non-blocking `ICON_MISSING` and the marketplace-install advice. No Claude session was loaded.
+- **QA01 and QA02 native runs:** both remain FAIL.
+
+## Limits and next step
+This run doesn't use final-review3 and doesn't establish hosted CI, coverage, owner acceptance or broad regression. It's logical protocol diagnostics, not byte-for-byte MCP wire capture.
+
+To settle the verdict, someone permitted to read files should check `NATIVE-RESULT.json`, `NATIVE-PLUGIN-RESULTS.json` (`logicalProtocol.calibrated`, the counts, `resourcesListHttpMapping`) and `native-codex-app-server.stderr.log`, or the saved tool output above. Alternatively, a future QA allowlist could permit reading the results without a rerun.

@@ -1,0 +1,62 @@
+| P-root-wal-none | root -wal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-root-wal-00-unrelated | root -wal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-root-wal-zz-unrelated | root -wal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-nested-wal-none | nested -wal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-nested-wal-00-unrelated | nested -wal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-wal-zz-unrelated | nested -wal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-root-shm-none | root -shm sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-root-shm-00-unrelated | root -shm sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-root-shm-zz-unrelated | root -shm sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-nested-shm-none | nested -shm sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-nested-shm-00-unrelated | nested -shm sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-shm-zz-unrelated | nested -shm sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-root-journal-none | root -journal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-root-journal-00-unrelated | root -journal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-root-journal-zz-unrelated | root -journal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 27/27 | PASS |
+| P-nested-journal-none | nested -journal sidecar, other hard link: none | dry/confirmed exit 0/0 | 22/22 | PASS |
+| P-nested-journal-00-unrelated | nested -journal sidecar, other hard link: 00-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-journal-zz-unrelated | nested -journal sidecar, other hard link: zz-unrelated | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-wal-rootlink | nested -wal sidecar hard-linked at the data-directory root as 00-root-link-wal | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-shm-rootlink | nested -shm sidecar hard-linked at the data-directory root as 00-root-link-shm | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-nested-journal-rootlink | nested -journal sidecar hard-linked at the data-directory root as 00-root-link-journal | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-root-wal-three-other-names | root WAL with 00-unrelated, zz-unrelated and keep-dir/inner-link names (nlink 4) | dry/confirmed exit 0/0 | 34/34 | PASS |
+| P-spelled-wal-none | WAL listed only as GRAPHGOBLIN.DB-WAL for database graphgoblin.db; other hard link: none | dry/confirmed exit 0/0 | 21/21 | PASS |
+| P-spelled-wal-00-unrelated | WAL listed only as GRAPHGOBLIN.DB-WAL for database graphgoblin.db; other hard link: 00-unrelated | dry/confirmed exit 0/0 | 25/25 | PASS |
+| P-spelled-wal-zz-unrelated | WAL listed only as GRAPHGOBLIN.DB-WAL for database graphgoblin.db; other hard link: zz-unrelated | dry/confirmed exit 0/0 | 25/25 | PASS |
+| P-configured-case-alias-with-link | GG_DB_URL names GraphGoblin.db; directory lists graphgoblin.db, graphgoblin.db-wal and 00-unrelated (WAL link) | dry/confirmed exit 0/0 | 25/25 | PASS |
+| P-unicode-alias-with-link | GG_DB_URL names οσ-1.db; directory lists ΟΣ-1.DB, ΟΣ-1.DB-WAL and 00-unrelated (WAL link) | dry/confirmed exit 0/0 | 26/26 | PASS |
+| P-kelvin-lookalike | database K.db with WAL K.db-wal; a distinct file named K.db-wal (Kelvin sign) is kept | dry/confirmed exit 0/0 | 24/24 | PASS |
+| P-copy-not-link | a byte-identical copy of the WAL (different identity) is kept as not part of the store | dry/confirmed exit 0/0 | 24/24 | PASS |
+| P-wal-link-inside-kept-workspace | root WAL hard-linked as workspaces/not-a-run/copy-wal (inside a kept workspace) | dry/confirmed exit 0/0 | 24/24 | PASS |
+| R-root-wal-as-datadir-lock | graphgoblin.db-wal is a hard link of graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-root-shm-as-db-lock | graphgoblin.db-shm is a hard link of graphgoblin.db.graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-nested-journal-as-db-lock | nested/graphgoblin.db-journal is a hard link of nested/graphgoblin.db.graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-nested-wal-as-datadir-lock | nested/graphgoblin.db-wal is a hard link of graphgoblin.lock, which holds a dead-PID lock record | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-workspaces | root WAL hard-linked as a top-level file named workspaces | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-artifacts | root WAL hard-linked as a top-level file named artifacts | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-chat-audio | root WAL hard-linked as a top-level file named chat-audio | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-datadir-guard | root WAL hard-linked as graphgoblin.lock.reclaim (the guard must be a directory) | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-lock-no-record | root WAL (real WAL bytes) hard-linked as graphgoblin.lock | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-held-datadir-lock-with-wal-link | a live process holds the data-directory lock; the WAL has another hard link 00-unrelated | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-held-db-lock-with-wal-link | a live process holds the database lock; the WAL has another hard link 00-unrelated | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-held-datadir-lock-shared-with-wal | a live process holds the data-directory lock, and graphgoblin.db-wal is a hard link of that live lock file | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-junction-exact | a junction at the exact SHM name | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-junction-other-spelling | a junction listed only as GRAPHGOBLIN.DB-WAL (another spelling of the WAL name) | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-directory-at-journal | a directory at the journal name | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-shm | root WAL hard-linked as graphgoblin.db-shm | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-in-removed-workspace | root WAL hard-linked as workspaces/01JRESETRUNAAAAAAAAAAAAAAA/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-in-artifacts | root WAL hard-linked as artifacts/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-in-chat-audio | root WAL hard-linked as chat-audio/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| R-wal-as-kept-workspace-entry | root WAL hard-linked as workspaces/copy-wal | dry/confirmed exit 1/1 | 10/10 | PASS |
+| C0-native-control | same fixture as C1-C4, real native final path: dry run removes GRAPHGOBLIN.DB-WAL | exit 0 | 5/5 | PASS |
+| C1-native-other-directory | native final path answers another directory: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C2-native-unlisted-name | native final path answers an unlisted name: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C3-native-EPERM | native final path answers EPERM: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C4-native-ENOENT | native final path answers ENOENT after presence: refuse, store not read, nothing changed | exit 1/1 | 5/5 | PASS |
+| C5-locked-replan-ambiguity | native answer turns unusable after the preview's store read | exit 1 | 3/3 | PASS |
+| C6-locked-replan-ambiguity-stale-locks | native answer turns unusable after the preview's store read; stale dead-PID lock files present | exit 1 | 3/3 | PASS |
+| C7-short-writer-only | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C8-short-reader-only | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C9-short-two-files | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C10-short-two-hard-links | configured GRAPHG~1.DB vs listed graphgoblin.db: refuse before the store read | exit 1/1 | 5/5 | PASS |
+| C11-short-agree | configured GRAPHG~1.DB-wal and listed graphgoblin.db-wal name one entry: proceeds, reads the stored spelling | exit 0 | 5/5 | PASS |

@@ -1,0 +1,286 @@
+{
+  "id": "527-C",
+  "issue": 527,
+  "title": "Discard restores and refocuses; correction saves the whole object",
+  "expected": "Discard: text restored, focus in Value, no PUT. Correction: whole renamed object saved and reloaded.",
+  "steps": [
+    "Hold a value with own __proto__, then Discard.",
+    "Hold again, then correct by renaming the member; the whole corrected object saves."
+  ],
+  "checks": [
+    {
+      "label": "focus returns to the Value editor after Discard",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "active element after discard",
+      "actual": {
+        "tag": "DIV",
+        "label": "Variables value 1",
+        "text": "{  \"type\": \"string\",  \"title\": \"last complete topic\"}"
+      },
+      "observation": true
+    },
+    {
+      "label": "Value no longer invalid",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "Value text restored to the last complete value",
+      "actual": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "expected": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "pass": true
+    },
+    {
+      "label": "held segment gone after discard",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "draft label back to All changes saved",
+      "actual": "All changes saved",
+      "pass": true
+    },
+    {
+      "label": "no PUT from hold+discard",
+      "actual": 0,
+      "pass": true
+    },
+    {
+      "label": "SQL variables after correction",
+      "actual": {
+        "topic": {
+          "type": "object",
+          "properties": {
+            "proto_name": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "other": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "object",
+          "properties": {
+            "proto_name": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "other": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "last PUT payload variables",
+      "actual": {
+        "topic": {
+          "type": "object",
+          "properties": {
+            "proto_name": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "other": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "expected": {
+        "topic": {
+          "type": "object",
+          "properties": {
+            "proto_name": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "other": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "reloaded corrected Value",
+      "actual": {
+        "type": "object",
+        "properties": {
+          "proto_name": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "expected": {
+        "type": "object",
+        "properties": {
+          "proto_name": {
+            "type": "number"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "pass": true
+    }
+  ],
+  "screenshots": [],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:27:49.707Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 527 correct and discard 3",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "object",
+              "properties": {
+                "proto_name": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            },
+            "other": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 3441,
+  "consoleErrors": [],
+  "trace": "527-C-trace.zip"
+}

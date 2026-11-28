@@ -1,0 +1,155 @@
+PASS WITH LIMITS
+
+# #479 independent QA (`qa:touched-systems`): claude-window-rq-01
+
+**Candidate.** `7c893c7795a086e349e87041f0c144442fc6f282` on `14ea6984`, worktree `G:/ggq/gg-fu-ui-479-20261124/GraphGoblin`. The worktree is unchanged by QA (`git status` is clean). Nothing was committed.
+
+**QA author.** Claude Opus 5.5 (xhigh), independent of the implementer.
+
+**Environment.**
+
+- Node v22.23.4 and pnpm 12.8.1. TEMP and TMP were set to `G:/ggq/tmp/rq-479`.
+- `ProgramFiles`, `ProgramFiles(x86)` and `ProgramW6432` were kept (FUP-089).
+- Browser: installed Microsoft Edge 158.0.4370.33 through the Playwright `msedge` channel, headless, at `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`.
+- Heavy-suite lock: held from 2026-11-26T08:55:57Z to 09:09:23Z (build, all browser work), then released. Before that I waited about 21 min for another worker's lock.
+
+## Build and dist identity
+
+`pnpm build` at HEAD finished 12/12 tasks (9 cached), see `BUILD.log`. Dist hashes are in `DIST.sha256.txt`. They are identical to the author's dist:
+
+| File | SHA-256 |
+| --- | --- |
+| `index.html` | `3ad02cb5…f0d6` |
+| `sw.js` | `1772c953…39a7` |
+| `assets/index-CXeg9U2q.js` | `9339c9df…8d95` |
+
+## Repository gates and specs (run once each)
+
+| Command | Result | Raw |
+| --- | --- | --- |
+| `vitest run OrthogonalEdge.test.tsx viewport-gesture.contract.test.tsx Canvas.space-cards.fit.test.tsx Canvas.test.tsx` | 4 files, 150/150 | `UNIT-FOCUSED.log` |
+| `pnpm --filter @graphgoblin/web typecheck` | pass | `WEB-TYPECHECK.log` |
+| `pnpm --filter @graphgoblin/web lint` | 0 errors, 5 warnings, all in files this change does not touch | `WEB-LINT.log` |
+| `prettier --check` on the six paths | pass | `PRETTIER.log` |
+| Edge `e2e/routing-toolbar.spec.ts` (`--workers=1 --retries=0`) | 7/7 passed (41.3 s) | `E2E-routing-toolbar.log`, `browser-output-routing-toolbar/` (per-case `geometry.json` and screenshots) |
+| Edge `e2e/edge-routes.spec.ts` | 11/11 passed (48.4 s) | `E2E-edge-routes.log` |
+| Edge `e2e/shared-edge-ids.spec.ts` | 7/7 passed (29.6 s) | `E2E-shared-edge-ids.log` |
+
+**Native-baseline comparison.** My run of the new spec uses the test-server environment, which matches the native baseline's layout. It reproduces each design prediction to within 0.01 px. Every stage the patch should not move matches the native baseline exactly:
+
+| Case | Remove connection centre | Before #479 (native baseline) | Placement |
+| --- | --- | --- | --- |
+| Desktop, Fit with panels collapsed | (475.23, 178.52) | 27/63 probes | below |
+| Coarse, opening | (472.71, 183.93), 44 px tall | 14/63 | below |
+| Coarse, Fit with panels open | (472.97, 216.78) | 49/63 | below |
+| Coarse, Fit with panels collapsed | (376.55, 186.12) | 14/63 | below |
+| 320, opening | (130.24, 336.50) | 21/63 | below |
+
+All five now get 63/63 probes.
+
+Unchanged stages, matching the baseline exactly:
+
+- desktop opening (450.22, 200.58)
+- desktop Fit with panels open (450.22, 235.08)
+- desktop pan (475.23, 156.52)
+- coarse zoom (399.12, 155.85)
+- 390 opening (159.24, 271.00)
+- 390 Fit (180.18, 412.99)
+
+## Exploratory QA: built API and web on a disposable store
+
+**Setup.**
+
+- Server: `node apps/api/dist/main.js` with:
+  - `GG_HOST=127.0.0.1`
+  - `GG_PORT=47951` (not one of the owner's ports)
+  - `GG_DATA_DIR=G:/ggq/tmp/rq-479-qa/store`
+  - `GG_OLLAMA_ENABLED=false`
+  - `GG_CODEX_BINARY` and `GG_CLAUDE_BINARY` pointing at absent paths, so the owner's CLIs are never run
+  - `GG_WEB_DIST` set to the worktree dist
+- Drivers: my own scripts (`raw/scripts/*.cjs`), which are not on the branch. They select the connection with a trusted pointer on its path (as the native driver did) or from the keyboard. Taps are CDP touch on an emulated coarse pointer.
+- Contexts: fresh and isolated, with service workers blocked.
+
+**Environment difference.** The real API reports Codex as absent, so the editor header shows "3 errors, 1 warning". At 1024 px and narrower this wraps, and the canvas pane starts 29 to 40 px lower than in the baseline environment. At 1280 the header is identical. As a result:
+
+- Desktop stages match the baseline and the predictions exactly in pane-relative coordinates.
+- 320 opening matches the prediction pane-relatively: (86.24, 59.00) against (86.20, 59.00).
+- Other coarse and narrow stages are not comparable to the baseline. They are checked by relationships only (inside, 18 px gap, probes). See `raw/pane-relative-comparison.txt`.
+
+### Case table
+
+Raw JSON, console logs and screenshots are in `raw/`. "Inside" means at least 8 px from every side of the `.react-flow` pane. "Probes" means a 9×7 grid inset 4 px, using `elementFromPoint`.
+
+| # | Case (both themes unless noted) | Expected | Actual | Result | Raw |
+| --- | --- | --- | --- | --- | --- |
+| 1 | Desktop 1280×900 native sequence: opening → Fit (panels open) → Fit (collapsed) → mouse pan +46 → zoom out | Reproduced stage below the label, inside, 63/63. Others unchanged. 18 px gap. | Collapsed Fit: **below**, (475.23, 178.52), 63/63. Others above at exactly the baseline centres, 63/63. | PASS | `sequence-*.json`, `seq-desktop-*` |
+| 2 | Coarse 1024×768 sequence (touch taps) | Full 44 px Remove inside the pane at every stage | Opening, Fit and collapsed Fit **below**; zoom above. All 44 px, 63/63, inside. | PASS (relational; see note above) | `seq-coarse-*` |
+| 3 | 390×844 sequence | Above, unchanged | Above at every stage, 63/63 | PASS | `seq-narrow390-*` |
+| 4 | 320×800 sequence | Opening below, inside | Opening **below**, pane-relative equal to the prediction, 63/63. Fits above, 63/63. | PASS | `seq-narrow320-*` |
+| 5 | Acceptance with no pan or zoom after the reproduced Fit: trusted click (desktop, 390, 320) or tap (coarse) at the measured centre, then Undo, then reload | 1 conditional PUT removing only that edge, then 1 conditional Undo PUT restoring the bytes, edge present after reload | Exactly so in all 8 config/theme runs. Focus moves to Undo after Remove. | PASS | `sequence-*.json` |
+| 6 | No writes from camera moves | 0 PUTs, Undo stays unavailable | 0 PUTs and Undo `aria-disabled` across opening, Fits, flips, pans and zoom (8 runs). Sweeps (about 50 pans each): 0 PUTs. Window resize and panel open: 0 PUTs. | PASS | `sequence-*`, `negative-light`, `interact-*` |
+| 7 | The frame intercepts nothing; ports and segment handles stay reachable at the reproduced Fit | No empty frame point hits the frame; no port centre hits the toolbar; no handle centre under the row | All hold in 8 runs. Note: at the 390/320 Fit zooms (0.23/0.16), some port centres hit the selected connection's own 24 px handle targets. That is pre-existing and unrelated to the toolbar. | PASS | `sequence-*.json` notes |
+| 8 | Reset route below the label over a card corner (manual lane 11 px lower), three trusted presses | 1 PUT; later presses hit the same held, `aria-disabled` Reset; no node editor; Remove untouched; 1 history entry | 1 PUT. Before the 2nd and 3rd press the point hits the held Reset. The held row's rect does not move. 0 visible dialogs, no node selected, the connection stays selected. One Undo restores `ui.route`, after which Undo is unavailable (total 2 PUTs). A pan re-places the held row inside the pane, still held, with no write. | PASS (see note A) | `interact-*`, `resetdiag-light` |
+| 9 | Focus after the later Reset presses (author's question 1) | Design text says "focus stays on the edge"; the #207 base behaviour is focus on the held button | Focus is on the held **Reset route** after the 2nd and 3rd press. Delete there removes nothing. Escape returns focus to the connection. Matches the #207 base behaviour (REVIEW F1). | Recorded | `interact-*` notes |
+| 10 | Keyboard at Below placement | Tab: handles then Remove. Focus ring not clipped. Escape back to the connection. Enter removes once and focus goes to Undo. Enter on Undo restores. | All hold. The focus-visible ring (2 px outline, 2 px offset) is wholly inside the pane. | PASS | `interact-*`, `keyboard-*-focus-ring-remove.png` |
+| 11 | Space on Remove, then Undo, Redo, Undo through the history buttons | Each action one PUT, matched by an API readback | Exactly so (4 PUTs; readbacks: removal, original bytes, removal, original bytes) | PASS | `redo-*` |
+| 12 | Shared id (#481) at Below placement | Note inside the pane, not over the controls, describing both buttons; trusted click and double click on Remove change nothing | All hold; 0 PUTs; 2 holders | PASS | `interact-*`, `shared-id-*-note.png` |
+| 13 | Protected voice step (system Chat with voice steps), row placed below the label near the top | Remove natively disabled with "Voice steps stay. Use Turn off voice messages."; a click or Delete changes nothing | All hold. The click lands on the disabled button itself, with no card or dialog beneath it. Delete shows the refusal notice. 0 PUTs. | PASS | `voice2-*` (see note B) |
+| 14 | Stale selection: another client saves, a local nudge gets a 409 conflict, then Reload server draft | Toolbar re-placed inside the shrunken pane; reload forgets the selection; no further writes | All hold: the pane shrank 126 px and the row stayed below and inside; no toolbar after reload; 1 refused attempt, 0 after. | PASS (light only) | `negative-light`, `stale-light-conflict.png` |
+| 15 | Window shrink to 1000×700 and loop settings opened while selected | Row re-placed inside; no writes | All hold | PASS | `interact-*` |
+| 16 | Contrast at Below placement | Text ≥ 4.5:1; border and focus ring ≥ 3:1 | Light: text 14.17, border 4.18 on canvas / 3.95 on card, ring 3.84 / 3.63. Dark: text 14.24, border 4.58 / 4.17, ring 9.09 / 8.27. The button background is opaque. | PASS | `interact-*` notes |
+| 17 | Label-height sweep, desktop (every 15 px of pane height) | Inside and 63/63 at every in-pane height | below for y < 70, above after; all inside, 63/63 | PASS | `negative-light.json` |
+| 18 | Label-height sweep, coarse zoomed out twice | Same as 17 | **Clamp with covers** for y < 85 (Clamp lands on Below's place), above after; all inside, 63/63. The covered target is the "work" out port's estimated coarse box, by **0.2 px**; its centre still hits. | PASS, shows REVIEW F2 | `negative-light.json`, `diag4-dark.json` |
+| 19 | 320×800 opening, manual lane through a card (Crosses a card + Reset route + Remove connection) | Wrap with Remove last, inside, 63/63 | Wraps (Remove on its own line), inside, 63/63. Placement is **clamp, covers** because the taller header pushed the label up. The Decision's "accept" port centre hits **Reset route** and the "work" out port centre hits **Crosses a card** while selected. | PASS for wrap and reach; **gap REVIEW F2** | `negative-light`, `diag2-light`, `wrap320-light.png`, `diag-wrap320-light.png` |
+| 20 | Coarse phones 360×640, 390×844, 412×915, 320×568: opening, Fit, collapsed Fit | Inside and 63/63 when the label is in the pane | 360/390/412: Fit and collapsed Fit 63/63. Openings at 360 and 320: label off the pane, so the row travels off with it (by design). **320×568 Fit and collapsed Fit: Clamp, 56/63, all 7 misses on xyflow's Controls panel**; centre hittable. | **Gap REVIEW F5** | `diag2-light.json`, `diag-phone-*` |
+| 21 | Label-height sweep, coarse 320×640 with the wrapped 3-control row | Same as 17 | Above and Clamp: 56–61/63, the misses on the Controls panel (F5). `data-overflow="true"` at row width 214.00003 against `max-width` 214 (F6). | **Gap REVIEW F5, F6** | `negative-light.json`, `diag3-light.json`, `sweep-coarse320-*` |
+
+**Note A.** My first reset run (`interact-*`) failed its "no dialog" check because it counted all 5 closed `[role=dialog]` elements in the DOM. A single labelled diagnostic re-run (`resetdiag-light`) counts visible dialogs: 5 in the DOM before any action, 0 visible after each press. That record stands next to the original failure; both are kept.
+
+**Note B.** My first voice attempt (`negative-light`, `voice-light`) failed because I placed the voice fixture's cards on top of each other, so the protected edges could not be drawn ("Port covered by a card"). That is a fixture error, kept on record. `voice2-*` spaces the cards out and passes in both themes.
+
+### Other retained failures (check-definition errors, not product defects)
+
+- **`sequence-light`, 9 failures.**
+  - 4 compare centres with the design predictions while the pane was offset by the environment's header. They match pane-relatively, or were not comparable; see `raw/pane-relative-comparison.txt`.
+  - 5 required every port and handle centre to hit itself. At the 390/320 Fit zooms the selected connection's own segment-handle targets sit over nearby ports and over each other. That is pre-existing; none of these points hits the toolbar.
+  - The checks were corrected for the dark run (`sequence-dark`: 1 failure, the same pane-offset prediction comparison at 320).
+- **`diag2-light`.** The 360×640 and 320×568 "openings" are off-pane by design. They are counted as failures only because that check required 63/63 at every stage.
+
+## Touched systems and coverage
+
+| System | Exercised through | Result |
+| --- | --- | --- |
+| Toolbar placement (`toolbarPlacement`, measured row, selector, CSS wrap) | Real Edge layout and hit tests, 4 sizes, both themes, sweeps, resize | Works as designed; P3 gaps F2, F5, F6 |
+| Reset hold | Trusted presses, pan, Undo | Works |
+| #481 note placement | Shared-id fixture | Works |
+| Remove, Undo and Redo through the public API with conditional saves | PUT `If-Match` capture and GET readbacks | Exactly one save per action, byte-equal restore |
+| Gesture gate, refusals, Escape and Enter/Space | Trusted mouse, keyboard; `edge-routes` and `shared-edge-ids` specs | Unchanged |
+| Canvas store and saved geometry | Readbacks | No camera write; `ui.route` restored |
+
+## What was not established (limits)
+
+- **No physical touch hardware or real phone.** The coarse pointer is Chromium emulation with CDP taps, and all runs are headless Edge on Windows. Linux CI Edge was not run.
+- **Mouse-pan gating** was not separately probed with a click during settling. That is covered by the rerun `edge-routes.spec.ts`; my drivers wait for `data-gesture` to clear.
+- **Store-level stale selection** (a selection left over from before a load, acting before re-render) was not driven in the browser. It is covered by unit tests. Only the conflict-and-reload path (case 14) was exercised, and in light theme only. Sweeps 17–21 also ran in light only, except 18's diagnostic, which ran in dark.
+- **Native-baseline equality for coarse, 390 and 320** comes from my rerun of the author's spec in the test-server environment. My exploratory runs on the real API have a taller header at those widths, so they are checked by relationships only.
+- **Pre-#479 behaviour** in the new F5 geometries (320×568 and 320×640 coarse) was reasoned, not run, because no base build was used.
+- **Forced colours** was not checked beyond the rerun `edge-routes` forced-colours case. Contrast was computed for Remove at Below placement against the canvas and a card only.
+
+## Verdict
+
+PASS WITH LIMITS. Every acceptance item in the issue and the design holds in real Edge:
+
+- the reproduced cases are wholly hittable inside the pane (63/63, full 44 px coarse);
+- Remove, Undo and Reset each save exactly once, and readbacks are byte-equal;
+- camera moves never write;
+- ports and segment handles are not intercepted at the reproduced Fits;
+- keyboard and focus work, contrast passes, and the #481 note and the protected and stale refusals all behave.
+
+Gaps found (all P3, see REVIEW.md):
+
+- **F2:** Clamp onto Below's place can cover port centres. This is the design's anticipated gap, and it now has native evidence.
+- **F5:** On short, narrow, coarse panes the row can sit partly under the canvas's own Controls panel.
+- **F6:** A false `data-overflow` at the row's max-width.
+
+Maintained-regression recommendation (not added to the branch): give `expectReachable`'s overflow assertion the same tolerance F6 proposes. Optionally add a coarse ≤ 360 px case that probes for the Controls panel once F5 is decided.

@@ -1,5 +1,6 @@
+import { realpathSync } from 'node:fs';
 import { lstat, readdir, realpath, stat } from 'node:fs/promises';
-import { basename, resolve, sep } from 'node:path';
+import { basename, dirname, resolve, sep } from 'node:path';
 import { CURRENT_DEFINITION_FORMAT } from '@graphgoblin/contracts';
 import { databaseFilePath } from '@graphgoblin/infrastructure/sqlite';
 import { canonicalPath } from '../canonical-path.js';
@@ -30,8 +31,8 @@ import { hasCode, identityOf, listEntry, removeEntry, statEntry, type TreeEntry 
  * names are stored run IDs, then its own database lock and, last, its data-directory lock when it
  * releases them. Planned identities are rechecked before each removal (see tree.ts for
  * the remaining external-process race). Links are removed themselves; `master.key` and every
- * other entry are kept. Browser device drafts live in each
- * browser and are discarded from the editor.
+ * other entry are kept, including another hard-link name of a removed sidecar. Browser device
+ * drafts live in each browser and are discarded from the editor.
  */
 
 export const RESET_USAGE =
@@ -339,6 +340,144 @@ const DATABASE_PARTS = [
 const message = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
 
+/** The listed names in `dir` whose entry has `identity`, without following links. */
+async function namesOf(dir: string, names: readonly string[], identity: string) {
+  const matches: string[] = [];
+  for (const name of names)
+    if ((await identityOf(resolve(dir, name))) === identity) matches.push(name);
+  return matches;
+}
+
+/** Whether two entries lie under the same physical directories, root first. */
+const sameRoute = (a: TreeEntry, b: TreeEntry): boolean =>
+  a.ancestors.length === b.ancestors.length &&
+  a.ancestors.every((ancestor, index) => ancestor.identity === b.ancestors[index]?.identity);
+
+/**
+ * The directory entry that the SQLite sidecar name `name` opens in the database's physical
+ * directory `parent`, or undefined when nothing is there. A file identity is shared by every hard
+ * link of the file; a directory entry is a physical parent plus a listed name, and only an entry
+ * is removed. So the selection rests on directory facts, never on letter-case or Unicode folding:
+ *
+ * - present but not a regular file: refused with the special-file message, never resolved further
+ *   (the name it shows is diagnostic only);
+ * - the directory lists `name` itself: that entry, whatever other names the file has;
+ * - else the one listed name in that directory with the same identity (a spelling the volume
+ *   equates, such as another letter case);
+ * - else, on Windows only, the listed name of the filesystem's own final path for `name` (see
+ *   `nativeChoice`);
+ * - otherwise refused. A chosen name other than `name` is observed again and must still be the same
+ *   regular file under the same physical directories.
+ */
+async function sidecarEntry(
+  dataDir: string,
+  parent: readonly string[],
+  name: string,
+): Promise<TreeEntry | undefined> {
+  const shown = [...parent, name].join('/');
+  const requested = await statEntry(dataDir, shown);
+  if (!requested) return undefined;
+  const dir = resolve(dataDir, ...parent);
+  const names = await readdir(dir);
+  const exact = names.includes(name);
+  if (requested.kind !== 'file') {
+    // Only regular files are database files; a link or special file is never followed or resolved
+    // by the filesystem's final path.
+    const listed = exact ? [name] : await namesOf(dir, names, requested.identity);
+    const path = [...parent, listed.length === 1 ? listed[0]! : name].join('/');
+    throw new ResetRefusedError(
+      `${path} is a ${NOUNS[requested.kind][0]}, not a database file; a reset removes only regular database files`,
+    );
+  }
+  if (exact) return requested;
+  const matches = await namesOf(dir, names, requested.identity);
+  if (matches.length === 0)
+    throw new ResetRefusedError(
+      `${shown} is present, but the data directory lists no name for it; a reset removes only an entry the directory lists, so verify that no GraphGoblin process uses this store, then run the reset again`,
+    );
+  const chosen = matches.length === 1 ? matches[0]! : nativeChoice(dir, name, matches, shown);
+  const entry = await statEntry(dataDir, [...parent, chosen].join('/'));
+  if (
+    entry?.kind !== 'file' ||
+    entry.identity !== requested.identity ||
+    !sameRoute(entry, requested)
+  )
+    throw new ResetRefusedError(
+      `${shown} changed while the reset was listing it; verify that no GraphGoblin process uses this store, then run the reset again`,
+    );
+  return entry;
+}
+
+/**
+ * Which of several listed hard links in `dir` the spelling `name` opens. Only Windows reports it:
+ * the native final path of the opened name (GetFinalPathNameByHandleW) names the link that was
+ * opened, with the directory's own spelling. It is taken only when it lies in the same physical
+ * directory as resolved separately and names one of the listed candidates. Elsewhere, or when the
+ * query fails (including a name that is gone by now) or names anything else, the reset refuses
+ * rather than choose; the missing-path fallback of `canonicalPath` is never used here.
+ */
+function nativeChoice(
+  dir: string,
+  name: string,
+  matches: readonly string[],
+  shown: string,
+): string {
+  const refuse = (detail: string) =>
+    new ResetRefusedError(
+      `the data directory lists ${shown} under more than one name (${[...matches].sort().join(', ')}), and ${detail}; verify that no GraphGoblin process uses this store, then move the other names yourself`,
+    );
+  if (process.platform !== 'win32')
+    throw refuse('the filesystem does not say which one SQLite opens');
+  let parent: string;
+  let final: string;
+  try {
+    parent = realpathSync.native(dir);
+    final = realpathSync.native(resolve(dir, name));
+  } catch (error) {
+    throw refuse(`the filesystem could not say which one SQLite opens (${message(error)})`);
+  }
+  const chosen = basename(final);
+  if (dirname(final) !== parent || !matches.includes(chosen))
+    throw refuse(`the filesystem names ${final}, which is not one of them`);
+  return chosen;
+}
+
+/**
+ * Refuse when a selected sidecar is the same file as `other`, a name the reset owns in another
+ * role: removing the sidecar under one name while owning the file under another would remove or
+ * replace data the manifest does not show.
+ */
+function refuseShared(
+  sidecars: readonly ResetTarget[],
+  identity: string,
+  other: string,
+  role: string,
+): void {
+  const sidecar = sidecars.find((target) => target.entries[0]?.identity === identity);
+  if (sidecar)
+    throw new ResetRefusedError(
+      `${sidecar.path} (${sidecar.what}) is the same file as ${other}, ${role}; a reset cannot remove a file under one name while it owns another, so verify that no GraphGoblin process uses this store, then move ${other} yourself`,
+    );
+}
+
+/** What a reserved top-level name holds, for a refusal that names it. */
+const RESERVED_ROLES: Record<string, string> = {
+  workspaces: 'the reserved name of the run workspaces directory',
+  artifacts: 'the reserved name of the artifacts directory',
+  'chat-audio': 'the reserved name of the private chat audio directory',
+};
+
+/**
+ * A hard link the planner proved: `kept` is another listed top-level name of the regular file
+ * whose sidecar entry `removed` the reset removes, a distinct entry with the same identity. The
+ * manifest check allows exactly these pairs to share an identity across Removes and Keeps.
+ */
+interface SidecarLink {
+  removed: string;
+  kept: string;
+  identity: string;
+}
+
 export interface PlanResetOptions {
   /** Physical data directory. */
   dataDir: string;
@@ -389,11 +528,32 @@ export async function planReset({
       `the database ${database} has the name of the reset's lock file; rename it first`,
     );
   const databaseTargets: ResetTarget[] = [];
-  const databaseDir = resolve(dataDir, ...segments.slice(0, -1));
+  const sidecars: ResetTarget[] = [];
+  const databaseParent = segments.slice(0, -1);
+  const storedName = segments.at(-1)!;
+  // The writer passes the configured path to SQLite, which derives its sidecar names from that
+  // spelling; the reset and its store reader use the stored one.
+  const configuredName = database.split('/').at(-1)!;
   for (const [suffix, what] of DATABASE_PARTS) {
-    // Sidecars are listed under the spelling the directory shows for them.
-    const leaf = await listedName(databaseDir, segments.at(-1)! + suffix);
-    const entry = await statEntry(dataDir, [...segments.slice(0, -1), leaf].join('/'));
+    // The database is its stored spelling, which the resolution above found as the one listed
+    // name of its file; each sidecar is the directory entry its name opens (`sidecarEntry`).
+    const entry =
+      suffix === ''
+        ? await statEntry(dataDir, stored)
+        : await sidecarEntry(dataDir, databaseParent, storedName + suffix);
+    if (suffix !== '' && configuredName !== storedName) {
+      // Both spellings are resolved in the same physical directory and must name one entry, or
+      // none, before the store is read: otherwise the store reader could borrow the wrong file and
+      // the reset could remove one while the writer's stays.
+      const writer = await sidecarEntry(dataDir, databaseParent, configuredName + suffix);
+      if (writer?.path !== entry?.path) {
+        const found = (spelling: string, listed: TreeEntry | undefined) =>
+          `${[...databaseParent, spelling].join('/')} names ${listed ? `the listed entry ${listed.path}` : 'no entry'}`;
+        throw new ResetRefusedError(
+          `the database is configured as ${configuredName} but listed as ${storedName}, and ${found(configuredName + suffix, writer)} while ${found(storedName + suffix, entry)}; a reset cannot tell which ${what} belongs to this store, so configure GG_DB_URL with the name as the directory lists it`,
+        );
+      }
+    }
     if (!entry) continue;
     // Only a regular file: a directory, a link, a FIFO, a socket or a device is never a database
     // file, and reading the store from one could block or remove something that was never data.
@@ -401,7 +561,9 @@ export async function planReset({
       throw new ResetRefusedError(
         `${entry.path} is a ${NOUNS[entry.kind][0]}, not a database file; a reset removes only regular database files`,
       );
-    databaseTargets.push({ path: entry.path, what, entries: [entry] });
+    const target: ResetTarget = { path: entry.path, what, entries: [entry] };
+    databaseTargets.push(target);
+    if (suffix !== '') sidecars.push(target);
   }
   const store: ResetPlan['store'] =
     databaseTargets[0]?.path === stored
@@ -458,14 +620,18 @@ export async function planReset({
       });
   }
   targets.push(...databaseTargets);
-  // Everything else at the top level is kept. Ownership is decided by identity, so the database's
-  // stored spelling and its sidecars, or an `Artifacts` directory on a case-insensitive volume, are
-  // never listed under Keeps while their entries are removed.
+  // Everything else at the top level is kept. The reserved directories and the database are owned
+  // by identity, so an `Artifacts` directory on a case-insensitive volume is never listed under
+  // Keeps while its entries are removed. A sidecar is owned by its listed name only: another hard
+  // link of it is a separate entry, kept below. A sidecar that is also a name the reset owns in
+  // another role is refused before that name can hide it.
   const owned = new Set<string>();
   for (const name of RESERVED_ROOTS) {
     owned.add(name);
     const identity = await identityOf(resolve(dataDir, name));
-    if (identity !== undefined) owned.add(identity);
+    if (identity === undefined) continue;
+    refuseShared(sidecars, identity, name, RESERVED_ROLES[name]!);
+    owned.add(identity);
   }
   // The locks a confirmed reset takes, where the lock module keeps them: the database lock beside
   // the database (in its subdirectory, when it has one) and the data-directory lock at the root,
@@ -489,6 +655,10 @@ export async function planReset({
         throw new ResetRefusedError(
           `${path} is a ${NOUNS[entry.kind][0]}, not ${guard ? 'a lock reclamation guard directory' : 'a lock file'}; verify that no GraphGoblin process uses this store, then move it yourself`,
         );
+      // Taking a lock replaces a stale lock file and releasing it removes the file, so a sidecar
+      // under a lock name would be changed by the locks rather than by the manifest.
+      if (entry)
+        refuseShared(sidecars, entry.identity, path, `the ${role}${guard ? ' guard' : ''}`);
       ownership.push({ path, role, guard, present: entry !== undefined });
       if (parent.length === 0) owned.add(name);
       if (entry && guard && locked)
@@ -504,10 +674,36 @@ export async function planReset({
     if (identity !== undefined) owned.add(identity);
   } else
     for (const target of databaseTargets)
-      for (const entry of target.entries) owned.add(entry.path).add(entry.identity);
+      for (const entry of target.entries) {
+        owned.add(entry.path);
+        // The database's spelling resolution refused any other listed name of its file.
+        if (!sidecars.includes(target)) owned.add(entry.identity);
+      }
+  const links: SidecarLink[] = [];
   for (const name of (await readdir(dataDir)).sort()) {
     const identity = await identityOf(resolve(dataDir, name));
     if (owned.has(name) || (identity !== undefined && owned.has(identity))) continue;
+    // Another listed name of a removed sidecar's file, at the top level or above a nested database:
+    // a distinct entry (another name in the same directory, or another physical directory) that
+    // the reset keeps. Anything less certain is left to the manifest check, which refuses it.
+    const sidecar = sidecars.find((target) => target.entries[0]?.identity === identity);
+    const removed = sidecar?.entries[0];
+    const other = removed && (await statEntry(dataDir, name));
+    if (
+      removed &&
+      other?.kind === 'file' &&
+      other.identity === removed.identity &&
+      (other.path !== removed.path ||
+        other.ancestors.at(-1)?.identity !== removed.ancestors.at(-1)?.identity)
+    ) {
+      links.push({ removed: removed.path, kept: name, identity: removed.identity });
+      kept.push({
+        path: name,
+        why: `another name for ${removed.path}; the file stays under this name`,
+        identity,
+      });
+      continue;
+    }
     kept.push({
       path: name,
       why:
@@ -518,35 +714,58 @@ export async function planReset({
     });
   }
   kept.sort((a, b) => (a.path < b.path ? -1 : 1));
-  assertDisjointManifest(targets, kept);
+  checkManifest(targets, kept, links);
   return { dataDir, database: stored, store, targets, kept, ownership };
 }
 
 /**
  * A manifest names every entry once and never both removes and keeps one; a reset that could
  * remove an entry twice would stop part of the way, and one that keeps what it removes would lie.
- * Entries are compared by filesystem identity when both sides carry one, else by path. The
- * refusals above make this unreachable for any configuration; it stays as the final guard.
+ * Entries are compared by path, and by filesystem identity when both sides carry one. This exported
+ * check has no exception. `planReset` ends with the same check plus its proved sidecar links; the
+ * refusals before it name the cause where they can, and one file reached as two removed entries
+ * (a sidecar hard-linked into a removed directory) is refused only by that final check.
  */
 export function assertDisjointManifest(
   targets: readonly ResetTarget[],
   kept: readonly KeptEntry[],
 ): void {
+  checkManifest(targets, kept, []);
+}
+
+/**
+ * The manifest check `planReset` runs. Removed entries never repeat a path or an identity, and a
+ * kept path is never a removed one. A kept identity may equal a removed one only as a planned
+ * `SidecarLink`: that exact kept name, the one removed entry with that identity being its sidecar.
+ */
+function checkManifest(
+  targets: readonly ResetTarget[],
+  kept: readonly KeptEntry[],
+  links: readonly SidecarLink[],
+): void {
   const removedPaths = new Set<string>();
-  const removedIdentities = new Set<string>();
+  const removedIdentities = new Map<string, string>();
   for (const target of targets)
     for (const entry of target.entries) {
       if (removedPaths.has(entry.path) || removedIdentities.has(entry.identity))
         throw new ResetRefusedError(`the manifest would list ${entry.path} twice`);
       removedPaths.add(entry.path);
-      removedIdentities.add(entry.identity);
+      removedIdentities.set(entry.identity, entry.path);
     }
-  for (const entry of kept)
+  for (const entry of kept) {
+    if (removedPaths.has(entry.path))
+      throw new ResetRefusedError(`the manifest would both remove and keep ${entry.path}`);
+    if (entry.identity === undefined) continue;
+    const removed = removedIdentities.get(entry.identity);
     if (
-      removedPaths.has(entry.path) ||
-      (entry.identity !== undefined && removedIdentities.has(entry.identity))
+      removed !== undefined &&
+      !links.some(
+        (link) =>
+          link.kept === entry.path && link.identity === entry.identity && link.removed === removed,
+      )
     )
       throw new ResetRefusedError(`the manifest would both remove and keep ${entry.path}`);
+  }
 }
 
 export function formatBytes(bytes: number): string {

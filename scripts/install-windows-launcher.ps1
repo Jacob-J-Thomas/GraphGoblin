@@ -238,6 +238,27 @@ function Publish-LauncherArtifacts {
     }
 }
 
+# The .NET Framework C# compiler reports failed Win32 resource preparation as error CS1567 or
+# CS1619; a long staging path is one cause. Each stdout and stderr line is classified by its leading
+# diagnostic field alone. The line either starts with it, as in 'error CS1619:', or it follows a csc
+# tool label or file name prefix, with or without a numeric location, that ends at the first colon
+# other than a leading drive colon; file names may contain spaces. The field is identified before
+# the allowlist applies, so a warning, fatal error or other code never qualifies, nor does a later
+# separator or code text in its message. Only an allowlisted code from a failed compile is
+# returned, never compiler text, paths or the localized system reason.
+function Get-CompilerResourceFailure($Result) {
+    if ($Result.Code -eq 0) { return $null }
+    foreach ($text in @($Result.Stdout, $Result.Stderr)) {
+        if (!$text) { continue }
+        foreach ($line in $text -split '\r\n|\r|\n') {
+            # The prefix is optional and tried last, so a line that starts with a field keeps it.
+            if ($line -imatch '^(?:(?:[a-z]:[\\/]|[^\s:])[^:]*:\s*)??((?:fatal\s+)?error|warning)\s+([^\s:]+)\s*:' -and
+                $Matches[1] -ceq 'error' -and $Matches[2] -cin 'CS1567', 'CS1619') { return $Matches[2] }
+        }
+    }
+    $null
+}
+
 function Invoke-StagedLauncher([string[]]$Arguments, [string]$Failure) {
     $result = Invoke-InstallerProcess $stagedExe $Arguments 15
     if ($result.Code -ne 0 -or $result.Stderr) { Refuse-LauncherInstall $Failure }
@@ -287,12 +308,20 @@ try {
         try { $PwaShortcut = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($PwaShortcut) }
         catch { $PwaShortcut = $null }
     }
+    $invalidSource = 'Install the Chrome PWA, then supply -PwaShortcut with its .lnk path.'
     if (!$PwaShortcut -or ![IO.File]::Exists($PwaShortcut) -or [IO.Path]::GetExtension($PwaShortcut) -ine '.lnk') {
-        Refuse-LauncherInstall 'Install the Chrome PWA, then supply -PwaShortcut with its .lnk path.'
+        Refuse-LauncherInstall $invalidSource
     }
+    $unsupportedSource = 'The PWA shortcut is a link or other reparse point, which the installer does not support; files in cloud-synced folders can be reparse points. Copy the Chrome PWA shortcut to an ordinary local folder that is not synced, pass that copy with -PwaShortcut, then run the installer again.'
+    $changedSource = 'The PWA shortcut changed during preparation. Select its current file and run the installer again.'
 
     Initialize-InstallerPaths
     $source = Get-InstallerPath $PwaShortcut
+    # The selected leaf's observed attributes decide (#499): a leaf reported as a reparse point, such
+    # as a link or a visible cloud placeholder, is refused before its digest, any stage or any
+    # shortcut read.
+    if (!$source.Id -or $source.IsDirectory) { Refuse-LauncherInstall $invalidSource }
+    if ($source.IsLink) { Refuse-LauncherInstall $unsupportedSource }
     $sourceDigest = Get-InstallerDigest $source.Path
     $exe = Join-Path $InstallDir 'GraphGoblin.exe'
     $paths = @($exe, "$exe.json")
@@ -321,6 +350,9 @@ try {
     $seenIds = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     [void]$seenPaths.Add($source.Path)
     [void]$seenIds.Add($source.Id)
+    # The parameter that selects each output, in $paths order.
+    $outputParameters = @('-InstallDir', '-InstallDir', '-DesktopShortcut', '-StartMenuShortcut', '-PinnedShortcut')
+    $regularOutput = 'Choose a regular output file with the required shortcut extension.'
     foreach ($path in $paths) {
         if ([string]::IsNullOrWhiteSpace($path)) { Refuse-LauncherInstall 'Choose a valid output shortcut path.' }
         try { $destination = Get-InstallerPath $path }
@@ -334,9 +366,15 @@ try {
         if (!$seenPaths.Add($destination.Path) -or ($destination.Id -and !$seenIds.Add($destination.Id))) {
             Refuse-LauncherInstall 'The PWA source and launcher outputs must use distinct files and paths. Choose a separate shortcut destination.'
         }
-        if ($destination.IsDirectory -or $destination.IsLink -or
-            ($destinations.Count -ge 2 -and [IO.Path]::GetExtension($destination.Path) -ine '.lnk')) {
-            Refuse-LauncherInstall 'Choose a regular output file with the required shortcut extension.'
+        if ($destination.IsDirectory) { Refuse-LauncherInstall $regularOutput }
+        # After the collision checks and before its digest, an existing output leaf reported as a
+        # reparse point is refused with the parameter that selected it (#499).
+        if ($destination.IsLink) {
+            $parameter = $outputParameters[$destinations.Count]
+            Refuse-LauncherInstall "An existing launcher output selected by $parameter is a link or other reparse point, which the installer does not replace; files in cloud-synced folders can be reparse points. Choose an ordinary local path that is not synced with $parameter, then run the installer again."
+        }
+        if ($destinations.Count -ge 2 -and [IO.Path]::GetExtension($destination.Path) -ine '.lnk') {
+            Refuse-LauncherInstall $regularOutput
         }
         $destinations.Add($destination)
         $originalDigest = if ($destination.Id) { Get-InstallerDigest $destination.Path } else { '' }
@@ -358,6 +396,10 @@ try {
             "/out:$stagedExe", (Join-Path $RepoPath 'apps/windows-launcher/Launcher.cs')
         ) 30
     } catch { Refuse-LauncherInstall 'Launcher compilation failed. Check the .NET Framework compiler and checkout.' }
+    $resourceFailure = Get-CompilerResourceFailure $compile
+    if ($resourceFailure) {
+        Refuse-LauncherInstall "Launcher compilation failed while the .NET Framework C# compiler prepared the launcher's Win32 resources (compiler error $resourceFailure). The installer compiles in a temporary gg-launcher-stage folder inside the install folder, or its nearest existing parent, and that staging path may be too long for this compiler. Choose a shorter writable local folder with -InstallDir, then run the installer again."
+    }
     if ($compile.Code -ne 0 -or ![IO.File]::Exists($stagedExe)) { Refuse-LauncherInstall 'Launcher compilation failed.' }
 
     $linkHelp = 'PwaShortcut must name an installed Chrome PWA shortcut.'
@@ -386,7 +428,7 @@ try {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { $identity = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($exe.ToUpperInvariant())))).Replace('-', '').ToLowerInvariant().Substring(0, 24) }
     finally { $sha.Dispose() }
-    # Only explicitly supplied overrides are persisted.
+    # Only explicitly supplied overrides are persisted, with one enrollment and no runtime refresh.
     $config = [ordered]@{
         Repo = $RepoPath; Node = $NodePath; DataDir = $DataDir; Port = $Port
         ChromeProxy = $pwa.TargetPath; ChromeProfile = $profile; ChromeAppId = $appId
@@ -394,6 +436,16 @@ try {
         PwaAppUserModelId = $pwaId; LauncherAppUserModelId = "GraphGoblin.$identity"
         Environment = $Environment; StartupTimeoutSeconds = 60; WindowTimeoutSeconds = 30
     }
+    [IO.File]::WriteAllText($stagedConfig, ($config | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
+    # Enrollment (#566): the contained configured runtime observes the cold launch environment
+    # once. Its bounded helper work (15 s) and cleanup (2 s) finish within this stage timeout.
+    $enrollmentRefusal = 'The staged launcher configuration was refused while enrolling its gateway settings. Check the launcher paths, Node runtime, built checkout, reserved GG_* overrides and the Windows job policy.'
+    try { $enrollment = Invoke-InstallerProcess $stagedExe @('--enroll-install', '--config', $stagedConfig) 40 }
+    catch { Refuse-LauncherInstall $enrollmentRefusal }
+    if ($enrollment.Code -ne 0 -or $enrollment.Stderr) { Refuse-LauncherInstall $enrollmentRefusal }
+    try { $config.Enrollment = $enrollment.Stdout | ConvertFrom-Json }
+    catch { Refuse-LauncherInstall $enrollmentRefusal }
+    if (!$config.Enrollment) { Refuse-LauncherInstall $enrollmentRefusal }
     [IO.File]::WriteAllText($stagedConfig, ($config | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
     $validation = Invoke-InstallerProcess $stagedExe @('--validate-install', '--config', $stagedConfig) 15
     if ($validation.Code -ne 0 -or $validation.Stderr -or $validation.Stdout) {
@@ -422,10 +474,15 @@ try {
             }
         }
     )
-    $currentSource = Get-InstallerPath $source.Path
-    if (!(Test-InstallerFile $currentSource $source.Id $sourceDigest)) {
-        Refuse-LauncherInstall 'The PWA shortcut changed during preparation. Select its current file and run the installer again.'
+    # Re-observe the selected input itself, not only its earlier canonical target, so a leaf now
+    # replaced by a link to the same file is seen (#499). A different or missing file is a change;
+    # the same file now reported as a reparse point is refused before any digest.
+    $currentSource = Get-InstallerPath $PwaShortcut
+    if (!$currentSource.Id -or $currentSource.Id -cne $source.Id -or $currentSource.Path -ine $source.Path) {
+        Refuse-LauncherInstall $changedSource
     }
+    if ($currentSource.IsDirectory -or $currentSource.IsLink) { Refuse-LauncherInstall $unsupportedSource }
+    if (!(Test-InstallerFile $currentSource $source.Id $sourceDigest)) { Refuse-LauncherInstall $changedSource }
 
     $retainStages = $true
     $result = Publish-LauncherArtifacts -Artifacts $artifacts

@@ -1,0 +1,399 @@
+{
+  "id": "526-E",
+  "issue": 526,
+  "title": "Reload while device storage is still blocked (no device copy) [diagnostic timeline]",
+  "expected": "Server draft shown, held text gone, notice still shown.",
+  "steps": [
+    "Device storage blocked by an older tab; hold unfinished JSON; save a valid neighbour; reload while still blocked.",
+    "Observation: 480 px wide, held input again."
+  ],
+  "checks": [
+    {
+      "label": "before reload: Draft saved + held segment",
+      "actual": {
+        "whole": "Draft saved . Field input kept in this window only",
+        "draft": "Draft saved",
+        "held": ". Field input kept in this window only"
+      },
+      "pass": true
+    },
+    {
+      "label": "reload timeline while blocked (1 s steps, up to 30 s)",
+      "actual": [
+        {
+          "second": 0,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 1,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 2,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 3,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 4,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 5,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 6,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 7,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 8,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 9,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 10,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 11,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 12,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 13,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 14,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 15,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 16,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 17,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 18,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 19,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 20,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 21,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 22,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 23,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 24,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 25,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 26,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 27,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 28,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 29,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        },
+        {
+          "second": 30,
+          "notice": false,
+          "checking": true,
+          "status": "All changes saved"
+        }
+      ],
+      "observation": true
+    },
+    {
+      "label": "device notice shown within 30 s",
+      "actual": false,
+      "observation": true
+    },
+    {
+      "label": "Value 1 = last complete server value (held text gone)",
+      "actual": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "expected": {
+        "type": "string",
+        "title": "last complete topic"
+      },
+      "pass": true
+    },
+    {
+      "label": "description from server",
+      "actual": "neighbour before blocked reload",
+      "pass": true
+    },
+    {
+      "label": "status after blocked reload",
+      "actual": {
+        "whole": "All changes saved",
+        "draft": "All changes saved",
+        "held": null
+      },
+      "observation": true
+    },
+    {
+      "label": "no held segment and no saved-to-server overclaim beyond the draft",
+      "actual": {
+        "whole": "All changes saved",
+        "draft": "All changes saved",
+        "held": null
+      },
+      "pass": true
+    },
+    {
+      "label": "480 px layout",
+      "actual": {
+        "viewport": 480,
+        "docScroll": 480,
+        "left": 100,
+        "right": 432,
+        "clientWidth": 332,
+        "scrollWidth": 332,
+        "parts": [
+          {
+            "id": "draft-state",
+            "top": 98,
+            "left": 100,
+            "right": 190
+          },
+          {
+            "id": "held-input-state",
+            "top": 98,
+            "left": 202,
+            "right": 432
+          }
+        ]
+      },
+      "observation": true
+    }
+  ],
+  "screenshots": [
+    "526-E-blocked-reload-after-timeline.png",
+    "526-E-blocked-reloaded.png",
+    "526-E-narrow-480.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:34:19.335Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 526 blocked reload 1",
+          "description": "neighbour before blocked reload",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {
+            "topic": {
+              "type": "string",
+              "title": "last complete topic"
+            }
+          },
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Approve",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "wait",
+              "config": {
+                "mode": "input",
+                "prompt": "Approve?",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ],
+                "onTimeout": "continue"
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 38612,
+  "consoleErrors": [],
+  "trace": "526-E-trace.zip"
+}

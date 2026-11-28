@@ -122,15 +122,18 @@ function Harness({
   spy = vi.fn(),
   revision = 0,
   report,
+  held = {},
 }: {
   schema: Schema;
   initial: unknown;
   spy?: (value: unknown) => void;
   revision?: number;
   report?: (path: string, error: ParseError | undefined) => void;
+  /** Held input the form mounts with, as a history or dialog-session remount restores it. */
+  held?: Record<string, ParseError>;
 }) {
   const [value, setValue] = useState(initial);
-  const [errors, setErrors] = useState<Record<string, ParseError>>({});
+  const [errors, setErrors] = useState<Record<string, ParseError>>(held);
   return (
     <>
       <SchemaForm
@@ -397,22 +400,24 @@ describe('section JSON mode', () => {
       });
     const spy = vi.fn();
     const report = vi.fn();
+    // The applied value, spaced by the author, held while a parent rule refused it, as a history
+    // or dialog-session remount restores it. (Typed now, it would read as the section's own value
+    // and stay passive, #522.)
+    const text = '[ 1 ]';
+    const refusal = 'section (config.enabled): Enable this collection first';
     render(
       <Harness
         schema={schema}
         initial={{ enabled: false, section: [1] }}
         spy={spy}
         report={report}
+        held={{ section: { message: refusal, text, input: 'unparsed text' } }}
       />,
     );
     const user = userEvent.setup();
-    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
-    // The applied value, spaced by the author, is held while a parent rule refuses it.
-    const text = '[ 1 ]';
-    setCode('Section JSON', text);
-    expect(
-      screen.getByText('section (config.enabled): Enable this collection first'),
-    ).toBeInTheDocument();
+    expect(getCode('Section JSON')).toBe(text);
+    expect(screen.getByText(refusal)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Discard the unparsed text' })).toBeInTheDocument();
     report.mockClear();
 
     // Fixing the sibling makes the held text valid and equal to the section. It stays held as typed.
@@ -783,6 +788,208 @@ describe('section JSON mode', () => {
         'true',
       ),
     );
+  });
+});
+
+describe('section JSON diagnostics from the moment it opens (#522)', () => {
+  /** A section a sibling switch governs: off, the section must be empty. */
+  const governed = z
+    .object({
+      enabled: z.boolean(),
+      section: z.array(z.number()).meta({ jsonEditor: true }),
+    })
+    .superRefine((config, ctx) => {
+      if (!config.enabled && config.section.length)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['enabled'],
+          message: 'Enable this collection first',
+        });
+    });
+  const REFUSAL = 'section (config.enabled): Enable this collection first';
+  const editor = () => screen.getByRole('textbox', { name: 'Section JSON' });
+  const apply = () => screen.getByRole('button', { name: 'Apply JSON' });
+  const discard = () => screen.queryByRole('button', { name: 'Discard the unparsed text' });
+
+  it('opens valid content with valid controls: no message, Apply enabled, nothing held', async () => {
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(
+      <Harness
+        schema={governed}
+        initial={{ enabled: true, section: [1] }}
+        spy={spy}
+        report={report}
+      />,
+    );
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    expect(getCode('Section JSON')).toBe('[\n  1\n]');
+    expect(editor()).not.toHaveAttribute('aria-invalid');
+    expect(screen.queryByText(REFUSAL)).not.toBeInTheDocument();
+    expect(apply()).toBeEnabled();
+    expect(discard()).not.toBeInTheDocument();
+    expect(report).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('shows committed content the validator refuses at once, passively, and keeps the editors switchable', async () => {
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(
+      <Harness
+        schema={governed}
+        initial={{ enabled: false, section: [1] }}
+        spy={spy}
+        report={report}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    // The first render shows the same message typed text would get, without a keystroke.
+    expect(getCode('Section JSON')).toBe('[\n  1\n]');
+    expect(screen.getByText(REFUSAL)).toBeVisible();
+    expect(editor()).toHaveAttribute('aria-invalid', 'true');
+    expect(editor()).toHaveAccessibleDescription(expect.stringContaining(REFUSAL));
+    expect(apply()).toBeDisabled();
+    // Passive: no discard for committed content, nothing held or reported, no edit.
+    expect(discard()).not.toBeInTheDocument();
+    expect(screen.queryByText(/Choose Apply JSON/)).not.toBeInTheDocument();
+    expect(report).not.toHaveBeenCalled();
+    expect(spy).not.toHaveBeenCalled();
+    // Whitespace alone reads as the same value: still passive.
+    setCode('Section JSON', '[ 1 ]');
+    expect(screen.getByText(REFUSAL)).toBeVisible();
+    expect(apply()).toBeDisabled();
+    expect(discard()).not.toBeInTheDocument();
+    expect(report).not.toHaveBeenCalled();
+    // Nothing is held, so the structured editor takes over at once.
+    await user.click(screen.getByRole('button', { name: 'Use structured editor for Section' }));
+    expect(screen.queryByLabelText('Section JSON')).not.toBeInTheDocument();
+    expect(screen.queryByText(/before switching editors/)).not.toBeInTheDocument();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('takes a correction through the held channel and Apply, and clears the diagnostic', async () => {
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(
+      <Harness
+        schema={governed}
+        initial={{ enabled: false, section: [1] }}
+        spy={spy}
+        report={report}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    // A refused edit is typed input: held, with its discard.
+    setCode('Section JSON', '[2]');
+    expect(report).toHaveBeenLastCalledWith('section', {
+      message: REFUSAL,
+      text: '[2]',
+      input: 'unparsed text',
+    });
+    expect(discard()).toBeInTheDocument();
+    expect(apply()).toBeDisabled();
+    // A valid one is unapplied JSON until Apply.
+    setCode('Section JSON', '[]');
+    expect(report).toHaveBeenLastCalledWith('section', {
+      message: 'Choose Apply JSON or Cancel JSON to finish this edit.',
+      text: '[]',
+      input: 'unapplied JSON',
+    });
+    expect(screen.queryByText(REFUSAL)).not.toBeInTheDocument();
+    expect(editor()).not.toHaveAttribute('aria-invalid');
+    expect(apply()).toBeEnabled();
+    await user.click(apply());
+    expect(spy).toHaveBeenLastCalledWith({ enabled: false, section: [] });
+    expect(report).toHaveBeenLastCalledWith('section', undefined);
+    expect(screen.queryByText(REFUSAL)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Choose Apply JSON/)).not.toBeInTheDocument();
+    expect(apply()).toBeEnabled();
+  });
+
+  it('restores the passive diagnostic on Cancel, keeping focus on Cancel', async () => {
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(
+      <Harness
+        schema={governed}
+        initial={{ enabled: false, section: [1] }}
+        spy={spy}
+        report={report}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    setCode('Section JSON', '{broken');
+    expect(screen.getByText(/^Invalid JSON/)).toBeVisible();
+    expect(screen.queryByText(REFUSAL)).not.toBeInTheDocument();
+    const cancel = screen.getByRole('button', { name: 'Cancel JSON' });
+    await user.click(cancel);
+    expect(cancel).toHaveFocus();
+    expect(getCode('Section JSON')).toBe('[\n  1\n]');
+    expect(report).toHaveBeenLastCalledWith('section', undefined);
+    // The committed content's own diagnostic is back, still passive.
+    expect(screen.getByText(REFUSAL)).toBeVisible();
+    expect(screen.queryByText(/^Invalid JSON/)).not.toBeInTheDocument();
+    expect(discard()).not.toBeInTheDocument();
+    expect(apply()).toBeDisabled();
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('follows sibling changes live while nothing is held', async () => {
+    const spy = vi.fn();
+    const report = vi.fn();
+    render(
+      <Harness
+        schema={governed}
+        initial={{ enabled: true, section: [1] }}
+        spy={spy}
+        report={report}
+      />,
+    );
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: 'Edit as JSON: Section' }));
+    expect(apply()).toBeEnabled();
+    await user.click(screen.getByRole('switch', { name: 'Enabled' }));
+    expect(spy).toHaveBeenLastCalledWith({ enabled: false, section: [1] });
+    expect(screen.getByText(REFUSAL)).toBeVisible();
+    expect(editor()).toHaveAttribute('aria-invalid', 'true');
+    expect(apply()).toBeDisabled();
+    expect(discard()).not.toBeInTheDocument();
+    await user.click(screen.getByRole('switch', { name: 'Enabled' }));
+    expect(screen.queryByText(REFUSAL)).not.toBeInTheDocument();
+    expect(editor()).not.toHaveAttribute('aria-invalid');
+    expect(apply()).toBeEnabled();
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('keeps a refusal found by Apply’s recheck of the committed content passive', async () => {
+    const onChange = vi.fn();
+    const onHeldChange = vi.fn();
+    const validation: { message?: string } = {};
+    render(
+      <JsonText
+        path="section"
+        label="Section JSON"
+        value={[1]}
+        schema={z.array(z.number())}
+        explicit
+        validateValue={() => validation.message}
+        onChange={onChange}
+        onHeldChange={onHeldChange}
+      />,
+    );
+    expect(apply()).toBeEnabled();
+    validation.message = 'section: Parent rule changed';
+    await userEvent.setup().click(apply());
+    expect(screen.getByText(validation.message)).toBeVisible();
+    expect(apply()).toBeDisabled();
+    expect(discard()).not.toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+    expect(onHeldChange).not.toHaveBeenCalledWith(true);
+    expect(getCode('Section JSON')).toBe('[\n  1\n]');
   });
 });
 
@@ -1224,6 +1431,83 @@ describe('Codex config overrides in the structured editor (#429)', () => {
     const corrected = 'config.harnessOptions.configOverrides.service_tier';
     act(() => expect(focusIssuePath(container, corrected)).toBe(true));
     expect(screen.getByLabelText('Config overrides value 1')).toHaveFocus();
+  });
+
+  it('shows an issue inside a committed Value on that Value, and links it there before a dotted sibling (#521)', () => {
+    const spy = vi.fn();
+    const { container } = render(
+      <div data-field-scope="config">
+        <Harness
+          schema={InferenceConfigSchema}
+          initial={config({ example: { previous: true }, 'example.outer': 'sibling' })}
+          spy={spy}
+        />
+      </div>,
+    );
+    const advanced = openAdvanced();
+    const value = screen.getByLabelText('Config overrides value 1');
+    const sibling = screen.getByLabelText('Config overrides value 2');
+    setCode('Config overrides value 1', '{"outer":{"team docs":true}}');
+    // Taken as typed: a schema issue of committed content, not held text.
+    expect(reported(spy)).toEqual({
+      example: { outer: { 'team docs': true } },
+      'example.outer': 'sibling',
+    });
+    expect(screen.queryByRole('button', { name: 'Discard the unparsed text' })).toBeNull();
+    // The Value owns it: marked, described by its member path and the rule, and announced.
+    const message = `outer.team docs: ${CODEX_CONFIG_KEY_MESSAGE}`;
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(message);
+    expect(
+      within(value.closest('[data-field]') as HTMLElement).getByRole('alert'),
+    ).toHaveTextContent(message);
+    expectClean(screen.getByLabelText('Config overrides key 1'));
+    expectClean(screen.getByLabelText('Config overrides key 2'));
+    expectClean(sibling);
+    // The group still counts it once.
+    expect(advanced).toHaveTextContent('1 error');
+    // Its link reaches this Value, not the sibling whose dotted key reads as the member's parent.
+    act(() =>
+      expect(
+        focusIssuePath(container, 'config.harnessOptions.configOverrides.example.outer.team docs'),
+      ).toBe(true),
+    );
+    expect(value).toHaveFocus();
+    // Corrected, the effect clears with it.
+    setCode('Config overrides value 1', '{"outer":{"team_docs":true}}');
+    expectClean(value);
+    expectClean(sibling);
+    expect(advanced).not.toHaveTextContent('error');
+    expect(lastIsValid(spy)).toBe(true);
+  });
+
+  it('keeps an issue inside one entry off a sibling whose dotted key joins to its path (#521)', () => {
+    const schema = z.object({
+      limits: z.record(z.string(), z.record(z.string(), z.number())),
+    });
+    const { container } = render(
+      <div data-field-scope="config">
+        <Harness schema={schema} initial={{ limits: { a: { b: 1 }, 'a.b': { c: 2 } } }} />
+      </div>,
+    );
+    const owner = screen.getByLabelText('Limits value 1');
+    const sibling = screen.getByLabelText('Limits value 2');
+    // Member b of entry "a" joins to the same text as entry "a.b"; only "a" owns the issue.
+    setCode('Limits value 1', '{"b":"many"}');
+    expect(owner).toHaveAttribute('aria-invalid', 'true');
+    expect(owner).toHaveAccessibleDescription(/^b: Invalid input/);
+    expectClean(sibling);
+    act(() => expect(focusIssuePath(container, 'config.limits.a.b')).toBe(true));
+    expect(owner).toHaveFocus();
+    setCode('Limits value 1', '{"b":3}');
+    expectClean(owner);
+    // And an issue inside the dotted entry is its own, never its namesake's parent's.
+    setCode('Limits value 2', '{"c":"x"}');
+    expect(sibling).toHaveAttribute('aria-invalid', 'true');
+    expect(sibling).toHaveAccessibleDescription(/^c: Invalid input/);
+    expectClean(owner);
+    act(() => expect(focusIssuePath(container, 'config.limits.a.b.c')).toBe(true));
+    expect(sibling).toHaveFocus();
   });
 
   it('keeps a real value error on the Value, apart from a refused key', () => {

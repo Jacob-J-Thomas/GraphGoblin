@@ -1,0 +1,29 @@
+{
+  "id": "526-E",
+  "issue": 526,
+  "title": "Reload while device storage is still blocked (no device copy)",
+  "expected": "Server draft shown, held text gone, notice still shown.",
+  "steps": [
+    "Device storage blocked by an older tab; hold unfinished JSON; save a valid neighbour; reload while still blocked."
+  ],
+  "checks": [
+    {
+      "label": "before reload: Draft saved + held segment",
+      "actual": {
+        "whole": "Draft saved . Field input kept in this window only",
+        "draft": "Draft saved",
+        "held": ". Field input kept in this window only"
+      },
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "526-E-first-failure.png"
+  ],
+  "verdict": "FAIL",
+  "failure": "TimeoutError: locator.waitFor: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Changes are not kept on this device').first() to be visible\u001b[22m\n",
+  "stack": "locator.waitFor: Timeout 8000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('Changes are not kept on this device').first() to be visible\u001b[22m\n\n    at case526BlockedReload (G:\\ggq\\tmp\\editor-forms-qa\\scripts\\editor-qa.mjs:903:24)\n    at async file:///G:/ggq/tmp/editor-forms-qa/scripts/editor-qa.mjs:1003:22",
+  "durationMs": 13277,
+  "consoleErrors": [],
+  "trace": "526-E-trace.zip"
+}

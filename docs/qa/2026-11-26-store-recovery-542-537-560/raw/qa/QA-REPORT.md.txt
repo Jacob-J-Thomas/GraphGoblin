@@ -1,0 +1,129 @@
+PASS WITH LIMITS
+
+# Independent QA: #542 / #537 / #560 store-recovery residual
+
+QA by Claude Opus 5.5 (xhigh), independent of the author, 2026-11-26 (UTC 09:20–09:45), Windows 11
+Pro 10.0.26300, Node v22.23.4 (project runtime), Git Bash. Procedure `RQ-TEMPLATE.md` phase 2
+(`qa:touched-systems`). Source under test was not modified; worktree clean at
+`6c86acea5db1725795c3e02fcc00dff521aacc7e` before and after.
+
+## Build identity
+
+`apps/api/dist` was not rebuilt. A fresh `tsc -p tsconfig.build.json` emit of HEAD into
+`G:/ggq/tmp/rq-542-qa/emit` matched `apps/api/dist` byte-for-byte for every JS file
+(`data-dir-lock`, `container`, `serve`, `startup-cleanup`, `main`, `create-api-key`, `reset/reset`
+and all others; only the copied `catalog/` folder differs). `tsc -b --dry` also reported every
+project up to date. No heavy-suite lock was needed (the lock was held by another worker throughout).
+
+## Method
+
+- Public path: `node [--import fault-preload.mjs] apps/api/dist/main.js` with disposable
+  `GG_DATA_DIR`/`GG_DB_URL` under `G:/ggq/tmp/rq-542-qa/runs`, `GG_PORT=0` (ephemeral, never
+  4747/4748/7443/11434), providers disabled (`GG_OLLAMA_ENABLED=false`, absent Codex/Claude
+  binaries, no Jev key), `TEMP`/`TMP` on G:. A listening API was drained through
+  `GET`/`POST /system/shutdown`. Managed cases used `GG_WINDOWS_LAUNCHER_LOG_DIR` on a private
+  ACL'd disposable directory (as the #533 native harness did).
+- Faults: `scripts/fault-preload.mjs` uses `module.registerHooks` to redirect only
+  `node:fs/promises` as imported by `dist/data-dir-lock.js` and `@graphgoblin/infrastructure/sqlite`
+  as imported by `dist/container.js`; every other operation is real filesystem/SQLite. One case
+  (C1) uses a real native NTFS ACL denial instead of injection. Successor guards name a real live
+  helper process with its real CIM creation time, so successor verification ran natively.
+- Each case records steps, expected checks, actual output, pass/fail and raw output under
+  `raw/faults/<case>.json` (full stderr, fault call log, file tree after). Failures are kept as
+  recorded; one labelled diagnostic re-run (D3b, module level) is filed separately.
+
+## Case table
+
+| Case | System / fault | Expected | Actual | Result |
+| --- | --- | --- | --- | --- |
+| A1 | dir lock record write fails (partial bytes) | primary unchanged, no detail; one close; identity proof then one unlink; store clean | as expected; sequence write,stat,close,lookup,unlink | PASS |
+| A2 | write + close fail (handle really closed) | primary first; last line `cleanup also failed: main-record-close (EIO)`; record removed | as expected | PASS |
+| A2b | write + close refused, handle left open | same as A2 | same; unlink succeeded with the handle still open | PASS |
+| A3 | write + unlink fail; data dir name contains U+2028 | `…main-record-unlink (EACCES); ownership retained: lock record <path>` with `\u2028` escaped; partial record kept; next start refuses fail-closed | as expected; no raw separator in stderr; next start: one-line "could not be verified (malformed or incomplete owner record)" | PASS |
+| A4 | write + handle identity fails | `main-record-identity (EIO)`, record retained, no lookup/unlink | as expected (write,stat,close only) | PASS |
+| A5 | close-only fail | primary = close error, record proven by exact bytes and removed | as expected | PASS |
+| A6 | close + unlink fail | complete record kept and named; next start reclaims it as the exited process's | as expected | PASS |
+| A6b | write + proof lookup fails | `main-record-lookup (EACCES)`, retained, no unlink | as expected | PASS |
+| A7 | write fail + own guard marker unlink EPERM | detail `recovery-release (EPERM)` after record cleanup; record removed; guard+marker kept; next start reclaims | as expected | PASS |
+| A8 | database lock record write+unlink fail inside createContainer, plus directory lease release fail | one flattened line `main-record-unlink (EACCES), directory-lease-release (EACCES); ownership retained: lock record <db lock>, data-directory lease <dir>` | as expected; both files kept, db guard released | PASS |
+| A9 | attested acquisition (Mac-only startup path) attestation `stat` fails, via exported lock API | attestation error thrown unchanged; exact-bytes proof; one close, one unlink | as expected | PASS (module level, labelled) |
+| B0 | invalid `GG_MASTER_KEY` after SQLite opened (control) | primary unchanged; db close once; db lease then dir lease released | as expected | PASS |
+| B1 | + mutable database close fails (after closing) | detail `database-close (EIO); ownership retained: database lease <db>, data-directory lease <dir>`; no lease release attempted; both lock files kept | as expected (zero lock unlinks) | PASS |
+| B1b | + database close refused, connection left open | same as B1 | same | PASS |
+| B1m | B1 under the managed launcher log | exit 74, silent shell, one record `store`/`store-unavailable`, no text leak | as expected | PASS |
+| B2 | foreign-table store refusal + read-only close fails | refusal explanation as before, then one detail line `readonly-database-close (EIO); ownership retained: …`; both leases kept; db bytes unchanged | behaviour as expected (8 explanation lines + detail); **harness expectation wrongly required 10 lines** | FAIL (harness expectation error; behaviour conforms) |
+| B2m | B2 under the managed launcher log | `store-refused` | exit 74, one record `store`/`store-refused`, no text leak | PASS |
+| B3 | current store + read-only close-only fail | close error is primary; detail `ownership retained: database lease …, data-directory lease …`; no mutable open | as expected | PASS |
+| B4 | db lease release fails | `database-lease-release (EACCES); ownership retained: database lease <db>`; dir lease still released | as expected (order db then dir) | PASS |
+| B5 | both lease releases fail | both steps in order, both retained | as expected | PASS |
+| C1 | stale marker made unreadable by real NTFS deny-read ACL | `observed-marker-read failed (EPERM): <marker>` with `operation`, `markerToken`, `code`, raw cause; read-only status throws the same label; marker untouched | as expected; ACL restored, bytes identical | PASS |
+| C2 | own marker read fails during release (EACCES) | rollback error with cause `recovery-marker-read (EACCES)` and token; main lock rolled back; guard kept | as expected | PASS |
+| D1 | own release: guard rmdir EPERM after a real live successor replaced it | startup completes, main lock kept, one rmdir, successor bytes intact, clean drain | listened; main record = this API while listening; guard = successor only; exit 0; successor intact after shutdown | PASS |
+| D2 | own release EPERM, guard unchanged | rollback with `recovery-directory-remove (EPERM)`, no probe entries, one rmdir, empty guard left; next start reclaims | as expected | PASS |
+| D3 | own release EPERM, successor's recorded creation identity off by one | rollback, original EPERM, no probe entry (credible mismatch), successor intact | as expected | PASS |
+| D3b | own release EPERM, post-denial guard lookup fails | rollback; probe entry visible in shell as label+code; probe text not printed | rollback, original EPERM, probe text absent; **the entry prints as `probeFailures: [ [Object] ]`** (inspect depth) | FAIL (observation → review finding R2) |
+| D3b-diag | same, module level, labelled diagnostic | object carries the entry | `{operation:'recovery-directory-lookup', code:'EACCES'}`, raw cause non-enumerable | diagnostic only |
+| D4 | acquisition EPERM, verified live successor (FUP091) | exactly the ordinary one-line `held(path)` refusal; one rmdir; successor intact; stale marker removed | exact match | PASS |
+| D4m | D4 under the managed launcher log | `store-held` | as expected | PASS |
+| D5 | acquisition EPERM persistent, lookup fails | `recovery-directory-remove (EPERM)` with `probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ]`, probe text absent | as expected | PASS |
+
+Fault suite: 29 cases, 27 PASS, 2 FAIL (B2 harness expectation error; D3b real observation).
+Raw: `raw/faults/*.json`, `raw/faults/console.log`, `raw/faults/faults-summary-*.json`.
+A preliminary two-case smoke run (A1, D1, both PASS) was used to validate the harness; it is
+outside the record (`G:/ggq/tmp/rq-542-qa/smoke-raw`).
+
+## Native ordinary contention
+
+| Run | Shape | Result |
+| --- | --- | --- |
+| Public startup race (`scripts/qa-contention.mjs`) | 4 rounds × 5 `dist/main.js` processes on one fresh store each (same data dir and DB file, ephemeral ports, providers disabled) | 4/4 PASS. Each round: exactly one listened; the directory and database lock records named it; read-only status `held`; the other four exited 1 with one ownership line each (no stack, no filesystem failure); winner drained (202) and exited 0; all five PIDs gone; no lock, guard or staging left (only `store.db`, `-wal`, `-shm`); status `free` afterwards. Settle 4.8–7.0 s. |
+| Historical library-level harness (`../verify-native-contention.mjs candidate`) | 3 trials × 5 forked `acquireDataDirLock` workers | 3/3: one owner, record matched, status held, four ordinary refusals, release `removed`, directory empty |
+
+Refusal mix in the public race: 13 × `another GraphGoblin process holds …` (main lock or guard) and
+3 × `Store ownership could not be verified (WMI returned no valid process creation identity): <guard>`.
+The latter is the existing conservative uncertainty in `lockFileState` (unchanged by this diff): a
+guard holder that was alive at the PID check had no CIM record by the time of the identity query,
+consistent with a losing contender releasing and exiting mid-check. It is an accurate one-line
+refusal, but not ordinary contention. Raw: `raw/contention/`.
+
+## Focused unit tests (independent run)
+
+`pnpm --filter @graphgoblin/api test` on `data-dir-lock`, `data-dir-lock-failures`,
+`reset/reset-acquisition`, `container-startup-cleanup`, `serve-failure-output`, `macos-local-key`:
+6 files, 194 passed, 18 skipped (Mac `geteuid`-gated), exit 0. Log: `focused-tests.log`.
+
+## What this QA establishes
+
+- Through the public startup path on Windows: primary error first, cleanup steps as one escaped
+  detail line with closed labels and vetted codes, no secondary message text, retained ownership
+  named, and files left exactly as the contract says (proven own records removed once; unproven
+  ones and their leases kept; foreign/successor entries untouched).
+- No lease release after a failed read-only or mutable SQLite close; otherwise database then
+  directory lease released once each, second still attempted after the first fails.
+- Managed records keep the primary's closed cause (`store-refused`, `store-held`,
+  `store-unavailable`) with no path or fixture text.
+- The #542 own-release positive branch works natively end to end: published-guard identity
+  capture, real CIM creation-time lookup of a live foreign process, main lock kept, successor
+  preserved. Unchanged, mismatched and unverifiable states roll back with the original `EPERM`.
+- FUP091: the verified acquisition successor still yields exactly the ordinary one-line `held(path)`.
+- Ordinary contention still yields one live owner, ownership refusals for the rest and complete
+  cleanup.
+
+## Not established / limits
+
+- How often, or whether, native Windows ever produces the own-release `EPERM` with a successor
+  present; every `EPERM` here was injected (the successor and its identity were real). The
+  historical #471 cause and frequency remain unknown.
+- Attestation (`attestLocalArtifact`) is reachable only through the Mac launcher; it was exercised
+  at module level (A9) and in unit tests, not on a Mac.
+- API package coverage was not run (brief: hosted CI owns it); the author's local ≥90% gate remains
+  unconfirmed.
+- The D3b observation: the probe evidence on the own-release rollback is attached but not visible
+  in default shell output (`[Object]`). See REVIEW R2.
+- Contention used 5 contenders × 4 rounds on one machine; it does not bound rarer interleavings.
+
+## Recommendations for maintained regressions (not added to the branch)
+
+- A shell-output assertion for the own-release rollback with a failed probe (would expose R2).
+- The D1 native positive-successor schedule (real helper process + real CIM identity) is a useful
+  Windows-only acceptance check alongside the existing native contention suite.

@@ -1,0 +1,9 @@
+import json, sys
+run, ids = sys.argv[1], sys.argv[2:]
+for f in ids:
+    d = json.load(open(f'{run}/{f}.json', encoding='utf-8'))
+    print('=====', f, d['verdict'], d['durationMs'], 'ms', 'consoleErrors:', len(d['consoleErrors']), d.get('failure', ''))
+    for ch in d['checks']:
+        a = json.dumps(ch['actual'], ensure_ascii=True)
+        tag = 'OBS ' if ch.get('observation') else ('PASS' if ch['pass'] else 'FAIL')
+        print('  ', tag, ch['label'], '=>', a[:300])

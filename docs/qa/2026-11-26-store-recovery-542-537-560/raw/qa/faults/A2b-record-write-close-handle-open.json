@@ -1,0 +1,88 @@
+{
+  "name": "A2b-record-write-close-handle-open",
+  "issue": "#560",
+  "system": "data-directory lock record via shell startup",
+  "faults": [
+    "write",
+    "close-open"
+  ],
+  "checks": [
+    {
+      "what": "exit code 1, never listened",
+      "ok": true,
+      "detail": 1
+    },
+    {
+      "what": "primary failure printed first",
+      "ok": true,
+      "detail": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:"
+    },
+    {
+      "what": "exactly one close and the expected single-attempt sequence",
+      "ok": true,
+      "detail": [
+        "main-open",
+        "main-write",
+        "main-stat",
+        "main-close",
+        "main-lookup",
+        "main-unlink"
+      ]
+    },
+    {
+      "what": "no cleanup error message printed",
+      "ok": true
+    },
+    {
+      "what": "last stderr line is the one escaped detail line",
+      "ok": true,
+      "detail": {
+        "last": "cleanup also failed: main-record-close (EIO)",
+        "expected": "cleanup also failed: main-record-close (EIO)"
+      }
+    },
+    {
+      "what": "detail appears exactly once",
+      "ok": true
+    },
+    {
+      "what": "no raw control or line-separator characters in stderr",
+      "ok": true
+    },
+    {
+      "what": "own record removed",
+      "ok": true
+    },
+    {
+      "what": "recovery guard released",
+      "ok": true
+    },
+    {
+      "what": "no database lock or staging left",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n    at Proxy.<anonymous> (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:40:21)\n    at async acquireFile (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:556:9)\n    at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:656:25)\n    at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'ENOSPC'\n}\ncleanup also failed: main-record-close (EIO)\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "main-open",
+      "main-write",
+      "main-stat",
+      "main-close",
+      "main-lookup",
+      "unlink:graphgoblin.lock",
+      "main-unlink",
+      "unlink:61ed0268-37f4-491b-9fb3-d79515631138.json",
+      "rmdir:graphgoblin.lock.reclaim"
+    ]
+  },
+  "filesAfter": [],
+  "ms": 9341,
+  "pass": true
+}

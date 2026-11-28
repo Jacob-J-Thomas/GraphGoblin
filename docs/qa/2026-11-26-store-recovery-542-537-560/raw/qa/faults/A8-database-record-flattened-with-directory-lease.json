@@ -1,0 +1,80 @@
+{
+  "name": "A8-database-record-flattened-with-directory-lease",
+  "issue": "#560",
+  "system": "database lock record failure inside createContainer, flattened with directory lease release failure",
+  "checks": [
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "primary first",
+      "ok": true,
+      "detail": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp"
+    },
+    {
+      "what": "one flattened detail line in causal order",
+      "ok": true,
+      "detail": {
+        "last": "cleanup also failed: main-record-unlink (EACCES), directory-lease-release (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A8-database-record-flattened-with-directory-lease\\data\\store.db.graphgoblin.lock, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A8-database-record-flattened-with-directory-lease\\data",
+        "expected": "cleanup also failed: main-record-unlink (EACCES), directory-lease-release (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A8-database-record-flattened-with-directory-lease\\data\\store.db.graphgoblin.lock, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A8-database-record-flattened-with-directory-lease\\data"
+      }
+    },
+    {
+      "what": "no secondary message text",
+      "ok": true
+    },
+    {
+      "what": "database record kept (partial)",
+      "ok": true
+    },
+    {
+      "what": "directory lease kept (release failed)",
+      "ok": true
+    },
+    {
+      "what": "database guard released",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: rq fixture main record write refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n    at Proxy.<anonymous> (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:40:21)\n    at async acquireFile (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:556:9)\n    at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:656:25)\n    at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:79:28)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'ENOSPC'\n}\ncleanup also failed: main-record-unlink (EACCES), directory-lease-release (EACCES); ownership retained: lock record G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A8-database-record-flattened-with-directory-lease\\data\\store.db.graphgoblin.lock, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\A8-database-record-flattened-with-directory-lease\\data\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:fc0f4ca8-e06a-4900-9bc5-db89fb712624.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "main-open",
+      "main-write",
+      "main-stat",
+      "main-close",
+      "main-lookup",
+      "unlink:store.db.graphgoblin.lock",
+      "main-unlink",
+      "unlink:15d2b805-1245-4d74-b492-0e76f8c7425e.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "unlink:graphgoblin.lock",
+      "lease-unlink-fault:directory"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":65900,\"startedAt\":\"2026-11-26T09:35:14.203Z\",\"windowsCreationTime\":\"134401593077538320\",\"token\":\"fc0f4ca8-e06a-4900-9bc5-db89fb712624\"}"
+    },
+    {
+      "path": "store.db.graphgoblin.lock",
+      "type": "file",
+      "size": 7,
+      "text": "{\"pid\":"
+    }
+  ],
+  "ms": 10569,
+  "pass": true
+}

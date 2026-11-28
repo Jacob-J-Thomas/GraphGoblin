@@ -1,0 +1,223 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f44c5136f51d8a2d6becdad845bb46470dac3be1..4dcc442f3525dde91d87d52f009b107c34336395 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -4,6 +4,16 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
+ 
+ ## Unreleased
+ 
++- `runs.get` and `runs.observation` in `@graphgoblin/api-client` report a successful response whose
++  body the connection cut short as `GraphGoblinApiError` with `status: 0` and the new code
++  `RESPONSE_INTERRUPTED`, keeping the native read error as `cause` (#561). They used to reject
++  with the raw `TypeError`, which offline handling did not recognise. They read the body from the
++  original `Response` and classify only a failed read of a native GET response while the caller's
++  signal is live; an abort keeps its identical reason, and malformed JSON, HTTP refusals
++  (including a refusal with a truncated body), constructed responses and locked or used bodies
++  keep their existing errors. Raw `client.GET`, other wrappers, writes, `parseAs: 'stream'` and
++  SSE are unchanged. No store, schema or format change.
++
+ - MCP `describe_loop` and `start_run` resolve `loopId` as an exact ID of one of the caller's
+   loops first, then as a full loop name under the API's name rule: trimmed, whitespace runs
+   collapsed to one space and lowercased, without Unicode normalization or locale-dependent case
+diff --git a/docs/07-api-and-streaming.md b/docs/07-api-and-streaming.md
+index 30ea0be370344dba26ad4cd53c1cba63221e20fb..0d7eba636c0a3db9a66119bdb33b3f7b9e5d45d4 100644
+--- a/docs/07-api-and-streaming.md
++++ b/docs/07-api-and-streaming.md
+@@ -483,7 +483,7 @@ Replacing an existing plugin output also requires the platform metadata check be
+ 
+ - **Generated types.** `openapi.json` (the API's document) and `src/generated/schema.ts` (from `openapi-typescript`) are committed. `pnpm --filter @graphgoblin/api-client generate` re-emits both from the API's source; a test fails with that instruction when either drifts from the live API. The API emits large and recursive contract schemas (`JsonValue`, `LoopDefinition`, `RunRecord`, `RunEvent`, `ContextThread`, ...) as named components from a dedicated registry in `apps/api/src/openapi-registry.ts`; request-side components carry an `Input` suffix. `RunEvent` includes the discriminated strict progress variants, including inference item types and the script shape documented above.
+ - **Factory.** `createGraphGoblinClient({ baseUrl, apiKey?, fetch?, client? })` returns a typed openapi-fetch client. `apiKey` becomes `authorization: Bearer ...`; `client: 'ui' | 'mcp'` becomes `x-graphgoblin-client`, which the API maps to the `manual.ui` or `manual.mcp` invocation source.
+-- **Errors.** Non-2xx responses throw `GraphGoblinApiError` with the problem's `status`, `code`, `detail`, and `errors`; transport failures throw it with `status: 0` and `code: 'NETWORK_ERROR'`. `unwrap(result)` does the same for raw openapi-fetch calls.
++- **Errors.** Non-2xx responses throw `GraphGoblinApiError` with the problem's `status`, `code`, `detail`, and `errors`; a `fetch` failure before any response headers throws it with `status: 0` and `code: 'NETWORK_ERROR'`. `unwrap(result)` does the same for raw openapi-fetch calls. `runs.get` and `runs.observation` (#561) also read their successful body themselves from the original native `Response`, with the caller's signal: when a 2xx GET body stops arriving before it is complete, they throw `status: 0` with the distinct `code: 'RESPONSE_INTERRUPTED'` and the native read error as `cause`. Only a rejected body read of a `basic` or `cors` response qualifies, and only while the caller's signal is not aborted; an abort rethrows the identical rejection. Complete malformed JSON stays a `SyntaxError`, a refusal whose own body was cut short stays the raw error, 204, HEAD, `Content-Length: 0` and an empty body resolve to `undefined`, and a constructed or re-wrapped `Response` or a body already locked or read keeps its own error. Nothing is retried and no error text is inspected. Scope limit: raw `client.GET`, every other resource wrapper, every write (a 2xx header already proves acceptance), `parseAs: 'stream'` callers and `subscribeRunEvents` still surface a body failure after headers as the native error, not as `status: 0`.
+ - **Resource wrappers.** `loops`, `runs`, `settings`, `secrets`, `apiKeys`, `modelCatalog`, `classifierModels`, `events`, and `system` take the client first and return the response body, for example `await runs.start(client, loopId, { input })` or `await runs.replay(client, runId, nodeId)`. Classifier helpers are `list(client)`, `upsert(client, id, metadata)`, `create(client, id, metadata)` (the same PUT with `If-None-Match: *`, refused with `CLASSIFIER_EXISTS` when the id exists), `setEnabled(client, id, enabled)`, and `remove(client, id)`; ids are encoded and API problems propagate unchanged.
+ - **Live events.** `subscribeRunEvents({ client, runId, after?, onEvent, signal? })` reads `GET /runs/{id}/events` as SSE, validates each frame with `RunEventSchema`, and calls `onEvent` in `seq` order. It remembers the last delivered `seq`; if the connection drops before `run.finished`, `run.failed`, or `run.cancelled`, it reconnects with `after=<lastSeq>` after an exponential backoff (500 ms doubling, capped at 30 s, reset after a connection that makes progress) and discards replayed events it has already delivered. 408, 425, 429, 5xx, and network errors are retried; other statuses reject `done`. A frame that fails validation is reported through `onError` and skipped. It returns `{ close(), done, lastSeq }`.
+ - **Waiting.** `waitForRun(client, runId, { timeoutMs, pollMs?, signal? })` polls `GET /runs/{id}` until terminal execution is durably finalized with no pending webhook, or the deadline. Every GET and sleep receives a signal combining caller cancellation and the total observation budget. Caller abort rejects promptly with the signal's exact reason, including before the first request. The deadline resolves `{ finished: false, run? }` without waiting for an in-flight request or sleep, retaining only the last snapshot received before the deadline; when none arrived, `run` is omitted. The deadline result carries the last timely snapshot, which can be up to one poll interval old during normal polling (older if a request stalls). A zero budget makes no request. A timely terminal, fully finalized snapshot returns `{ finished: true, run }`. Late responses and rejections cannot change the settled result or trigger another poll. The first cancellation cause wins; a caller signal already aborted at entry wins over a zero deadline. Timers and caller listeners are removed on completion. `observeRun(client, runId, options, { stopWhen?, onPoll? })` shares these semantics while supporting MCP's early returns and progress reporting.
+diff --git a/packages/api-client/src/client.ts b/packages/api-client/src/client.ts
+index 841830363727b430cec5051d5810972c27f3a4e6..1eb0ebea254fe3ff97e6f1c9d1857aca153bfb34 100644
+--- a/packages/api-client/src/client.ts
++++ b/packages/api-client/src/client.ts
+@@ -40,7 +40,13 @@ function isAbort(error: unknown, request: Request): boolean {
+   return request.signal.aborted || (error instanceof Error && error.name === 'AbortError');
+ }
+ 
+-/** Transport failures surface as `GraphGoblinApiError` with `status` 0; aborts pass through. */
++/**
++ * A `fetch` rejection, a failure before any response headers arrived, surfaces as
++ * `GraphGoblinApiError` with `status` 0 and `NETWORK_ERROR`; aborts pass through. openapi-fetch
++ * calls `onError` for that rejection only: a body that fails after the headers arrived is read
++ * later, so raw `client.GET` and the other methods surface that native error unchanged. Only
++ * `runs.get` and `runs.observation` classify it, as `RESPONSE_INTERRUPTED` (see `readJson`).
++ */
+ const networkErrors: Middleware = {
+   onError({ error, request }) {
+     if (isAbort(error, request) || error instanceof GraphGoblinApiError) return undefined;
+diff --git a/packages/api-client/src/errors.test.ts b/packages/api-client/src/errors.test.ts
+index 9a8b3b1d3a32ab9c5ad223fb37472576c2293237..fe007355582330cb01a654e3d27f03e0a57bebe8 100644
+--- a/packages/api-client/src/errors.test.ts
++++ b/packages/api-client/src/errors.test.ts
+@@ -1,7 +1,14 @@
+ import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
+ import type { AddressInfo } from 'node:net';
+ import { afterEach, describe, expect, it } from 'vitest';
+-import { createGraphGoblinClient, GraphGoblinApiError, loops, system, unwrap } from './index.js';
++import {
++  createGraphGoblinClient,
++  GraphGoblinApiError,
++  loops,
++  NETWORK_ERROR_STATUS,
++  system,
++  unwrap,
++} from './index.js';
+ 
+ let server: Server | undefined;
+ 
+@@ -78,6 +85,25 @@ describe('GraphGoblinApiError', () => {
+     });
+   });
+ 
++  it('builds a distinct status-0 RESPONSE_INTERRUPTED error that keeps the native cause', () => {
++    const native = new TypeError('terminated');
++    const error = GraphGoblinApiError.interrupted(native);
++    expect(error).toBeInstanceOf(GraphGoblinApiError);
++    expect(error).toMatchObject({
++      status: NETWORK_ERROR_STATUS,
++      code: 'RESPONSE_INTERRUPTED',
++      detail: 'terminated',
++      problem: undefined,
++      message: 'RESPONSE_INTERRUPTED: terminated',
++    });
++    expect(error.cause).toBe(native);
++    expect(error.code).not.toBe(GraphGoblinApiError.network(native).code);
++    expect(GraphGoblinApiError.interrupted('socket closed')).toMatchObject({
++      detail: 'socket closed',
++      cause: 'socket closed',
++    });
++  });
++
+   it('passes aborts and existing API errors through unchanged', async () => {
+     const baseUrl = await serve(() => undefined); // never answers
+     const client = createGraphGoblinClient({ baseUrl });
+diff --git a/packages/api-client/src/errors.ts b/packages/api-client/src/errors.ts
+index 9f32e48d2f370333b2d17eea2786a355f444980f..1e7c174d2b043e54f034d5b4b66c76006126d340 100644
+--- a/packages/api-client/src/errors.ts
++++ b/packages/api-client/src/errors.ts
+@@ -10,9 +10,20 @@ export interface ProblemDetails {
+   [extension: string]: unknown;
+ }
+ 
+-/** `status` used for failures where no HTTP response arrived (DNS, refused connection, reset). */
++/**
++ * `status` used when no usable HTTP response arrived. The client maps a `fetch` rejection before
++ * any response headers (DNS, refused connection, reset) to it with code `NETWORK_ERROR`, and
++ * `runs.get` and `runs.observation` map a successful GET body that the connection cut short to it
++ * with code `RESPONSE_INTERRUPTED`. Nothing else maps a failure after headers: raw `client.GET`,
++ * other resource wrappers, writes, `parseAs: 'stream'` callers and the SSE helper surface the
++ * native body error unchanged.
++ */
+ export const NETWORK_ERROR_STATUS = 0;
+ 
++function describeCause(cause: unknown): string {
++  return cause instanceof Error ? cause.message : String(cause);
++}
++
+ function isProblemDetails(value: unknown): value is ProblemDetails {
+   return (
+     typeof value === 'object' &&
+@@ -23,8 +34,9 @@ function isProblemDetails(value: unknown): value is ProblemDetails {
+ }
+ 
+ /**
+- * An API call that did not succeed. For HTTP failures it carries the server's problem details;
+- * for transport failures `status` is 0 and `code` is `NETWORK_ERROR`.
++ * An API call that did not succeed. For HTTP failures it carries the server's problem details.
++ * `status` 0 means no usable response arrived: `code` is `NETWORK_ERROR` when `fetch` itself
++ * failed, or `RESPONSE_INTERRUPTED` when `runs.get` or `runs.observation` lost a successful body.
+  */
+ export class GraphGoblinApiError extends Error {
+   override readonly name = 'GraphGoblinApiError';
+@@ -63,14 +75,22 @@ export class GraphGoblinApiError extends Error {
+     );
+   }
+ 
+-  /** Wrap a transport failure thrown by `fetch`. */
++  /** Wrap a transport failure thrown by `fetch` before any response headers arrived. */
+   static network(cause: unknown): GraphGoblinApiError {
+     return new GraphGoblinApiError(
+-      {
+-        status: NETWORK_ERROR_STATUS,
+-        code: 'NETWORK_ERROR',
+-        detail: cause instanceof Error ? cause.message : String(cause),
+-      },
++      { status: NETWORK_ERROR_STATUS, code: 'NETWORK_ERROR', detail: describeCause(cause) },
++      { cause, serverSent: false },
++    );
++  }
++
++  /**
++   * Wrap the native read failure of a successful GET body that ended before it was complete. The
++   * 2xx headers arrived but no usable answer did, so `status` is 0 like {@link network}; the
++   * distinct code says where it failed and `cause` is the original native error.
++   */
++  static interrupted(cause: unknown): GraphGoblinApiError {
++    return new GraphGoblinApiError(
++      { status: NETWORK_ERROR_STATUS, code: 'RESPONSE_INTERRUPTED', detail: describeCause(cause) },
+       { cause, serverSent: false },
+     );
+   }
+diff --git a/packages/api-client/src/resources.ts b/packages/api-client/src/resources.ts
+index 35a8922d2a615a239baee3db842798166b453c96..d345137764dffc9d77c5e322e3b38d0ab4591f32 100644
+--- a/packages/api-client/src/resources.ts
++++ b/packages/api-client/src/resources.ts
+@@ -1,12 +1,25 @@
+ import type { RecoveryCommand } from '@graphgoblin/contracts';
++import type { Client, MethodResponse } from 'openapi-fetch';
++import { readJson } from './body.js';
+ /**
+  * Thin convenience wrappers over the typed client, grouped by resource. Every function takes the
+  * client first, returns the response body, and throws `GraphGoblinApiError` on a non-2xx response.
+  * Argument and return types come from the generated OpenAPI schema.
++ *
++ * Only `runs.get` and `runs.observation` also classify a successful GET body cut short after its
++ * headers (`RESPONSE_INTERRUPTED`, status 0; see `readJson`). Every other wrapper, raw
++ * `client.GET` and every write still surface such a body failure as the native error.
+  */
+ import type { GraphGoblinClient, paths } from './client.js';
+ import { unwrap } from './errors.js';
+ 
++/** The typed 2xx JSON body of a GET, as openapi-fetch would parse it. */
++type GetJson<P extends '/runs/{id}' | '/runs/{id}/observation'> = MethodResponse<
++  Client<paths>,
++  'get',
++  P
++>;
++
+ export const cron = {
+   preview: async (
+     client: GraphGoblinClient,
+@@ -143,7 +156,11 @@ export const runs = {
+     options: { signal?: AbortSignal } = {},
+   ) => unwrap(await client.GET('/runs', { params: { query }, ...options })),
+   get: async (client: GraphGoblinClient, runId: string, options: { signal?: AbortSignal } = {}) =>
+-    unwrap(await client.GET('/runs/{id}', { ...id(runId), ...options })),
++    readJson<GetJson<'/runs/{id}'>>(
++      'GET',
++      await client.GET('/runs/{id}', { ...id(runId), ...options, parseAs: 'stream' }),
++      options.signal,
++    ),
+   thread: async (
+     client: GraphGoblinClient,
+     runId: string,
+@@ -157,7 +174,12 @@ export const runs = {
+     client: GraphGoblinClient,
+     runId: string,
+     options: { signal?: AbortSignal } = {},
+-  ) => unwrap(await client.GET('/runs/{id}/observation', { ...id(runId), ...options })),
++  ) =>
++    readJson<GetJson<'/runs/{id}/observation'>>(
++      'GET',
++      await client.GET('/runs/{id}/observation', { ...id(runId), ...options, parseAs: 'stream' }),
++      options.signal,
++    ),
+   /** Forward replay uses `after`; browsing seeks `around` then passes opaque older/newer cursors unchanged. Use `subscribeRunEvents` for a live tail. */
+   events: async (
+     client: GraphGoblinClient,

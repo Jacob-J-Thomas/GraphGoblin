@@ -1,0 +1,164 @@
+{
+  "mode": "native",
+  "command": "node --expose-gc G:/ggq/delivery-evidence/2026-11-24-followups/preflight-545-546/independent-qa-01/reproduce-candidate-public-entry.mjs G:/ggq/gg-fu-preflight-20261124/GraphGoblin G:/ggq/delivery-evidence/2026-11-24-followups/preflight-545-546/independent-qa-01 CANDIDATE-PUBLIC-ENTRY.json",
+  "workingDirectory": "G:/ggq/gg-fu-preflight-20261124/GraphGoblin",
+  "startedAt": "2026-11-25T01:55:02.237998+00:00",
+  "finishedAt": "2026-11-25T01:56:03.625997+00:00",
+  "exitCode": 0,
+  "patchSha256": "9d58186982ab043a02ad810953ec58fe609a03e69756555a7cdd0c9ff22dffaa",
+  "sourceUnchanged": true,
+  "stdout": {
+    "file": "native.stdout.log",
+    "bytes": 4976,
+    "sha256": "3f1568cd6c183a8840e0b4f6d4558fdd7354ebd40cb8975aa2ac2b3af3e9784c"
+  },
+  "stderr": {
+    "file": "native.stderr.log",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "builtArtifacts": {
+    "apps/api/dist/main.js": "3160ac2a1339525dc3f63400bbd9aca29aea6663442d625ce6728bd35619325c",
+    "apps/api/dist/serve.js": "85fb3fc909c4487e2ed2a7ba5829ac71b4e3b370fccb83fd3ac7a18fffdb9051",
+    "apps/api/dist/preflight.js": "b9438c729b9faf2bb8ee02c38cf8c328562bcce780a7e2b98bc57f682d7cebaa",
+    "apps/api/dist/container.js": "d314a57f6361075a051c929c8ca76691a792ccdf727265e5989a08cd5ac78200",
+    "packages/infrastructure/dist/sqlite/settings.js": "117b2cc96571831d6c0376672538e9454d3019af21c1072bb5889b9a2c245687",
+    "packages/domain/dist/model-resolution.js": "f8ddf2ebdbd38df698bf03ac6cab9de33531df24c1575f7b97779a81cee0262c"
+  },
+  "comparison": {
+    "file": "CANDIDATE-PUBLIC-ENTRY.json",
+    "sha256": "51d264b2058d1e2d8bc7288beb41f20d90fb2f090b8c7b16098b01c3d8bf6fae",
+    "scenarios": {
+      "migrated-none": {
+        "baselinePreflightExit": 0,
+        "baselineModelCheck": "ok      Default model   gpt-5.5 (codex) is in the model catalog",
+        "preflightExit": 1,
+        "startupExit": 1,
+        "listened": false,
+        "database": "ok      Database        reachable and migrated",
+        "model": "FAIL    Default model   GG_DEFAULTS.byHarness.codex.effort \"none\" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 0,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "migrated-low": {
+        "baselinePreflightExit": 0,
+        "baselineModelCheck": "ok      Default model   gpt-5.5 (codex) is in the model catalog",
+        "preflightExit": 0,
+        "startupExit": 0,
+        "listened": true,
+        "database": "ok      Database        reachable and migrated",
+        "model": "ok      Default model   gpt-5.5 (codex) is in the model catalog and supports effort low",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 0,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "migrated-omitted": {
+        "baselinePreflightExit": 0,
+        "baselineModelCheck": "ok      Default model   gpt-5.5 (codex) is in the model catalog",
+        "preflightExit": 0,
+        "startupExit": 0,
+        "listened": true,
+        "database": "ok      Database        reachable and migrated",
+        "model": "WARN    Default model   gpt-5.5 (codex) is in the model catalog, but GG_DEFAULTS.byHarness.codex.effort is not set; runs need a supported effort from the loop or Settings defaults",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 0,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "pending-disabled": {
+        "baselinePreflightExit": 0,
+        "baselineModelCheck": "ok      Default model   gpt-6-luna (codex) is in the default catalog seeded on first start",
+        "preflightExit": 0,
+        "startupExit": null,
+        "listened": false,
+        "database": "WARN    Database        3 migration(s) pending; they are applied on the next start",
+        "model": "WARN    Default model   gpt-6-luna is in the model catalog but disabled",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 16512,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "pending-stored-only": {
+        "baselinePreflightExit": 1,
+        "baselineModelCheck": "FAIL    Default model   GG_DEFAULTS.byHarness.codex.model \"fixture-only-codex-model\" is not in the default catalog seeded on first start; pick a listed harness model and enable it in Settings",
+        "preflightExit": 0,
+        "startupExit": 0,
+        "listened": true,
+        "database": "WARN    Database        3 migration(s) pending; they are applied on the next start",
+        "model": "ok      Default model   fixture-only-codex-model (codex) is in the model catalog and supports effort low",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 16512,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "pending-missing-seed": {
+        "baselinePreflightExit": null,
+        "baselineModelCheck": null,
+        "preflightExit": 0,
+        "startupExit": 0,
+        "listened": true,
+        "database": "WARN    Database        3 migration(s) pending; they are applied on the next start",
+        "model": "ok      Default model   gpt-6.1-terra (codex) is in the model catalog and supports effort medium",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 8272,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "pending-stored-effort": {
+        "baselinePreflightExit": null,
+        "baselineModelCheck": null,
+        "preflightExit": 1,
+        "startupExit": 1,
+        "listened": false,
+        "database": "WARN    Database        3 migration(s) pending; they are applied on the next start",
+        "model": "FAIL    Default model   GG_DEFAULTS.byHarness.codex.effort \"high\" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 8272,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "missing": {
+        "baselinePreflightExit": 0,
+        "baselineModelCheck": "ok      Default model   gpt-5.5 (codex) is in the default catalog seeded on first start",
+        "preflightExit": 0,
+        "startupExit": 0,
+        "listened": true,
+        "database": "WARN    Database        the database does not exist yet; it is created and migrated on first start",
+        "model": "ok      Default model   gpt-5.5 (codex) is in the default catalog seeded on first start and supports effort low",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": null,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "unsupported": {
+        "baselinePreflightExit": 1,
+        "baselineModelCheck": "ok      Default model   gpt-5.5 (codex) is in the default catalog seeded on first start",
+        "preflightExit": 1,
+        "startupExit": 1,
+        "listened": false,
+        "database": "FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"G:\\ggq\\delivery-evidence\\2026-11-24-followups\\preflight-545-546\\independent-qa-01\\candidate-store-002YV1\\unsupported-data\"",
+        "model": "WARN    Default model   The configured Codex model and effort are not checked until the database is current and readable",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": 0,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      },
+      "unreadable": {
+        "baselinePreflightExit": 1,
+        "baselineModelCheck": "ok      Default model   gpt-5.5 (codex) is in the default catalog seeded on first start",
+        "preflightExit": 1,
+        "startupExit": 1,
+        "listened": false,
+        "database": "FAIL    Database        not reachable: SQLITE_NOTADB: file is not a database",
+        "model": "WARN    Default model   The configured Codex model and effort are not checked until the database is current and readable",
+        "codexReadiness": "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "existingWalBytes": null,
+        "databaseBytesPreserved": true,
+        "existingWalBytesPreservedOrNewWalEmpty": true
+      }
+    }
+  }
+}

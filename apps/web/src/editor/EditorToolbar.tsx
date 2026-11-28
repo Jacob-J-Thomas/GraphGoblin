@@ -5,7 +5,7 @@ import { Icon } from '../components/icons/index.js';
 import { Badge, Button } from '../components/ui/index.js';
 import { cn } from '../lib/utils.js';
 import { newRunPath } from '../runs/new/paths.js';
-import { saveLabel, type DeviceCopy } from './save-status.js';
+import { HELD_INPUT_LABEL, saveLabel, type DeviceCopy } from './save-status.js';
 import type { SaveState } from './store.js';
 import { UndoRedo } from './UndoRedo.js';
 
@@ -53,7 +53,10 @@ export function OpenInRuns({ loopId, published }: { loopId: string; published: b
   );
 }
 
-/** The editor's bar: where you are, what is published, the save state, and the loop actions. */
+/**
+ * The editor's bar: where you are, what is published, the save state (the complete draft's, and
+ * any field input kept in this window only), and the loop actions.
+ */
 export function EditorToolbar({
   loopId,
   system,
@@ -62,6 +65,7 @@ export function EditorToolbar({
   version,
   saveState,
   device,
+  heldInput = false,
   saveMessage,
   errors,
   validation,
@@ -80,6 +84,8 @@ export function EditorToolbar({
   saveState: SaveState;
   /** Where the current edits are kept besides the server (`saveLabel` says which matters). */
   device: DeviceCopy;
+  /** Whether a field holds input the draft does not (`hasHeldInput`), kept in this window only. */
+  heldInput?: boolean;
   /** The indicator's tooltip: the save notice's text, or the server's message. */
   saveMessage: string | undefined;
   errors: number;
@@ -91,6 +97,10 @@ export function EditorToolbar({
   onPublish: () => void;
   saveStatusRef?: Ref<HTMLSpanElement>;
 }) {
+  const label =
+    system && saveState === 'invalid'
+      ? 'Not saved: fix the chat issue'
+      : saveLabel(saveState, device, heldInput);
   return (
     <header className="relative z-[3] flex items-start gap-x-3 border-b border-default bg-surface-raised px-4 py-2.5">
       {/* A fixed leading slot, first in the DOM and on screen and top-aligned: what the rest of the
@@ -120,30 +130,43 @@ export function EditorToolbar({
         </h1>
         {system ? <Badge>System</Badge> : null}
         {published ? <Badge tone="good">published v{version}</Badge> : <Badge>draft only</Badge>}
+        {/* The complete draft's state, then, while a field holds input the draft does not, a
+            segment of its own saying where that input is (#526). The segments wrap apart; this
+            element stays the same focus target whatever they say. */}
         <span
           ref={saveStatusRef}
-          className="inline-flex items-center gap-1.5 rounded-sm text-sm text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+          className="inline-flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 rounded-sm text-sm text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           data-testid="save-state"
           title={saveMessage}
         >
-          {saveState === 'saved' ? (
-            <Icon name="check-circle" className="size-[15px] text-status-good-fg" />
+          {label === '' ? null : (
+            <span data-testid="draft-state" className="inline-flex items-center gap-1.5">
+              {saveState === 'saved' ? (
+                <Icon name="check-circle" className="size-[15px] text-status-good-fg" />
+              ) : null}
+              {saveState === 'invalid' ||
+              saveState === 'offline' ||
+              saveState === 'error' ||
+              saveState === 'name-conflict' ? (
+                <Icon
+                  name={saveState === 'error' ? 'failed' : 'alert'}
+                  className={cn(
+                    'size-[15px]',
+                    saveState === 'error' ? 'text-status-bad-fg' : 'text-status-warn-fg',
+                  )}
+                />
+              ) : null}
+              {label}
+            </span>
+          )}
+          {heldInput ? (
+            <span data-testid="held-input-state" className="inline-flex items-center gap-1.5">
+              {/* Read as a sentence of its own after the draft's state. */}
+              {label === '' ? null : <span className="sr-only">. </span>}
+              <Icon name="alert" className="size-[15px] text-status-warn-fg" />
+              {HELD_INPUT_LABEL}
+            </span>
           ) : null}
-          {saveState === 'invalid' ||
-          saveState === 'offline' ||
-          saveState === 'error' ||
-          saveState === 'name-conflict' ? (
-            <Icon
-              name={saveState === 'error' ? 'failed' : 'alert'}
-              className={cn(
-                'size-[15px]',
-                saveState === 'error' ? 'text-status-bad-fg' : 'text-status-warn-fg',
-              )}
-            />
-          ) : null}
-          {system && saveState === 'invalid'
-            ? 'Not saved: fix the chat issue'
-            : saveLabel(saveState, device)}
         </span>
         <div className="ml-auto flex max-w-full flex-wrap items-center justify-end gap-2">
           {system ? (

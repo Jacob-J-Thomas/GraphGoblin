@@ -1,0 +1,24 @@
+$ vitest run --reporter=verbose src/reset/reset-acquisition.test.ts -t 'another hard link'
+
+ RUN  v5.0.3 G:/ggq/gg-t509/GraphGoblin/apps/api
+
+ ↓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the data-directory lock fails after changing its metadata (stale metadata: false)
+ ↓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the data-directory lock fails after changing its metadata (stale metadata: true)
+ ↓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the database lock fails after changing its metadata (stale metadata: false)
+ ↓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > taking the database lock fails after changing its metadata (stale metadata: true)
+ ↓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > says when the guard left behind cannot be inspected, without claiming its state
+ ↓ src/reset/reset-acquisition.test.ts > a failed acquisition that leaves lock metadata is never reported as no change > passes every removal through when no fault is injected: a confirmed reset still completes
+ ↓ src/reset/reset-acquisition.test.ts > ordinary refusals > names the stage when another owner takes the data-directory lock first, and leaves that owner’s record
+ ↓ src/reset/reset-acquisition.test.ts > ordinary refusals > names the stage when another owner takes the database lock first, and leaves that owner’s record
+ ↓ src/reset/reset-acquisition.test.ts > ordinary refusals > gives one actionable refusal when the data-directory lock becomes unverifiable after preview
+ ↓ src/reset/reset-acquisition.test.ts > ordinary refusals > gives one actionable refusal when the database lock becomes unverifiable after preview
+ ✓ src/reset/reset-acquisition.test.ts > ordinary refusals > names the database stage when the lock module refuses a database with another hard link 844ms
+ ↓ src/reset/reset-acquisition.test.ts > ordinary refusals > a dry run refused read-only while the database lock is held still says nothing changed
+ ↓ src/reset/reset-acquisition.test.ts > ordinary refusals > a confirmed reset refused read-only while the database lock is held still says nothing changed
+
+ Test Files  1 passed (1)
+      Tests  1 passed | 12 skipped (13)
+   Start at  21:34:24
+   Duration  5.11s (import 54%, transform 27%, tests 17%, setup 1%)
+
+exit=0

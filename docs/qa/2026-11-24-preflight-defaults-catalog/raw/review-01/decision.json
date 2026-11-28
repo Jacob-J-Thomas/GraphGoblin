@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "reviewPass": 1,
+  "reviewer": "independent OpenAI-family reviewer",
+  "verdict": "PASS",
+  "signoffScope": "Frozen patch code review only",
+  "base": "d2df8600c2c8574bec420947de686b936910b245",
+  "head": "d2df8600c2c8574bec420947de686b936910b245",
+  "branch": "codex/gg-fu-preflight-20261124",
+  "worktree": "G:/ggq/gg-fu-preflight-20261124/GraphGoblin",
+  "patchSha256": "9d58186982ab043a02ad810953ec58fe609a03e69756555a7cdd0c9ff22dffaa",
+  "sourceManifest": "source-manifest.json",
+  "sourceHashesMatchAuthorExit": true,
+  "sourceHashesUnchangedAtCompletion": true,
+  "findings": [],
+  "findingsCount": 0,
+  "introducedBlockers": 0,
+  "deferredIssueRequests": [],
+  "reviewedConcerns": [
+    {
+      "signature": "preflight/omitted-codex-effort-warning",
+      "evidence": [
+        "../ARCHITECTURE.md",
+        "apps/api/src/preflight.ts:320",
+        "apps/api/src/preflight-catalog.test.ts:510"
+      ],
+      "reason": "Explicit FUP-010 decision; startup permits omission; focused matrix verifies warning",
+      "disposition": "NO-CHANGE"
+    },
+    {
+      "signature": "preflight/disabled-harness-status-difference",
+      "evidence": [
+        "apps/api/src/preflight.ts:317",
+        "apps/api/src/preflight-catalog.test.ts:591"
+      ],
+      "reason": "Required existing Codex WARN and Claude FAIL semantics are preserved",
+      "disposition": "NO-CHANGE"
+    },
+    {
+      "signature": "preflight/native-handle-retained-before-gc",
+      "evidence": [
+        "driver-control-results.json",
+        "closure-probe-results.json"
+      ],
+      "reason": "Present on immutable base and candidate; both release after GC; no introduced cleanup regression",
+      "disposition": "NO-CHANGE"
+    }
+  ],
+  "verification": {
+    "runtime": "v22.23.4",
+    "authorEvidenceVerified": "author-verification-summary.json",
+    "authorFocusedTests": "97/97 passed",
+    "authorDomainTests": "484/484 passed",
+    "authorTypecheck": "PASS",
+    "authorLint": "PASS",
+    "authorBuild": "PASS",
+    "authorFormat": "PASS",
+    "independentDiffCheck": "PASS",
+    "independentBuiltFunctionClosureProbe": "PASS",
+    "independentBaseDriverControl": "PASS",
+    "probeExistingNonemptyWalCoverage": false,
+    "authorExistingNonemptyWalCoverage": true
+  },
+  "evidenceTierNotes": [
+    "Author gate results were checked from raw tool output; they are not independent QA.",
+    "Independent probes call built functions and sources, not the physical main entry.",
+    "Native pre-GC file-sharing behavior is pre-existing and releases after GC."
+  ],
+  "remainingGates": [
+    "Independent native CLI/ordinary startup QA",
+    "Designated final review",
+    "CI and full package coverage after fixture-isolation prerequisites"
+  ],
+  "publicationOrMergeAuthorizedByReview": false,
+  "worktreeEdits": false,
+  "gitIndexWrites": false,
+  "createdAt": "2026-11-25T01:49:59.4392685Z"
+}

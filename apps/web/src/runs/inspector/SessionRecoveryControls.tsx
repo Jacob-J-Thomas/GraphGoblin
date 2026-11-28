@@ -1,12 +1,21 @@
 import type { RunEvent, RunRecord } from '@graphgoblin/contracts';
 import { runs } from '@graphgoblin/api-client';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLayoutEffect, useRef } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useApi } from '../../api/context.js';
+import { CredentialChangedError, sendUnder } from '../../api/credential-dispatch.js';
 import { keys } from '../../api/queries.js';
 import { Button, HelpText } from '../../components/ui/index.js';
 import { errorMessage, formatDateTime } from '../../lib/utils.js';
-import { assertOpen, type WriteGate } from './RunControls.js';
+import {
+  assertOpen,
+  crossed,
+  notSentByKey,
+  requestedBeforeKey,
+  sameCredential,
+  WRAPPING_LABEL,
+  type WriteGate,
+} from './RunControls.js';
 
 type Failed = Extract<RunEvent, { type: 'run.failed' }>;
 
@@ -22,6 +31,7 @@ interface Choice {
 }
 
 const CHANGED = 'Not sent: the failure shown has changed. Review the run again.';
+const ACTION = 'Start fresh session';
 
 /** The inspector view's Start fresh session choice for the run it shows (#416). */
 export interface SessionRecovery {
@@ -31,6 +41,11 @@ export interface SessionRecovery {
   readonly pending: boolean;
   /** Why this visit's latest choice was refused or not sent, until a new choice replaces it. */
   readonly refusal: string | undefined;
+  /**
+   * This visit's latest choice was sent under an earlier accepted credential and settled under a
+   * later one (#562): only that it was requested is reported, never its outcome.
+   */
+  readonly notice: string | undefined;
   /** Why the view cannot send a choice now; undefined while it can. */
   readonly blocked: string | undefined;
   /** Queue a choice for the failure shown now, under the gate it is shown with. */
@@ -79,6 +94,8 @@ export function useSessionRecovery({
   useLayoutEffect(() => {
     shown.current = { runId, nodeId, visitId: missing?.visitId, seq: failed?.seq };
   });
+  // The choice that settled under a later accepted credential than it was sent under (#562).
+  const [requested, setRequested] = useState<Choice>();
   const action = useMutation({
     mutationFn: async (choice: Choice) => {
       assertOpen(choice.gate);
@@ -90,23 +107,39 @@ export function useSessionRecovery({
         now.seq !== choice.failureSeq
       )
         throw new Error(CHANGED);
-      return runs.recoverSession(client, choice.runId, {
-        nodeId: choice.nodeId,
-        failureSeq: choice.failureSeq,
-      });
+      return sendUnder(client, choice.gate.credential, (client) =>
+        runs.recoverSession(client, choice.runId, {
+          nodeId: choice.nodeId,
+          failureSeq: choice.failureSeq,
+        }),
+      );
     },
-    onSuccess: (_result, { runId }) => {
-      void queries.invalidateQueries({ queryKey: keys.run(runId) });
-      void queries.invalidateQueries({ queryKey: keys.thread(runId) });
+    onSuccess: (_result, choice) => {
+      void queries.invalidateQueries({ queryKey: keys.run(choice.runId) });
+      void queries.invalidateQueries({ queryKey: keys.thread(choice.runId) });
+      if (crossed(choice.gate)) setRequested(choice);
+    },
+    onError: (error, choice) => {
+      if (!(error instanceof CredentialChangedError) && crossed(choice.gate)) setRequested(choice);
     },
   });
   // The latest choice this view made, only while the visit that made it is shown.
-  const own = action.variables?.owner === owner;
-  const pending = own && action.isPending;
+  const choice = action.variables?.owner === owner ? action.variables : undefined;
+  const pending = choice !== undefined && action.isPending;
+  // Its outcome is shown only under the accepted credential it was chosen under.
+  const refusal =
+    choice && action.isError
+      ? action.error instanceof CredentialChangedError
+        ? notSentByKey(ACTION)
+        : requested !== choice && sameCredential(choice.gate, availability)
+          ? errorMessage(action.error)
+          : undefined
+      : undefined;
   return {
     answerable: failed !== undefined,
     pending,
-    refusal: own && action.isError ? errorMessage(action.error) : undefined,
+    refusal,
+    notice: choice && requested === choice && !pending ? requestedBeforeKey(ACTION) : undefined,
     blocked: availability.blocked,
     choose: () => {
       if (pending || !run || !failed || !nodeId || !missing || !availability.open()) return;
@@ -142,8 +175,9 @@ export function SessionRecoveryControls({
     nodeId === run.currentNodeId &&
     missing.visitId.startsWith(run.id + ':');
   const choices = events.filter((event) => event.type === 'run.resumed' && event.freshSession);
-  if (!eligible && choices.length === 0) return null;
-  // Node IDs may be 64 characters: wrap them rather than widening the inspector at 390 px.
+  if (!eligible && choices.length === 0 && recovery.notice === undefined) return null;
+  // Node IDs may be 64 characters: wrap them, in the prose and in the button's label, rather than
+  // widening the inspector or cutting the label short at narrow widths and enlarged text (#563).
   return (
     <div className="grid min-w-0 gap-2 wrap-anywhere">
       {eligible ? (
@@ -156,6 +190,7 @@ export function SessionRecoveryControls({
           </p>
           <Button
             variant="outline"
+            className={WRAPPING_LABEL.md}
             disabled={!recovery.answerable || recovery.pending || recovery.blocked !== undefined}
             onClick={() => recovery.choose()}
           >
@@ -167,6 +202,7 @@ export function SessionRecoveryControls({
           ) : null}
         </>
       ) : null}
+      {recovery.notice !== undefined ? <HelpText role="status">{recovery.notice}</HelpText> : null}
       {choices.map((event) =>
         event.type === 'run.resumed' && event.freshSession ? (
           <p key={event.seq} className="text-sm text-muted">

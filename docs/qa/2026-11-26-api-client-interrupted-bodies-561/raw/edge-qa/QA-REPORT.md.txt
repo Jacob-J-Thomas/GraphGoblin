@@ -1,0 +1,291 @@
+PASS WITH LIMITS (updated after the Q1 re-verification at combined HEAD 2a3de9df, which includes ec5c2bb3). #563 is now PASS WITH LIMITS: Q1 is resolved, but true native browser zoom is not established. #562 PASS, #561 PASS, #575/#577 regression PASS. The original run at 7d971876 was FAIL for #563 (Q1); that record is kept below.
+
+> Original verdict line (first run, combined HEAD 7d971876): FAIL: one #563 acceptance gap (Q1, P2: a run waiting for input still overflows at 320 px with 200% text). #562 PASS, #561 PASS, #575/#577 regression PASS on the combined tree.
+
+# Combined independent QA: #561 + #562 + #563 (Claude Opus 5.5 xhigh, not the author)
+
+## Tree under test
+
+- Integration worktree: `G:/ggq/gg-qa-inspector-combined/GraphGoblin`, branch
+  `qa/inspector-combined-20261126`. It is never pushed and is left in place for the orchestrator.
+- Base `origin/main` = `4e1037c9e9922ffa27237fe79850403b6b54fc70`.
+- Merges:
+  - `git merge --no-ff codex/gg-fu-api-client-561-20261124` (`9673af09e`): clean. Merge commit `b24cb5a54`.
+  - `git merge --no-ff codex/gg-fu-inspector-562-563-20261124` (`e7e665237`): `CHANGELOG.md` only
+    conflicted. I resolved it as a union (the 561 and main entries first, then the 562/563 entries).
+    The diff against main adds 35 lines and removes 0. `docs/09` merged automatically.
+- **Combined HEAD `7d971876571c7f606f91fd05d2bb0b83b7a15fb1`.** 29 files, +4056/−164 against main.
+- Install and build:
+  - `pnpm install --frozen-lockfile`: exit 0 (`install.log`).
+  - `pnpm build --filter=@graphgoblin/web --filter=@graphgoblin/api --force`: exit 0, 9/9 tasks,
+    0 cached (`build.log`), under the heavy-suite lock.
+- Baseline for #563 comparisons: a second disposable worktree,
+  `G:/ggq/gg-qa-inspector-combined/baseline-main` (detached at `origin/main` 4e1037c9).
+  - `install` and `pnpm build --filter=@graphgoblin/web --force`: 9/9 (`baseline-build.log`).
+  - Its `apps/web/dist` was route-served to the same backend and runs. Only the main JS/CSS bundle
+    differs from the candidate dist.
+  - This worktree is my addition to the brief. It is left in place.
+- Environment:
+  - Node v22.23.4, temp on `G:/ggq/tmp/rq-inspector`.
+  - Real Edge: `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe` (headless,
+    `executablePath`), with the `ProgramFiles`, `ProgramFiles(x86)` and `ProgramW6432` variables kept.
+- Backends (both provider-disabled and both requiring API keys; ports 4811/4812/4821/4822, none of
+  4747/4748/7443/11434):
+  - The built API (`apps/api/dist/main.js`) on the disposable store
+    `G:/ggq/tmp/rq-inspector-qa/store1`, port 4811, with `GG_REQUIRE_API_KEY=true`,
+    `GG_OLLAMA_ENABLED=false`, `GG_OLLAMA_URL=http://127.0.0.1:1`, `GG_CODEX_BINARY` and
+    `GG_CLAUDE_BINARY` pointing at nonexistent paths, and `GG_WEB_DIST` set to the combined build.
+    Two real keys of one owner were made with `--create-api-key`.
+  - For Start fresh session only, the repository's built-API fixture
+    `apps/api/scripts/missing-session.fixture.mjs`: real production composition and storage, with
+    only the provider port faked. It ran on store2, port 4812, with keys required and its own two keys.
+- Tokens were typed into pages and held in memory only. Evidence records key labels (A/B) and key
+  IDs, never tokens (scanned).
+- Heavy-suite lock taken and released:
+  - 12:44:30–12:46Z: build.
+  - About 12:47–12:50Z: first Edge run.
+  - 12:56:35–13:21Z: Edge QA, baseline build, Playwright suites.
+
+  It was always free when I took it.
+- All owned processes were stopped at the end (API run3 PID 64980, fixture PID 58512, the proxy
+  task). The listener and process scan is clean.
+
+## Per-issue QA table
+
+| Issue | Verdict | Cases (pass/total) | Summary |
+|---|---|---|---|
+| #562 | **PASS** | 14/14 product cases. Three harness-expectation failures are recorded, explained and kept. | Real second tab with a real `storage` event, Edge, built API with real per-key actors. Nothing chosen under A is ever sent under B, and nothing is sent under A after the switch. The expired, not-sent and already-sent copy is correct. Old-generation outcomes, IDs and navigation are suppressed. A fresh choice sends once as B. Every inspector write family is covered. |
+| #563 | **FAIL** (one state) | Matrix 202/206. Two failures are harness artifacts (diagnosed); 2 are the real defect Q1. | Finished and replay runs pass every cell (320/639/640/768/1440 × 100/200), and keyboard order and names are unchanged everywhere. **A run waiting for input overflows to 326 px at 320/200, and its form spills past its card (Q1).** Native browser zoom was not achieved (not established). |
+| #561 | **PASS** | 7/7 | A `runs.get` body cut short after 200 headers shows the same Offline state as a before-headers failure, with no raw transport text, and recovers without a reload. Malformed JSON and HTTP 503 are unchanged. A warm interruption goes to the offline class. |
+| #575/#577 regression | **PASS** | 53/53, plus 30/30 for the new specs | The author's 11 regression specs and the two new specs (credentials, reflow) were run once each on the combined tree. |
+
+## #562 cases (Edge, built API store1 unless noted)
+
+Raw results: `qa/<case>/result.json`, `qa/562-results.jsonl`, request logs and screenshots in
+each case folder. "writes" are the inspector tab's non-GET requests, labelled by the key header the
+browser actually sent. The actor attribution comes from the API's own run events.
+
+| Case | Steps | Expected | Actual | Result |
+|---|---|---|---|---|
+| S1 review open | Run succeeded. Open Replay..., choose node `done`. The other tab stores key B. Reopen, choose `done`, Create. | The review closes with "Review closed: … Nothing was sent. Open Replay... again …" in a `role=status`, focus goes to the enabled trigger, 0 writes, the run is reread as B, the reopened review is reset, and a fresh Create is sent once as B and navigates. | All as expected: writes are `[replay as B]` and the page navigated to the fork. | PASS |
+| S2 pause in flight | Waiting run, Pause. The route holds the response after the API answered 200. Other tab stores B, then release. Fresh Resume. | One request as A, pending until settled, "Pause was requested before …", no alert, API `run.paused` actor = key A. Fresh Resume sent once as B, `run.resumed` actor = key B, and the copy clears. | As expected. Run 1 of this case failed **harness expectations only**: pause answers 200, not 202, and once the reread shows the run paused, Pause is replaced by a disabled Resume. That record is kept as `S2-pause-in-flight.run1-harness-expectation-error`; the second run has corrected expectations. | PASS (r2) |
+| S2b replay in flight | Create replay. Hold the response (202, fork created). Other tab stores B, then release. | The review closes, there is no "Nothing was sent" while the write is pending, the trigger stays disabled, then "Replay was requested before …", no navigation, the fork ID appears nowhere, and there is one replay as A. | As expected. Focus while pending is on the empty status line, which then fills with the requested copy (see note N1). | PASS |
+| S3 queued sweep | Pause clicked, with the key switch (same-tab StorageEvent after a real localStorage write, through the app's real listener) after 0–12 microtasks or a task. | The invariant: no B request for the A choice and no A request after the switch. | **Invariant held at every delay.** At delays 0 and above, `fetch` was already called before the first microtask, so each one is the "already sent" path: one Pause as A, requested copy, actor A. At delay −1 (switch, then click in the same turn) the click was ignored: 0 requests and no copy. The harness expected the Not-sent copy there, but a click refused by the spent gate is the existing #416 behaviour (silent), so this is a harness expectation miss (record kept). | PASS (invariant); harness miss recorded |
+| S3c queued (sync) | Click Pause, then switch synchronously before any microtask. | 0 requests, "Not sent: … before Pause was sent …" in the alert slot, no automatic retry, and a fresh Pause sent once as B (actor B). | As expected. | PASS |
+| S3b pre-render click | With the Replay review open, switch the key and click Create in the same turn, before React re-renders. | At the click the old review is still shown and enabled, 0 replay requests are sent, the review closes and the closed copy is shown. | As expected. | PASS |
+| S4 script recovery | A real `SCRIPT_OUTCOME_UNCERTAIN`: kill the built API while the script node runs, then restart it on the same store. Open Recover script. Other tab stores B. Reopen and consent to Resume. | The review closes with "… Open Recover script again …", focus goes to Recover script, 0 writes and no second script effect. The fresh consented Resume is sent once as B, with `run.resumed` actor B and `retryUncertainScript: true`. | As expected. Run 1 failed in the **harness** (it waited on a marker file that outlives a killed script). That record is kept as `S4-script-recovery.run1-harness-liveness-error`; the second run uses a PID-liveness check. | PASS (r2) |
+| S5a fresh session queued (fixture, store2) | A real `HARNESS_SESSION_MISSING` (provider session file removed). Click "Start fresh session for worker", then switch synchronously. | 0 requests, "Not sent: … before Start fresh session was sent …", no `run.resumed`. The fresh choice is sent once as B (actor B, `freshSession`). | As expected. | PASS |
+| S5b fresh session in flight (fixture) | The choice is accepted by the API and its response held. Other tab stores B, then release. | "Start fresh session was requested before …", no alert, one request as A, actor A. | As expected. | PASS |
+| S6 input answer | (a) A typed answer is sent and held. Other tab stores B, then release. (b) A typed draft, then Submit with a synchronous switch. | (a) Requested copy, one input as A, the API woke the run by input. (b) 0 requests, "Not sent … Submit input …", draft kept, and a fresh Submit is sent once as B. | As expected. | PASS |
+| S6c signal in flight | A signal wait. Send signal is held. Other tab stores B, then release. | Requested copy, one signal as A. | As expected. | PASS |
+| S7 delete-ready | Open Review delete-ready history (preview as A). Other tab stores B. Reopen and confirm. | The review closes with "… Open Review delete-ready history again …", focus goes to that trigger, only the A preview was written, the new review reads its own preview as B, and the confirmation is sent once as B with "1 run marked delete-ready." | As expected. | PASS |
+| S8 cancel under B | Switch to B, then Cancel run. Also POST pause with no key and with an unknown key. | One cancel as B, `run.cancel_requested` actor = key B, and server authorization unchanged (401/401). | As expected. | PASS |
+
+Also run on the combined tree: `e2e/inspector-credentials.spec.ts` 4/4, including a refused Replay
+under A whose error text and named run are hidden under B (`e2e-new-specs.log`).
+
+## #563 cases
+
+Matrix: `qa/R563-matrix/` (rows.jsonl, per-cell JSON with baseline and candidate metrics, full-page
+screenshots for both builds, Menu and dialog shots). "200%" here is computed root-font doubling
+(`html { font-size: 200% }`), so the root is 32 px. Runs on the built API: a run waiting for input
+(Pause/Resume/Cancel run/Replay..., long Resume reason) and a replay run (replay origin).
+
+| Check (each cell, candidate) | Result |
+|---|---|
+| Document and body `scrollWidth` = viewport; `scrollTo(999,0)` stays at 0 | **Replay run: all 9 cells pass. Waiting run: every cell passes except 320/200 (326 px, scrollX 6). This is Q1.** Baseline at 320/200 is 469/476 px, and at 640/768/200 it is 1068 px. |
+| No text outside the viewport; every control inside the viewport; control text inside its control | Pass in every cell, both runs. |
+| Keyboard order and accessible names (DOM focusables) and a real Tab walk (≤30 stops), compared with the baseline build | **Identical in all 18 cells.** |
+| Unchanged 100% cells (320/100, 1440/100) hold boxes within 0.5 px of baseline | Pass (0 differences), both runs. |
+| Root font is doubled in 200% cells | Pass (32 px). |
+| Double click selects exactly the run ID | Pass in 16/18 cells. **768/200 ×2 failed in the harness**: Playwright double-clicks the centre of the span's box, which for a two-line ID falls in the 6 px gap between lines (it selected "\n"). In the labelled diagnostic (`qa/R563-diagnostic/diagnostic.json`), double-clicking at 10%/50%/90% of both lines selects exactly the ID every time. Not a defect. |
+| Menu below 640 px: the panel top equals the header bottom; Escape returns focus to Menu with `aria-expanded=false` | Pass. |
+| The Replay dialog's text and controls are contained; Escape returns focus to Replay... | Pass. |
+| Intermediate widths at 100% (REVIEW F4): 768/100 and 1024/100 | Run-header boxes change. Side-by-side (`waiting-768px-100pct-compare-top.png`): **the baseline clips the run ID under the Pause button at 768/100**, and the candidate shows the full ID with the controls wrapped into a column. This is an improvement, not a regression. |
+| Other run states at 320/200 and 320/100 (`qa/R563-states/`): waiting-input, waiting-input with schema, waiting-signal, paused, cancelled, failed/finished script | Signal, paused, cancelled and finished are all 320 at both sizes. **Waiting-input (both variants) is 326 at 320/200 and 320 at 320/100.** |
+| Coarse pointer (touch emulation, `(pointer: coarse)` true) at 320/100 and 320/200 (`qa/R563-coarse-pointer/coarse.json`) | Every button is at least 44 px (88 px at 200%), all text is inside its control, and the header is 56 px at 100%. Pass. |
+| Native browser zoom 200%, tried once | **Not achieved.** A fresh Edge profile with `partition.default_zoom_level` set to 200% stayed at DPR 1 with a 616 px viewport, headless and headed. `--force-device-scale-factor=2` gave DPR 2 but did not shrink the CSS viewport. In CSS terms, a 640 px window at 200% zoom is the 320/100 cell (pass). True zoom is not established (`qa/563-native-zoom*.log`). |
+
+**Q1 root cause** (from the labelled diagnostics, `qa/R563-diagnostic/prompt-chain.json` and
+`qa/R563-coarse-pointer/input-card-culprit.json`):
+- In the "Input requested" card, `JsonSchemaForm`'s `form.grid` (min-width auto) is 229.4 px wide.
+  Its one-line **Submit input** button (`whitespace-nowrap shrink-0`, with no wrapping label) needs
+  about 229 px at 200% text.
+- The card's `div.grid.gap-5` has an implicit `auto` column, which grows to 229.4 px inside a
+  174 px content box.
+- As a result, the JSON field, Submit input and "At Approve (approve)" end at 302.4 px (the card
+  ends at 288 px), and the `-mx-3` Prompt `pre` ends at 326.4 px, which widens the document.
+- The defect is pre-existing on main (masked by the 469 px overflow). It is inside #563's acceptance.
+- The author's matrix rendered only finished runs, so it never reached this state.
+
+The full Edge reflow spec also ran green on the combined tree (26 reflow tests plus 4 credentials,
+`e2e-new-specs.log`). That run has no baseline comparison, because its output directory has no
+`-candidate` suffix.
+
+## #561 cases
+
+The local proxy `qa-scripts/body-proxy.mjs` (4821 → 4811) arms a mode for one run's GETs. Every
+decision is logged in `qa/561-proxy.jsonl`:
+- `mid` truncation happened 14× on `runs.get` and 8× on `runs.observation`, as "headers + half of
+  the real body, then the socket destroyed".
+- Edge reported `net::ERR_CONTENT_LENGTH_MISMATCH`.
+
+| Case | Expected | Actual | Result |
+|---|---|---|---|
+| C1 cold `runs.get` cut short after 200 headers | Offline state ("Run needs the GraphGoblin API, which cannot be reached right now."), no "Could not load run", no raw `network error`/`Failed to fetch`/`TypeError`, no Replay. Recovers once bodies are whole. | As expected. Recovered within 45 s without a reload. | PASS |
+| C2 control: failure before headers | The same Offline state | Same | PASS |
+| C3 control: complete malformed JSON | "Could not load run" (not offline) | Same | PASS |
+| C4 control: HTTP 503 problem | "Could not load run" with `QA_UNAVAILABLE` (not offline) | Same | PASS |
+| C5 cold `runs.observation` cut short, compared with before-headers | Offline class, no raw transport text | Both show the "Cannot reach the GraphGoblin API" banner. Before-headers also shows "Run evidence could not be read: NETWORK_ERROR: Failed to fetch". At capture time the cut-short case showed no evidence alert yet (still retrying). Neither case shows raw TypeError text. | PASS |
+| C6 warm: a live change rereads a shown run and the body is cut short | Offline-class presentation, no raw error, recovers | The banner appears, with "Status from event #14; the run record is updating.", and no raw error. It recovers. | PASS |
+
+## Regression (#575/#577) and supporting checks on the combined tree
+
+| Check | Result | Log |
+|---|---|---|
+| Author's 11 regression specs (inspector-availability, -truthfulness, -large-values, responsive, api-key-current, script-recovery, deletion-eligibility, replay-seed, missing-session, recovery-eligibility, live-follow); Edge, workers 1, retries 0 | **53/53 passed**, exit 0 (4.5 min) | `e2e-regression-575.log`, `.exit.json` |
+| New specs (inspector-credentials, inspector-reflow) | **30/30 passed**, exit 0 | `e2e-new-specs.log` |
+| Focused web unit tests: credential-dispatch, api-key-fetch, api-key, queries.reconnect, RunInspectorPage.credentials, RunInspectorPage.offline, HistoryEligibility, WaitPanel, layout, utils | 10 files, **177/177** | `unit-web-focused.log` |
+| Focused api-client unit tests: body, errors, resources | 3 files, **62/62** | `unit-client-focused.log` |
+| Typecheck: web, mcp (the #561 DOM-type regression), api-client | exit 0 / 0 / 0 | `typecheck-*.log` |
+
+## Findings from QA
+
+- **Q1 (P2, FIX-IN-PR, orchestrator to confirm scope):** the overflow of a run waiting for input at
+  320/200 (above). Required outcome:
+  - no horizontal document overflow;
+  - the form stays inside its card;
+  - the label is not cut short;
+  - a waiting-input cell is added to the reflow matrix.
+
+  The submit button lives in `forms/JsonSchemaForm` (outside the 30 write paths), so a
+  wrapping-label fix needs a scope decision. A `WaitPanel`-only container constraint would turn the
+  overflow into an ellipsized label, which the design rejects.
+- **N1 (note, not admitted):** when a review closes while its own write is still in flight (S2b),
+  focus goes to the status line while it is still empty. The line fills with the requested copy
+  when the write settles. This matches the design ("otherwise to the status line"). There is no
+  concrete user cost beyond a moment of focus on an empty element.
+- **N2 (note):** a click that lands in the same turn as a key change, before React re-renders, is
+  silently ignored for Pause (S3 delay −1). Nothing is sent and no copy is shown. This is the same
+  as the existing #416 handling of spent-gate clicks, and the window is shorter than a frame.
+- The REVIEW findings F1–F4 stand. F4 is now resolved as an improvement (above).
+
+## Deviations from the brief and caveats
+
+- **Queued writes in a real browser.** A real second tab's `storage` event is a separate task and
+  cannot interleave between a click and its `fetch`. In the built app the mutation reaches `fetch`
+  within the first microtask. The queued (chosen, not dispatched) tier was therefore produced
+  in-page: a real `localStorage` write plus a same-tab `StorageEvent` delivered to the app's real
+  listener inside the click's turn. The review-open and in-flight tiers used the real second tab.
+- **Fresh session backend.** Start fresh session ran against the repository's built-API
+  missing-session fixture (store2), not the plain built API. A real `HARNESS_SESSION_MISSING` needs
+  a provider, and the plain API was provider-disabled.
+- **The #563 baseline** came from a second disposable worktree at `origin/main`, route-served by
+  Playwright for the same backend and runs.
+- **First #562 run log lost.** It was not captured because the `qa/` folder did not exist when
+  `tee` started. Its per-case `result.json` files and `562-results.jsonl` lines remain.
+- **Harness failures** (S2 run 1, S3 delay −1, S4 run 1, R563 768/200 double click) are kept and
+  labelled. Each re-run was a single labelled diagnostic or a corrected-expectation run. No product
+  failure was replaced.
+- **Lock time.** I held the heavy-suite lock from 12:56Z to 13:21Z, including script-writing
+  intervals in that span.
+
+## Not established
+
+- True native browser zoom at 200% (both attempts failed to apply zoom). Only computed root-font
+  doubling was measured.
+- A real phone or physical coarse pointer. Touch emulation only.
+- Combined-tree package-wide coverage (`pnpm test:coverage`), full `pnpm check`, lint and format,
+  and hosted CI. None was run here; the author's web coverage was on the unmerged branch.
+- An interrupted body on the SSE stream or on writes. Out of #561's scope, not exercised.
+- Server-side request audit on the plain built API. The key used per write was taken from the
+  browser's request headers plus the API's own actor on pause, resume and cancel events. Replay,
+  input, signal and delete-ready requests have no actor field in events; their key is from browser
+  request headers only, while the e2e credentials spec's server audit covers Replay.
+- Behaviour across the #561 interruption and a credential change at the same time (not combined
+  in one case).
+
+## Q1 re-verification (2026-11-26, after the orchestrator's scope decision)
+
+The orchestrator admitted `apps/web/src/forms/JsonSchemaForm.tsx` and its test into #563.
+
+### Tree and build
+- **Fix:** commit `ec5c2bb33` ("keep a waiting run's input form inside its card at 320px/200% text").
+  Branch head `751bd0ba2` adds a merge of origin/main into the branch; origin/main is unchanged
+  at `4e1037c9`.
+- **Merged into the integration worktree** with `git merge --no-ff codex/gg-fu-inspector-562-563-20261124`:
+  - `CHANGELOG.md` conflicted only on the #561 hunk. I resolved it as a union, keeping the #561
+    entry. The diff against main still removes nothing, and the #563 entry carries the new
+    waiting-run sentence.
+  - **New combined HEAD `2a3de9df1a62aa0a9db5419f2032a20328db9023`.**
+  - Diff from the first QA HEAD (`7d971876`): exactly the 7 files of ec5c2bb3, +208/−6.
+- **Rebuild** under the heavy-suite lock (taken just before the install, which finished at 14:14:43Z; released at 14:26:13Z):
+  - `pnpm install --frozen-lockfile` exit 0.
+  - `pnpm build --filter=@graphgoblin/web --filter=@graphgoblin/api --force`: 9/9, 0 cached.
+  - Logs: `q1/install.log`, `q1/build.log`.
+  - New web bundle `index-B6RhVpr6.js`. The CSS is unchanged (`index-BU16gX-c.css`), because every
+    class the fix uses already existed.
+
+### Brief review of ec5c2bb3
+- **`JsonSchemaForm.tsx`.** The submit `Button` gets
+  `h-auto min-h-9 py-1.5 [&>span]:whitespace-normal pointer-coarse:h-auto pointer-coarse:min-h-11`.
+  Its name, `type="submit"` and its place last in the form are unchanged.
+  - This string is byte-identical to `WRAPPING_LABEL.md` in `RunControls.tsx`. That duplication is a
+    P3 note (NO-CHANGE): `forms/` should not import from `runs/inspector`. A shared home in
+    `components/ui` would be a later tidy-up.
+- **`WaitPanel.tsx`.** The card body becomes `grid grid-cols-[minmax(0,1fr)] gap-5 wrap-anywhere`.
+  `overflow-wrap` is now inherited by the form's fields. That affects only how a long unbroken token
+  wraps visually inside the JSON textarea, and the value is unchanged.
+- **Tests.** The unit tests are additive:
+  - `JsonSchemaForm.test.tsx` adds 2 cases: one named submit, last in the form, with the wrap classes.
+  - `WaitPanel.test.tsx` adds 1 case: the column classes.
+- **`inspector-reflow.spec.ts`.** The diff is purely additive (+148/−1). The one removed line is
+  the import, which gains `approvalLoop`. No existing assertion, oracle or cell changed.
+  - New tests:
+    - Two waiting-for-input runs (with and without a required-string input schema) across all four
+      MATRIX layouts. Each runs `expectContained` (document and body width, text ranges, control
+      text, Timeline), an every-box-inside-the-card check, `scrollTo(999,0)` and the baseline box
+      comparison for the unchanged cells.
+    - A New run form check at the four MATRIX layouts plus 360/200. It requires form text and
+      control text to be contained, Start run to sit inside the viewport, and a one-line 2.25 rem
+      Start run at 100%.
+  - This checks what Q1 needs, and the waiting tests would fail on the pre-fix build (326 px).
+  - Minor note: the New run test records `documentWidth` in its notes but does not assert it. My own
+    QA below asserts it.
+
+### Edge results
+Real Edge against the built API (store1, keys required, provider-disabled, port 4811). Each cell
+compares the candidate with the origin/main web build, route-served for the same runs.
+
+| Case | Cells | Checks per cell | Result |
+|---|---|---|---|
+| Q1a: waiting for input, no schema (long prompt) | 320/200, 320/100, 640/200, 1440/100, 1440/200, 768/200 | (a) document and body width equal the viewport and `scrollTo(999,0)` stays at 0; (b) every box inside the Input requested card; (c) no text outside the viewport, every control inside it, control text inside its control; (d) DOM focus order and a real Tab walk identical to origin/main; at 100%: Submit input one line at 36 px (same as main) and header, card, field, submit and prompt boxes unchanged within 0.5 px; at 200%: root font 32 px | **32/32 PASS**. At 320/200 the document is **320** (it was 326 before the fix, and 469 on main) with 0 strays. Submit input wraps to 2 lines (82 px) inside the card. At 320/100 and 1440/100 there are 0 box differences and the button is 36 px. |
+| Q1b: waiting for input, with schema (required Reason string, Approved boolean, Count integer) | same 6 | same | **32/32 PASS**. 320/200 = 320, 0 strays. Keyboard order identical. 100% cells unchanged. |
+| Q1c: New run, minimal loop (JSON textarea) | 320/100, 320/200, 360/200, 640/200, 1440/100, 1440/200 | (a)–(d), with the "card" being the `section[aria-label="Start a run"]` | **32/32 PASS**. Start run is one line: 36 px at 100% and 72 px at 200%, the same as main. 0 box differences at 100%. Document = viewport in every cell (main is 456 px at 320 and 360/200, and 1068 at 640/200). |
+| Q1d: New run, manual trigger with an input schema (Topic, Count) | same 6 | same | **32/32 PASS**. Same as Q1c. |
+| Q1e: behaviour at 320/200 | — | (1) Start run with Topic=`reflow` starts one run and opens it; (2) the started run carries the input; (3) Submit input with Reason answers the wait | (1) and (3) PASS. (2) **failed in the harness**: it looked for the input in `run.trigger`/`run.input`, which do not exist on the run record. In a labelled diagnostic (`qa/q1-diagnostic-input.log`), the run's `run.queued` thread carries `invocation.trigger.payload = {"topic":"reflow"}` (source `manual.ui`, caller key A). The product behaves correctly; the harness record is kept. |
+
+Raw: `qa/q1/<case>/rows.json`, `result.json`, baseline and candidate full-page plus card screenshots
+per cell; `qa/q1-results.jsonl`; `qa/q1-run1.log`; script `qa-scripts/qa-q1.mjs`.
+
+### Specs and unit tests on HEAD 2a3de9df
+| Check | Result | Log |
+|---|---|---|
+| New specs (inspector-credentials, inspector-reflow, now including the 3 new tests) | **33/33 passed**, exit 0 (1.8 min) | `e2e-q1-new-specs.log`, `.exit.json` |
+| The author's 11 #575/#577 regression specs | **53/53 passed**, exit 0 (4.2 min) | `e2e-q1-regression-575.log`, `.exit.json` |
+| Focused web unit tests (JsonSchemaForm, WaitPanel, RunInspectorPage.credentials and offline, `runs/new`) | 5 files, **98/98** | `q1/unit-web-q1.log` |
+| Web typecheck | exit 0 | `q1/typecheck-web-q1.log` |
+
+Cleanup: the API (PID 64980, reused for the q1 run) is stopped. The listener and process scan is
+clean (4811/4812/4821/4822 free, no QA node processes). The lock is released. The worktrees are clean.
+
+### Updated verdicts
+- **#563: PASS WITH LIMITS.** Q1 is resolved (Q1 disposition: fixed in ec5c2bb3, verified). The
+  limits:
+  - True native browser zoom is not established (unchanged from the first run).
+  - A coarse pointer was checked by emulation only.
+- **#562: PASS.** **#561: PASS.** **#575/#577 regression: PASS.**
+- **Overall: PASS WITH LIMITS.**
+- Still open from REVIEW: F1 and F2 (P3, DEFER-ISSUE), plus the P3 duplication note above.
+- Not established beyond the first run's list: combined-tree package-wide coverage and lint/format
+  after ec5c2bb3.

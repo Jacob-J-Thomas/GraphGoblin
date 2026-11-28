@@ -1,0 +1,65 @@
+Both #545 and #546 are implemented in the six authorized files and left unstaged. All the checks I was allowed to run pass. I did not run the broad API suite, the process tests or anything against a provider.
+
+## #545: Codex effort in `GG_DEFAULTS`
+**Change (`apps/api/src/preflight.ts`):** the Codex default-model check now runs `validateHarnessDefaults`, the same check startup uses, on the Codex process defaults. In order:
+- **Model not in the catalog:** same FAIL message as before.
+- **Effort the model doesn't offer:** FAIL with `EFFORT_UNSUPPORTED`. This applies to disabled models too, because startup refuses those as well.
+- **Disabled model:** same WARN as before. Claude's disabled model still FAILs.
+- **No effort set:** WARN, and exit code 0 if nothing else fails. The message says runs need an effort from the loop or Settings defaults.
+- **Otherwise:** ok, and the line now names the effort ("… and supports effort low").
+
+This FAIL appears under the "Default model" check, not "Harness codex", so it stays separate from harness prerequisites. Check IDs, labels and the report shape are unchanged, and startup and runtime behaviour is unchanged. `GET /system/preflight` uses the same function, so it now also shows the missing-effort warning.
+
+**Tests:**
+- In `preflight-catalog.test.ts`, the existing gpt-5.5/none row used to expect `ok`/exit 0. It now expects FAIL/exit 1, and startup refuses.
+- A new set covers none/low/no effort against migrated, missing and empty stores. Each case runs `runPreflightCli` and then ordinary container startup, and checks that they agree.
+- New unit tests in `preflight.test.ts` cover the exact messages, that Codex readiness is unaffected, and the disabled-model ordering.
+
+## #546: which catalog preflight uses
+**Change:** the CLI now inspects the store once, with startup's guard and a migration count. Depending on the result:
+- **Fully migrated store:** unchanged; it still reads the full catalog, including Ollama discovery data, with missing shipped models added.
+- **Current store with pending migrations:** reads the stored rows with `readPreMigrationModelCatalog`, the same way startup does before migrating, and adds missing shipped models with `projectStartupModelCatalog`.
+- **Missing or empty store:** uses the shipped catalog. An empty store now gets the "default catalog seeded on first start" wording through a new optional `emptyStore` field on the internal sources interface.
+- **Refused or unreadable store:** the database check still fails. The catalog is never read; the Codex and Claude model checks warn "not checked until the database is current and readable" instead of showing a model-ready line from the shipped catalog.
+
+Jev and Ollama are still skipped until migration, and the existing temporary write probe on the data directory is unchanged.
+
+**Tests (pending store built from the real migrations up to `0026_chat`, so 3 migrations are pending):**
+- **Stored-only Codex model:** ok, and startup starts with it.
+- **Stored disabled Codex row:** WARN, and it stays disabled after startup.
+- **Stored efforts that lack the configured one:** FAIL, matching startup's `EFFORT_UNSUPPORTED` refusal.
+- **Stored disabled Claude row:** FAIL, and startup still starts.
+- **Shipped model missing from the store:** ok, and startup inserts it.
+- Each case also checks that the codex/claude harness rows, the plugins warning and the skipped Jev check keep their existing results.
+- **Unsupported (format 3) and corrupt stores:** the warning is shown, no ok line appears, and startup refuses.
+- `configPreflightSources().catalog()` rejects for refused and unreachable stores rather than falling back to the shipped catalog.
+
+## Ollama off in tests
+Every `createContainer`, `loadConfig` and CLI environment in `preflight.test.ts` now sets `GG_OLLAMA_ENABLED=false` explicitly, through an `OLLAMA_OFF` constant and the `cli()` helper. `createTestApp` already turned it off, and the new tests in `preflight-catalog.test.ts` use its existing `env()` helper, which already does.
+
+## Database and WAL coverage
+- **Database and existing WAL:** both are byte-compared before and after every CLI run on an existing store. That includes the migrated, empty, pending, unsupported and corrupt cases, and after every startup refusal. Migration records and stored catalog rows are also compared after each run.
+- **Pending store with an existing WAL:** the store is copied while a writer is still open, so disabling a row exists only as frames in the WAL. Preflight reports that row as disabled, so it reads those frames, and it leaves the database and WAL bytes unchanged and the file set the same. Startup then keeps the row disabled.
+- **Allowed differences:** the `-shm` file may change and an empty WAL may appear, as the docs already allow.
+- **Missing store:** neither preflight nor a refused startup creates the database's directory.
+
+## Commands and results
+| Command | Result |
+|---|---|
+| `pnpm --filter @graphgoblin/api test src/preflight-catalog.test.ts` | 31/31 passed |
+| `pnpm --filter @graphgoblin/api test src/preflight-catalog.test.ts src/preflight.test.ts src/preflight-ollama.test.ts` | 97/97 passed (last run 14.4s) |
+| `pnpm --filter @graphgoblin/api typecheck` | passed |
+| `pnpm --filter @graphgoblin/api lint` | passed |
+| `pnpm test --filter=@graphgoblin/domain` | 484/484 passed |
+| `pnpm build --filter=@graphgoblin/api` | passed; `preflight.ts` has not changed since |
+| `pnpm exec prettier --check …` (the 6 files) | passed |
+| `git --no-pager diff --check` | clean |
+
+Docs and CHANGELOG are updated: the preflight section of `docs/11-security-and-distribution.md`, `docs/guide/01-install-and-first-run.md`, and an Unreleased entry with an upgrade note in `CHANGELOG.md`.
+
+## Gaps and deviations
+- I could not run the new tests against the old code, since checkout and stash weren't allowed. The flipped gpt-5.5/none row and your before/after native run are the evidence that the old behaviour was different.
+- I read "unsupported/unreadable store closure" as: show the "not checked" warning instead of a model-ready line. I did not add a test that the file handle is closed on Windows; `sources.close()` is unchanged.
+- Changed output text: the Codex ok line now names the effort, and there are new warnings. Anything that parses preflight output may need updating; the CHANGELOG says so.
+- An empty store's database line still says "N migration(s) pending" (existing wording), while its model line now says "the default catalog seeded on first start".
+- Two Bash calls weren't on the allowed list, both read-only: my first call ran `node --version; git --no-optional-locks status --short` as one command, and I ran `wc -l` on two test files.

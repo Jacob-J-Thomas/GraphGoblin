@@ -1,0 +1,16 @@
+Host and filesystem facts observed for this QA (2026-11-26 UTC)
+- Windows: Microsoft Windows [Version 10.0.26300.9974]; Node v22.23.4 (project-scoped runtime)
+- Volume G: NTFS (Get-Volume: FileSystem=NTFS, Label "New Volume", Fixed); serial 3055-0404
+- Directory names: case-insensitive (default). `fsutil file queryCaseSensitiveInfo` on a fixture dir: disabled.
+  `fsutil file setCaseSensitiveInfo <fixture> enable` -> "error: 0x00000005 Access is denied." (not available unelevated)
+- 8.3 short names: none issued (`dir /x` shows no short name for a long fixture name);
+  `fsutil 8dot3name query G:` and `fsutil fsinfo volumeinfo G:` -> "Error 5: Access is denied."
+- Hard links: supported (`mklink /H`, fs.link); `fsutil hardlink list <file>` works unelevated and was used as an
+  independent kernel witness of every name of a linked file before and after each reset.
+- Junctions: creatable unelevated (used for the special-file refusal cases). File symlinks were not created.
+- Native readdir order on this volume: `00-unrelated` lists before `graphgoblin.db*`, `zz-unrelated` after
+  (asserted per case in QA-CLI-RESULT.json, "native listing puts ..." checks).
+- NTFS equates `οσ-1.db-wal` with listed `ΟΣ-1.DB-WAL` (P-unicode-alias-with-link) and keeps the Kelvin-sign
+  `\u212A.db-wal` distinct from `K.db-wal` (P-kelvin-lookalike).
+- realpathSync.native(G:\...\graphgoblin.db-wal) with the file listed only as GRAPHGOBLIN.DB-WAL and another
+  hard link 00-unrelated returned ...\GRAPHGOBLIN.DB-WAL (QA-CONTROLLED-RESULT.json C0 nativeAnswers).

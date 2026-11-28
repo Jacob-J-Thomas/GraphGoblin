@@ -1,0 +1,62 @@
+# CHANGES REQUIRED
+
+The direction is right, but #562 is missing four decisions: an atomic dispatch check, handling for requests already sent, separate copy, and a full list of writes. The #563 evidence is also narrower than the draft says.
+
+**What the images show**
+- **562 screenshots:** after the key switch, A's "Replay as a new run" dialog stays open with "Create replay run" enabled.
+- **563, 320px at 2x text:** the page is scrolled about 25px. The card's left border is gone and text starts at x≈8 (x≈33 at normal size). "Load newer", the input and row summaries are cut off at the right edge. The event number and type sit on separate lines and don't overlap.
+- **Same row selected everywhere:** every 563 image has #123456789012345 selected, including the "-10593" files. Geometry is identical for all three sequence values, so that axis gives no distinct test cases.
+- **Wrong part of the page:** the images show only the Timeline. Nothing shows the Menu, the run ID, the controls or the history buttons, which cause most of the overflow. The 320px normal-text image was taken while still "connecting…".
+- **Fixed heights don't grow:** at 2x, button padding is unchanged and the text fills the boxes. Only font sizes doubled.
+
+**#562 design**
+1. **Gate:** read `generation` from the key store when rendering and add it to the `gate` memo's dependencies. A new gate identity then closes old reviews at commit through the existing identity checks. `open()` also checks the live store: `!rejected && generation === captured`. This live check is the only protection between the key change and React's layout-effect commit, because until then `latestGate.current` still points at the old gate. Don't use the header registry's scope as the token; it only changes later, on `lease()`.
+2. **Atomic check:** the last check must run in the same synchronous step where `withApiKey` reads the key. Either prove there is no `await` between `assertOpen` and `fetch` in `runs.*`, or move the comparison into `withApiKey` and throw "not sent" without calling `fetch`.
+3. **All writes covered:** pause, resume, cancel, replay, script retry, fresh session, and delete-ready preview/confirm. A preview token from key A must never be confirmed under key B. Include the Input requested submission if it writes. Typed drafts are kept; earlier clicks no longer count.
+4. **Old review, nothing sent:** close it. Return focus to its trigger ("Replay…", "Review delete-ready history" or "Withdraw delete-ready mark") if enabled, otherwise to the status line (tabIndex -1). Never take focus from an open API-key prompt. Announce in a polite status region that is already in the page, below the Resume reason (history uses its existing live span). Copy: "Review closed: this browser's API key changed. Nothing was sent. Open Replay… again to choose with the current key." Reopening resets node, consent (false) and observed sequence.
+5. **Queued but not sent:** use a new error, not the existing `NOT_SENT` text about a lost connection. Show it in the existing alert slot, outside the closed dialog. Copy: "Not sent: this browser's API key changed before {action} was sent. Choose it again to send with the current key." No retry, no reopening, nothing triggered automatically. The existing run refresh on error stays.
+6. **Already sent:** one request, never cancelled or resent, cache refresh unchanged. If it finishes after the key changed: don't navigate, and don't show IDs or error text received under key A (#386 says evidence isn't shown across generations, and key B may not be able to read the new run). Copy: "{Action} was requested before this browser's API key changed. Its outcome isn't shown under the current key; check Runs before trying again." Controls stay pending until it finishes.
+7. **Same key:** re-saving the same key doesn't change the generation, so the review and consent stay and one click sends one request as A. The same key after a rejection or "forget", and A→B→A, expire the review.
+8. **Header:** don't remount anything. During a pending run read with no key change, "Status from event #N; the run record is updating." stays and the gate stays open.
+
+**#562 tests:**
+- Use a real second tab writing to storage.
+- Click synchronously after the store update, before React re-renders: 0 requests.
+- The held-mutation replacement and same-key-new-generation fixtures must send 0 requests (today they send 1).
+- A fresh choice under B sends exactly 1 POST, with the API fixture recording actor api-key B.
+- A request sent before the switch: 1 POST as A, no navigation.
+- Double-click: 1 request.
+- Server authorization unchanged.
+
+**#563 design at 320px with 2x text.** DOM and visual order stay as they are.
+1. **Shared header (`AppShell.tsx`, `MainNav.tsx`):** below 640px only, the header becomes `flex-wrap h-auto min-h-14 py-2`. The logo stays on row 1 and Menu wraps to row 2, right-aligned. Menu button `h-10` becomes `min-h-10`. The menu panel's `top-14` becomes `top-full`. Nav links `h-12` become `min-h-12`. Classes at 640px and up are unchanged.
+2. **`Page` (inspector only):** `<Page wide className="grid-cols-[minmax(0,1fr)]">`, so one long unbreakable item can't widen every section.
+3. **Run header:**
+   - h1 gets `min-w-0`; the ID span gets `wrap-anywhere`, about 17 characters per line, still mono and muted, with no hyphens or inserted characters.
+   - The status badge moves to the next line.
+   - The "Replay run … from …" span gets `min-w-0 wrap-anywhere`.
+   - Controls stay on row 3: Pause, Resume / Cancel run, Replay…, then the reason text.
+   - Add `wrap-anywhere` to the Resume-reason paragraph, the dialog's "Source run" paragraph and the "Open existing replay" link.
+4. **History buttons:** let labels wrap (`whitespace-normal h-auto min-h-<current>`). "Review delete-ready history" needs about 370px at 2x but only 288px is available. These buttons are also on the Runs list.
+5. **Timeline:** keep the existing number column, type and summary, and the label above a full-width input, then "Go to event". Add `wrap-anywhere` to the type only if the longest real event type overflows. Record why the Input's `w-24` renders full width.
+6. **Allowed scroll areas:** only the exact-JSON viewer (`BoundedValue`) may scroll horizontally, because it is truly two-dimensional; it must be focusable and named. The Timeline list stays vertical-only (`scrollWidth ≤ clientWidth`), and the dialog body scrolls vertically. Never the navigation, IDs, prose or `Page`.
+
+**Protecting other pages:**
+- Check every route (Chat, Loops, editor, Runs, Events, Settings, inspector) at 1440 normal, 1440 at 2x and 320 normal against the current build. The header, Menu, nav and history-button boxes must match within ±0.5px, with zero pixel difference.
+- Search for anything that assumes a 56px header (`top-14`, `calc(100vh-3.5rem)`) and check the editor at 320px with 2x text.
+- Add 639, 640 and 768px at 2x, because layouts switch at 640px.
+
+**#563 checks:**
+- Run the 12 cells plus negatives: a replay run, a parent link and the longest event type. Selection must match each cell's sequence ("Exact recorded event #N").
+- Document and body `scrollWidth` = 320. `scrollTo(999,0)` leaves `scrollX` at 0, including after Timeline Home/End/PageDown and focusing each control.
+- Zero qualifying overflow ranges. Don't compare counts; they already vary (31, 27 and 26).
+- Control text stays vertically inside its box.
+- Native full-page screenshots of the header, Menu open, run header, controls and dialog.
+- Double-clicking the ID selects exactly the run ID, and the clipboard gets the exact value.
+- Escape closes Menu: focus returns to Menu, `aria-expanded` false, and the panel's top equals the header's bottom.
+- The Tab sequence of names is unchanged before and after.
+- Timeline keeps one tab stop, Home/End work and Tab leaves it.
+
+**Confidence:**
+- **#562: medium-high** on the cause (one real 202 sent as B, plus the fixtures). Whether the check is atomic is unproven until the client's `await` path is checked.
+- **#563: medium.** The run ID and shared header as causes are well supported: the ID's right edge, 427.8px plus the 25px scroll, matches the 453px width. The history-button wrapping and the `Page` grid explanation are inferences; confirm them by applying one change at a time. All evidence is from Chromium with fonts doubled by a script, not browser zoom.

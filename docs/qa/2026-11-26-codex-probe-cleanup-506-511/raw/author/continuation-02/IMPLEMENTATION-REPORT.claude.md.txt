@@ -1,0 +1,40 @@
+The MCP listing correction is in and every final check passes on the unchanged candidate. One requirement could not be met without editing frozen code: through the harness, the turn's submission comes out as `delivery-uncertain`, not `definitely-not-submitted`. I've retained the failing evidence for you.
+
+## What changed (only these five paths)
+
+- **`isolation.ts`**: `configuredServers` now checks `result.terminationUnconfirmed` right after the listing runner returns, before the spawnError, exit-code and JSON checks. When it's set, it throws `HARNESS_TERMINATION_UNCONFIRMED` (non-retriable, `definitely-not-submitted`) with a fixed message. The first failure is named only when `spawnError` exactly equals the runner's own wording for this call (`timed out after ${timeoutMs} ms`, rebuilt from the call's own number, or `The operation was aborted`). Anything else becomes "failed". No output, stdout, path or supplied error text reaches the message. Example: `Codex could not list the machine's MCP servers, so the turn did not start: the listing timed out after 15000 ms and its process did not confirm that it stopped; it may still be running.`
+- **`isolation.test.ts`**: 8 new cases. All earlier cases are unchanged, including the real-runner cancellation/close-order test.
+  - Four go through the actual `CodexHarness` with an injected runner: timeout, an error from the started process, an error worded like a deadline, and a cancelled turn (where `cancel()` now rejects with the same code). Each checks there is no session or submission event, no argument file from the fake CLI, no spawn, and no canary in the error, events or warn log.
+  - Four call `configuredServers` directly and check non-retriable and `definitely-not-submitted`.
+- **Docs**:
+  - docs/06: the old sentence saying a cancelled listing "still ends as cancelled" is replaced with a description of the new behaviour.
+  - docs/10: added a description of the new cases, which only check the adapter's mapping.
+  - CHANGELOG: one added sentence in the #506 entry.
+
+## The gap for you to decide
+- **Where it comes from:** harness.ts:320 calls the engine's `harnessFailureSubmission` (`inference-failure.ts:87-100`). That function turns every `HARNESS_TERMINATION_UNCONFIRMED` into `delivery-uncertain`, whatever submission the error carried.
+- **It's deliberate elsewhere:** frozen tests already expect this (`failure-evidence.test.ts:88`, `harness.test.ts:449/505`, `termination.test.ts:117`), and docs/05:382-383 says unconfirmed termination is never downgraded.
+- **Evidence:** `002-focused-02`. With the fix applied and the brief's expectation still in the tests, code, message and retriable all match; only submission differs.
+- **What the final test does:** it expects `delivery-uncertain` at the harness level, with a comment pointing to the engine mapping. `definitely-not-submitted` is still checked on the listing's own error.
+- **Decision needed:** either accept this as the conservative outcome, or allow a harness/engine change, which would also mean changing those frozen tests and docs/05. I didn't edit `harness.ts`; its existing priority does keep the code even when the turn is cancelled.
+
+## Checks
+Receipts are under `G:\ggq\delivery-evidence\2026-11-24-followups\codex-cleanup-506-511\continuation-preparation-02\verification-logs\`:
+
+| Receipt | Result |
+|---|---|
+| `001-focused-01` | Red on purpose, before the fix: 8 failed / 31 passed. A cancelled turn's `cancel()` resolved as ordinary cancellation. |
+| `002-focused-02` | Red, kept as evidence of the submission gap: 4 failed / 35 passed |
+| `003-format-write-01` | Passed; only `isolation.test.ts` was reflowed |
+| `004-focused-03` | 39 passed |
+| `005-coverage-01` | 710 passed, 5 skipped; lines 99.31%, branches 96% |
+| `006`–`011` | typecheck, lint, deps, layers, format-check and diff-check all passed |
+
+`deps` reported 0 errors and 4 `no-orphans` warnings. They're in paths this work doesn't touch (the infrastructure drizzle config, the web worker and e2e config, an api script's type file), so I left them alone.
+
+## Remaining limits
+- The new tests supply the runner's result directly. They don't prove that a real process ever survived being killed.
+- runCli's cancellation wording is copied into isolation.ts because `cli.ts` is frozen and doesn't export it. If that wording changes, the message would say "failed" instead of "was cancelled", which stays bounded.
+- If `cancelGraceMs` is set below the runner's 2-second cleanup allowance, a cancelled listing would get the harness's own generic message instead of the listing one. The code would be the same.
+- I had no authorized command to re-hash the frozen files. I edited only the five allowed paths, and every receipt shows `afterGuardError: null`.
+- All twelve paths are unstaged. I made no commits, staged nothing and touched no issues. The fresh `claude-continuation-02` directory is yours to create. Scan1, independent QA, CI and the final review are still to come.

@@ -1,0 +1,78 @@
+{
+  "name": "D4m-managed-store-held",
+  "issue": "#542 / FUP091",
+  "system": "managed classification of the verified acquisition successor",
+  "checks": [
+    {
+      "what": "stale marker removed",
+      "ok": true
+    },
+    {
+      "what": "managed exit 74, silent shell",
+      "ok": true,
+      "detail": 74
+    },
+    {
+      "what": "cause store-held at stage store",
+      "ok": true,
+      "detail": [
+        {
+          "level": 50,
+          "time": 1795685847922,
+          "pid": 58952,
+          "msg": "GraphGoblin startup failed",
+          "stage": "store",
+          "cause": "store-held",
+          "detail": "Another GraphGoblin process holds this store.",
+          "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+        }
+      ]
+    },
+    {
+      "what": "successor intact",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 74,
+    "signal": null,
+    "listened": false,
+    "stderr": "",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:d66311d4-2a95-4200-a048-6de44ad5da7b.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "guard-rmdir-fault:successor",
+      "unlink:0c93a32e-71f2-4b4c-9dae-7168f5d1905a.json",
+      "rmdir:graphgoblin.lock.reclaim.0c93a32e-71f2-4b4c-9dae-7168f5d1905a.tmp"
+    ]
+  },
+  "managedRecords": [
+    {
+      "level": 50,
+      "time": 1795685847922,
+      "pid": 58952,
+      "msg": "GraphGoblin startup failed",
+      "stage": "store",
+      "cause": "store-held",
+      "detail": "Another GraphGoblin process holds this store.",
+      "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+    }
+  ],
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock.reclaim",
+      "type": "dir"
+    },
+    {
+      "path": "graphgoblin.lock.reclaim\\4332a01f-24cf-49a9-a01d-0fc5e2697387.json",
+      "type": "file",
+      "size": 103,
+      "text": "{\"pid\":59488,\"windowsCreationTime\":\"134401594433683560\",\"token\":\"4332a01f-24cf-49a9-a01d-0fc5e2697387\"}"
+    }
+  ],
+  "ms": 4676,
+  "pass": true
+}

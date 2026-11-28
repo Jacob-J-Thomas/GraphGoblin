@@ -1,0 +1,243 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: issue-170-qa.spec.ts >> inference session policies: named key errors stay visible; switching variants removes stale keys and history restores them
+- Location: e2e\issue-170-qa.spec.ts:786:1
+
+# Error details
+
+```
+Error: expect(locator).toHaveValue(expected) failed
+
+Locator:  getByRole('dialog').getByRole('group', { name: 'Session', exact: true }).getByLabel('Conversation', { exact: true })
+Expected: "fresh"
+Received: "resume-named"
+Timeout:  10000ms
+
+Call log:
+  - Expect "toHaveValue" getByRole('dialog').getByRole('group', { name: 'Session', exact: true }).getByLabel('Conversation', { exact: true }) with timeout 10000ms
+  - waiting for getByRole('dialog').getByRole('group', { name: 'Session', exact: true }).getByLabel('Conversation', { exact: true })
+    23 × locator resolved to <select id="_r_2u_" aria-describedby="_r_2t_-help _r_2u_-policy-help _r_2u_-resume-note" class="rounded-md border border-strong transition-[border-color,box-shadow] hover:border-field-hover bg-surface-field aria-invalid:border-status-bad-border w-full min-w-0 px-3 text-md text-default placeholder:text-subtle focus-visible:border-accent-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:border-default disabled:bg-surface-sunken…>…</select>
+       - unexpected value "resume-named"
+
+```
+
+```yaml
+- combobox "Conversation":
+  - option "Start fresh"
+  - option "Resume latest in this run"
+  - option "Resume named conversation" [selected]
+  - option "Resume this node's conversation"
+```
+
+# Test source
+
+```ts
+  743 |   await expect(dialog.getByRole('tab', { name: /^Context/ })).toHaveAttribute(
+  744 |     'aria-selected',
+  745 |     'true',
+  746 |   );
+  747 |   await expect.poll(async () => at(await config(request, id), 'minConfidence')).toBe(0.4);
+  748 |   await page.keyboard.press('Control+Shift+z');
+  749 |   await expect(last).toBeFocused();
+  750 |   await page.keyboard.press('Control+Shift+z');
+  751 |   await expect(last).toHaveAttribute('aria-checked', 'true');
+  752 |   await expect(last).toBeFocused();
+  753 | 
+  754 |   const inferId = await create(request, 'inference', {
+  755 |     prompt: { template: 'Hi' },
+  756 |     contextFiles: [],
+  757 |   });
+  758 |   await page.goto(`/app/loops/${inferId}/edit`);
+  759 |   dialog = await openNode(page, 'approve');
+  760 |   await selectTab(dialog, 'Context');
+  761 |   await expandAll(dialog);
+  762 |   const editor = await jsonEditor(dialog, 'Context files');
+  763 |   const files = [{ path: 'qa.md', template: 'Hi' }];
+  764 |   await replace(page, editor, JSON.stringify(files));
+  765 |   await apply(editor);
+  766 |   const applyButton = sectionOf(editor).getByRole('button', { name: 'Apply JSON' });
+  767 |   await expect(applyButton).toBeFocused();
+  768 |   await page.keyboard.press('Control+z');
+  769 |   await expect(applyButton).toBeFocused();
+  770 |   await expect(dialog.getByRole('tab', { name: /^Context/ })).toHaveAttribute(
+  771 |     'aria-selected',
+  772 |     'true',
+  773 |   );
+  774 |   await expect(dialog.getByRole('button', { name: /^Advanced/ })).toHaveAttribute(
+  775 |     'aria-expanded',
+  776 |     'true',
+  777 |   );
+  778 |   await expect.poll(async () => (await config(request, inferId))['contextFiles']).toEqual([]);
+  779 |   expect(JSON.parse(await editorText(page, editor))).toEqual(files);
+  780 |   await applyButton.focus();
+  781 |   await page.keyboard.press('Control+Shift+z');
+  782 |   await expect(applyButton).toBeFocused();
+  783 |   await expect.poll(async () => (await config(request, inferId))['contextFiles']).toEqual(files);
+  784 | });
+  785 | 
+  786 | test('inference session policies: named key errors stay visible; switching variants removes stale keys and history restores them', async ({
+  787 |   page,
+  788 |   request,
+  789 | }) => {
+  790 |   const id = await create(request, 'inference', { prompt: { template: 'Hi' } });
+  791 |   await page.goto(`/app/loops/${id}/edit`);
+  792 |   const dialog = await openNode(page, 'approve');
+  793 |   await selectTab(dialog, 'Context');
+  794 |   const policy = dialog
+  795 |     .getByRole('group', { name: 'Session', exact: true })
+  796 |     .getByLabel('Conversation', { exact: true });
+  797 |   await expect(policy).toHaveValue('fresh');
+  798 |   await policy.selectOption({ label: 'Resume latest in this run' });
+  799 |   await expect
+  800 |     .poll(async () => (await config(request, id))['session'])
+  801 |     .toEqual({ policy: 'resume-previous' });
+  802 |   await policy.selectOption('resume-named');
+  803 |   const key = dialog.locator('[data-field="session.key"] input');
+  804 |   await expect(key).toHaveAccessibleName('Conversation name');
+  805 |   await key.fill('invalid key');
+  806 |   const invalid = InferenceConfigSchema.safeParse({
+  807 |     prompt: { template: 'Hi' },
+  808 |     session: { policy: 'resume-named', key: 'invalid key' },
+  809 |   });
+  810 |   const message = invalid.error!.issues.find(
+  811 |     (issue) => issue.path.join('.') === 'session.key',
+  812 |   )!.message;
+  813 |   await expect(key).toHaveAttribute('aria-invalid', 'true');
+  814 |   await expect(key).toHaveAccessibleDescription(
+  815 |     new RegExp(message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')),
+  816 |   );
+  817 |   expect((await config(request, id))['session']).toEqual({ policy: 'resume-previous' });
+  818 |   // The name's error counts on Context, where Session is, and not on Settings (#441).
+  819 |   await expect(dialog.getByRole('tab', { name: /^Context.* 1 error$/ })).toBeVisible();
+  820 |   await expect(dialog.getByRole('tab', { name: 'Settings', exact: true })).toBeVisible();
+  821 |   await key.fill('authored-session');
+  822 |   await expect
+  823 |     .poll(async () => (await config(request, id))['session'])
+  824 |     .toEqual({ policy: 'resume-named', key: 'authored-session' });
+  825 |   await policy.selectOption('fresh');
+  826 |   await expect(key).toHaveCount(0);
+  827 |   await expect
+  828 |     .poll(async () => (await config(request, id))['session'])
+  829 |     .toEqual({ policy: 'fresh' });
+  830 |   await policy.focus();
+  831 |   await page.keyboard.press('Control+z');
+  832 |   await expect(policy).toBeFocused();
+  833 |   await expect(key).toHaveValue('authored-session');
+  834 |   await page.keyboard.press('Control+Shift+z');
+  835 |   await expect(policy).toBeFocused();
+  836 |   await expect(key).toHaveCount(0);
+  837 |   await expect
+  838 |     .poll(async () => (await config(request, id))['session'])
+  839 |     .toEqual({ policy: 'fresh' });
+  840 |   await page.reload();
+  841 |   await openNode(page, 'approve');
+  842 |   await selectTab(dialog, 'Context');
+> 843 |   await expect(policy).toHaveValue('fresh');
+      |                        ^ Error: expect(locator).toHaveValue(expected) failed
+  844 | });
+  845 | 
+  846 | for (const theme of ['dark', 'light']) {
+  847 |   test(`I7 JSON ${theme}: every section wraps long invalid text without horizontal scrolling at all five widths`, async ({
+  848 |     page,
+  849 |     request,
+  850 |   }) => {
+  851 |     test.setTimeout(180_000);
+  852 |     await page.addInitScript((value) => localStorage.setItem('graphgoblin-theme', value), theme);
+  853 |     for (const kind of ['inference', 'decision']) {
+  854 |       const id = await create(
+  855 |         request,
+  856 |         kind,
+  857 |         kind === 'inference' ? { prompt: { template: 'Hi' } } : decision(),
+  858 |       );
+  859 |       const before = await config(request, id);
+  860 |       await page.goto(`/app/loops/${id}/edit`);
+  861 |       const dialog = await openNode(page, 'approve');
+  862 |       const sections =
+  863 |         kind === 'inference'
+  864 |           ? ([
+  865 |               ['Settings', ['Config overrides', 'Capabilities', 'Transforms']],
+  866 |               ['Context', ['Input', 'Context files']],
+  867 |             ] as const)
+  868 |           : ([
+  869 |               ['Settings', ['Answer']],
+  870 |               ['Context', ['Context']],
+  871 |             ] as const);
+  872 |       for (const [tab, labels] of sections) {
+  873 |         await selectTab(dialog, tab);
+  874 |         await expandAll(dialog);
+  875 |         for (const label of labels) {
+  876 |           const editor = await jsonEditor(dialog, label);
+  877 |           await replace(page, editor, '{"unfinished":"' + '雪'.repeat(400));
+  878 |           await expect(editor).toHaveAttribute('aria-invalid', 'true');
+  879 |           await expect(
+  880 |             sectionOf(editor).getByRole('button', { name: 'Apply JSON' }),
+  881 |           ).toBeDisabled();
+  882 |         }
+  883 |       }
+  884 |       for (const width of [360, 768, 1024, 1440, 1920]) {
+  885 |         await page.setViewportSize({ width, height: 900 });
+  886 |         for (const [tab, labels] of sections) {
+  887 |           await selectTab(dialog, tab);
+  888 |           for (const label of labels) {
+  889 |             const editor = dialog.getByRole('textbox', { name: `${label} JSON`, exact: true });
+  890 |             await editor.scrollIntoViewIfNeeded();
+  891 |             await expect
+  892 |               .poll(
+  893 |                 async () =>
+  894 |                   sectionOf(editor).evaluate((root) => {
+  895 |                     const dialog = root.closest('dialog')!;
+  896 |                     const bounds = dialog.getBoundingClientRect();
+  897 |                     return [...root.querySelectorAll<HTMLElement>('button,.cm-editor,.cm-scroller')]
+  898 |                       .filter((el) => {
+  899 |                         if (el.closest('[hidden], [inert]')) return false;
+  900 |                         const box = el.getBoundingClientRect();
+  901 |                         if (box.width <= 1 || box.height <= 1) return false;
+  902 |                         return (
+  903 |                           box.left < bounds.left ||
+  904 |                           box.right > bounds.right ||
+  905 |                           el.scrollWidth > el.clientWidth + 1
+  906 |                         );
+  907 |                       })
+  908 |                       .map((el) => el.getAttribute('aria-label') ?? el.className);
+  909 |                   }),
+  910 |                 `${kind} ${theme} ${width} ${label}`,
+  911 |               )
+  912 |               .toEqual([]);
+  913 |             await expect(editor).toHaveAccessibleDescription(/Invalid JSON/);
+  914 |           }
+  915 |           expect(await dialog.evaluate((root) => root.scrollWidth <= root.clientWidth)).toBe(true);
+  916 |         }
+  917 |       }
+  918 |       expect(await config(request, id)).toEqual(before);
+  919 |     }
+  920 |   });
+  921 | }
+  922 | 
+  923 | test('I6 schema numbers and variable/pointer suggestions accept authored values and describe refusals', async ({
+  924 |   page,
+  925 |   request,
+  926 | }) => {
+  927 |   const id = await create(request, 'decision', decision('classifier', noul));
+  928 |   await page.goto(`/app/loops/${id}/edit`);
+  929 |   const dialog = await openNode(page, 'approve');
+  930 |   await expandAll(dialog);
+  931 |   for (const [name, path] of [
+  932 |     ['Min confidence', 'minConfidence'],
+  933 |     ['Noul true-probability threshold', 'truthThreshold'],
+  934 |   ] as const) {
+  935 |     const field = dialog.getByRole('spinbutton', { name });
+  936 |     await expect(field).toHaveAttribute('min', '0');
+  937 |     await expect(field).toHaveAttribute('max', '1');
+  938 |     await expect(field).toHaveAttribute('step', 'any');
+  939 |     for (const value of ['-0.1', '1.1']) {
+  940 |       await field.fill(value);
+  941 |       await expect(field).toHaveAttribute('aria-invalid', 'true');
+  942 |       await expect(field).toHaveAccessibleDescription(
+  943 |         value.startsWith('-') ? /Too small/ : /Too big/,
+```

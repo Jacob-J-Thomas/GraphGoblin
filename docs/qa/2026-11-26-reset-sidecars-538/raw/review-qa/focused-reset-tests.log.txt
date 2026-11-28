@@ -1,0 +1,36 @@
+2026-11-26T04:01:07Z
+
+ RUN  v5.0.3 G:/ggq/gg-fu-538/GraphGoblin/apps/api
+
+ ❯ src/reset/reset-sidecars.test.ts (66 tests | 1 failed | 3 skipped) 56888ms
+   ❯ a sidecar is the entry its name opens, never another hard link of its file (24)
+     × root -journal, other hard link: none 952ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/reset/reset-sidecars.test.ts > a sidecar is the entry its name opens, never another hard link of its file > root -journal, other hard link: none
+AssertionError: expected 1 to be +0 // Object.is equality
+
+- Expected
++ Received
+
+- 0
++ 1
+
+ ❯ src/reset/reset-sidecars.test.ts:234:30
+    232|
+    233|       const confirmed = await reset(dataDir, CONFIRM, { env });
+    234|       expect(confirmed.code).toBe(0);
+       |                              ^
+    235|       expect(confirmed.err).toBe('');
+    236|       expect(section(confirmed.out, 'Removes:')).toEqual(removes(datab…
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 11 passed (12)
+      Tests  1 failed | 228 passed | 5 skipped (234)
+   Start at  22:01:09
+   Duration  79.79s (tests 83%, import 10%, transform 6%)
+
+EXIT 1

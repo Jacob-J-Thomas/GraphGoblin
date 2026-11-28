@@ -1124,7 +1124,11 @@ test('conflict inside Context JSON retains pending text; overwrite saves applied
   await expect(bDialog.getByText('The draft changed on the server')).toBeVisible();
   await expect(editor).toHaveText('{held-conflict');
   await bDialog.getByRole('button', { name: 'Overwrite with this copy' }).click();
-  await expect(b.getByTestId('save-state')).toHaveText('All changes saved');
+  await expect(b.getByTestId('draft-state')).toHaveText('Draft saved');
+  await expect(b.getByTestId('held-input-state')).toBeVisible();
+  await expect(b.getByTestId('held-input-state')).toContainText(
+    'Field input kept in this window only',
+  );
   expect((await config(request, id))['contextFiles']).toEqual([]);
   await expect(editor).toHaveText('{held-conflict');
   await aDialog.getByLabel('Label', { exact: true }).fill('Tab A stale');
@@ -1149,7 +1153,11 @@ test('I6 incomplete optional numeric text keeps the last applied number in every
   await field.pressSequentially('-');
   expect(await field.evaluate((el: HTMLInputElement) => el.validity.badInput)).toBe(true);
   await dialog.getByLabel('Label', { exact: true }).fill('Save while number is incomplete');
-  await expect(page.getByTestId('save-state')).toHaveText('All changes saved');
+  await expect(page.getByTestId('draft-state')).toHaveText('Draft saved');
+  await expect(page.getByTestId('held-input-state')).toBeVisible();
+  await expect(page.getByTestId('held-input-state')).toContainText(
+    'Field input kept in this window only',
+  );
   const persisted = await config(request, id);
   const local = (await mirror(page, id))?.nodes.find((n) => n.id === 'approve')?.config;
   await test.info().attach('D1-incomplete-number.json', {
@@ -1368,8 +1376,12 @@ for (const [label, value] of [
     const enabled = await button.isEnabled();
     if (enabled) await button.click();
     await dialog.getByLabel('Label', { exact: true }).fill('Trigger mirror after JSON');
-    await expect(page.getByTestId('save-state')).toHaveText(
-      /All changes saved|Saved on this device only/,
+    await expect(page.getByTestId('draft-state')).toHaveText(
+      /^(?:Draft saved|Draft saved on this device only)$/,
+    );
+    await expect(page.getByTestId('held-input-state')).toBeVisible();
+    await expect(page.getByTestId('held-input-state')).toContainText(
+      'Field input kept in this window only',
     );
     const local = (await mirror(page, id))?.nodes.find((n) => n.id === 'approve')?.config;
     const rawPath = label === 'Capabilities' ? 'capabilities' : 'harnessOptions.configOverrides';

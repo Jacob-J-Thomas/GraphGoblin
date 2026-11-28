@@ -1,6 +1,6 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { expect, it } from 'vitest';
 import { DeletionConfirmationSchema, DeletionSelectionSchema } from '@graphgoblin/contracts';
 import { FakeApi, problem } from '../__fixtures__/fake-api.js';
@@ -10,7 +10,13 @@ import {
   HistoryEligibilityControls,
   useHistoryConfirmation,
 } from './HistoryEligibility.js';
-import type { WriteGate } from './inspector/RunControls.js';
+import { currentCredential, isCurrentCredential, useApiKeyStore } from '../api/api-key.js';
+import {
+  notSentByKey,
+  requestedBeforeKey,
+  reviewClosedByKey,
+  type WriteGate,
+} from './inspector/RunControls.js';
 
 function fakeConsent() {
   const api = new FakeApi();
@@ -617,4 +623,106 @@ it('keeps a retained run selected when polling moves its protected status outsid
   await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
   expect(await screen.findByText('Run is running; protected.')).toBeVisible();
   expect(screen.getByRole('button', { name: 'Confirm delete-ready selection' })).toBeDisabled();
+});
+
+/**
+ * The inspector's arrangement under accepted API-key credentials (#562): its gate is issued under
+ * the credential accepted at render and replaced when another is accepted.
+ */
+function KeyedInspector({ runId }: { runId: string }) {
+  const generation = useApiKeyStore((state) => state.generation);
+  const rejected = useApiKeyStore((state) => state.rejected);
+  const [visit] = useState(() => ({}));
+  const gate = useMemo<WriteGate>(() => {
+    const credential = { generation, rejected };
+    return {
+      blocked: undefined,
+      credential,
+      open: () => isCurrentCredential(credential),
+      shown: () => true,
+    };
+  }, [generation, rejected]);
+  const confirmation = useHistoryConfirmation({ owner: visit, availability: gate });
+  return <HistoryEligibilityControls runIds={[runId]} confirmation={confirmation} />;
+}
+
+it('closes a withdrawal review when another key is accepted, names its trigger and returns focus to it (#562)', async () => {
+  useApiKeyStore.getState().save('gg_A');
+  const api = fakeConsent(),
+    user = userEvent.setup();
+  const run = api.addRun({ status: 'succeeded' });
+  renderWith(<KeyedInspector runId={run.id} />, '/', api);
+  const withdraw = screen.getByRole('button', { name: 'Withdraw delete-ready mark' });
+  await user.click(withdraw);
+  await screen.findByRole('button', { name: 'Confirm withdrawal' });
+  act(() => useApiKeyStore.getState().save('gg_B'));
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  expect(screen.getByText(reviewClosedByKey('Withdraw delete-ready mark'))).toHaveAttribute(
+    'aria-live',
+    'polite',
+  );
+  await waitFor(() => expect(withdraw).toHaveFocus());
+  expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(0);
+});
+
+it('hides a confirmation saved under one key once another is accepted, and reports one settled after the change only as requested (#562)', async () => {
+  useApiKeyStore.getState().save('gg_A');
+  const api = fakeConsent(),
+    user = userEvent.setup();
+  const run = api.addRun({ status: 'succeeded' });
+  renderWith(<KeyedInspector runId={run.id} />, '/', api);
+  await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
+  await user.click(await screen.findByRole('button', { name: 'Confirm delete-ready selection' }));
+  expect(await screen.findByText('1 run marked delete-ready.')).toBeInTheDocument();
+  act(() => useApiKeyStore.getState().save('gg_B'));
+  await waitFor(() => expect(screen.queryByText('1 run marked delete-ready.')).toBeNull());
+
+  let answer!: (response: Response) => void;
+  api.override(
+    'POST /runs/deletion-eligibility',
+    () =>
+      new Promise<Response>((resolve) => {
+        answer = resolve;
+      }),
+  );
+  await user.click(screen.getByRole('button', { name: 'Withdraw delete-ready mark' }));
+  await user.click(await screen.findByRole('button', { name: 'Confirm withdrawal' }));
+  await waitFor(() => expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(2));
+  act(() => useApiKeyStore.getState().save('gg_A'));
+  await act(async () => {
+    answer(problem(409, 'DELETION_CONFLICT', 'Run run-secret changed.'));
+    await Promise.resolve();
+  });
+  expect(await screen.findByText(requestedBeforeKey('Confirm withdrawal'))).toBeInTheDocument();
+  expect(document.body.textContent).not.toContain('run-secret');
+  expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(2);
+});
+
+it('does not send a confirmation whose key changed before dispatch under a gate that stayed open (#562)', async () => {
+  useApiKeyStore.getState().save('gg_A');
+  const api = fakeConsent(),
+    user = userEvent.setup();
+  const run = api.addRun({ status: 'succeeded' });
+  // A gate whose own check ignores credentials: only the write's dispatch check can refuse it.
+  const gate: WriteGate = {
+    blocked: undefined,
+    credential: currentCredential(),
+    open: () => true,
+    shown: () => true,
+  };
+  function Static() {
+    const [visit] = useState(() => ({}));
+    const confirmation = useHistoryConfirmation({ owner: visit, availability: gate });
+    return <HistoryEligibilityControls runIds={[run.id]} confirmation={confirmation} />;
+  }
+  renderWith(<Static />, '/', api);
+  await user.click(screen.getByRole('button', { name: 'Review delete-ready history' }));
+  const confirm = await screen.findByRole('button', { name: 'Confirm delete-ready selection' });
+  await waitFor(() => expect(confirm).toBeEnabled());
+  useApiKeyStore.getState().save('gg_B');
+  await user.click(confirm);
+  expect(
+    await screen.findByText(notSentByKey('Confirm delete-ready selection')),
+  ).toBeInTheDocument();
+  expect(posts(api, '/runs/deletion-eligibility')).toHaveLength(0);
 });

@@ -1,0 +1,323 @@
+HEAD 7ca7557724c02952029fb41136bb89e3e8542ec3 2026-11-26T09:45:49Z node v22.23.4
+== 1. fix reverted (printableEvidence(probes) -> probes), expect 2 failures
+ apps/api/src/data-dir-lock.ts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+ RUN  v5.0.3 G:/ggq/gg-r542/GraphGoblin/apps/api
+
+ ↓ src/data-dir-lock-failures.test.ts > publishes after observing absence without trying to remove the shared guard first
+ ↓ src/data-dir-lock-failures.test.ts > preserves a live guard published after observing absence and before atomic publication
+ ↓ src/data-dir-lock-failures.test.ts > credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: false)
+ ↓ src/data-dir-lock-failures.test.ts > credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: true)
+ ↓ src/data-dir-lock-failures.test.ts > recognizes a Windows recovery marker that disappeared before its owner could be read
+ ↓ src/data-dir-lock-failures.test.ts > finds a live successor in a read-only check after the original marker disappears
+ ↓ src/data-dir-lock-failures.test.ts > refuses read-only ownership after bounded rechecks of repeatedly disappearing markers
+ ↓ src/data-dir-lock-failures.test.ts > reports the final acquisition outcome after 8 marker read losses
+ ↓ src/data-dir-lock-failures.test.ts > reports the final acquisition outcome after 7 marker read losses
+ ↓ src/data-dir-lock-failures.test.ts > reports uncertainty after seven marker read losses and a final lost stale-marker unlink
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused win32 recovery marker read ("EPERM") that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused linux recovery marker read ("EACCES") that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused win32 recovery marker read ("not a vetted\ncode") that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused linux recovery marker read (7) that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused marker read in the read-only ownership check without changing anything
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused read of its own recovery marker and rolls back its main lock
+ ↓ src/data-dir-lock-failures.test.ts > preserves a refused main owner record read even when its path is absent
+ ↓ src/data-dir-lock-failures.test.ts > accepts Windows EPERM only after the exact stale UUID marker is independently absent
+ ↓ src/data-dir-lock-failures.test.ts > never retries a refused stale-marker deletion or touches a successor marker
+ ↓ src/data-dir-lock-failures.test.ts > continues after Windows rmdir EPERM when the guard directory is independently absent
+ ↓ src/data-dir-lock-failures.test.ts > reports an ordinary held refusal when Windows directory EPERM exposes a verified live successor
+ ↓ src/data-dir-lock-failures.test.ts > continues without taking reclamation credit for a successor that releases during the identity probe
+ ↓ src/data-dir-lock-failures.test.ts > retains the original Windows directory denial for a persistent empty guard
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with malformed JSON
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with mismatched UUID
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with missing identity
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with own unheld PID
+ ↓ src/data-dir-lock-failures.test.ts > keeps Windows directory EPERM when the successor creation identity is unverified ({"reason":"WMI probe denied"})
+ ↓ src/data-dir-lock-failures.test.ts > keeps Windows directory EPERM when the successor creation identity is unverified ({"identity":"134388256826197771"})
+ ↓ src/data-dir-lock-failures.test.ts > reports a failed successor liveness probe as secondary evidence on the original denial
+ ↓ src/data-dir-lock-failures.test.ts > reports a failed successor inspection as secondary evidence on the original denial
+ ↓ src/data-dir-lock-failures.test.ts > preserves a live successor and the original denial when the directory recheck is inaccessible
+ ↓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM for an ambiguous successor directory
+ ↓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM when a link points to a valid successor directory
+ ↓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM when the sole valid-looking marker is a hard link
+ ↓ src/data-dir-lock-failures.test.ts > preserves the original denial when a physical successor is replaced during the identity probe
+ ↓ src/data-dir-lock-failures.test.ts > post-probe rechecks after a positive foreign identity lookup (FUP084) > rejects a successor whose sole marker was replaced in place while its directory stayed
+ ↓ src/data-dir-lock-failures.test.ts > post-probe rechecks after a positive foreign identity lookup (FUP084) > rejects a successor whose final directory identity differs while its marker is unchanged
+ ↓ src/data-dir-lock-failures.test.ts > preserves non-Windows directory EPERM even when a verified live successor is present
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its main lock and claims nothing more when the denial exposes a verified live successor (stale guard first: false)
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its main lock and claims nothing more when the denial exposes a verified live successor (stale guard first: true)
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock on a persistent denial with an unchanged guard
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock on a persistent denial with a changed but empty guard
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock when a successor has a mismatched UUID record
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock when a successor has an unverifiable identity
+ × src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > reports a failed post-denial lookup of its guard as evidence and rolls back 48ms
+   → expected 'Error: Store acquisition rolled back …' to contain 'probeFailures: [ { operation: \'recov…'
+ × src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > prints the probe label and code even when the main lock rollback also fails 26ms
+   → expected 'AggregateError: Store ownership recov…' to contain 'probeFailures: [ { operation: \'recov…'
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its staged identity is unavailable
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its staged identity differs
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published identity is unknown (inode 0)
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published identity is unstable
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published guard does not list exactly its own marker
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published guard cannot be listed
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > does not classify a successor when its own marker was already gone at removal
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > publishes and releases normally when its guard identity cannot be captured
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its missing outcome without touching the guard when its own marker is already gone
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its existing release outcome for ENOENT without classifying a successor
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its existing release outcome for ENOTEMPTY without classifying a successor
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > preserves non-Windows rollback even when a verified live successor is present
+ ↓ src/data-dir-lock-failures.test.ts > retains a genuine guard-directory removal failure and rolls back its main lock
+ ↓ src/data-dir-lock-failures.test.ts > never removes a successor published before an absent-marker EPERM recheck
+ ↓ src/data-dir-lock-failures.test.ts > preserves non-Windows EPERM even when a stale marker disappeared
+ ↓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired ordinary main lock if its recovery marker cannot be released
+ ↓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired attested main lock if its recovery marker cannot be released
+ ↓ src/data-dir-lock-failures.test.ts > explicitly reports retained ownership if both recovery release and main rollback fail
+ ↓ src/data-dir-lock-failures.test.ts > retains the original ownership refusal alongside recovery cleanup failures
+ ↓ src/data-dir-lock-failures.test.ts > retains an acquisition refusal when unpublished staging cleanup also fails
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'unlink' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'unlink' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close', 'unlink' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close', 'unlink' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat', 'close' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat', 'close' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'lookup' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'lookup' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close', 'unlink' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close', 'unlink' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > treats a partial record already gone before its proof lookup as settled
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > treats a proven record that disappears during its single unlink as settled
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > preserves a foreign file that replaced a partial record and ends only the local reservation
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > preserves a different record that replaced a complete one before a failed close
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > removes a complete attested record after its attestation fails and keeps that failure
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps attested acquisition and refuses its proof once release starts
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > reports a failed post-denial lookup of its guard as evidence and rolls back
+AssertionError: expected 'Error: Store acquisition rolled back …' to contain 'probeFailures: [ { operation: \'recov…'
+
+- Expected
++ Received
+
+- probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ]
++ Error: Store acquisition rolled back because reclamation cleanup failed: G:\ggq\tmp\a4-542-537-560\gg-lock-failure-5kwX7p\graphgoblin.lock
++     at Module.acquireDataDirLock (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:890:13)
++     at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:863:19
++     at async file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20 {
++   [cause]: Error: Store ownership recovery-directory-remove failed (EPERM): G:\ggq\tmp\a4-542-537-560\gg-lock-failure-5kwX7p\graphgoblin.lock.reclaim
++       at filesystemFailure (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:249:5)
++       at removeEmptyRecovery (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:466:11)
++       at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:584:15
++       at Module.acquireDataDirLock (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:879:7)
++       at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:863:19
++       at async file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20 {
++     code: 'EPERM',
++     operation: 'recovery-directory-remove',
++     markerToken: null,
++     probeFailures: [ [Object] ],
++     [cause]: Error: synthetic permission refusal
++         at denied (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:37:36)
++         at refuseOwnRelease (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:773:21)
++         at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:859:21
++         at file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:1628:35
++         at file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:26
++         at file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3321:20
++         at new Promise (<anonymous>)
++         at runWithCancel (file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3316:10)
++         at file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:3301:20
++         at new Promise (<anonymous>) {
++       code: 'EPERM'
++     }
++   }
++ }
+
+ ❯ src/data-dir-lock-failures.test.ts:877:21
+    875|     expect(shellFailureOutput(error)).toBe(error);
+    876|     const printed = formatWithOptions({}, shellFailureOutput(error));
+    877|     expect(printed).toContain(
+       |                     ^
+    878|       "probeFailures: [ { operation: 'recovery-directory-lookup', code…
+    879|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯
+
+ FAIL  src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > prints the probe label and code even when the main lock rollback also fails
+AssertionError: expected 'AggregateError: Store ownership recov…' to contain 'probeFailures: [ { operation: \'recov…'
+
+- Expected
++ Received
+
+- probeFailures: [ { operation: 'recovery-directory-lookup', code: 'EACCES' } ]
++ AggregateError: Store ownership recovery-directory-remove failed (EPERM): G:\ggq\tmp\a4-542-537-560\gg-lock-failure-j6Sh5t\graphgoblin.lock.reclaim; main-lock rollback also failed; ownership remains held: G:\ggq\tmp\a4-542-537-560\gg-lock-failure-j6Sh5t\graphgoblin.lock
++     at cleanupFailure (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:260:10)
++     at Module.acquireDataDirLock (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:884:15)
++     at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:895:19
++     at async file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20 {
++   [errors]: [
++     Error: Store ownership recovery-directory-remove failed (EPERM): G:\ggq\tmp\a4-542-537-560\gg-lock-failure-j6Sh5t\graphgoblin.lock.reclaim
++         at filesystemFailure (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:249:5)
++         at removeEmptyRecovery (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:466:11)
++         at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:584:15
++         at Module.acquireDataDirLock (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:879:7)
++         at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:895:19
++         at async file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20 {
++       code: 'EPERM',
++       operation: 'recovery-directory-remove',
++       markerToken: null,
++       probeFailures: [Array],
++       [cause]: [Error]
++     },
++     Error: synthetic rollback refusal
++         at failure (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:121:67)
++         at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:892:34
++         at Mock (file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/spy.DgMTfhrK.js:323:40)
++         at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:803:19
++         at Module.acquireDataDirLock (G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock.ts:882:9)
++         at G:/ggq/gg-r542/GraphGoblin/apps/api/src/data-dir-lock-failures.test.ts:895:19
++         at async file:///G:/ggq/gg-r542/GraphGoblin/node_modules/.pnpm/vitest@5.0.3_@types+node@22_8cb3c428779bce02ab47fd7b0887ed53/node_modules/vitest/dist/chunks/run.BTlFXlnv.js:2783:20 {
++       code: 'EACCES'
++     }
++   ]
++ }
+
+ ❯ src/data-dir-lock-failures.test.ts:903:21
+    901|     // The evidence is inside an aggregate entry, two levels below the…
+    902|     const printed = formatWithOptions({}, shellFailureOutput(error));
+    903|     expect(printed).toContain(
+       |                     ^
+    904|       "probeFailures: [ { operation: 'recovery-directory-lookup', code…
+    905|     );
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  2 failed | 89 skipped (91)
+   Start at  03:45:51
+   Duration  6.23s (import 64%, transform 34%, tests 1%, setup 1%)
+
+  Transform  transforming modules took 2.01s · 34% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-r542\GraphGoblin\apps\api
+
+exit 1
+source restored byte-for-byte
+worktree clean for apps/api/src/data-dir-lock.ts
+== 2. with the fix, expect 2 passes
+
+ RUN  v5.0.3 G:/ggq/gg-r542/GraphGoblin/apps/api
+
+ ↓ src/data-dir-lock-failures.test.ts > publishes after observing absence without trying to remove the shared guard first
+ ↓ src/data-dir-lock-failures.test.ts > preserves a live guard published after observing absence and before atomic publication
+ ↓ src/data-dir-lock-failures.test.ts > credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: false)
+ ↓ src/data-dir-lock-failures.test.ts > credits a guard removal only if the directory survived the marker read race (other contender also removed the directory: true)
+ ↓ src/data-dir-lock-failures.test.ts > recognizes a Windows recovery marker that disappeared before its owner could be read
+ ↓ src/data-dir-lock-failures.test.ts > finds a live successor in a read-only check after the original marker disappears
+ ↓ src/data-dir-lock-failures.test.ts > refuses read-only ownership after bounded rechecks of repeatedly disappearing markers
+ ↓ src/data-dir-lock-failures.test.ts > reports the final acquisition outcome after 8 marker read losses
+ ↓ src/data-dir-lock-failures.test.ts > reports the final acquisition outcome after 7 marker read losses
+ ↓ src/data-dir-lock-failures.test.ts > reports uncertainty after seven marker read losses and a final lost stale-marker unlink
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused win32 recovery marker read ("EPERM") that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused linux recovery marker read ("EACCES") that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused win32 recovery marker read ("not a vetted\ncode") that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused linux recovery marker read (7) that still exists, keeping its original cause
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused marker read in the read-only ownership check without changing anything
+ ↓ src/data-dir-lock-failures.test.ts > labels a refused read of its own recovery marker and rolls back its main lock
+ ↓ src/data-dir-lock-failures.test.ts > preserves a refused main owner record read even when its path is absent
+ ↓ src/data-dir-lock-failures.test.ts > accepts Windows EPERM only after the exact stale UUID marker is independently absent
+ ↓ src/data-dir-lock-failures.test.ts > never retries a refused stale-marker deletion or touches a successor marker
+ ↓ src/data-dir-lock-failures.test.ts > continues after Windows rmdir EPERM when the guard directory is independently absent
+ ↓ src/data-dir-lock-failures.test.ts > reports an ordinary held refusal when Windows directory EPERM exposes a verified live successor
+ ↓ src/data-dir-lock-failures.test.ts > continues without taking reclamation credit for a successor that releases during the identity probe
+ ↓ src/data-dir-lock-failures.test.ts > retains the original Windows directory denial for a persistent empty guard
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with malformed JSON
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with mismatched UUID
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with missing identity
+ ↓ src/data-dir-lock-failures.test.ts > keeps the original Windows directory denial for a successor with own unheld PID
+ ↓ src/data-dir-lock-failures.test.ts > keeps Windows directory EPERM when the successor creation identity is unverified ({"reason":"WMI probe denied"})
+ ↓ src/data-dir-lock-failures.test.ts > keeps Windows directory EPERM when the successor creation identity is unverified ({"identity":"134388256826197771"})
+ ↓ src/data-dir-lock-failures.test.ts > reports a failed successor liveness probe as secondary evidence on the original denial
+ ↓ src/data-dir-lock-failures.test.ts > reports a failed successor inspection as secondary evidence on the original denial
+ ↓ src/data-dir-lock-failures.test.ts > preserves a live successor and the original denial when the directory recheck is inaccessible
+ ↓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM for an ambiguous successor directory
+ ↓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM when a link points to a valid successor directory
+ ↓ src/data-dir-lock-failures.test.ts > retains Windows directory EPERM when the sole valid-looking marker is a hard link
+ ↓ src/data-dir-lock-failures.test.ts > preserves the original denial when a physical successor is replaced during the identity probe
+ ↓ src/data-dir-lock-failures.test.ts > post-probe rechecks after a positive foreign identity lookup (FUP084) > rejects a successor whose sole marker was replaced in place while its directory stayed
+ ↓ src/data-dir-lock-failures.test.ts > post-probe rechecks after a positive foreign identity lookup (FUP084) > rejects a successor whose final directory identity differs while its marker is unchanged
+ ↓ src/data-dir-lock-failures.test.ts > preserves non-Windows directory EPERM even when a verified live successor is present
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its main lock and claims nothing more when the denial exposes a verified live successor (stale guard first: false)
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its main lock and claims nothing more when the denial exposes a verified live successor (stale guard first: true)
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock on a persistent denial with an unchanged guard
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock on a persistent denial with a changed but empty guard
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock when a successor has a mismatched UUID record
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > rolls back its main lock when a successor has an unverifiable identity
+ ✓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > reports a failed post-denial lookup of its guard as evidence and rolls back 38ms
+ ✓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > prints the probe label and code even when the main lock rollback also fails 15ms
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its staged identity is unavailable
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its staged identity differs
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published identity is unknown (inode 0)
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published identity is unstable
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published guard does not list exactly its own marker
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > cannot prove a successor and rolls back when its published guard cannot be listed
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > does not classify a successor when its own marker was already gone at removal
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > publishes and releases normally when its guard identity cannot be captured
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its missing outcome without touching the guard when its own marker is already gone
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its existing release outcome for ENOENT without classifying a successor
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > keeps its existing release outcome for ENOTEMPTY without classifying a successor
+ ↓ src/data-dir-lock-failures.test.ts > this caller's own Windows guard release (#542) > preserves non-Windows rollback even when a verified live successor is present
+ ↓ src/data-dir-lock-failures.test.ts > retains a genuine guard-directory removal failure and rolls back its main lock
+ ↓ src/data-dir-lock-failures.test.ts > never removes a successor published before an absent-marker EPERM recheck
+ ↓ src/data-dir-lock-failures.test.ts > preserves non-Windows EPERM even when a stale marker disappeared
+ ↓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired ordinary main lock if its recovery marker cannot be released
+ ↓ src/data-dir-lock-failures.test.ts > rolls back a newly acquired attested main lock if its recovery marker cannot be released
+ ↓ src/data-dir-lock-failures.test.ts > explicitly reports retained ownership if both recovery release and main rollback fail
+ ↓ src/data-dir-lock-failures.test.ts > retains the original ownership refusal alongside recovery cleanup failures
+ ↓ src/data-dir-lock-failures.test.ts > retains an acquisition refusal when unpublished staging cleanup also fails
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'unlink' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'unlink' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close', 'unlink' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'close', 'unlink' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat', 'close' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'stat', 'close' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'lookup' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'write', 'lookup' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close', 'unlink' ] ahead of its cleanup (guard release also fails: false)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps the first failure among [ 'close', 'unlink' ] ahead of its cleanup (guard release also fails: true)
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > treats a partial record already gone before its proof lookup as settled
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > treats a proven record that disappears during its single unlink as settled
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > preserves a foreign file that replaced a partial record and ends only the local reservation
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > preserves a different record that replaced a complete one before a failed close
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > removes a complete attested record after its attestation fails and keeps that failure
+ ↓ src/data-dir-lock-failures.test.ts > exclusive main record setup failures (#560) > keeps attested acquisition and refuses its proof once release starts
+
+ Test Files  1 passed (1)
+      Tests  2 passed | 89 skipped (91)
+   Start at  03:45:58
+   Duration  6.26s (import 63%, transform 35%, tests 1%, setup 1%)
+
+  Transform  transforming modules took 2.13s · 35% of tracked time, re-done on every run
+             persist transforms across runs with fsModuleCache: true
+             learn more: https://vitest.dev/guide/improving-performance#caching-between-reruns
+
+exit 0

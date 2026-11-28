@@ -1,0 +1,165 @@
+{
+  "caseId": "RC2-base-4e1037c9-hang",
+  "source": "4e1037c9",
+  "scenario": "hang",
+  "timeoutMs": 2500,
+  "holdMs": 8000,
+  "binaryKind": "fake",
+  "node": "v22.23.4",
+  "root": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z",
+  "probe": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z\\temp\\gg-codex-probe-01642471",
+  "elapsedMs": 4671,
+  "result": {
+    "state": "unknown",
+    "ok": false,
+    "problems": [
+      "Codex readiness could not be confirmed. Check that the Codex CLI starts and responds, then retry preflight."
+    ],
+    "version": "0.160.0"
+  },
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 60372,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "--version"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z\\temp\\gg-codex-probe-01642471",
+      "at": 1283.6
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1704.5
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": 0,
+      "signal": null,
+      "at": 1704.6
+    },
+    {
+      "kind": "spawn",
+      "id": 1,
+      "pid": 60000,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z\\temp\\gg-codex-probe-01642471",
+      "at": 1714.8
+    },
+    {
+      "kind": "exit",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 1971.4
+    },
+    {
+      "kind": "close",
+      "id": 1,
+      "code": 0,
+      "signal": null,
+      "at": 1971.4
+    },
+    {
+      "kind": "spawn",
+      "id": 2,
+      "pid": 62952,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "exec",
+        "resume",
+        "--help"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z\\temp\\gg-codex-probe-01642471",
+      "at": 1981.2
+    },
+    {
+      "kind": "exit",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2138.7
+    },
+    {
+      "kind": "close",
+      "id": 2,
+      "code": 0,
+      "signal": null,
+      "at": 2138.7
+    },
+    {
+      "kind": "spawn",
+      "id": 3,
+      "pid": 61672,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "login",
+        "status"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z\\temp\\gg-codex-probe-01642471",
+      "at": 2148.4
+    },
+    {
+      "kind": "kill",
+      "id": 3,
+      "at": 4667.5
+    },
+    {
+      "kind": "rm",
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z\\temp\\gg-codex-probe-01642471",
+      "options": {
+        "recursive": true,
+        "force": true
+      },
+      "at": 4668.7,
+      "outcome": "EBUSY"
+    },
+    {
+      "kind": "exit",
+      "id": 3,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 4695.9
+    },
+    {
+      "kind": "close",
+      "id": 3,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 4695.9
+    }
+  ],
+  "rmCalls": [
+    {
+      "path": "G:\\ggq\\tmp\\506-511-qa\\runs\\RC2-base-4e1037c9-hang-k58x1z\\temp\\gg-codex-probe-01642471",
+      "outcome": "EBUSY"
+    }
+  ],
+  "atReturn": {
+    "tempEntries": [
+      "gg-codex-probe-01642471"
+    ],
+    "probeExists": true,
+    "probeEntries": [],
+    "helpers": []
+  },
+  "afterHelpers": {
+    "tempEntries": [
+      "gg-codex-probe-01642471"
+    ],
+    "probeExists": true,
+    "probeEntries": [],
+    "helpersAlive": [],
+    "forcedTermination": [],
+    "turnAttempt": false
+  }
+}

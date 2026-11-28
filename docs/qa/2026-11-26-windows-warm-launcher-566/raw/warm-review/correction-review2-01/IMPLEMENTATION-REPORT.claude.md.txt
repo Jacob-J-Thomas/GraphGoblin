@@ -1,0 +1,42 @@
+I made all three corrections (R1, R3 and R6) in the five writable files. All five checks passed on the same final source, and the real-gateway ordering for R1 ran and passed. Nothing is staged or committed, and none of the thirteen frozen files changed.
+
+**Verification**, each run once in order:
+
+| Step | Result |
+|---|---|
+| `format-write` (test file and the two docs) | passed |
+| `static` | passed |
+| `build` | passed |
+| `native-focused` | passed, 7 of 7 tests |
+| `native-readiness` | passed, 20 of 20 tests; `noAttemptGate: "witnessed"` |
+
+The evidence lines from `native-focused`:
+- **`windows-launcher-owned-cleanup`:** `postProofHandoverVenue: "real-owned-gateway"`, `postProofReplacementDrains: 0`, `postProofConnectionRefused: true`, still with `ownedDrains: 2`, `replacementDrains: 0`, `redirectTargetRequests: 0` and `incarnationRefused: true`.
+- **`windows-launcher-store-identity`:** `equalLowDifferentHighRefused: true`, `equalFullIdentityAccepted: true`. `caseSensitiveDirectoryWitness` is still `false`.
+- **`windows-launcher-review1`:** `slowPreparationSpawnCount: 0`, `ordinaryPreparedSpawnCount: 1`.
+
+**R1: drain over one connection**
+- Every owner capture and every drain now uses its own private connection to `127.0.0.1`. That connection's agent hands out its first socket once and refuses any later connection, even after the socket closes or while a request is waiting. Before each request is written, the test checks that it got that exact socket and that it is still open.
+- The owner record now includes the gateway's shutdown incarnation (the ID at the start of its control token). A drain checks the owner twice on that connection and sends the POST only if the token is unchanged, in the running state, with no active or unconfirmed runs.
+- In the existing owned-cleanup test, a test-only hook runs after the final check. Inside it, the first real drain closes the gateway through its own separately checked connection, the test waits for that gateway to exit and the held connection to close, and a replacement starts listening on the port. The outer drain then refused to reconnect: it wrote no POST, and the replacement received no request at all.
+- The stale-owner, redirect, second-gateway and lease checks are unchanged.
+- **Limit:** this proves that one ordering only, not a listener swap while a request is in flight.
+
+**R3: full file ID for the case-only check**
+- When the path differs only in letter case, both handles are now kept open and compared by the full `FILE_ID_INFO`: all 64 bits of the volume serial and all 128 bits of the file ID. An unavailable, all-zero or all-ones ID is refused, and the old 64-bit index is never used as a fallback. The exact-path fast path and the log and installer identity code are unchanged.
+- **Real handles:** the existing case-alias check passes, and two open handles on one directory report the same usable full ID while a different directory's ID differs.
+- **Controlled checks**, labelled as such: equal low bits with different high bits is refused; equal full IDs are accepted; a different volume is refused, including a serial that matches only in its low 32 bits; unknown IDs are refused. They also confirm that both handles were open whenever an ID was read.
+- **Limit:** nothing here observes a real ReFS collision or uses a case-sensitive directory.
+
+**R6: final time check before Chrome starts**
+- The early "less than 200 ms left" refusal stays. The path check, arguments and `ProcessStartInfo` are then prepared, and the last remaining-time check happens immediately before `Process.Start`.
+- In the deterministic test, preparation that pushes past the threshold makes no start call (three cost combinations), while preparation that leaves exactly 200 ms still starts. The ordinary, boundary and capped-poll tests still pass.
+- **Limit:** scheduler lag and work inside the start call itself are not covered.
+
+**Notes**
+- One combined directory-listing command I tried early on was denied. I didn't retry it and used the file-reading tools instead.
+- The wrapper script is outside the worktree and I couldn't read it, so the results above come from its own output.
+- The owner objects in the alias-round local evidence now also show the incarnation ID. The CI evidence records are unchanged.
+- The only doc edits are the affected passages in `docs/10-testing-and-quality.md` and ADR-0090.
+
+Independent QA, current-target CI and the final review are still to do.

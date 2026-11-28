@@ -1,0 +1,94 @@
+{
+  "name": "B1-container-database-close",
+  "issue": "#560",
+  "system": "createContainer setup cleanup via shell startup (primary: invalid GG_MASTER_KEY after SQLite opened)",
+  "checks": [
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "primary failure printed first",
+      "ok": true,
+      "detail": "Error: GG_MASTER_KEY must decode to exactly 32 bytes\n    at loadMasterKey (file:"
+    },
+    {
+      "what": "last line is the one detail line",
+      "ok": true,
+      "detail": {
+        "last": "cleanup also failed: database-close (EIO); ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B1-container-database-close\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B1-container-database-close\\data",
+        "expected": "cleanup also failed: database-close (EIO); ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B1-container-database-close\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B1-container-database-close\\data"
+      }
+    },
+    {
+      "what": "no secondary message text",
+      "ok": true
+    },
+    {
+      "what": "database closed exactly once",
+      "ok": true,
+      "detail": [
+        "preload-registered",
+        "unlink:56177a93-6ecc-472b-8c59-69ec66eb93b8.json",
+        "rmdir:graphgoblin.lock.reclaim",
+        "unlink:cec2922a-c133-4095-9436-34ba2c6b6d12.json",
+        "rmdir:store.db.graphgoblin.lock.reclaim",
+        "database-close"
+      ]
+    },
+    {
+      "what": "no lease release attempted after an unconfirmed close",
+      "ok": true,
+      "detail": []
+    },
+    {
+      "what": "directory lease record kept",
+      "ok": true
+    },
+    {
+      "what": "database lease record kept",
+      "ok": true
+    },
+    {
+      "what": "guards released",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: GG_MASTER_KEY must decode to exactly 32 bytes\n    at loadMasterKey (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/master-key.js:12:19)\n    at createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:132:20)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16)\ncleanup also failed: database-close (EIO); ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B1-container-database-close\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B1-container-database-close\\data\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:56177a93-6ecc-472b-8c59-69ec66eb93b8.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "unlink:cec2922a-c133-4095-9436-34ba2c6b6d12.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "database-close"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":57576,\"startedAt\":\"2026-11-26T09:35:31.901Z\",\"windowsCreationTime\":\"134401593266268600\",\"token\":\"56177a93-6ecc-472b-8c59-69ec66eb93b8\"}"
+    },
+    {
+      "path": "store.db",
+      "type": "file",
+      "size": 0
+    },
+    {
+      "path": "store.db.graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":57576,\"startedAt\":\"2026-11-26T09:35:34.050Z\",\"windowsCreationTime\":\"134401593266268600\",\"token\":\"cec2922a-c133-4095-9436-34ba2c6b6d12\"}"
+    }
+  ],
+  "ms": 7656,
+  "pass": true
+}

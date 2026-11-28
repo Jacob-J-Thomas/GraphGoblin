@@ -1,6 +1,18 @@
-import { mkdtemp, readFile, realpath, rm, writeFile, mkdir, cp } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
+import {
+  mkdtemp,
+  readFile,
+  readdir,
+  realpath,
+  rename,
+  rm,
+  writeFile,
+  mkdir,
+  cp,
+  symlink,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
@@ -38,6 +50,18 @@ const MCP_TOOLS = [
   'provide_input',
   'send_signal',
 ];
+
+/** Every entry below `dir` with its text, to show a refusal left an output exactly as it was. */
+async function snapshot(dir: string): Promise<Record<string, string>> {
+  const tree: Record<string, string> = {};
+  for (const entry of await readdir(dir, { recursive: true, withFileTypes: true })) {
+    const path = join(entry.parentPath, entry.name);
+    tree[relative(dir, path).split(sep).join('/')] = entry.isFile()
+      ? await readFile(path, 'utf8')
+      : 'folder';
+  }
+  return tree;
+}
 
 describe('plugin source', () => {
   it('has a valid manifest, MCP config, and the three skills', async () => {
@@ -164,6 +188,177 @@ describe('assemble', () => {
   );
 
   it(
+    'refuses unsupported source entries before changing the marketplace',
+    async () => {
+      const copy = join(scratch, 'source 漢', 'plugin', 'graphgoblin');
+      await cp(pluginDir, copy, { recursive: true });
+      const outDir = join(scratch, 'marketplace');
+      const mcpEntry = join(scratch, 'main.js');
+      await assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+      const before = await snapshot(outDir);
+      const assemble = () => assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+
+      const skill = join(copy, 'skills', 'run-loop');
+      await mkdir(join(skill, 'scripts'));
+      await writeFile(join(skill, 'scripts', 'collect.ps1'), 'Write-Output 1');
+      await writeFile(join(skill, 'reference.md'), 'supporting reference');
+      await expect(assemble()).rejects.toThrow(
+        `Unsupported plugin source entries in "${copy}": "skills/run-loop/reference.md", "skills/run-loop/scripts/". This builder packages only ".codex-plugin/plugin.json", ".mcp.json", "skills/`,
+      );
+      await rm(join(skill, 'scripts'), { recursive: true });
+      await rm(join(skill, 'reference.md'));
+
+      // Neither a stray file nor a linked folder in the skills folder is skipped or followed.
+      const elsewhere = join(scratch, 'elsewhere skill');
+      await mkdir(elsewhere);
+      await writeFile(join(elsewhere, 'SKILL.md'), await readFile(join(skill, 'SKILL.md')));
+      await writeFile(join(copy, 'skills', 'notes.txt'), 'not a skill');
+      await symlink(
+        elsewhere,
+        join(copy, 'skills', 'linked-skill'),
+        process.platform === 'win32' ? 'junction' : 'dir',
+      );
+      await expect(assemble()).rejects.toThrow(
+        `: "skills/linked-skill" (link, not followed), "skills/notes.txt". This builder packages only`,
+      );
+      expect(await snapshot(outDir)).toEqual(before);
+      expect(await readdir(scratch)).not.toContain('.marketplace.graphgoblin-build');
+    },
+    fileIoTimeout,
+  );
+
+  /** A copy of the plugin source assembled once, with a snapshot of that marketplace. */
+  async function assembledCopy() {
+    const copy = join(scratch, 'source 漢', 'plugin', 'graphgoblin');
+    await cp(pluginDir, copy, { recursive: true });
+    const outDir = join(scratch, 'marketplace');
+    const mcpEntry = join(scratch, 'main.js');
+    await assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+    const assemble = () => assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+    return { copy, outDir, before: await snapshot(outDir), assemble };
+  }
+
+  it(
+    'refuses a folder without SKILL.md in the skills folder, naming it, before reading skills',
+    async () => {
+      const { copy, outDir, before, assemble } = await assembledCopy();
+      await mkdir(join(copy, 'skills', 'references'));
+      await writeFile(join(copy, 'skills', 'references', 'note.md'), 'supporting reference');
+      await mkdir(join(copy, 'skills', 'empty'));
+      await expect(assemble()).rejects.toThrow(
+        `Unsupported plugin source entries in "${copy}": "skills/empty/", "skills/references/". This builder packages only ".codex-plugin/plugin.json", ".mcp.json", "skills/`,
+      );
+      expect(await snapshot(outDir)).toEqual(before);
+      expect(await readdir(scratch)).not.toContain('.marketplace.graphgoblin-build');
+    },
+    fileIoTimeout,
+  );
+
+  it(
+    'refuses a link at an entry it reads before following or reading it',
+    async () => {
+      const { copy, outDir, before, assemble } = await assembledCopy();
+      // A junction needs no Windows symlink privilege but can only target a folder, which reading
+      // through it fails on. Elsewhere the link targets text that the loader would reject if it
+      // read it. Either way only a refusal made before the read produces the expected message.
+      const linkType = process.platform === 'win32' ? 'junction' : 'file';
+      const elsewhere = join(scratch, 'elsewhere');
+      await mkdir(join(elsewhere, 'run-loop'), { recursive: true });
+      await writeFile(join(elsewhere, 'run-loop', 'SKILL.md'), 'not a skill');
+      const unread = join(scratch, 'unread.txt');
+      await writeFile(unread, 'not a plugin file');
+      const target = process.platform === 'win32' ? elsewhere : unread;
+      const missing = join(scratch, 'missing');
+      const link = (entry: string) =>
+        `: "${entry}" (link, not followed). This builder packages only`;
+      const manifest = `Unsupported plugin source entry "${join(copy, '.codex-plugin', 'plugin.json')}": the plugin manifest must be a regular file, and links are not followed`;
+      const cases = [
+        ['.mcp.json', target, link('.mcp.json')],
+        ['.mcp.json', missing, link('.mcp.json')],
+        ['skills/run-loop/SKILL.md', target, link('skills/run-loop/SKILL.md')],
+        ['skills/run-loop/SKILL.md', missing, link('skills/run-loop/SKILL.md')],
+        ['skills', elsewhere, link('skills')],
+        ['.codex-plugin/plugin.json', target, manifest],
+        ['.codex-plugin/plugin.json', missing, manifest],
+      ] as const;
+      const aside = join(scratch, 'aside');
+      for (const [entry, linked, refusal] of cases) {
+        const path = join(copy, ...entry.split('/'));
+        await rename(path, aside);
+        await symlink(linked, path, linkType);
+        await expect(assemble(), `${entry} linked to ${linked}`).rejects.toThrow(refusal);
+        await rm(path);
+        await rename(aside, path);
+      }
+      expect(await snapshot(outDir)).toEqual(before);
+      expect(await readFile(unread, 'utf8')).toBe('not a plugin file');
+    },
+    fileIoTimeout,
+  );
+
+  // Node cannot create a FIFO itself; POSIX hosts (CI) use mkfifo, Windows has no FIFO files.
+  it.skipIf(process.platform === 'win32')(
+    'refuses a FIFO at an entry it reads without opening it',
+    async () => {
+      const { copy, outDir, before, assemble } = await assembledCopy();
+      const cases = [
+        ['.mcp.json', ': ".mcp.json". This builder packages only'],
+        ['skills/run-loop/SKILL.md', ': "skills/run-loop/SKILL.md". This builder packages only'],
+        [
+          '.codex-plugin/plugin.json',
+          `Unsupported plugin source entry "${join(copy, '.codex-plugin', 'plugin.json')}": the plugin manifest must be a regular file`,
+        ],
+      ] as const;
+      const aside = join(scratch, 'aside');
+      for (const [entry, refusal] of cases) {
+        const path = join(copy, ...entry.split('/'));
+        await rename(path, aside);
+        expect(spawnSync('mkfifo', [path]).status).toBe(0);
+        // Opening a FIFO that has no writer blocks, so a read would hang instead of refusing.
+        await expect(assemble(), entry).rejects.toThrow(refusal);
+        await rm(path);
+        await rename(aside, path);
+      }
+      expect(await snapshot(outDir)).toEqual(before);
+    },
+    fileIoTimeout,
+  );
+
+  it(
+    'names a changed generated inventory and keeps the earlier marketplace',
+    async () => {
+      const copy = join(scratch, 'source', 'plugin', 'graphgoblin');
+      await cp(pluginDir, copy, { recursive: true });
+      const outDir = join(scratch, 'marketplace');
+      const mcpEntry = join(scratch, 'main.js');
+      await assemblePlugin({ pluginDir: copy, outDir, mcpEntry });
+      const before = await snapshot(outDir);
+
+      // A new valid skill is a supported input, so it changes the generated inventory.
+      await mkdir(join(copy, 'skills', 'review-loop'));
+      await writeFile(
+        join(copy, 'skills', 'review-loop', 'SKILL.md'),
+        '---\nname: review-loop\ndescription: Review a GraphGoblin loop draft before publishing it.\n---\n\n# Review\n',
+      );
+      await expect(assemblePlugin({ pluginDir: copy, outDir, mcpEntry })).rejects.toThrow(
+        `Unsafe plugin output destination "${outDir}": its ownership marker from this builder lists a different file inventory from the one this version generates (generated now but not listed: "plugins/graphgoblin/skills/review-loop/SKILL.md"). The builder verifies and replaces only its current inventory and never removes entries named only by a marker. Inspect this directory and move it aside, or choose an unused destination`,
+      );
+      expect(await snapshot(outDir)).toEqual(before);
+
+      const fresh = join(scratch, 'fresh marketplace');
+      const assembled = await assemblePlugin({ pluginDir: copy, outDir: fresh, mcpEntry });
+      expect(assembled.skills.map((skill) => skill.name).sort()).toEqual([
+        'design-loop',
+        'inspect-run',
+        'review-loop',
+        'run-loop',
+      ]);
+      expect((await loadPlugin(join(fresh, 'plugins', 'graphgoblin'))).skills).toHaveLength(4);
+    },
+    fileIoTimeout,
+  );
+
+  it(
     'rejects a skill whose folder and name disagree',
     async () => {
       const testDir = scratch;
@@ -207,6 +402,16 @@ describe('assemble', () => {
       ).toBe(1);
       expect(lines.at(-1)).toMatch(/Unsafe plugin output destination.*unrelated.txt.*not owned/);
       expect(await readFile(sentinel, 'utf8')).toBe('preserve');
+
+      // A missing generated folder is named instead of surfacing a raw ENOENT.
+      await rm(sentinel);
+      await rm(join(out, 'plugins', 'graphgoblin', 'skills'), { recursive: true });
+      expect(
+        await runCli(['--out', out, '--mcp-entry', entry], fakePackage, (line) => lines.push(line)),
+      ).toBe(1);
+      expect(lines.at(-1)).toBe(
+        `Unsafe plugin output destination "${resolve(out)}": expected generated entries are missing: "plugins/graphgoblin/skills". Choose an unused destination, or inspect this directory and move it aside before rebuilding`,
+      );
     },
     fileIoTimeout,
   );

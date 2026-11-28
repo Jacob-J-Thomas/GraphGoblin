@@ -1,0 +1,96 @@
+{
+  "name": "B3-readonly-close-only",
+  "issue": "#560",
+  "system": "read-only SQLite close failure as its own primary via shell startup",
+  "checks": [
+    {
+      "what": "ordinary start created a current store and shut down cleanly",
+      "ok": true,
+      "detail": 0
+    },
+    {
+      "what": "exit 1",
+      "ok": true
+    },
+    {
+      "what": "close failure is the primary, printed first",
+      "ok": true,
+      "detail": "Error: rq fixture read-only database close refusal\n    at synthetic (file:///G:/"
+    },
+    {
+      "what": "detail names retained ownership only (no cleanup step)",
+      "ok": true,
+      "detail": {
+        "last": "ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B3-readonly-close-only\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B3-readonly-close-only\\data",
+        "expected": "ownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B3-readonly-close-only\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B3-readonly-close-only\\data"
+      }
+    },
+    {
+      "what": "no mutable open after the failed read-only close",
+      "ok": true
+    },
+    {
+      "what": "both leases kept",
+      "ok": true
+    }
+  ],
+  "createStore": {
+    "code": 0,
+    "signal": null,
+    "listened": true,
+    "control": {
+      "getStatus": 200,
+      "postStatus": 202
+    },
+    "stderr": "",
+    "stdoutLines": 6,
+    "stdoutTail": "ng request\"}\n{\"level\":30,\"time\":1795685789232,\"pid\":48400,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-1\",\"res\":{\"statusCode\":200},\"responseTime\":8.284299999999348,\"msg\":\"request completed\"}\n{\"level\":30,\"time\":1795685789234,\"pid\":48400,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"req\":{\"method\":\"POST\",\"url\":\"/system/shutdown\",\"host\":\"127.0.0.1:53157\",\"remoteAddress\":\"127.0.0.1\",\"remotePort\":53159},\"msg\":\"incoming request\"}\n{\"level\":30,\"time\":1795685789244,\"pid\":48400,\"hostname\":\"DESKTOP-RQPA3QI\",\"reqId\":\"req-2\",\"res\":{\"statusCode\":202},\"responseTime\":9.743000000000393,\"msg\":\"request completed\"}\n"
+  },
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: rq fixture read-only database close refusal\n    at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n    at Proxy.<anonymous> (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:149:21)\n    at createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:106:36)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  code: 'EIO'\n}\nownership retained: database lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B3-readonly-close-only\\data\\store.db, data-directory lease G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\B3-readonly-close-only\\data\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:0fc1cdaf-aee7-455f-9cf6-df27abc831a6.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "unlink:b01634aa-4ba9-483d-97a3-044f29b1a187.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "readonly-database-close"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":59544,\"startedAt\":\"2026-11-26T09:36:33.019Z\",\"windowsCreationTime\":\"134401593893456280\",\"token\":\"0fc1cdaf-aee7-455f-9cf6-df27abc831a6\"}"
+    },
+    {
+      "path": "store.db",
+      "type": "file",
+      "size": 4096
+    },
+    {
+      "path": "store.db-shm",
+      "type": "file",
+      "size": 32768
+    },
+    {
+      "path": "store.db-wal",
+      "type": "file",
+      "size": 642752
+    },
+    {
+      "path": "store.db.graphgoblin.lock",
+      "type": "file",
+      "size": 142,
+      "text": "{\"pid\":59544,\"startedAt\":\"2026-11-26T09:36:35.436Z\",\"windowsCreationTime\":\"134401593893456280\",\"token\":\"b01634aa-4ba9-483d-97a3-044f29b1a187\"}"
+    }
+  ],
+  "ms": 17005,
+  "pass": true
+}

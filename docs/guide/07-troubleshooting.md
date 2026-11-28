@@ -4,23 +4,31 @@
 
 "Windows could not start an isolated launcher check" means the configured runtime could not be
 started inside the helper's private job. Use Windows 10 or Windows Server 2016 or later and check
-the enclosing shell or management tool's job policy. This applies to warm clicks too; a running
-gateway remains available at its existing address. A known missing or invalid runtime has its
-own Node-path guidance.
+the enclosing shell or management tool's job policy. Only enrollment and cold starts run that
+check; a click that reuses a running matching gateway starts no process. A known missing or
+invalid runtime has its own Node-path guidance.
 
-Identity and initial ownership checks each allow 15 seconds of work, followed by at most two
-seconds for helper cleanup. Synchronous Windows calls have separate limits. Slow but legitimate
-WMI work can reach that cap; it never proves a lock stale. Later held-store checks reserve cleanup
-time and keep the last held reason if another complete sample cannot fit. Let deliberate startup
-or shutdown finish, then click again. Do not stop unrelated processes or delete an unverified lock.
+On a cold start the enrollment and initial ownership checks each allow the configured startup
+timeout, at least 15 seconds (60 seconds in the default installation), followed by at most two
+seconds for helper cleanup; the installer's own enrollment allows 15 seconds. Synchronous Windows
+calls have separate limits. Slow but legitimate WMI work can reach that allowance; it never proves
+a lock stale. Later held-store checks share the remaining store-release wait, reserve cleanup time
+and keep the last held reason if another complete sample cannot fit. Let deliberate startup or
+shutdown finish, then click again. Do not stop unrelated processes or delete an unverified lock.
 "Windows could not confirm that all processes for this launcher check stopped" takes precedence
 if cleanup could not be verified. No new gateway starts after that refusal. Raw helper output is
-never displayed or copied into launcher logs.
+never displayed or copied into launcher logs. Every helper refusal ends its first sentence with a
+measured observation such as
+`(ownership check timed out after 60004 ms of its 60000 ms allowance; stdout 0 bytes, stderr 0 bytes)`:
+the check, what happened, the time the launcher measured, the allowance and how many bytes the
+launcher read from the helper's stdout and stderr (ADR-0092).
 
 The launcher reports the failed step in a dialog (stderr with `--ensure-gateway`) and records a
-closed JSON record in `launcher.log` next to its configuration. A gateway it started writes its
-private server log, including run failure details, to `gateway.log` in the same folder. The default
-location is `%LOCALAPPDATA%\GraphGoblin\Launcher`. Each log keeps two files, `gateway.log` and
+closed JSON record in `launcher.log` next to its configuration. A check that succeeded but took
+five seconds or more leaves a `slow-check` record there with the same integers; it is a note, not
+a failure. A gateway it started writes its private server log, including run failure details, to
+`gateway.log` in the same folder. The default location is `%LOCALAPPDATA%\GraphGoblin\Launcher`.
+Each log keeps two files, `gateway.log` and
 `gateway.log.1` (4 MiB each) and `launcher.log` and `launcher.log.1` (256 KiB each); older records
 roll off. Under sustained pressure or a write fault the gateway drops log records rather than
 waiting, and a `gateway log records dropped` record counts them (ADR-0081).
@@ -52,11 +60,78 @@ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
   no record is assumed. Run it from a terminal as above.
 - **Built gateway does not match this launcher:** the checkout was built before this launcher
   version. Stop the running gateway, rebuild and reinstall the launcher together.
+- **Installer: compilation failed while the C# compiler prepared Win32 resources (CS1567 or
+  CS1619):** `install-windows-launcher.ps1` compiles the launcher in a temporary
+  `gg-launcher-stage-…` folder inside the install folder, or inside its nearest existing parent
+  while the install folder does not exist yet. The Windows .NET Framework C# compiler can fail to
+  prepare the executable's resources when that staging path is long; the limit belongs to this
+  compiler, and the installer applies no length rule of its own. A first install into a new, long
+  folder can therefore succeed while a later reinstall into the same, now existing folder fails.
+  Run the installer again with a shorter writable local folder passed as `-InstallDir`, such as
+  the default `%LOCALAPPDATA%\GraphGoblin\Launcher` or another short folder in your own profile;
+  it also holds the launcher logs, so it must stay private (see **Log folder unsafe or
+  unavailable** above). The refusal leaves the installed launcher, its configuration and
+  shortcuts unchanged and removes its stage; a successful install into the new folder points the
+  shortcuts there, and you can then remove the old folder. Any other compiler failure reports
+  only `Launcher compilation failed.`: check the checkout and the .NET Framework compiler.
+- **Installer: the PWA shortcut is a link or other reparse point:** Windows reports the selected
+  Chrome shortcut, passed as `-PwaShortcut` or found in the default Start-menu `Chrome Apps` or
+  Desktop location, as a reparse point, such as a symbolic link or a cloud-sync placeholder. The
+  installer decides from the attributes it has just read, before hashing or staging anything or
+  reading the shortcut, but it cannot promise that a sync service will not download the file. It
+  reads the selected path again just before publishing and refuses the same way if that path now
+  reaches the same file through a link. This is not a changed file, so running again with the
+  same path is refused again. Copy the Chrome app shortcut to an ordinary local folder that is not
+  synced, pass that copy with `-PwaShortcut` and run the installer again; this applies with
+  `-NoShortcuts` too. A file symbolic link as the source is refused even when its target is an
+  ordinary shortcut. "The PWA shortcut changed during preparation" means that the selected path
+  now names a different or missing file, or that its contents changed.
+- **Installer: an existing launcher output is a link or other reparse point:** the message names
+  the parameter that selected it, `-InstallDir`, `-DesktopShortcut`, `-StartMenuShortcut` or
+  `-PinnedShortcut`, including a default Desktop or Start-menu location. Pass an ordinary local
+  path that is not synced with that parameter, or name an existing ordinary local shortcut with
+  `-PinnedShortcut` or omit it, then run the installer again. The refused file is left unchanged.
+  A shortcut that an earlier install published into a synced folder can be refused this way on
+  reinstall. The installer sees only the attribute Windows reports, not the sync service, and
+  cannot promise that a service will not download a refused placeholder.
 
+- **Not enrolled for its current Repo, Node, DataDir, Port and `GG_*` overrides:** the launcher JSON
+  was edited, or was written by an earlier installer. Rerun `install-windows-launcher.ps1` with the
+  intended values; the launcher never updates its enrollment itself.
+- **Current effective gateway settings differ from this launcher's enrollment:** a cold start
+  found that the checkout now resolves different settings (for example a changed default, serving
+  root, store target or protocol). Rerun the installer to enroll them deliberately.
+- **Gateway no longer resolves to the enrolled store:** the gateway on the port has the enrolled
+  settings, but the configured data directory or database path now leads elsewhere (a moved store
+  or a retargeted junction or link). Restore the path, or stop that gateway deliberately and rerun
+  the installer for the intended store. The running gateway is never stopped by the launcher.
+- **Gateway answers but its built web app is unavailable:** the gateway on the port has the
+  enrolled settings, but its `/app/` shell is missing (404 or 410) or not an ordinary page. The
+  click refuses at once, without waiting for other launches; rebuild the web app with the checkout
+  and restart that gateway deliberately. The launcher never stops it.
+- **Configuration changed, replaced or removed while this click waited:** another launch held the
+  startup locks while the JSON was edited. Launch again to use the current file.
+- **Port is occupied but the configured gateway is not ready:** something accepts connections on
+  the port without answering as GraphGoblin, even after the launcher waited for other clicks.
+  Check what listens there; the launcher never starts a second gateway or stops that process.
+- **Read-only enrollment or ownership check exceeded its work budget:** the observation names the
+  check that timed out, the time the launcher measured and its allowance. A slow machine can spend
+  much of it loading Node modules before an ownership check queries PowerShell. Check system load
+  and the configured runtime, and for an ownership check also PowerShell and Windows Management
+  Instrumentation. A timeout never proves a store is free.
+- **Store remains held after an inconclusive recheck:** the launcher keeps the last verified owner
+  and its lock location, refuses a second gateway and appends the failed recheck's observation.
+  Let that owner's deliberate shutdown finish or inspect it; do not stop unrelated processes or
+  delete unverified locks. An incomplete final retry can simply mean the release wait ended,
+  rather than a PowerShell or WMI failure.
+- **Check exited with a code or returned an invalid or oversized response:** the observation names
+  the check, the exit code where there is one and how many bytes it wrote. Check the supported
+  Node runtime, the built checkout and the `GG_*` settings. The helper's output itself is never
+  shown or logged, and no gateway starts when a check's result cannot be validated.
 - **Port belongs to another or differently configured service:** check the configured checkout,
   Node runtime, port, `GG_DB_URL`, store and GG_* overrides. The launcher refuses plain health from
-  older builds too. Stop the intended old gateway through its deliberate shutdown before launching
-  the new build. It never stops an unrelated listener.
+  older builds too, including a gateway from before the launch identity: stop it once through its
+  deliberate shutdown before launching the new build. It never stops an unrelated listener.
 - **Existing process owns the store:** it may be starting, serving another port or releasing its
   store. Wait for it or correct the configuration. Do not delete ownership files to make it start.
 - **Store ownership is held or cannot be verified after a reboot:** Windows can reuse a process
@@ -85,6 +160,14 @@ waiting, and a `gateway log records dropped` record counts them (ADR-0081).
   and `127.0.0.1`, or two ports, are different PWA identities.
 - **Gateway ready but PWA did not open:** check Chrome's installed app, profile and executable;
   rerun the configuration script. The gateway keeps running.
+- **Gateway already running but Chrome could not be started:** the installed app's
+  `chrome_proxy.exe` is missing or Windows refused to start it. The message names the gateway's
+  address; open it in Chrome, or reinstall the Chrome app and rerun the installer. The gateway
+  keeps running.
+- **Another click is still opening the Chrome app window:** simultaneous clicks wait for each
+  other while the window opens. A click whose window time is nearly spent when its turn comes does
+  not start Chrome late, so it cannot open a second window. Try again in a moment; the gateway
+  keeps running.
 - **Taskbar cold click opens disconnected Chrome directly:** remove the old direct Chrome pin,
   open through the new desktop launcher and pin that running GraphGoblin button. Verify the cold
   taskbar route; rewriting a pin file alone may leave Explorer's cached direct Chrome command.

@@ -1,0 +1,66 @@
+{
+  "name": "B2m-managed-store-refused",
+  "issue": "#560",
+  "system": "managed (Windows launcher log) classification of the tagged store-refusal primary",
+  "checks": [
+    {
+      "what": "managed exit 74 (startup failure written), no shell output",
+      "ok": true,
+      "detail": 74
+    },
+    {
+      "what": "one record: stage store, cause store-refused",
+      "ok": true,
+      "detail": [
+        {
+          "level": 50,
+          "time": 1795685778840,
+          "pid": 54720,
+          "msg": "GraphGoblin startup failed",
+          "stage": "store",
+          "cause": "store-refused",
+          "detail": "The store uses an unsupported format.",
+          "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+        }
+      ]
+    },
+    {
+      "what": "no paths or fixture text in the managed record",
+      "ok": true
+    },
+    {
+      "what": "both leases kept",
+      "ok": true
+    }
+  ],
+  "startup": {
+    "code": 74,
+    "signal": null,
+    "listened": false,
+    "stderr": "",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:b052639e-a7d6-4ad7-aebc-987c2aa14e48.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "unlink:2e16d019-f489-43ea-b1b1-055a6ee709b6.json",
+      "rmdir:store.db.graphgoblin.lock.reclaim",
+      "readonly-database-close"
+    ]
+  },
+  "managedRecords": [
+    {
+      "level": 50,
+      "time": 1795685778840,
+      "pid": 54720,
+      "msg": "GraphGoblin startup failed",
+      "stage": "store",
+      "cause": "store-refused",
+      "detail": "The store uses an unsupported format.",
+      "guidance": "Check the configured store and any other GraphGoblin process, then launch again."
+    }
+  ],
+  "ms": 9552,
+  "pass": true
+}

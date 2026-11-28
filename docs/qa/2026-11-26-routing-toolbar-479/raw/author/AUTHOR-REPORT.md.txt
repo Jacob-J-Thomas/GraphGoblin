@@ -1,0 +1,167 @@
+# #479 author report — claude-window-author-03 (B7)
+
+Author: Claude Opus 5.5 (xhigh), continuing the uncommitted partial of `claude-author-01`.
+Worktree `G:/ggq/gg-fu-ui-479-20261124/GraphGoblin`, branch `codex/gg-fu-ui-479-20261124`, base
+`14ea69842025c627f704b436727385d78e08768c`. One commit: `7c893c7795a086e349e87041f0c144442fc6f282`
+(tree `77ef4d8da355b819f801519db585fb6d53302430`, repository identity, no attribution). Status: ready
+for independent review/QA and opposite-family review. No merge, no push. Owner acceptance is not
+claimed.
+
+## Changed paths (the six contract write paths, nothing else)
+
+| Path | SHA-256 (as committed) |
+| --- | --- |
+| `apps/web/src/editor/OrthogonalEdge.tsx` | `dbb69e93f5451b6d9929c41f87793002bf166f92caad7f8832008ed2f76036b2` |
+| `apps/web/src/editor/OrthogonalEdge.test.tsx` | `1cb9a4da3c37fca2de15869cd35b09d15e24012c0d4284698656ea4a1c2c307e` |
+| `apps/web/src/styles/canvas-routes.css` | `51ac951df1b6b07e83cbc8fb63c4ff3eb4cd8a575aeb4fe09e164d96de7a905c` (unchanged from the partial) |
+| `apps/web/e2e/routing-toolbar.spec.ts` (new) | `befd63536a4a043f0a718fad3d3a09d7985123593e5462d488bc2566e6185b70` |
+| `docs/09-frontend-and-pwa.md` | `796c5010a9af34e3f4d9d99b7fb0fb2bd6c7b24745afbaaaded1b9f8b86a0de5` |
+| `CHANGELOG.md` | `d7486884a2f3fe7be8f93f5d76e9a1ad89bba767168a1160725b775c1b4b68f6` |
+
+Not touched: `Canvas.tsx`, `viewport-gesture.ts`, `store.ts`, `e2e/server.ts`, saved routes and
+labels, Fit padding, global tokens, dependencies.
+
+## What this run did to the partial
+
+- Reviewed the partial `OrthogonalEdge.tsx` against `DESIGN.claude.md` (FUP-085) and the author
+  contract; kept its design: pure `toolbarPlacement()` (Above, then Below unless it covers a
+  segment handle or a `nodeLookup` port, then Clamp on the roomier side; sideways shift into the
+  8 px inset first; `off-pane` and `unmeasured` keep the old Above place), the measured row box
+  (layout effect plus `ResizeObserver`, a 0.5 px settle step), the `useStore` selector with
+  `samePlacement` equality, handles read lazily only after Above fails, `ToolbarHold` storing
+  `placed` and the `view` (transform and pane size) so only a camera or pane change re-places a
+  held row, the note on the far side of the controls (`notePlacement` with `NoteControls`), the
+  CSS wrap (`width: fit-content`, `flex-wrap`, inline `max-width` pane − 16) and the stable
+  `data-placement` / `data-overflow` / `data-covers-handle` attributes. Only Prettier touched the
+  source file in this run.
+- Fixed the typecheck error (TS2345 at the old `:1665`) by returning `DOMRect.fromRect(...)` from
+  the `getBoundingClientRect` mock, and the lint error (`no-unnecessary-type-assertion` at the
+  old `:1624`) by passing the fake observer directly; replaced the `as unknown as InternalNode`
+  double cast with a properly typed `InternalNode` fixture. No `any`, no rule disabled.
+- Added unit coverage for the remaining `hitAreas` branches (hidden card, unmeasured card, an
+  output port with a null target list).
+- Wrote `apps/web/e2e/routing-toolbar.spec.ts`, the docs/09 updates (Remove, the #481 note,
+  Reset route's hold, a new "Toolbar placement (#479)" bullet, the Tests list) and an Unreleased
+  CHANGELOG entry.
+
+## Contract and design mapping
+
+| Design / contract item | Where |
+| --- | --- |
+| Boundary = xyflow pane `width×height`, 8 px inset (`NOTE_MARGIN`) | `toolbarPlacement`; e2e `expectReachable` (row ≥ 8 px inside `.react-flow` on every side) |
+| Row size = own measured box, layout effect + `ResizeObserver`, never 420×48 | `createSizeStore`, `useLayoutEffect`; unit "measures the row again as the pointer turns coarse or fine, settles" |
+| Above / Below (+ handle exclusion) / Clamp, sideways shift first | `toolbarPlacement`; unit `toolbarPlacement (#479)` block; e2e below/above stages |
+| Off-pane label: unclamped, travels with label | `step: 'off-pane'`; unit; e2e `label-off-pane` stage |
+| 320 px wrap, Remove last | CSS + inline `max-width`; unit wrap test; e2e 320 crossing case |
+| Coarse: full 44 px rect inside | e2e coarse case (`remove.height ≥ 44`, 63/63 probes) |
+| `useStore` selector + equality; handles read only after Above fails | unit "a pan that keeps its place renders nothing", `handles` spy tests |
+| Reset hold stores side/offsets + view; only transform/pane change re-places | `ToolbarHold.placed/view`, `sameView`; unit hold test; e2e Reset case |
+| Unchanged guards (Reset focus, `detail > 1`, `TOOLBAR_KEYS`/Escape, settling, protected title, #481 `aria-describedby`) | code paths unchanged; existing unit tests pass; e2e Escape and shared-id checks; existing Edge specs rerun green |
+| #481 note far side when `NOTE_ROOM` fits, else other side of label; controls never move | `notePlacement`; unit note tests; e2e shared-id case |
+| Camera never writes or adds history | e2e: 0 draft PUTs and Undo `aria-disabled` across opening, Fits, flips, pans, zoom |
+| Acceptance click/tap: one conditional PUT removing only that edge; one Undo PUT; GET equals pre-removal bytes; present after reload | e2e `removeAndUndo` (desktop ×2 themes, coarse tap, 390, 320) |
+| Docs order above → below → clamp; CHANGELOG | docs/09 "Toolbar placement (#479)"; CHANGELOG Unreleased |
+
+## Commands and results
+
+Node v22.23.4 (project runtime), pnpm 12.8.1, `TEMP`/`TMP` = `G:/ggq/tmp/b7-479`.
+
+| Command | Result |
+| --- | --- |
+| `pnpm --filter @graphgoblin/web typecheck` | pass (was failing at TS2345) — `WEB-TYPECHECK.log` |
+| `pnpm --filter @graphgoblin/web lint` | 0 errors; 5 pre-existing warnings in untouched `runs/RunInspectorPage.tsx` and `runs/inspector/SessionRecoveryControls.tsx` — `WEB-LINT.log` |
+| `vitest run src/editor/OrthogonalEdge.test.tsx` | 57/57 pass |
+| Contract focused group `vitest run OrthogonalEdge.test.tsx viewport-gesture.contract.test.tsx Canvas.space-cards.fit.test.tsx --reporter=verbose` | 76/76 pass, 3 files — `UNIT-FOCUSED.log` |
+| `vitest run OrthogonalEdge.test.tsx viewport-gesture.contract.test.tsx Canvas.space-cards.fit.test.tsx Canvas.test.tsx` | 150/150 pass (4 files) |
+| `prettier --check` on the six paths | pass — `PRETTIER.log` |
+| `pnpm build` (whole repo, under the lock) | 12/12 tasks, 8 cached, 48 s — `BUILD.log` |
+| Edge spec `e2e/routing-toolbar.spec.ts`, run 01 | 6 passed, 2 failed (first failures retained, below) — `E2E-routing-toolbar-01.log`, `browser-output-01/` |
+| Edge spec, run 02 (after the two test fixes) | 7/7 passed (40 s) — `E2E-routing-toolbar-02.log`, `browser-output-02/` |
+| Edge spec, run 03 (after a geometry-log fix, the committed spec) | 7/7 passed (39 s) — `E2E-routing-toolbar-03.log`, `browser-output-03/` |
+| Existing Edge specs `edge-routes.spec.ts` + `shared-edge-ids.spec.ts` | 18/18 passed — `E2E-existing-edge-routes-shared-ids.log` |
+| `pnpm --filter @graphgoblin/web test:coverage`, attempt 01 | killed by my own 25 min `timeout` before reporting (exit 124/143) — `WEB-COVERAGE.log`; not a test failure |
+| web coverage, attempt 02 (`--reporter=dot --reporter=json`, 45 min limit) | 236 files / 3218 tests passed (607 suites); statements 97.74%, branches 94.48%, functions 97.32%, lines 98.7%; `OrthogonalEdge.tsx` lines 100%, branches 97.39%, functions 98.07%; 21 min 39 s — `WEB-COVERAGE-02.log`, `WEB-COVERAGE-02.results.json`, `WEB-COVERAGE-02.summary.json` |
+
+All Playwright runs: Edge channel (`msedge`, `C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe`,
+SHA-256 `5b07e50e…378ee`, matching the contract), `--workers=1 --retries=0`, the checked-in config
+(60 s case / 10 s expect timeouts), `ProgramFiles`, `ProgramFiles(x86)` and `ProgramW6432` kept in
+the environment (FUP-089), the existing e2e server (`createTestApp`, Ollama discovery off, ephemeral
+loopback ports), no `/apps/live`, no owner ports or browser profile. Web dist identity after the
+build: `index.html` `3ad02cb5…f0d6`, `sw.js` `1772c953…39a7`.
+
+### First failures (run 01), retained
+
+1. Shared-id case: the filter `title` = "Use fallback" matched two groups. With `reenter-more`
+   given the loop-back's id, the canvas draws both holders as "subject Use fallback (decline) to
+   work" (the shared id resolves to one pair of ends, pre-existing #481 behaviour). Fix: expect two
+   holders, take the one drawn last (on top), check its accessible name.
+2. Clamp case at a 1280 × 220 window: the canvas stayed 263 px tall (the editor's minimum layout),
+   more than the 116 px at which neither Above nor Below fits a single-line 32 px row (140 px
+   coarse). The case cannot be reached by window size, so it was removed; Clamp stays covered by
+   the unit tests, and docs/09 says so.
+
+## Browser results (run 02 geometry, identical in run 03)
+
+Remove connection centre (client px), placement, probes hit (9 × 7 grid inset 4 px):
+
+| Stage | Placement | Centre | Probes | Design prediction / native baseline |
+| --- | --- | --- | --- | --- |
+| desktop light+dark, opening | above | (450.22, 200.58) | 63/63 | baseline (450.22, 200.58): unchanged |
+| desktop, Fit, panels open | above | (450.22, 235.08) | 63/63 | baseline (450.22, 235.08): unchanged |
+| desktop, Fit, panels collapsed (reproduced) | below | (475.23, 178.52) | 63/63 | predicted (475.2, 178.5); baseline clipped 27/63 at (475.23, 110.52) |
+| desktop, ordinary pan +46 | above | (475.23, 156.52) | 63/63 | baseline (475.23, 156.52): unchanged |
+| desktop, label panned off the top | off-pane | (475.23, 38.52) | — | row bottom = label − 18, above the pane |
+| desktop, zoom out from the collapsed Fit | above | (502.69, 170.85) | 63/63 | baseline zoom was taken after a pan, so not comparable (x matches) |
+| coarse dark, opening | below | (472.71, 183.93), h 44 | 63/63 | predicted (472.7, 183.9); baseline 14/63 |
+| coarse, Fit, panels open | below | (472.97, 216.78), h 44 | 63/63 | predicted (473.0, 216.8); baseline 49/63 |
+| coarse, Fit, panels collapsed | below | (376.55, 186.12), h 44 | 63/63 | predicted (376.6, 186.1); baseline 14/63 |
+| coarse, zoom out | above | (399.12, 155.85), h 44 | 63/63 | baseline (399.12, 155.85): unchanged |
+| 390 light, opening / Fit | above | (159.24, 271.00) / (180.18, 412.99) | 63/63 | baselines identical: unchanged |
+| 320 dark, opening | below | (130.24, 336.50) | 63/63 | predicted (130.2, 336.5); baseline 21/63 |
+| 320 dark, Crosses a card + Reset + Remove | above, shifted into the inset | (159.99, 351.50) | 63/63 | wrapped, Remove on its own last line |
+| Reset case (manual lane 11 px below the automatic) | below | (527.40, 189.34) Remove; Reset over the `work` card's corner | 63/63 | row identical before and after the reset; automatic label 10.8 px higher |
+| shared id (#481) | below | (475.23, 178.52) | 63/63 | note under the controls, inside the pane |
+
+Also checked in the browser: the empty points of the toolbar frame and every visible port centre
+hit the same element as with nothing selected (or the selected connection's own raised drawing),
+never the frame; every segment handle's centre hits its handle (desktop both themes, coarse);
+zero draft PUTs and no history across opening, both Fits, the flips, pans and zoom; acceptance by
+trusted mouse click (desktop ×2, 390, 320) and CDP touch tap (coarse) at the measured centre: one
+PUT with `If-Match`, the GET equals the prior definition less exactly that edge; one Undo PUT with
+`If-Match`, the GET equals the pre-removal definition byte for byte (`JSON.stringify`), and the
+edge is present after reload; three Reset presses: one PUT, the point hits the same held
+`aria-disabled` Reset before the second and third presses, no dialog, Remove untouched, one Undo
+restores the manual route and leaves Undo disabled (one history entry); shared id: Remove
+`aria-disabled` and described by the note, a trusted click changes nothing (no PUT, no notice),
+Escape returns focus to the connection.
+
+Screenshots and `geometry.json` per case: `browser-output-02/` and `browser-output-03/`
+(`routing-toolbar-desktop-12-…`, `routing-toolbar-coarse-poi-…`, `routing-toolbar-narrow-390-…`,
+`routing-toolbar-narrow-320-…`). Traces are kept only on failure: `browser-output-01/*/trace.zip`
+for the two first failures.
+
+## Open questions and limits
+
+1. **Focus after later Reset presses.** Design assertion 6 says "Focus stays on the edge". The
+   first press moves focus to the edge (unchanged #207 behaviour). A later trusted mouse press on
+   the held, `aria-disabled` Reset route gives that button focus (the browser's mousedown), as the
+   existing unit test already asserts; the hold's handler deliberately does nothing. The design
+   also lists Reset's focus behaviour as unchanged, so I kept it and the spec asserts the actual
+   behaviour. Independent QA should confirm this reading.
+2. **Clamp when Below covers a handle.** Following the design literally, when Below fits but
+   covers a handle and below is the roomier side, Clamp lands on the same place as Below and
+   reports `data-covers-handle="true"`. No native case shows it; preferring the other side would be
+   a design change.
+3. **Clamp in the browser.** Not reachable by window size in this layout (minimum canvas 263 px).
+   Unit-tested only.
+4. **Not exercised by the new browser spec:** protected voice-step and stale-selection refusals,
+   and mouse-pan gating beyond waiting for `data-gesture` to clear. Their code paths are unchanged;
+   unit tests and the rerun `edge-routes`/`shared-edge-ids` Edge specs cover them.
+5. Implementer browser observations do not replace the separate Claude QA (both themes at every
+   size, native click/tap/Reset/Undo, keyboard and contrast), current hosted coverage and CI, the
+   GPT opposite-family review and the fresh Astra MAX final audit. #585 routing diagnosis is
+   separate.
+6. The heavy-suite lock was held idle from 04:45Z to about 07:31Z because the session hit its usage
+   limit right after acquiring it; nothing ran in that window. Build, both Edge runs, the existing
+   specs and both coverage attempts ran 07:31Z–08:26Z; the lock was released at 08:26:46Z.
+7. `pnpm check:qa` was not run: this change adds no `docs/qa` paths (evidence is in this folder).

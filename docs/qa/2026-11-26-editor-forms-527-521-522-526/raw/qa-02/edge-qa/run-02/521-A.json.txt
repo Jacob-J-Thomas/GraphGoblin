@@ -1,0 +1,381 @@
+{
+  "id": "521-A",
+  "issue": 521,
+  "title": "Nested override key error on owning Value; issue links focus it (dialog and canvas); correct, save, publish",
+  "expected": "Owning Value invalid + described, sibling/keys clean, focus lands in owning Value, correction saves and publish succeeds.",
+  "steps": [
+    "Type {\"outer\":{\"team docs\":true}} into Config overrides value 1 (key \"example\"); sibling key \"example.outer\" stays valid.",
+    "Move focus to Label, open the dialog issue badge, choose the team docs issue.",
+    "Close the dialog; choose the issue from the canvas node badge.",
+    "Correct the member; the Value clears, the draft saves to the server, Publish succeeds."
+  ],
+  "checks": [
+    {
+      "label": "owning Value described by relative path + rule",
+      "actual": "outer.team docs: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+      "pass": true
+    },
+    {
+      "label": "message visible under the Value",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "sibling Value and both Keys clean",
+      "actual": {
+        "sibling": {
+          "invalid": null,
+          "label": "Config overrides value 2",
+          "description": "",
+          "focused": false
+        },
+        "key1": {
+          "invalid": null,
+          "label": "Config overrides key 1",
+          "description": "",
+          "focused": false
+        },
+        "key2": {
+          "invalid": null,
+          "label": "Config overrides key 2",
+          "description": "",
+          "focused": false
+        }
+      },
+      "pass": true
+    },
+    {
+      "label": "no held-input segment (schema diagnostic, not held text)",
+      "actual": null,
+      "pass": true
+    },
+    {
+      "label": "Settings tab text",
+      "actual": "Settings 1 error",
+      "observation": true
+    },
+    {
+      "label": "issue row text",
+      "actual": "Error SCHEMA Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype. config.harnessOptions.configOverrides.example.outer.team docs",
+      "observation": true
+    },
+    {
+      "label": "focus in owning Value 1 (not sibling \"example.outer\")",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "sibling not focused",
+      "actual": false,
+      "pass": true
+    },
+    {
+      "label": "canvas badge issue opens the node with focus in owning Value 1",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "Value clean after correction",
+      "actual": "",
+      "pass": true
+    },
+    {
+      "label": "SQL configOverrides after correction (sibling kept)",
+      "actual": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "expected": {
+        "example": {
+          "outer": {
+            "team_docs": true
+          }
+        },
+        "example.outer": "sibling"
+      },
+      "pass": true
+    },
+    {
+      "label": "no PUT ever carried the invalid nested key",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "ordinary publish succeeds after correction",
+      "actual": {
+        "loop": {
+          "id": "01M3Y7RKG0Y1Y4G498SN1428KT",
+          "ownerId": "local",
+          "name": "QA 521 nested value 5",
+          "currentVersionId": "01M3Y7RKG0Y1Y4G498SN1428KV",
+          "createdAt": "2026-10-02T12:00:00.000Z",
+          "updatedAt": "2026-10-02T12:00:00.000Z"
+        },
+        "current": {
+          "id": "01M3Y7RKG0Y1Y4G498SN1428KV",
+          "loopId": "01M3Y7RKG0Y1Y4G498SN1428KT",
+          "version": 1,
+          "status": "published",
+          "definition": {
+            "schemaVersion": 4,
+            "name": "QA 521 nested value 5",
+            "settings": {
+              "workingDirectory": {
+                "kind": "temp"
+              },
+              "defaults": {
+                "byHarness": {}
+              },
+              "maxNodeVisits": 10,
+              "runDeadlineSeconds": null,
+              "structuredTimeoutMs": null,
+              "subloopDepthLimit": 8
+            },
+            "variables": {},
+            "nodes": [
+              {
+                "id": "start",
+                "label": "Start",
+                "ui": {
+                  "x": 0,
+                  "y": 80
+                },
+                "kind": "trigger",
+                "config": {
+                  "type": "manual",
+                  "exposeTo": [
+                    "ui",
+                    "api",
+                    "mcp"
+                  ]
+                }
+              },
+              {
+                "id": "approve",
+                "label": "Check",
+                "ui": {
+                  "x": 290,
+                  "y": 80
+                },
+                "kind": "inference",
+                "config": {
+                  "harness": "codex",
+                  "session": {
+                    "policy": "fresh"
+                  },
+                  "prompt": {
+                    "template": "Disposable editor QA"
+                  },
+                  "input": [],
+                  "harnessOptions": {
+                    "sandbox": "workspace-write",
+                    "approval": "never",
+                    "configOverrides": {
+                      "example": {
+                        "outer": {
+                          "team_docs": true
+                        }
+                      },
+                      "example.outer": "sibling"
+                    }
+                  },
+                  "output": {
+                    "captureTranscript": "artifact",
+                    "toMessages": "final",
+                    "transforms": []
+                  }
+                }
+              },
+              {
+                "id": "done",
+                "label": "Done",
+                "ui": {
+                  "x": 570,
+                  "y": 80
+                },
+                "kind": "exit",
+                "config": {
+                  "outcome": "success",
+                  "returns": "none",
+                  "destinations": [
+                    {
+                      "kind": "caller"
+                    }
+                  ]
+                }
+              }
+            ],
+            "edges": [
+              {
+                "id": "e1",
+                "from": {
+                  "node": "start",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "approve",
+                  "port": "in"
+                }
+              },
+              {
+                "id": "e2",
+                "from": {
+                  "node": "approve",
+                  "port": "out"
+                },
+                "to": {
+                  "node": "done",
+                  "port": "in"
+                }
+              }
+            ]
+          },
+          "createdAt": "2026-10-02T12:00:00.000Z",
+          "publishedAt": "2026-10-02T12:00:00.000Z"
+        },
+        "draftToken": "5ba58bde37b52a20"
+      },
+      "pass": true
+    },
+    {
+      "label": "published version",
+      "actual": 1,
+      "observation": true
+    }
+  ],
+  "screenshots": [
+    "521-A-marked.png",
+    "521-A-focus-dialog-badge.png",
+    "521-A-focus-canvas-badge.png"
+  ],
+  "verdict": "PASS",
+  "puts": [
+    {
+      "at": "2026-11-26T04:27:54.660Z",
+      "status": 200,
+      "sent": {
+        "definition": {
+          "schemaVersion": 4,
+          "name": "QA 521 nested value 5",
+          "settings": {
+            "workingDirectory": {
+              "kind": "temp"
+            },
+            "defaults": {
+              "byHarness": {}
+            },
+            "maxNodeVisits": 10,
+            "runDeadlineSeconds": null,
+            "structuredTimeoutMs": null,
+            "subloopDepthLimit": 8
+          },
+          "variables": {},
+          "nodes": [
+            {
+              "id": "start",
+              "label": "Start",
+              "ui": {
+                "x": 0,
+                "y": 80
+              },
+              "kind": "trigger",
+              "config": {
+                "type": "manual",
+                "exposeTo": [
+                  "ui",
+                  "api",
+                  "mcp"
+                ]
+              }
+            },
+            {
+              "id": "approve",
+              "label": "Check",
+              "ui": {
+                "x": 290,
+                "y": 80
+              },
+              "kind": "inference",
+              "config": {
+                "harness": "codex",
+                "session": {
+                  "policy": "fresh"
+                },
+                "prompt": {
+                  "template": "Disposable editor QA"
+                },
+                "input": [],
+                "harnessOptions": {
+                  "sandbox": "workspace-write",
+                  "approval": "never",
+                  "configOverrides": {
+                    "example": {
+                      "outer": {
+                        "team_docs": true
+                      }
+                    },
+                    "example.outer": "sibling"
+                  }
+                },
+                "output": {
+                  "captureTranscript": "artifact",
+                  "toMessages": "final",
+                  "transforms": []
+                }
+              }
+            },
+            {
+              "id": "done",
+              "label": "Done",
+              "ui": {
+                "x": 570,
+                "y": 80
+              },
+              "kind": "exit",
+              "config": {
+                "outcome": "success",
+                "returns": "none",
+                "destinations": [
+                  {
+                    "kind": "caller"
+                  }
+                ]
+              }
+            }
+          ],
+          "edges": [
+            {
+              "id": "e1",
+              "from": {
+                "node": "start",
+                "port": "out"
+              },
+              "to": {
+                "node": "approve",
+                "port": "in"
+              }
+            },
+            {
+              "id": "e2",
+              "from": {
+                "node": "approve",
+                "port": "out"
+              },
+              "to": {
+                "node": "done",
+                "port": "in"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "durationMs": 2452,
+  "consoleErrors": [],
+  "trace": "521-A-trace.zip"
+}

@@ -1,0 +1,102 @@
+"""Assemble the #555 QA packet's raw members and MANIFEST.json (Brief B9).
+
+Copies retained originals byte-for-byte into docs/qa/<packet>/raw/, renaming Markdown originals to
+.md.txt and logs to .log.txt, then writes MANIFEST.json with each member's source, bytes and
+SHA-256. README.md and .gitattributes are written separately and hashed here as reader files.
+"""
+
+from hashlib import sha256
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+
+WT = Path('G:/ggq/gg-fu-ui-555-test-errors-20261124/GraphGoblin')
+PACKET = WT / 'docs/qa/2026-11-26-pwa-test-error-precedence-555'
+E = Path('G:/ggq/delivery-evidence/2026-11-24-followups/ui-479-515-555')
+AUTHOR = E / '555-test-precedence-author-contract'
+MINE = E / 'claude-window-555-01'
+SCRIPTS = Path('G:/ggq/tmp/b9-555/scripts')
+
+RUN_FILES = [('RUN.txt', 'RUN.txt'), ('stdout.log', 'stdout.log.txt'), ('stderr.log', 'stderr.log.txt'),
+             ('playwright.json', 'playwright.json'), ('dist-source.sha256', 'dist-source.sha256.txt'),
+             ('served-dist-before.sha256', 'served-dist-before.sha256.txt'),
+             ('served-dist-after.sha256', 'served-dist-after.sha256.txt')]
+
+MEMBERS = [
+    ('raw/review-01/REVIEW.md.txt', AUTHOR / 'review-01/REVIEW.md', 'retained original: GPT formal review 1'),
+    ('raw/review-01/REVIEW.json', AUTHOR / 'review-01/REVIEW.json', 'retained original: GPT formal review 1 binding'),
+    ('raw/review-01/AST-COMPARE.json', AUTHOR / 'review-01/AST-COMPARE.json', 'retained original: review AST comparison'),
+    ('raw/author-01/IMPLEMENTATION-REPORT.claude.md.txt', AUTHOR / 'claude-author-01/IMPLEMENTATION-REPORT.claude.md',
+     'retained original: Claude author report'),
+]
+for run, folder in (('01-target-unresolved', 'native-631d16e'), ('02-full-pwa-spec', 'native-631d16e'),
+                    ('03-merged-full-pwa-spec', 'native-merged')):
+    for source, target in RUN_FILES:
+        MEMBERS.append((f'raw/{folder}/{run}/{target}', MINE / 'runs' / run / source, f'QA native run {run}'))
+for source, target in (('web-typecheck.log', 'web-typecheck.log.txt'), ('web-lint.log', 'web-lint.log.txt'),
+                       ('format-check.log', 'format-check.log.txt'), ('build.log', 'build.log.txt'),
+                       ('HEAD.txt', 'HEAD.txt')):
+    MEMBERS.append((f'raw/gates/{target}', MINE / 'gates' / source, 'QA merged-tree gate'))
+MEMBERS.append(('raw/scripts/run-pwa.sh.txt', SCRIPTS / 'run-pwa.sh', 'QA run driver (local paths, not portable)'))
+MEMBERS.append(('raw/scripts/assemble-packet.py.txt', SCRIPTS / 'assemble-packet.py', 'packet assembly driver'))
+
+
+def digest(path):
+    return sha256(path.read_bytes()).hexdigest()
+
+
+def git(*args):
+    return subprocess.check_output(['git', '--no-optional-locks', *args], cwd=WT).decode().strip()
+
+
+def main():
+    members = []
+    for relative, source, tier in MEMBERS:
+        target = PACKET / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if target.exists():
+            raise SystemExit(f'refusing to overwrite {target}')
+        shutil.copyfile(source, target)
+        if digest(target) != digest(source):
+            raise SystemExit(f'copy mismatch {relative}')
+        members.append({'path': relative, 'source': source.as_posix(), 'bytes': target.stat().st_size,
+                        'sha256': digest(target), 'tier': tier})
+    readers = []
+    for name in ('README.md', '.gitattributes'):
+        path = PACKET / name
+        if not path.is_file():
+            raise SystemExit(f'missing reader file {name}')
+        readers.append({'path': name, 'bytes': path.stat().st_size, 'sha256': digest(path)})
+    candidate = sys.argv[1]
+    merge = sys.argv[2]
+    manifest = {
+        'issue': 555,
+        'scope': 'test-only error precedence for the guarded PWA update dirty-tab case (FUP-029)',
+        'productCauseResolved': False,
+        'source': {
+            'branch': git('branch', '--show-current'),
+            'reviewedBase': '631d16e39b8e9932f4763390a4166fa67eea8df3',
+            'candidateCommit': candidate,
+            'candidatePatchSha256': '47e3e1b9b9e944f5ba0b4792cdc2a45f4c68587ff5758f0a1215e17d81c678e0',
+            'candidateFile': 'apps/web/e2e/pwa.spec.ts',
+            'candidateFileSha256': digest(WT / 'apps/web/e2e/pwa.spec.ts'),
+            'mergeCommit': merge,
+            'mergedMain': git('rev-parse', f'{merge}^2'),
+        },
+        'readerFiles': readers,
+        'rawMembers': members,
+        'notPublished': {
+            'reason': 'provider prompts, session event journals and private reasoning are not published',
+            'authorEventsSha256': digest(AUTHOR / 'claude-author-01/CLAUDE-EVENTS.private.jsonl'),
+        },
+    }
+    with (PACKET / 'MANIFEST.json').open('x', encoding='utf-8', newline='\n') as stream:
+        json.dump(manifest, stream, indent=2, ensure_ascii=False)
+        stream.write('\n')
+    print(json.dumps({'members': len(members), 'readers': readers}, indent=1))
+
+
+if __name__ == '__main__':
+    main()

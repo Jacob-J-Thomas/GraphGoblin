@@ -2,6 +2,7 @@ import { act, screen, waitFor } from '@testing-library/react';
 import { IDBFactory } from 'fake-indexeddb';
 import { createStore, promisifyRequest, set } from 'idb-keyval';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type * as CodeMirror from '../__fixtures__/codemirror.js';
 import type * as Fixtures from '../__fixtures__/fake-api.js';
 import type * as Render from '../__fixtures__/render.js';
 import type * as LocalDrafts from '../drafts/local-drafts.js';
@@ -20,6 +21,7 @@ let modules: {
   drafts: typeof LocalDrafts;
   newLoopDefinition: typeof Model.newLoopDefinition;
   useEditorStore: typeof Store.useEditorStore;
+  setCode: typeof CodeMirror.setCode;
 };
 let oldDatabase: IDBDatabase;
 
@@ -36,6 +38,8 @@ beforeEach(async () => {
     drafts: await import('../drafts/local-drafts.js'),
     newLoopDefinition: (await import('./model.js')).newLoopDefinition,
     useEditorStore: (await import('./store.js')).useEditorStore,
+    // The same CodeMirror module instance as the app's, imported after the reset like it.
+    setCode: (await import('../__fixtures__/codemirror.js')).setCode,
   };
 });
 
@@ -53,10 +57,13 @@ const saveState = () => screen.getByTestId('save-state');
 const deviceNotice = () => screen.queryByText(/blocks this device’s draft storage/);
 
 /** Open the editor; its first look at device storage waits out the blocked upgrade's grace. */
-async function openBlockedEditor() {
+async function openBlockedEditor(variables?: Record<string, Record<string, unknown>>) {
   const { FakeApi, renderApp, newLoopDefinition } = modules;
   const api = new FakeApi();
-  const loop = api.addLoop(newLoopDefinition('blocked'));
+  const loop = api.addLoop({
+    ...newLoopDefinition('blocked'),
+    ...(variables ? { variables } : {}),
+  });
   renderApp(`/loops/${loop.id}/edit`, api);
   await screen.findByRole('heading', { name: 'blocked' }, SAVE_WAIT);
   // The instruction is there from the start, before any edit.
@@ -136,5 +143,51 @@ describe('device storage blocked by an older tab', () => {
         'mirrored',
       ),
     );
+  });
+
+  it('keeps held field input in this window apart from where the complete draft is (#526)', async () => {
+    const topic = { type: 'string' };
+    const { api, loop } = await openBlockedEditor({ topic });
+    const store = () => modules.useEditorStore.getState();
+    const draftState = () => screen.getByTestId('draft-state');
+    const heldState = () => screen.queryByTestId('held-input-state');
+    const status = saveState();
+    // Unparsed text in a variable's Value: held in this window, the draft unchanged.
+    modules.setCode('Variables value 1', '{"type":');
+    expect(store().fieldErrors['variables']?.['variables.topic']?.text).toBe('{"type":');
+    expect(heldState()).toHaveTextContent('Field input kept in this window only');
+    expect(saveState()).not.toHaveTextContent('All changes saved');
+
+    // A valid edit reaches the server without the held text; the device's refusal stays apart.
+    act(() => store().updateMeta({ description: 'to the server' }));
+    await waitFor(() => expect(store().saveState).toBe('saved'), SAVE_WAIT);
+    const sent = api.callsTo('PUT', `/loops/${loop.id}/draft`).at(-1)!.body as {
+      definition: { variables?: unknown; description?: string };
+    };
+    expect(sent.definition).toMatchObject({ description: 'to the server', variables: { topic } });
+    expect(draftState()).toHaveTextContent(/^Draft saved$/);
+    expect(heldState()).toHaveTextContent('Field input kept in this window only');
+    expect(deviceNotice()).toBeInTheDocument();
+
+    // A schema-invalid draft, refused by the device too, is kept in this window: said of the draft.
+    act(() => void store().addNode('subloop', { x: 0, y: 200 }));
+    await waitFor(
+      () => expect(draftState()).toHaveTextContent('Draft kept in this window only'),
+      SAVE_WAIT,
+    );
+    expect(heldState()).toHaveTextContent('Field input kept in this window only');
+    expect(
+      screen.getByText(
+        'Fix the schema errors to save to the server. Changes are kept in this window only.',
+      ),
+    ).toBeInTheDocument();
+    expect(saveState()).toBe(status);
+
+    // Once the old tab closes, the draft is saved on the device; the field input stays here.
+    await closeOldTab();
+    await waitFor(() => expect(draftState()).toHaveTextContent('Draft saved on this device only'));
+    expect(heldState()).toHaveTextContent('Field input kept in this window only');
+    const local = await modules.drafts.loadLocalDraft(loop.id);
+    expect(local?.definition.variables).toEqual({ topic });
   });
 });

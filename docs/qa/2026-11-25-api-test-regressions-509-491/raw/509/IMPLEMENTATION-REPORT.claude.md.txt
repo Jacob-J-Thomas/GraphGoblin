@@ -1,0 +1,48 @@
+I added the two test files and both checks are in place. The new tests pass (22/22 across the two files, run three times, plus 8/8 for the platform file alone). Each required mutation turns them red, and `api-port.ts` is back to its original content. I couldn't record file hashes or read the baseline evidence files; details are under "Gaps" below.
+
+## What changed (unstaged, only the two test files)
+
+**`apps/api/src/testing/api-port.test.ts`**
+- **Ollama override:** the existing invalid-`GG_PORT` subprocess call now passes `GG_OLLAMA_ENABLED: 'false'` explicitly. Every original assertion, skip rule and timeout is unchanged, and the shared subprocess helper is untouched.
+- **New concurrency test.** It first reserves a port normally, which keeps the other test workers off it. It then switches to a fresh claim folder of its own (under the test run's port folder) and starts 8 real `reserveApiPort(port, 1)` calls at once, then waits for all of them to finish. It checks that:
+  - exactly one call gets the port and the other 7 are refused with "Ports are reserved by tests or in use";
+  - the claim folders show one live owner;
+  - after release, a second round of 8 again produces exactly one winner, in a new generation.
+- **Stale release:** the old winner's second release, run alongside 8 more claimants, succeeds without effect. All 8 are refused and the replacement stays held.
+- **Cleanup:** the test checks that both releases leave the expected "released" markers and that its own folder is removed afterwards. Claiming itself is not mocked; the real filesystem decides the winner.
+
+**`apps/api/src/testing/api-port-platform.test.ts` (new, 8 tests)**
+- These tests temporarily override `process.platform` and record every listen attempt, then call the real public `reserveApiPort` on one held port.
+- For both `win32` and `darwin`, the exact attempts are 127.0.0.1, then 0.0.0.0, then ::.
+- The `linux` control attempts 127.0.0.1 only, including when 0.0.0.0 would report a conflict.
+- For each of win32 and darwin, a simulated conflict on just 0.0.0.0 or just :: makes the port refused.
+- Hosts without a simulated conflict still do real binds.
+- Every override is restored right after the call, and a check after each test confirms nothing was left changed.
+- The file states that these are controlled observations, not native OS evidence. Native listener behaviour stays in `api-port.test.ts`.
+
+## Mutation experiments (only the `checkWildcards` line in `api-port.ts`)
+
+| Run | Result |
+|---|---|
+| `win32` removed | Red: 3 failed, 5 passed. The failures were the win32 host-order test (it saw only 127.0.0.1) and both win32 conflict tests (the port was granted instead of refused). |
+| `darwin` removed | Red: 3 failed, 5 passed. The same three tests failed for darwin. |
+| Restored | Green: 8/8 for the platform file, 22/22 for both files. |
+
+After each restore, `git status` showed no change to `api-port.ts`, the file has no CR bytes (the repo uses LF line endings), and the line reads exactly `process.platform === 'win32' || process.platform === 'darwin'`. I ran no optional concurrency mutation, because only that condition was approved for mutation.
+
+## Other checks
+The API build, typecheck, lint, Prettier check and `git diff --check` all passed. All 13 original tests ran and passed, including the subprocess case and the :: listener case (IPv6 works on this host). No original failure showed up, and no product defect appeared.
+
+## Gaps
+- **No hashes:** none of the approved commands can compute a file hash, so I couldn't record source hashes or compare `api-port.ts` against BASELINE-SOURCE-MANIFEST.json. The only evidence it is byte-identical is git seeing no change against the current HEAD. Root needs to verify the hash.
+- **Baseline files not read:** ISSUE.json, BASELINE-TESTS.log, NATIVE-CLAIMS-BASELINE.json and BASELINE-SOURCE-MANIFEST.json are outside the worktree, where my file tools can't reach. I couldn't reconcile the baseline's "11 selected, 2 excluded" with my 13 original tests run.
+- **Red logs:** they exist only in this session's command output, since no log path was authorized for writing.
+- **Coverage:** I didn't run the coverage task (not an approved command), so the 90% floor is unverified. Only tests were added.
+- **Per-test names:** the default test output doesn't list passing test names.
+- **Evidence limits:**
+  - The 8 competing claims run inside one test process, sharing the real filesystem, not across processes.
+  - The platform results come from a temporary override on Windows, so there is no native macOS evidence.
+  - On Linux CI, the win32/darwin overrides will briefly bind 0.0.0.0 and :: on a disposable port.
+  - Both new tests assume no outside program grabs the held port mid-test, the same assumption the existing tests make.
+
+GPT review, the separate Claude QA session, CI and the final Astra audit are still to do.

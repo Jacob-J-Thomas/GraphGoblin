@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "reviewedAtUtc": "2026-11-25T01:46:31.368908+00:00",
+  "reviewPass": 1,
+  "formalReviewBudgetTotal": 3,
+  "mode": "stable-full-review",
+  "verdict": "CHANGES_REQUESTED",
+  "reviewer": "Independent OpenAI-family session agent",
+  "author": "Actual Claude Opus 5.5 author; CLAUDE-EXIT invocationSucceeded true, exitCode 0",
+  "baseSha": "d2df8600c2c8574bec420947de686b936910b245",
+  "headSha": "d2df8600c2c8574bec420947de686b936910b245",
+  "candidatePatchSha256": "d76727d01ed84999bd4302832c8ceeb1f1f6aa627e03589915f17c2486f59c35",
+  "candidateManifestSha256": "0ee87083e1006b5d7da25625a3a1adf727d6e29d0fd721da3ec48574cbca0b74",
+  "sourceFileCount": 11,
+  "candidateIdentity": "Uncommitted 11-file candidate over unchanged base/head; CANDIDATE-MANIFEST.json contains every raw source SHA256, including plugin-output.d.mts.",
+  "findings": [
+    {
+      "id": "R1",
+      "signature": "plugin-output/staged-write-close-masks-primary",
+      "severity": "P2",
+      "disposition": "FIX-IN-PR",
+      "title": "Retain the staged write failure when closing that file also fails",
+      "path": "tooling/plugin-output.mjs",
+      "startLine": 313,
+      "endLine": 316,
+      "introducedByPatch": false,
+      "provenance": "The same inner try/finally exists at the intended base; this is an unhandled pre-existing branch inside the expressly admitted #464 error-preservation contract.",
+      "contract": "#464: Keep both the primary failure and any cleanup failure observable; retain both in details and the message existing CLIs display.",
+      "behavior": "When handle.writeFile(content) rejects and handle.close() rejects in its finally, JavaScript replaces the write rejection with the close rejection before the outer catch executes. The new aggregation code receives only the close failure. A successfully cleaned staging tree causes the close Error alone to be rethrown, without cause/errors or the primary write message.",
+      "impact": "A real write failure can be hidden by its close/flush failure, leaving operators without the reason assembly failed. This violates the admitted diagnostic behavior. The disposable reproduction preserves the incumbent bytes and removes staging; no data-loss claim is made.",
+      "evidence": [
+        "probe-write-close.mjs",
+        "probe-write-close.log",
+        "tooling/plugin-output.mjs:313-316",
+        "git show HEAD:tooling/plugin-output.mjs: inner writeFile/close try/finally is identical"
+      ],
+      "reproduction": {
+        "boundary": "public writePluginOutput",
+        "injection": "For one actual opened staged file, inject a write Error and a close Error after safely closing its real handle. All other filesystem calls remain native.",
+        "observedError": "Error: REVIEW: staged file close failure",
+        "observedCause": null,
+        "observedErrors": null,
+        "primaryRetained": false,
+        "previousOutputUnchanged": true,
+        "stagingRemoved": true
+      },
+      "requestedOutcome": "Preserve the write failure and close failure together in observable details and the CLI-visible message, while continuing the existing safe cleanup and preserving any incumbent. Add a public-boundary regression for the combined failure.",
+      "scopeAdjudication": "Orchestrator explicitly confirmed during this review that #464 makes this P2 FIX-IN-PR despite its pre-existing provenance. Resolve in the same authorized files; do not expand cleanup authority."
+    }
+  ],
+  "findingCounts": {
+    "P0": 0,
+    "P1": 0,
+    "P2": 1,
+    "P3": 0,
+    "FIX-IN-PR": 1,
+    "DEFER-ISSUE": 0
+  },
+  "otherAdmissibleRootCauses": [],
+  "independentVerification": [
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/tooling exec vitest run plugin-output.test.mjs -t 'names a changed inventory|only quotes|with its own diagnostic|keeps the primary failure|reports an unpublished|continues cleanup|says the new artifact|keeps an entry|leaves the prior|plugin source inventory'",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "passed": 24,
+      "unselectedSkipped": 11,
+      "log": "targeted-tooling.log",
+      "purpose": "Verify changed inventory/refusals, aggregate recovery paths and finite source checks without repeating the full suite."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/plugin-codex exec vitest run src/plugin.test.ts -t 'refuses unsupported source entries|names a changed generated inventory'",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "passed": 2,
+      "unselectedSkipped": 9,
+      "log": "targeted-codex.log",
+      "purpose": "Verify public source refusal and changed-inventory preservation."
+    },
+    {
+      "command": "pnpm.cmd --filter @graphgoblin/plugin-claude exec vitest run src/plugin.test.ts -t 'adapts CRLF|refuses each missing|refuses unsupported plugin'",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "passed": 3,
+      "unselectedSkipped": 8,
+      "log": "targeted-claude.log",
+      "purpose": "Verify each anchor independently, LF/CRLF equivalence and source input refusal."
+    },
+    {
+      "command": "node review-01/probe-write-close.mjs (absolute evidence path)",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "log": "probe-write-close.log",
+      "purpose": "Narrow failure injection through public writer reproduces R1; incumbent unchanged."
+    },
+    {
+      "command": "node review-01/probe-byte-equivalence.mjs (absolute evidence path)",
+      "node": "v22.23.4",
+      "exitCode": 0,
+      "log": "probe-byte-equivalence.log",
+      "purpose": "Baseline and candidate public assembler source transpiled in-memory against unchanged manifest code and the current shared writer, using copied inputs and unused disposable destinations. Codex 6 generated files plus marker and Claude 7 plus marker have identical raw bytes. This compares generation behavior; it is not native client loading or a baseline-writer safety test."
+    }
+  ],
+  "inspectionConclusions": [
+    "All 11 authorized paths reviewed; source set and raw bytes frozen before diff review and unchanged afterwards.",
+    "Output names still come exclusively from the current finite files map. Marker-only names are compared and quoted, never read or deleted. Existing digest, platform metadata, overlap, path and quarantine safeguards remain.",
+    "Same-count name exchanges, missing files/folders, foreign/modified content, restoration failure/conflict, retained next/previous, post-publication cleanup and independent cleanup phases are covered by the bounded review and maintained tests.",
+    "Finite input checks are scoped to actual input roots; Codex derives configured source paths/discovered validated skills, Claude selects fixed plugin inputs/three skills/individual README. Current valid bytes remain identical.",
+    "Both exact run-loop anchors are required before publication after CRLF normalization, and the valid transform strings are unchanged.",
+    "No dependency, format, deletion-authority or architecture expansion observed. Stray .DS_Store refusal is the intentionally documented policy."
+  ],
+  "authorReportedVerificationNotIndependentlyRerun": {
+    "toolingCoverage": {
+      "lines": 98.21,
+      "branches": 96.33
+    },
+    "codexCoverage": {
+      "lines": 95.77,
+      "branches": 91.66
+    },
+    "claudeCoverage": {
+      "lines": 96.22,
+      "branches": 96.29
+    },
+    "gates": "Author reports full scoped tests, scoped coverage, typechecks, lints, formatting, and pnpm build all exit 0; these are author evidence and do not satisfy independent QA."
+  },
+  "limitsAndNonGoals": [
+    "No formal independent QA was performed. Native Codex marketplace installation/loading and native Claude validation remain required after correction in disposable configurations.",
+    "No provider turn, installed plugin, owner data, owner service, Git index, source edit, commit, external record or memory mutation.",
+    "Full repository checks/CI were not repeated in this source review; orchestrator owns final exact-head gates.",
+    "POSIX check/rename empty-directory race, concurrent deletion ENOENT race, and source-root/parent-link trust boundaries are pre-existing explicit non-goals, not new findings."
+  ],
+  "finalState": {
+    "file": "FINAL-STATE.json",
+    "baseHeadAnd11HashesUnchanged": true,
+    "patchUnchanged": true,
+    "indexUnchangedAndEmpty": true
+  },
+  "nextStep": "Actual Claude author batches R1 fix, then fresh independent QA and targeted review 2 of that delta. Formal pass 3 remains reserved for the required final audit; no extra full review justified."
+}

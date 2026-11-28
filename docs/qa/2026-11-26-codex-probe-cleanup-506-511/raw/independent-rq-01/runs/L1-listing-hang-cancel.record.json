@@ -1,0 +1,81 @@
+{
+  "caseId": "L1-listing-hang-cancel",
+  "scenario": "listing-hang",
+  "mode": "cancel",
+  "listingTimeoutMs": 15000,
+  "cancelGraceMs": "default",
+  "node": "v22.23.4",
+  "announcedAt": 2435.6,
+  "cancelAt": 2486,
+  "cancelOutcome": {
+    "status": "fulfilled",
+    "at": 2521.5
+  },
+  "result": {
+    "status": "rejected",
+    "at": 2521.4,
+    "name": "AbortError",
+    "code": 20,
+    "message": "The Codex turn was aborted"
+  },
+  "settleAfterCancelMs": 35,
+  "drainedEvents": [],
+  "warnings": [],
+  "spawnCount": 1,
+  "events": [
+    {
+      "kind": "spawn",
+      "id": 0,
+      "pid": 19544,
+      "args": [
+        "G:/ggq/tmp/506-511-qa/scripts/fake-codex.mjs",
+        "mcp",
+        "list",
+        "--json",
+        "--config",
+        "features.plugins=false",
+        "--config",
+        "features.apps=false",
+        "--config",
+        "features.memories=false",
+        "--config",
+        "features.hooks=false",
+        "--config",
+        "features.multi_agent=false",
+        "--config",
+        "features.goals=false"
+      ],
+      "cwd": "G:\\ggq\\tmp\\506-511-qa\\runs\\L1-listing-hang-cancel-k2WZtd\\work",
+      "at": 2284.5
+    },
+    {
+      "kind": "stderr-first",
+      "id": 0,
+      "at": 2435.6
+    },
+    {
+      "kind": "kill",
+      "id": 0,
+      "signal": "SIGTERM",
+      "at": 2486.8
+    },
+    {
+      "kind": "exit",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 2520
+    },
+    {
+      "kind": "close",
+      "id": 0,
+      "code": null,
+      "signal": "SIGTERM",
+      "at": 2520.1
+    }
+  ],
+  "helpersAtSettle": [],
+  "helpersAliveAfterWait": [],
+  "turnAttempt": false,
+  "leaks": []
+}

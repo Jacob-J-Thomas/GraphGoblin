@@ -1,0 +1,9 @@
+$ pnpm --filter @graphgoblin/api exec tsx --conditions=development scripts/check-templates.mjs
+Templates: 4 shipped starting points valid; deliberately invalid graphs refused.
+$ node tooling/scripts/check-licenses.mjs
+Licence allowlist: OK (226 packages checked)
+$ pnpm --filter @graphgoblin/contracts build && node tooling/scripts/gen-docs.mjs --check
+$ tsc -b tsconfig.build.json
+Generated docs are up to date.
+$ node tooling/scripts/design-contrast.mjs --check
+Design contrast: 0 failing enforced pair(s)

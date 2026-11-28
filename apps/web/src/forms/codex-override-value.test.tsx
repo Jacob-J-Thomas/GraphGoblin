@@ -132,3 +132,49 @@ describe('Codex config override values in the node editor (#429)', () => {
     30_000,
   );
 });
+
+describe('an issue inside a committed Codex override Value in the node editor (#521)', () => {
+  it('describes the owning Value, takes its issue link there, and saves once corrected', async () => {
+    const api = new FakeApi();
+    const overrides = { example: { previous: true }, 'example.outer': 'sibling' };
+    const definition = loopWith({
+      prompt: { template: 'Summarise the notes.' },
+      harnessOptions: { configOverrides: overrides },
+    });
+    const loop = api.addLoop(definition);
+    const dialog = await openOverrides(api, loop.id, definition);
+    const saved = () => harnessOptionsOf(api.loops.get(loop.id)!.draft!.definition);
+    const value = screen.getByLabelText('Config overrides value 1');
+    const sibling = screen.getByLabelText('Config overrides value 2');
+
+    setCode('Config overrides value 1', '{"outer":{"team docs":true}}');
+    const message = `outer.team docs: ${CODEX_CONFIG_KEY_MESSAGE}`;
+    expect(value).toHaveAttribute('aria-invalid', 'true');
+    expect(value).toHaveAccessibleDescription(message);
+    expect(sibling).not.toHaveAttribute('aria-invalid');
+    // A schema issue of the committed draft: no held text, and the tab counts it once.
+    expect(store().fieldErrors['node:infer']).toBeUndefined();
+    expect(harnessOptionsOf(store().definition)?.configOverrides).toEqual({
+      ...overrides,
+      example: { outer: { 'team docs': true } },
+    });
+    expect(within(dialog).getByRole('tab', { name: /^Settings/ })).toHaveAccessibleName(
+      /\b1 error\b/,
+    );
+
+    // The issue's link, as the node's issue list follows it, reaches the owning Value.
+    act(() => (document.activeElement as HTMLElement | null)?.blur());
+    act(() => store().openNode('infer', { field: `config.${VALUE_PATH}.outer.team docs` }));
+    await waitFor(() => expect(value).toHaveFocus());
+
+    // Corrected, the Value is clean and the whole draft is saved.
+    const corrected = { outer: { team_docs: true } };
+    setCode('Config overrides value 1', JSON.stringify(corrected));
+    expect(value).not.toHaveAttribute('aria-invalid');
+    await waitFor(
+      () => expect(saved()?.configOverrides).toEqual({ ...overrides, example: corrected }),
+      { timeout: 5000 },
+    );
+    await waitFor(() => expect(store().saveState).toBe('saved'));
+  }, 30_000);
+});

@@ -8,6 +8,7 @@
  * harness turns, decider availability, structured completions, timer polls, and extra API
  * instances with other configuration (for example `GG_REQUIRE_API_KEY=true`).
  */
+import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { z } from 'zod';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
@@ -77,6 +78,19 @@ const ClassifierReplySchema = z.discriminatedUnion('type', [
   }),
 ]);
 const classifierReplies = new Map<string, z.infer<typeof ClassifierReplySchema>[]>();
+/**
+ * One request an owned credential-actor instance answered (#562): which of its two keys presented
+ * the bearer, by label only. Tokens are never kept here or returned from it.
+ */
+interface CredentialAuditEntry {
+  method: string;
+  path: string;
+  status: number;
+  /** `actor-a`/`actor-b`, `none` without a bearer, or `unrecognised` for any other bearer. */
+  actor: string;
+}
+const credentialAudits = new Map<string, CredentialAuditEntry[]>();
+const tokenDigest = (token: string) => createHash('sha256').update(token).digest('hex');
 const claudeEfforts = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
 const readyClaudePreflight = HarnessPreflightSchema.parse({
   state: 'ready',
@@ -607,6 +621,49 @@ async function control(request: IncomingMessage, response: ServerResponse): Prom
         await rm(dataDir, { recursive: true, force: true, maxRetries: 5 });
         throw error;
       }
+    }
+    case '/apps/credential-actors': {
+      // Controlled setup for #562: an owned API instance with the fake provider only (explicitly
+      // without Ollama) that requires API keys. Its one disposable owner holds two valid keys, and
+      // every request the instance answers is audited by the label of the key presented, as the
+      // instance received it; the plaintext tokens go only to the spec that types them.
+      const instance = await startApp({ GG_OLLAMA_ENABLED: 'false' }, true);
+      const actors: Record<string, { keyId: string; token: string }> = {};
+      const labels = new Map<string, string>();
+      for (const [name, label] of [
+        ['a', 'actor-a'],
+        ['b', 'actor-b'],
+      ] as const) {
+        const { record, token } = await instance.app.container.repos.apiKeys.create(
+          'local',
+          label,
+          ['*'],
+        );
+        actors[name] = { keyId: record.id, token };
+        labels.set(tokenDigest(token), label);
+      }
+      const audit: CredentialAuditEntry[] = [];
+      credentialAudits.set(instance.id, audit);
+      instance.app.app.server.on(
+        'request',
+        (incoming: IncomingMessage, outgoing: ServerResponse) => {
+          const bearer = /^Bearer\s+(.+)$/i.exec(incoming.headers.authorization ?? '')?.[1]?.trim();
+          const actor =
+            bearer === undefined ? 'none' : (labels.get(tokenDigest(bearer)) ?? 'unrecognised');
+          const method = incoming.method ?? '';
+          const path = new URL(incoming.url ?? '/', 'http://audit.invalid').pathname;
+          outgoing.once('finish', () =>
+            audit.push({ method, path, status: outgoing.statusCode, actor }),
+          );
+        },
+      );
+      return { instanceId: instance.id, url: instance.url, actors };
+    }
+    case '/credential-audit': {
+      const instance = selectedInstance(body);
+      const audit = credentialAudits.get(instance.id);
+      if (!audit) throw new E2eControlError('no credential audit for ' + instance.id);
+      return { entries: audit };
     }
     case '/apps': {
       if (body['threadHistory'] === true) {

@@ -1,0 +1,63 @@
+{
+  "name": "D3-own-release-identity-mismatch",
+  "issue": "#542",
+  "system": "own guard release EPERM with a live successor whose recorded creation identity mismatches",
+  "checks": [
+    {
+      "what": "exit 1, rolled back",
+      "ok": true,
+      "detail": "Error: Store acquisition rolled back because reclamation cleanup failed: G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D3-own-release-identity-misma"
+    },
+    {
+      "what": "original EPERM kept, mismatch is a decision (no probeFailures)",
+      "ok": true
+    },
+    {
+      "what": "one rmdir attempt",
+      "ok": true
+    },
+    {
+      "what": "successor intact",
+      "ok": true
+    },
+    {
+      "what": "main lock rolled back",
+      "ok": true
+    }
+  ],
+  "successor": {
+    "pid": 65340,
+    "creationTime": "134401594310022410",
+    "recorded": "134401594310022411",
+    "token": "dfecebc0-0287-4328-accd-8f5c9b106638"
+  },
+  "startup": {
+    "code": 1,
+    "signal": null,
+    "listened": false,
+    "stderr": "Error: Store acquisition rolled back because reclamation cleanup failed: G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D3-own-release-identity-mismatch\\data\\graphgoblin.lock\n    at acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:684:19)\n    at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n    at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n    at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n  [cause]: Error: Store ownership recovery-directory-remove failed (EPERM): G:\\ggq\\tmp\\rq-542-qa\\runs\\faults-2026-11-26T09-32-59-710Z\\D3-own-release-identity-mismatch\\data\\graphgoblin.lock.reclaim\n      at filesystemFailure (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:134:26)\n      at removeEmptyRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:313:15)\n      at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:412:29\n      ... 3 lines matching cause stack trace ...\n      at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n    code: 'EPERM',\n    operation: 'recovery-directory-remove',\n    markerToken: null,\n    [cause]: Error: rq fixture guard removal refusal\n        at synthetic (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:17:50)\n        at Object.rmdir (file:///G:/ggq/tmp/rq-542-qa/scripts/fault-preload.mjs:121:13)\n        at async removeEmptyRecovery (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:285:9)\n        at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:412:29\n        at async acquireDataDirLock (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/data-dir-lock.js:675:13)\n        at async createContainer (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/container.js:52:33)\n        at async file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:57:23\n        at async serve (file:///G:/ggq/gg-r542/GraphGoblin/apps/api/dist/serve.js:118:16) {\n      code: 'EPERM'\n    }\n  }\n}\n",
+    "stdoutLines": 1,
+    "stdoutTail": "",
+    "faultLog": [
+      "preload-registered",
+      "unlink:4599995f-b305-443a-b5ad-5375565d0c98.json",
+      "rmdir:graphgoblin.lock.reclaim",
+      "guard-rmdir-fault:successor",
+      "unlink:graphgoblin.lock"
+    ]
+  },
+  "filesAfter": [
+    {
+      "path": "graphgoblin.lock.reclaim",
+      "type": "dir"
+    },
+    {
+      "path": "graphgoblin.lock.reclaim\\dfecebc0-0287-4328-accd-8f5c9b106638.json",
+      "type": "file",
+      "size": 103,
+      "text": "{\"pid\":65340,\"windowsCreationTime\":\"134401594310022411\",\"token\":\"dfecebc0-0287-4328-accd-8f5c9b106638\"}"
+    }
+  ],
+  "ms": 4624,
+  "pass": true
+}

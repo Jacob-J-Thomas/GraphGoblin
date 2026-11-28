@@ -1,0 +1,130 @@
+{
+  "facts": {
+    "pendingGuard": "current",
+    "pendingCount": 3,
+    "inspectedDirsBefore": {
+      "inspect-pending": [
+        "gateway.db"
+      ],
+      "inspect-format4": [
+        "gateway.db"
+      ],
+      "inspect-format3": [
+        "gateway.db"
+      ]
+    },
+    "inspectedDirsAfter": {
+      "inspect-pending": [
+        "gateway.db",
+        "gateway.db-shm",
+        "gateway.db-wal"
+      ],
+      "inspect-format4": [
+        "gateway.db",
+        "gateway.db-shm",
+        "gateway.db-wal"
+      ],
+      "inspect-format3": [
+        "gateway.db",
+        "gateway.db-shm",
+        "gateway.db-wal"
+      ]
+    }
+  },
+  "summary": [
+    {
+      "id": "N1",
+      "kind": "positive",
+      "store": "pending",
+      "defaults": {
+        "model": "gpt-rq-stored-only",
+        "effort": "low"
+      },
+      "preflightExit": 0,
+      "preserved": true,
+      "lines": [
+        "WARN    Database        3 migration(s) pending; they are applied on the next start",
+        "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "ok      Default model   gpt-rq-stored-only (codex) is in the model catalog and supports effort low"
+      ]
+    },
+    {
+      "id": "N2",
+      "kind": "negative",
+      "store": "pending",
+      "defaults": {
+        "model": "gpt-5.5",
+        "effort": "high"
+      },
+      "preflightExit": 1,
+      "preserved": true,
+      "lines": [
+        "WARN    Database        3 migration(s) pending; they are applied on the next start",
+        "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "FAIL    Default model   GG_DEFAULTS.byHarness.codex.effort \"high\" is not supported by gpt-5.5 in the model catalog (EFFORT_UNSUPPORTED); start refuses it. Pick an effort the model lists"
+      ],
+      "startupExit": 1,
+      "startupPreserved": true,
+      "startupStderr": [
+        "GraphGoblin did not start: Invalid GG_DEFAULTS (EVALUATION_INVALID_CONFIGURATION).",
+        "  codex: EFFORT_UNSUPPORTED at effort (model \"gpt-5.5\", effort \"high\"): The default reasoning effort is not supported by its model.",
+        "No stored data was changed. Set GG_DEFAULTS to a model and effort the model catalog lists, or remove it, then start again."
+      ]
+    },
+    {
+      "id": "N3",
+      "kind": "negative",
+      "store": "pending",
+      "defaults": {
+        "model": "gpt-6.1-terra",
+        "effort": "medium"
+      },
+      "preflightExit": 0,
+      "preserved": true,
+      "lines": [
+        "WARN    Database        3 migration(s) pending; they are applied on the next start",
+        "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "WARN    Default model   gpt-6.1-terra is in the model catalog but disabled"
+      ]
+    },
+    {
+      "id": "N4",
+      "kind": "positive-control",
+      "store": "format4",
+      "defaults": {
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "preflightExit": 0,
+      "preserved": true,
+      "lines": [
+        "ok      Database        reachable and migrated",
+        "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "ok      Default model   gpt-6-luna (codex) is in the model catalog and supports effort low"
+      ]
+    },
+    {
+      "id": "N5",
+      "kind": "negative",
+      "store": "format3",
+      "defaults": {
+        "model": "gpt-6-luna",
+        "effort": "low"
+      },
+      "preflightExit": 1,
+      "preserved": true,
+      "lines": [
+        "FAIL    Database        The store is format 3; this build reads only format 4. Start refuses this store and converts nothing; to start fresh, list what a reset removes with node apps/api/dist/main.js --reset --data-dir \"G:\\ggq\\tmp\\preflight-rq-01\\native\\work\\N5-data\"",
+        "ok      Harness codex   codex 0.160.0 is installed and logged in",
+        "WARN    Default model   The configured Codex model and effort are not checked until the database is current and readable"
+      ],
+      "startupExit": 1,
+      "startupPreserved": true,
+      "startupStderr": [
+        "GraphGoblin did not start: this build cannot open the store in data directory G:\\ggq\\tmp\\preflight-rq-01\\native\\work\\N5-data.",
+        "  Database: G:\\ggq\\tmp\\preflight-rq-01\\native\\work\\inspect-format3\\gateway.db",
+        "  Found:    format 3"
+      ]
+    }
+  ]
+}

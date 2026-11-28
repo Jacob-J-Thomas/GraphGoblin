@@ -4,6 +4,220 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
 
 ## Unreleased
 
+- Windows launcher cold starts follow the configured startup timeout
+  ([ADR-0092](docs/decisions/ADR-0092-configured-windows-helper-allowance.md)): the enrollment
+  and initial ownership checks each allow `max(15, StartupTimeoutSeconds)` seconds, 60 in the
+  default installation, instead of the fixed 15 seconds kept by the #459 entry below, so a valid
+  check that answers in 16 seconds under a 25-second timeout now succeeds. Held-store rechecks
+  still share the store-release wait and use the same allowance as their cap; the installer's own
+  enrollment keeps 15 seconds. Concurrent draining of both streams, bounded exit and EOF waits and
+  descendant collection stay with the private-job helper (#459, ADR-0086). Helper refusals keep
+  their codes and guidance and add the check, the outcome, the launcher-measured time, the
+  allowance and the stdout and stderr byte counts, never helper output; a held refusal after a
+  failed recheck appends that recheck's observation. A successful check that takes five seconds
+  or more leaves one closed `slow-check` record in `launcher.log`. Unknown ownership remains
+  protected. This integrates PR #460 onto the current launcher. **Upgrade:** rebuild and
+  reinstall the launcher by rerunning `install-windows-launcher.ps1` from the updated checkout;
+  the launcher configuration, enrollment and shortcuts keep their format. The store, API and
+  stored formats need no migration, reset or manual change. Part of #458.
+
+- API startup keeps its original failure when lock or container cleanup also fails (#560), and
+  Windows store recovery reports two more situations precisely (#542, #537). A failed write,
+  attestation or close of a newly created lock record now closes its handle once and removes the
+  record once, only after proving it is this acquisition's own: a partial record by the identity
+  its handle reported before closing, a complete one by its exact random-token bytes, at the
+  configured path without following links. A foreign or already removed file is left alone; a
+  record that cannot be proven or removed is kept with this process's reservation and named in
+  the error. If closing the read-only or mutable SQLite connection fails during container setup,
+  both store leases are kept until the process exits, because the connection may still be open;
+  otherwise the database lease and then the data-directory lease are each released once, even if
+  the first release fails. When cleanup leaves anything to report, the original failure stays
+  first in one tagged error with each failed step's label and code and the ownership kept. Shell
+  startup prints the original failure as before plus one line such as
+  `cleanup also failed: database-close (EIO); ownership retained: ...`, without cleanup
+  error messages; the launcher's managed record keeps the original failure's closed cause, and a
+  fully settled cleanup throws the original error unchanged. On Windows, when removing this
+  process's own emptied recovery guard is denied and a different directory now holds a verified
+  live successor (one new UUID marker, a live foreign PID with a matching creation identity,
+  unchanged after the identity check), startup keeps its main lock instead of rolling back and
+  claims no extra reclamation; an unknown captured guard identity or any unverified state keeps
+  the existing rollback. Failed reads of a recovery marker that still exists are labelled
+  `observed-marker-read` or `recovery-marker-read` with the marker's UUID, a vetted code and the
+  original error as the cause, and failed read-only probes made while classifying a guard-removal
+  denial are attached to that error as bounded `probeFailures`. The verified-successor
+  acquisition refusal, main owner record reads, reset accounting, the lock formats and the
+  managed record format are unchanged, as are returned-container disposal, shutdown and `serve`
+  stop. Controlled filesystem faults establish these decisions; they do not identify the cause
+  or frequency of earlier Windows recovery failures. See
+  [Security and distribution](docs/11-security-and-distribution.md) and
+  [ADR-0091](docs/decisions/ADR-0091-bounded-startup-ownership-cleanup.md).
+
+- API startup now prints a refused hard-linked SQLite database as one stack-free line with exit
+  code 1 (#533), as it already does for held or unverifiable ownership. Under any of the file's
+  names the line names its canonical path and keeps the existing guidance to use one ordinary
+  SQLite file so GraphGoblin can establish exclusive ownership, with control characters and line
+  separators escaped; it previously printed the same text with a stack trace. The refusal, its
+  wording, the untouched database bytes and the released locks are unchanged, as are `--reset`
+  and `--create-api-key` output for the same file. The Windows launcher's managed gateway keeps
+  its closed `store`/`store-unavailable` record and exit code 74. Other startup failures,
+  including unexpected filesystem errors and errors that only repeat this text, keep their stack.
+  No store, lock, export or contract change.
+
+- A reset now removes a SQLite sidecar as the directory entry its name opens and keeps every
+  other hard link of that file (#538). Before, when a `-wal`, `-shm` or `-journal` file had another
+  name in the same directory, the reset could list and unlink whichever name the directory listed
+  first. It still reported success and left the surviving name out of Keeps. Now the exact listed
+  name is used. Another spelling counts only when it is the one listed name with that file identity,
+  or on Windows the listed link the filesystem's final path names in the same directory; otherwise
+  the reset refuses. Another top-level name of a removed sidecar is listed under Keeps as
+  `another name for <sidecar>` and keeps its bytes. When `GG_DB_URL` spells the database file
+  differently from the directory listing, both sidecar spellings must name the same entry or none
+  before the store is read. A sidecar that is also one of the reset's lock files or guards, or a
+  reserved top-level name, is refused, and earlier lock refusals keep their diagnostics. An
+  ambiguity first seen under the locks refuses before removal and releases them. The exported
+  manifest check, lock module, store reader and stored formats are unchanged, so no upgrade action
+  is needed. Sidecars under 8.3 short names, macOS, and network or non-NTFS volumes are not
+  qualified by this change.
+
+- Preflight checks `GG_DEFAULTS` against the model catalog start uses (#545, #546). A Codex
+  effort its model does not offer now fails with `EFFORT_UNSUPPORTED`, as start refuses it; an
+  omitted Codex effort is a warning, because start accepts it but a run then needs a supported
+  effort from its loop or Settings defaults. The Codex `ok` detail names the effort. A current
+  store with pending migrations is checked against its stored rows, read as startup reads them
+  before migrating, plus the shipped models it lacks, so stored disabled rows, stored-only models
+  and stored effort lists count as they do at startup. Missing and empty stores still use the
+  shipped catalog. An unsupported or unreadable store still fails its database check; its Codex
+  and Claude default checks now warn that they were not checked instead of reporting a result
+  from the shipped catalog. `GET /system/preflight` applies the same Codex effort rule. Check IDs,
+  the report shape, the Jev and Ollama deferrals and startup policy are unchanged, and preflight
+  still changes no database or existing write-ahead log bytes.
+  **Upgrade:** rebuild the API. Preflight output parsers must allow the new Codex warning and
+  detail text. No schema, stored format or reset change.
+
+- Codex readiness checks and the MCP listing before each turn now wait for the CLI process they
+  started to close after a deadline or cancellation (#506). The first failure (timeout,
+  cancellation or missing CLI) is kept. The runner asks the process to stop, sends one stronger
+  request after one second if it has not exited, and stops waiting after a separate two-second
+  allowance. Preflight removes its temporary probe folder once, after its checks have closed. On
+  native Windows that removal used to run before a timed-out check had closed, and failed with
+  `EBUSY`, leaving the folder. When a check does not confirm that it stopped, the process may
+  still be using the folder, so preflight leaves it in place and does not try to remove it. In
+  that case, or when the removal after close fails, preflight keeps the check's state and adds a
+  fixed problem: `Codex CLI check process did not confirm that it stopped.` or
+  `Codex readiness check could not remove its temporary folder.` A check that had passed still
+  reports `unknown`. A turn whose MCP listing process did not confirm that it stopped now fails
+  `HARNESS_TERMINATION_UNCONFIRMED` with a fixed message naming the listing, even when the turn
+  was cancelled, rather than ending as cancelled or as an ordinary listing failure; no turn
+  starts. With a custom `cancelGraceMs` shorter than the two-second allowance, a cancelled turn
+  can instead end with the harness's generic termination message and the same code. The Codex
+  live smoke suite now creates its working directory only when it runs with `LIVE=1`, so
+  ordinary test runs no longer leave an empty `graphgoblin-live-*` directory in the temporary
+  folder (#511). Folders left by earlier runs are not removed automatically. No store, schema,
+  API or format change.
+
+- The Codex and Claude Code plugin builders explain refused rebuilds and failed replacements
+  (#464, #465, #468). A refusal now names the destination, the affected entries and the recovery
+  (an unused `--out`, or inspecting the old output and moving it aside). It says whether the
+  output's marker from this builder lists a different file inventory, an entry is unexpected or
+  modified, the marker is missing or invalid, or generated files or folders are missing. Formerly
+  a valid marker with a changed inventory was reported as unowned, and a missing generated folder
+  surfaced a raw `ENOENT`. A failed replacement keeps its original error together with any restore
+  or cleanup failure (an `AggregateError` whose `cause` is the original), and says where the
+  previous output or staging directory remains, or that the complete new output was already
+  published before cleanup failed. Both builders now refuse source entries they would not package
+  before touching the output: in the Codex plugin folder, anything besides the manifest,
+  `.mcp.json` and each skill's `SKILL.md`; for Claude, anything besides its plugin folder's
+  manifest, runtime guard and `design-draft.md`, the three shared `SKILL.md` files, and a
+  regular-file `README.md`. Links are refused, not followed. The Claude build also fails, naming
+  the missing text, if the shared run-loop skill loses the `## 1. Find the loop` heading or the
+  draft-consent sentence it adapts. Generated bytes, the marker format and the replacement rules
+  are unchanged. **Upgrade:** move any other file out of the plugin source folders, including
+  editor or operating-system files such as `.DS_Store`. After adding or removing a skill, move the
+  previous output aside or assemble to an unused `--out`.
+
+- `runs.get` and `runs.observation` in `@graphgoblin/api-client` report a successful response whose
+  body the connection cut short as `GraphGoblinApiError` with `status: 0` and the new code
+  `RESPONSE_INTERRUPTED`, keeping the native read error as `cause` (#561). They used to reject
+  with the raw `TypeError`, which offline handling did not recognise. They read the body from the
+  original `Response` and classify only a failed read of a native GET response while the caller's
+  signal is live; an abort keeps its identical reason, and malformed JSON, HTTP refusals
+  (including a refusal with a truncated body), constructed responses and locked or used bodies
+  keep their existing errors. Raw `client.GET`, other wrappers, writes, `parseAs: 'stream'` and
+  SSE are unchanged. No store, schema or format change.
+
+- A record's JSON Value in the structured editor, such as a declared variable's JSON Schema in
+  Variables, refuses an own member named `__proto__` at any depth instead of saving the value
+  without it (#527). The form's copy of a parsed value cannot keep that member, so the Value used
+  to accept the text and autosave the schema narrowed. It now holds the text exactly as typed,
+  marked invalid and described by
+  `<member path>: This member name cannot be saved. Rename or remove it.` (for example
+  `properties.__proto__` or `anyOf.1.__proto__`), beside its Discard button. The draft keeps the
+  entry's last complete value, neighbouring fields still save, and Publish is refused until the
+  member is renamed or removed or the text is discarded; Discard returns focus to the Value's
+  editor. `__proto__` inside a string and members named `constructor`, `prototype`, `__proto` or
+  `proto__` are ordinary and saved as entered. A rule the record's own schema gives, such as the
+  Codex override key rule (#429), still takes precedence with its own message. No stored, export
+  or device-draft format changes, and no stored value is rewritten.
+  [Schema-driven forms](docs/09-frontend-and-pwa.md#what-shipped-in-m5-first-pass-draft)
+
+- A schema error inside a committed JSON Value is shown on that Value (#521). A Codex override
+  whose Value nests a refused key, such as `{"outer":{"team docs":true}}`, used to leave the Value
+  without an inline message, invalid state or description, and its issue link could focus a valid
+  dotted sibling entry such as `example.outer` instead. The owning Value is now marked invalid and
+  described by `<path from the value>: <message>`, and the issue links in the node dialog and on
+  the canvas focus it. An error about the key itself stays on its Key, other rows stay clear, and
+  correcting the member clears the error and lets the draft save and publish.
+
+- A structured section opened with **Edit as JSON** shows the diagnostic for its committed content
+  at once (#522). Opening it over a refused value, such as an override key `bad key`, used to show
+  no rule and leave **Apply JSON** enabled until the text was edited. The opening text is now
+  checked by the same validator as typed text, parent rules included: refused content shows its
+  message inline from the first render, marks the editor invalid and disables Apply. The
+  diagnostic is passive: it holds no input, offers no discard, adds no undo step and changes no
+  save or publish state. It follows sibling changes, returns after **Cancel JSON** with focus kept
+  on Cancel, and valid opening content keeps its ordinary controls.
+
+- The editor header no longer reads **All changes saved** while a field holds input that exists
+  only in this window (#526). Unparsed or unapplied JSON, an incomplete number or schedule and a
+  refused Value (#527) are held apart from the draft, whose saves go on without them. While such
+  input exists the save status shows a second segment, **Field input kept in this window only**,
+  and the draft part names what was kept: **Draft saved** for a server copy, or **Draft saved on
+  this device only**, **Draft kept in this window only**, **Offline: draft saved on this device**
+  or **Offline: draft kept in this window only**. One polite announcement says **Field input kept
+  in this window only** as held input begins, inside the node dialog while it is open and on the
+  page otherwise, and nothing more is announced while typing continues. Correcting or discarding
+  the field returns the ordinary status, and a reload restores only the complete draft. The
+  indicator changes nothing in the save state, drafts, API or device storage, and other statuses
+  read as before.
+
+- A selected connection's **Remove connection** (and **Reset route**) stays inside the canvas
+  after Fit view, and wholly hittable in the reproduced desktop, coarse-pointer and narrow
+  layouts (#479). With the side panels collapsed, Fit put a Decision loop-back's label about
+  31 px under the canvas's top, so the toolbar above it was clipped: only its bottom 13.5 px drew
+  on a desktop, and a coarse pointer's 44 px target lost part of its height in the opening and
+  both Fits. The row of controls is now placed from the canvas pane and its own measured box,
+  8 px inside the pane: above its label as before when it fits, otherwise 18 px below the label
+  when that fits and covers no segment handle or card port, otherwise clamped inside the pane on
+  the side with more room. Views that already had room above keep the toolbar exactly where it
+  was; a label that leaves the canvas takes the toolbar with it; on a 320 px window a row with
+  **Crosses a card**, **Reset route** and **Remove connection** wraps with **Remove connection**
+  last. Fit, pans and zooms re-place it and never save or add history; a pan re-renders the
+  toolbar only when its place changes, while a zoom re-renders it through the zoom subscription
+  its handles already had. A held **Reset route** keeps its place until the view changes, so
+  later presses still land on it, and a shared id's note stays on the far side of the controls.
+  Known limits: on very small coarse-pointer canvases (320 × 568) the row can sit partly under
+  the canvas's zoom controls, its centre still hittable; and where Below would cover a port and
+  below is the roomier side, the clamped row stays there over the port while the connection is
+  selected. Fit view, its padding, saved routes and labels, the gesture gate and every refusal
+  are unchanged; no stored format or API change.
+
+- Windows launcher evidence records the native warm review-1 regressions (#566, #544) as their
+  own required `warm-review1` case. That test ran outside every recorded case, so its fixture and
+  gateway cleanup records had no case scope and were rejected, and a passing native run finalized
+  as `incomplete` with `records-rejected`. Its records now carry the case and subtest, its start,
+  end, subtests and child processes are required like the other cases', and the schema, the
+  rejection rule and the finalize gate are unchanged. No stored, export or contract change.
+
 - `@graphgoblin/domain` source analysis has one producer per count and diagnostic (#476, #477).
   `renameLoopNode` now reports `repairedSources` (each rewritten reference span in an expression,
   template or mutation pointer, once), `repairedConnections` (each edge with a moved end, once, so
@@ -31,6 +245,76 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   [Explicit version reads](docs/07-api-and-streaming.md#pinned-definitions-adr-0041)
   **Upgrade:** rebuild the API. No schema, stored format or reset change; no stored content is
   converted.
+
+- The run inspector and the shared header reflow at 320 px with 200% text (#563). The header grows
+  and wraps instead of a fixed 56 px row (Menu on its own row below 640 px, wrapping links from
+  640 px, the menu panel under its real bottom edge); the inspector's page is one shrinkable
+  column; the complete run ID, replay origin, Resume reason and the selected event's titles and
+  values wrap anywhere, with the ID still selected and copied exactly; the run controls take at
+  most half the run header from 640 px, so enlarged text no longer covers the run ID at 1440 px;
+  and inspector, review, history and Timeline paging buttons wrap their labels instead of
+  cutting them short. A run waiting for input keeps its prompt and form inside the **Input
+  requested** card (with or without an input schema): `JsonSchemaForm`'s submit button, also
+  **Start run** on New run, wraps its label instead of widening the form. Layouts that fit are
+  unchanged within 0.5 px, and DOM order, names, the
+  keyboard order and the Timeline's single Tab stop are kept. No text is hidden, shortened or
+  made smaller.
+
+- The run inspector sends a write only under the accepted API key it was chosen under (#562).
+  Pause, resume, cancel, replay, script recovery, **Start fresh session**, input and signal answers
+  and the delete-ready preview and confirmation are bound to the key store's opaque credential
+  generation, and the app's API-key fetch compares it in the step that reads the key to send,
+  after every queued and middleware await, so a change in another tab, a rejection, forgetting the
+  key or accepting the same key again after a rejection sends nothing chosen before it. An open
+  review closes and says so ("Review closed: this browser's API key changed. Nothing was sent.
+  …"), returning focus to its trigger or its status line, never taking it from the API key panel;
+  a queued write reports "Not sent: this browser's API key changed before … was sent."; a write
+  already sent stays the one request and, if it settles under another key, shows neither its IDs,
+  its error nor its new run and does not navigate, only that it was requested. Saving the key that
+  is already accepted keeps reviews and consent. Server authorization, the actor model, the
+  event-qualified header and #575's outage boundaries are unchanged.
+
+- The Windows launcher installer refuses a PWA shortcut, or an existing launcher output, that
+  Windows reports as a link or other reparse point, as files in cloud-synced folders can be, and
+  says to use ordinary local paths that are not synced (#499). The source is refused from the
+  attributes already read, before its digest, any stage or any shortcut read. The check just
+  before publication reads the selected `-PwaShortcut` path again rather than only its earlier
+  target, so a path that now reaches the same file through a link is refused the same way, without
+  hashing. "The PWA shortcut changed during preparation" now means only a different, missing or
+  modified file. A file symbolic link source, previously followed to its target, is now refused.
+  An output refusal names the parameter that selected it (`-InstallDir`, `-DesktopShortcut`,
+  `-StartMenuShortcut` or `-PinnedShortcut`). Collision refusals still come first, and the
+  directory and extension refusals and staged publication with rollback are unchanged. The
+  installer recognizes only the reparse attribute Windows reports: it adds no sync-service support
+  and does not promise that a service will not download a refused placeholder. The install and
+  troubleshooting guides cover redirected and synced Desktop folders.
+  **Upgrade:** if your Chrome shortcut or launcher outputs are in a synced folder, copy the
+  shortcut to an ordinary local folder and rerun the installer with explicit `-PwaShortcut`,
+  `-InstallDir`, `-DesktopShortcut` and `-StartMenuShortcut` paths. No store, export or
+  stored-data change.
+
+- The Windows launcher reuses a running gateway without waiting for helpers, locks or the
+  checkout's files (#566, #544, ADR-0090). `/healthz` adds `X-GraphGoblin-Launch-Identity`, a
+  versioned digest of the effective non-secret settings and canonical store and serving paths that
+  ignores the Node runtime and build. The installer enrolls it once through the configured runtime
+  and binds it to the launcher's exact checkout, Node, data-directory, port and `GG_*` inputs; a
+  click first probes the port and reuses a ready gateway with that identity whose store still
+  resolves to the enrolled locations. Startup locks, helper containment and the full fingerprint
+  check apply only to cold start, which also refuses settings that drifted from the enrollment.
+  Under a host job policy that refuses process creation, a warm click now succeeds without
+  attempting one; a cold start still refuses. A configuration changed while a click waited, a
+  retargeted store alias (including one that now names a different object differing only in
+  letter case), a matching gateway whose `/app/` answers 404 or 410, and an occupied but silent
+  port are refused without stopping anything; the missing web shell is refused at once. Both
+  health digests and the enrollment come from one observation of the store and serving paths.
+  Simultaneous clicks open one PWA window, a click whose window time is nearly spent never starts
+  Chrome late, and a missing or refused Chrome start names the running gateway's address. The full
+  fingerprint, `/healthz` body and other headers are unchanged.
+  **Upgrade:** a coordinated cutover. Shut down a running gateway from an earlier build
+  deliberately once, update and build the checkout, then rerun
+  `scripts/install-windows-launcher.ps1`; a launcher JSON without enrollment is refused until
+  then. Rerun the installer after editing the launcher's Repo, Node, DataDir, Port or overrides.
+  No store, export or stored-data change.
 
 - `pnpm check:qa --base <ref>` checks the QA packet paths selected for publication before a
   delivery publishes them (#524). It selects the `docs/qa` paths changed from the merge base with
@@ -78,7 +362,12 @@ All notable changes to GraphGoblin. The design is in [docs/](docs/README.md); th
   shared removal when the guard is absent and checks it again if another process removed the
   observed stale marker during a read or deletion. If the empty guard survives and this caller
   removes it, confirmed reset counts that reclamation. A denial with unverified ownership retains
-  its filesystem diagnostic.
+  its filesystem diagnostic. These rechecks are bounded: if the marker disappears during the
+  eighth acquisition attempt's read, or the stale-marker unlink on that final attempt finds it
+  already gone, startup reports that store ownership could not be verified at the acquisition
+  attempt limit (managed cause `store-ownership-unverified`) rather than naming a live owner. The
+  read-only status check used by `--reset` and the launcher likewise reports the guard as held,
+  with that uncertainty, after eight unsettled observations.
 
 - The run inspector treats its event stream's transport failure as an outage of the run it shows
   from that moment (#575). Previously a run read already in flight when the API listener

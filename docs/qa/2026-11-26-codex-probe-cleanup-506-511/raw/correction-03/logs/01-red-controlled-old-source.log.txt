@@ -1,0 +1,42 @@
+
+ RUN  v5.0.3 G:/ggq/gg-fu-codex-cleanup-20261124/GraphGoblin/packages/adapter-codex
+
+ ❯ src/probe-directory.test.ts (21 tests | 1 failed | 16 skipped) 30ms
+   ❯ Codex readiness probe settlement (#506) (7)
+     × retains its probe before confirmed close, given a timed-out check that did not confirm … 17ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/probe-directory.test.ts > Codex readiness probe settlement (#506) > retains its probe before confirmed close, given a timed-out check that did not confirm …
+AssertionError: expected [ Array(1) ] to deeply equal []
+
+- Expected
++ Received
+
+- []
++ [
++   "G:\\ggq\\tmp\\a3-506-511\\gg-codex-retained-R1zkZp\\gg-codex-probe-7d70dfdb",
++ ]
+
+ ❯ src/probe-directory.test.ts:336:24
+    334|       // Once the check has closed, the probe is removed once.
+    335|       const removals = vi.mocked(probeFs.rm).mock.calls.map(([path]) =…
+    336|       expect(removals).toEqual(closed ? [directory] : []);
+       |                        ^
+    337|       const left = await probeFs.readdir(directory).then(
+    338|         (entries) => entries,
+ ❯ src/probe-directory.test.ts:58:7
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed (1)
+      Tests  1 failed | 4 passed | 16 skipped (21)
+   Start at  21:27:44
+   Duration  2.77s (import 64%, transform 35%, tests 1%)
+
+Error: ERR_PNPM_RECURSIVE_EXEC_FIRST_FAIL
+
+  × "pnpm recursive exec" failed in G:\ggq\gg-fu-codex-cleanup-
+  │ 20261124\GraphGoblin\packages\adapter-codex
+

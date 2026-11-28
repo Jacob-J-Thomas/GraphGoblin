@@ -1,0 +1,79 @@
+CHANGES REQUIRED (one P2 FIX-IN-PR test defect found during native QA; no product defect found)
+
+# W2 testing-found review note: Windows launcher candidate `9f11b6e6`
+
+Reviewer: Claude Opus 5.5 (independent QA, W2). Brief `BRIEF-W2-windows-native-qa.md`: the phase 1
+review was already done for this candidate, so this note covers only the defect found while testing.
+It does not replace the opposite-family GPT review or the Astra MAX final audit.
+
+Candidate: `G:/ggq/gg-followups-20261124/GraphGoblin`, branch `codex/gg-followups-20261124`.
+The brief named HEAD `ac007e38`. The docs-only commit it allowed for has since landed:
+`9f11b6e6` changes only `docs/10-testing-and-quality.md` (+25 lines), and all runs bind
+`9f11b6e6`. PR #589 has the same head.
+
+## Root-cause ledger
+
+| ID | Severity | Signature | Disposition |
+| --- | --- | --- | --- |
+| F1 | P2 | `installer-acceptance/reinstall-equality-ignores-566-enrollment` | FIX-IN-PR (test only) |
+
+### F1 (P2, FIX-IN-PR): the #498 reinstall subtest fails on every venue, because its cross-install equality includes the #566 `Enrollment` block
+
+- **Where:** `tooling/scripts/windows-launcher.acceptance.mjs:1432-1437`, in the subtest
+  `public first install and same-path reinstall persist changed settings and every shortcut`
+  (installer case `:818`). The assertion is:
+
+  ```js
+  assert.deepEqual(
+    { ...installed[1], Environment: null },
+    { ...installed[0], Environment: null },
+  );
+  ```
+
+- **Evidence:**
+  - Local native run 1 (`raw/4-windows-powershell-run1/stdout.log`) fails here with
+    `ERR_ASSERTION`. Every other persisted field is equal. Only `Enrollment.Inputs` and
+    `Enrollment.Launch` differ:
+    - Inputs: `e5ed48c4…` (warn install) vs `dcf9bb15…` (debug install).
+    - Launch: `v1:71765c33…` vs `v1:5bdfaa80…`.
+  - Hosted CI run 45753412843, job "Windows launcher", tested the same head `9f11b6e6`.
+    It fails at the same assertion with the same shape: 50 tests, 48 pass, 2 fail (this subtest
+    and its parent). Copy: `raw/ci-hosted-run45753412843-windows-job/job-139686296647.log`,
+    lines 507-590.
+- **Why it is deterministic:** the subtest installs twice with only `GG_LOG_LEVEL` changed (`warn`,
+  then `debug`). Since #566, the installer embeds one enrollment in the config:
+  - `Enrollment.Inputs` is a digest over Repo, Node, DataDir, Port and the explicit sorted `GG_*`
+    overrides (architecture; `gatewayInputsDigest` in the suite). A changed `GG_LOG_LEVEL` must
+    change it.
+  - `Enrollment.Launch` projects `logLevel` (`apps/api/src/instance-identity.ts:116`), so it must
+    change too.
+
+  Both differences are the designed behaviour. The assertion can never pass on this candidate.
+- **Origin:** a semantic merge conflict.
+  - The subtest was written in `0776af43` on base `154e78d5`, which predates #566 (no `enroll` in
+    the installer at that base).
+  - `b07e1524` merged it into the warm branch (`ab1ca9c3`), whose installer embeds `Enrollment`.
+  - W1 and R1 did not run the installer case natively after that merge. I found no earlier native
+    run of it at or after `b07e1524` in the evidence I read.
+- **Impact:**
+  - The maintained Windows installer case, and so the hosted "Windows launcher" job, is red on
+    every venue.
+  - The subtest's final assertion (`:1438`, pinned-shortcut publication differs from its seed)
+    never executes. #498's pinned-shortcut acceptance item is therefore not established by the
+    maintained regression as written.
+  - The other assertions in that subtest ran and passed for both installs: persisted settings,
+    links, AppUserModelID, unchanged source and aliases, empty store and no stages.
+  - No product behaviour is wrong.
+- **Suggested fix (test only):**
+  - Exclude `Enrollment` as well as `Environment` from the cross-install equality.
+  - Assert the enrollment directly:
+    - per install: `Inputs === gatewayInputsDigest(persisted)` and `Launch` matches `^v1:[a-f0-9]{64}$`;
+    - across installs: `Version`, `DataDir`, `Database`, `Lookup` and `Target` are equal, while
+      `Inputs` and `Launch` differ because the changed setting is a projected one.
+  - Keep `:1438`.
+  - Then rerun the installer case on hosted CI, the venue that also has the file-symlink
+    prerequisite for the #499 subtests.
+
+## Not reviewed
+
+Everything else was reviewed by the earlier phase 1 (R1 and others) and is outside this note.

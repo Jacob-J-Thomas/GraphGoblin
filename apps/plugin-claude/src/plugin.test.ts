@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import { cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readdir, readFile, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join, sep } from 'node:path';
+import { join, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { LoopDefinitionSchema } from '@graphgoblin/contracts';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -9,6 +9,31 @@ import { isEntryPoint, run } from './cli.js';
 import { adaptSkill, assembleClaudePlugin, defaultPaths } from './index.js';
 
 const packageDir = fileURLToPath(new URL('..', import.meta.url));
+const skillNames = ['design-loop', 'inspect-run', 'run-loop'] as const;
+
+/** Copy this package's inputs into a disposable layout that `defaultPaths` resolves. */
+async function copyPackage(root: string) {
+  const copy = join(root, 'apps', 'plugin-claude');
+  const paths = defaultPaths(copy);
+  const source = defaultPaths(packageDir);
+  await mkdir(copy, { recursive: true });
+  await cp(source.pluginDir, paths.pluginDir, { recursive: true });
+  await cp(join(packageDir, 'README.md'), join(copy, 'README.md'));
+  await cp(source.sharedSkills, paths.sharedSkills, { recursive: true });
+  return { copy, paths };
+}
+
+/** Every entry below `dir` with its text, to show a refusal left an output exactly as it was. */
+async function snapshot(dir: string): Promise<Record<string, string>> {
+  const tree: Record<string, string> = {};
+  for (const entry of await readdir(dir, { recursive: true, withFileTypes: true })) {
+    const path = join(entry.parentPath, entry.name);
+    tree[relative(dir, path).split(sep).join('/')] = entry.isFile()
+      ? await readFile(path, 'utf8')
+      : 'folder';
+  }
+  return tree;
+}
 
 describe('Claude plugin artifact', () => {
   let scratch: string;
@@ -201,6 +226,86 @@ describe('Claude plugin artifact', () => {
       /has no shared draft section/,
     );
     expect(() => adaptSkill('run-loop', '# No frontmatter\n', '')).toThrow(/has no frontmatter/);
+    expect(() => adaptSkill('run-loop', '---\r\nname: run-loop\r\n---\r\n', '')).toThrow(
+      'missing the Claude adaptation anchors "## 1. Find the loop" and "start it from the draft (`allowDraft: true`) only if they agree."',
+    );
+  });
+
+  it('adapts CRLF shared skills to the same text as LF', async () => {
+    for (const name of skillNames) {
+      const shared = join(defaultPaths(packageDir).sharedSkills, name, 'SKILL.md');
+      const lf = (await readFile(shared, 'utf8')).replace(/\r\n/g, '\n');
+      expect(adaptSkill(name, lf.replace(/\n/g, '\r\n'), 'draft\n')).toBe(
+        adaptSkill(name, lf, 'draft\n'),
+      );
+    }
+  });
+
+  it('refuses each missing run-loop anchor before replacing an owned output', async () => {
+    const { copy, paths } = await copyPackage(join(scratch, 'copy'));
+    await assembleClaudePlugin(copy, { outDir, mcpEntry: entry });
+    const before = await snapshot(outDir);
+    expect(before['.graphgoblin-plugin-output.json']).toContain('"kind":"claude-plugin"');
+    const runLoop = join(paths.sharedSkills, 'run-loop', 'SKILL.md');
+    const original = await readFile(runLoop, 'utf8');
+    for (const [anchor, replacement] of [
+      ['## 1. Find the loop', '## 1. Locate the loop'],
+      [
+        'start it from the draft (`allowDraft: true`) only if they agree.',
+        'start it from the draft (`allowDraft: true`) only if they consent.',
+      ],
+    ] as const) {
+      expect(original).toContain(anchor);
+      await writeFile(runLoop, original.replace(anchor, replacement));
+      await expect(assembleClaudePlugin(copy, { outDir, mcpEntry: entry })).rejects.toThrow(
+        `The shared run-loop skill is missing the Claude adaptation anchor ${JSON.stringify(anchor)}. Restore the shared text or update the Claude run-loop adaptation, then assemble again`,
+      );
+      expect(await snapshot(outDir)).toEqual(before);
+      expect(await readdir(scratch)).not.toContain('.output.graphgoblin-build');
+    }
+    // With the shared text restored, a rebuild produces the same bytes and ownership marker.
+    await writeFile(runLoop, original);
+    await assembleClaudePlugin(copy, { outDir, mcpEntry: entry });
+    expect(await snapshot(outDir)).toEqual(before);
+  });
+
+  it('refuses unsupported plugin, shared skill and README inputs before changing the output', async () => {
+    const { copy, paths } = await copyPackage(join(scratch, 'copy'));
+    await assembleClaudePlugin(copy, { outDir, mcpEntry: entry });
+    const before = await snapshot(outDir);
+    const assemble = () => assembleClaudePlugin(copy, { outDir, mcpEntry: entry });
+
+    await writeFile(join(paths.pluginDir, 'notes.md'), 'not packaged');
+    await expect(assemble()).rejects.toThrow(
+      `Unsupported plugin source entries in "${paths.pluginDir}": "notes.md". This builder packages only ".claude-plugin/plugin.json", "check-runtime.cjs", "design-draft.md" from this folder. Move the unsupported entries out of it, or add explicit builder support for them, then assemble again`,
+    );
+    await rm(join(paths.pluginDir, 'notes.md'));
+
+    const shared = join(paths.sharedSkills, 'run-loop');
+    await writeFile(join(shared, 'reference.md'), 'supporting reference');
+    await mkdir(join(shared, 'scripts'));
+    await writeFile(join(shared, 'scripts', 'collect.sh'), 'echo');
+    await expect(assemble()).rejects.toThrow(
+      `Unsupported plugin source entries in "${paths.sharedSkills}": "run-loop/reference.md", "run-loop/scripts/". This builder packages only "design-loop/SKILL.md", "inspect-run/SKILL.md", "run-loop/SKILL.md" from this folder.`,
+    );
+    await rm(join(shared, 'reference.md'));
+    await rm(join(shared, 'scripts'), { recursive: true });
+
+    // Another shared skill is refused rather than silently left out of the Claude plugin.
+    await cp(join(paths.sharedSkills, 'run-loop'), join(paths.sharedSkills, 'review-loop'), {
+      recursive: true,
+    });
+    await expect(assemble()).rejects.toThrow(`: "review-loop/". This builder packages only`);
+    await rm(join(paths.sharedSkills, 'review-loop'), { recursive: true });
+
+    const readme = join(copy, 'README.md');
+    await rm(readme);
+    await mkdir(readme);
+    await expect(assemble()).rejects.toThrow(
+      `Unsupported plugin source entry "${readme}": the package README.md must be a regular file, and links are not followed`,
+    );
+    expect(await snapshot(outDir)).toEqual(before);
+    expect(await readdir(scratch)).not.toContain('.output.graphgoblin-build');
   });
 
   it('accepts CLI overrides and rejects unknown flags', async () => {
@@ -217,15 +322,8 @@ describe('Claude plugin artifact', () => {
   });
 
   it('resolves the default package layout independent of the calling directory', async () => {
-    const fakeApps = join(scratch, 'apps');
-    const fakePackage = join(fakeApps, 'plugin-claude');
-    const paths = defaultPaths(fakePackage);
-    const source = defaultPaths(packageDir);
-    await mkdir(fakePackage, { recursive: true });
-    await cp(source.pluginDir, paths.pluginDir, { recursive: true });
-    await cp(join(packageDir, 'README.md'), join(fakePackage, 'README.md'));
-    await cp(source.sharedSkills, paths.sharedSkills, { recursive: true });
-    await mkdir(join(fakeApps, 'mcp', 'dist'), { recursive: true });
+    const { copy: fakePackage, paths } = await copyPackage(scratch);
+    await mkdir(join(scratch, 'apps', 'mcp', 'dist'), { recursive: true });
     await writeFile(paths.mcpEntry, '');
     expect(await run([], fakePackage, () => {})).toBe(0);
     expect(await readFile(join(paths.outDir, '.mcp.json'), 'utf8')).toContain(

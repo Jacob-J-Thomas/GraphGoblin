@@ -1,0 +1,23 @@
+I replaced the one sentence in `docs/guide/01-install-and-first-run.md` as specified. No other file was touched, nothing is staged, and both checks pass.
+
+**Change (line 261, the "Check readiness and run the starter graph" section)**
+- Removed: `It changes nothing and is safe before the first start.`
+- Added: `It leaves settings and database rows unchanged and does not run migrations. It can create and remove a temporary file to check directory writability, and opening an existing database may create or update SQLite sidecar files. You can run it before the first start.`
+
+The old sentence appeared once in the file, and the old wording no longer appears anywhere in it. The new sentence sits between the unchanged `FAIL` sentence and "From the repository root…". I made the edit with an exact string replacement, so the rest of the line and file should be unchanged. I couldn't run `git diff` on the file under the command contract, so that is not checked byte-for-byte.
+
+**Checks**
+| Command | Result |
+|---|---|
+| `node --version` | `v22.23.4` (meets the ≥22.22.2 requirement in AGENTS.md) |
+| `pnpm exec prettier --check docs/guide/01-install-and-first-run.md` | Pass: "All matched files use Prettier code style!" |
+| `git --no-pager diff --check` | Pass (no output) |
+| `git --no-optional-locks status --short` | Same six modified, unstaged paths before and after |
+
+**Observations**
+- **Wording matches the code:** `apps/api/src/preflight.ts` has `probeWritable`, which creates a randomly named `.preflight-<uuid>` file with exclusive `wx` and then deletes it (`unlink`). The database check only reads pending migrations; the start applies them.
+- **Not verified in code:** the sidecar claim (that opening an existing database may create or update SQLite sidecar files) rests on your instruction, not on reading the database-opening code.
+- **Not reviewed:** I didn't review the other five changed paths or the guide's earlier existing change; the brief says they stay as provided.
+- **No tests or build:** none were run, as instructed.
+
+There are no open dependencies or gaps for this slice. Independent review, QA, CI and publication remain with you.

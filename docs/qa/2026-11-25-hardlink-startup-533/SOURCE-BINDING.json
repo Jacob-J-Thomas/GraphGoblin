@@ -1,0 +1,168 @@
+{
+  "issue": 533,
+  "reviewedComponent": {
+    "branch": "codex/gg-fu-hardlink-display-533-20261125",
+    "head": "631d16e39b8e9932f4763390a4166fa67eea8df3",
+    "tree": "af1c053c40e852536035299daf66296cbe1c7e49",
+    "indexSha256": "3b0def9c5ad260e4d41d440ab8bd90baa2aebdfc7f5d1096dbb06b0cd64a1bf7",
+    "patchSha256": "7e84ace8adf3bb104a131dd999b06ff0807206e314b018beba0f43b08a5f627e",
+    "patchBytes": 25631,
+    "changedPathSha256": {
+      "CHANGELOG.md": "ce849f43bb485e71e7360e6fd4b46717a6602396dfb2ee96461bc9612e3ad07c",
+      "apps/api/src/data-dir-lock.ts": "35622804fc9107f37cc37ebdd74232dc5c9ae970789ca18f5d063fc72a90fc94",
+      "apps/api/src/main.test.ts": "be8e95bb747983381fea07e7dff25f05031c6aeca152c34e345841b93f9cacbc",
+      "apps/api/src/serve-failure-output.test.ts": "29ff44cefe1802721754147f1091c845734c944635c7be4161bfa8da8670f63d",
+      "apps/api/src/serve.ts": "667244cf1e7c9392584b4642ec90bbad46ec5fd1abe2fdbb266a1f07b3239ad5",
+      "docs/11-security-and-distribution.md": "20a3763ddace9642222fc1dfaaecc93a250fc0a1f24ab11c0d92c93294cdae1a"
+    },
+    "author": {
+      "record": "raw/author/CLAUDE-EXIT.json",
+      "report": "raw/author/IMPLEMENTATION-REPORT.claude.md.txt"
+    },
+    "formalReview": {
+      "round": 1,
+      "budget": 3,
+      "verdict": "READY",
+      "findings": 0,
+      "record": "raw/review/REVIEW.json",
+      "report": "raw/review/REVIEW.md.txt",
+      "rootDisposition": "raw/review/ROOT-SOURCE-DISPOSITION.json"
+    },
+    "independentQa": {
+      "verdict": "PASS",
+      "sourceUnchangedBeforeAndAfter": true,
+      "result": "raw/qa/native-evidence/RESULT.json",
+      "report": "raw/qa/QA-REPORT.claude.md.txt",
+      "brief": "raw/qa/QA-BRIEF.md.txt",
+      "contract": "raw/qa/CONTRACT.json"
+    }
+  },
+  "nativeBaseline": {
+    "source": "154e78d54ee485330816d606032280de44d6e891",
+    "relevantFilesByteIdenticalTo": "631d16e39b8e9932f4763390a4166fa67eea8df3",
+    "record": "raw/baseline/BASELINE-533-NATIVE.json",
+    "equivalence": "raw/baseline/BASELINE-SOURCE-EQUIVALENCE.json",
+    "probe": "raw/baseline/verify-native-533.mjs"
+  },
+  "combinedProjection": {
+    "target": "4e1037c9e9922ffa27237fe79850403b6b54fc70",
+    "standaloneComponentCommit": "f0dac0158c475c1bd43c779a744ee8e3c89b8c2e",
+    "standaloneComponentTree": "2d84fd3dbbca7cab18f87c4fc90739f594c453f1",
+    "componentPatchSha256": "08635dfd756434770a5551b7da7208ff0766577c49dd79410217d05d8a0a23fa",
+    "componentPatchCommand": "git diff --full-index 4e1037c9 f0dac015",
+    "combinedCommit": "1a1bcf4c07d89d2ee778a77973aef091cb052d7e",
+    "combinedParent": "28bbcb4f33b83b423c27540f3e09bd8b3d346e62",
+    "combinedTree": "8087fdc1e8d0c89e7f80bce73ce74dd2be3c5165",
+    "combinedDiffSha256": "08635dfd756434770a5551b7da7208ff0766577c49dd79410217d05d8a0a23fa",
+    "combinedDiffCommand": "git diff --full-index 28bbcb4f 1a1bcf4c",
+    "combinedDiffBytes": 25596,
+    "pathSha256AtCombinedCommit": {
+      "CHANGELOG.md": "87827b632e199ef27a160e965fd49402020cb135aa9d478a5a7c2e4d5b19404b",
+      "apps/api/src/data-dir-lock.ts": "ec94dbc4e3a902b5777524f0ac2ea84fddfef261a8d76cad30ccaee68e1cca01",
+      "apps/api/src/main.test.ts": "ce38db2e191240a711fc379ae4ef69f77e6fd634d914213237fb59dd2cd9800d",
+      "apps/api/src/serve-failure-output.test.ts": "29ff44cefe1802721754147f1091c845734c944635c7be4161bfa8da8670f63d",
+      "apps/api/src/serve.ts": "a5fe2ead8e864c7c63256244db7a80ff494340233fe3b1653ce5c56923d2e5c5",
+      "docs/11-security-and-distribution.md": "b9a4f3755ec54fbf8874aff9cc93e68b627e7e98b16aadc60c762a2aa2378d46"
+    },
+    "pathsEqualToStandaloneComponent": true,
+    "pathsByteIdenticalToReviewed": ["apps/api/src/serve-failure-output.test.ts"],
+    "hunkComparison": "Every added and removed line of the reviewed change (631d16e3 to the reviewed worktree bytes) equals the combined commit's, except the main.test.ts node:fs/promises import line, where the target already imported realpath and the union adds link and unlink. The other differences are hunk offsets and context lines from the advanced target.",
+    "qaRanOnCombinedTree": false
+  },
+  "combinedTreeCheck": {
+    "actor": "Claude Opus 5.5 publication worker; not an independent QA session",
+    "host": "Windows, Node v22.23.4",
+    "sourceCommit": "1a1bcf4c07d89d2ee778a77973aef091cb052d7e",
+    "build": "pnpm build --filter=@graphgoblin/api --force: 7 tasks successful, 0 cached; console output not retained as a file",
+    "runs": [
+      {
+        "command": "pnpm --filter @graphgoblin/api test src/testing/api-port.test.ts src/testing/api-port-platform.test.ts",
+        "issue": 509,
+        "log": "raw/combined-tree/509-api-port.log.txt",
+        "exit": 0,
+        "files": 2,
+        "passed": 22,
+        "skipped": 0
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/api test src/routes/thread-disconnect.test.ts",
+        "issue": 491,
+        "log": "raw/combined-tree/491-thread-disconnect.log.txt",
+        "exit": 0,
+        "files": 1,
+        "passed": 11,
+        "skipped": 0
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/api test src/data-dir-lock.test.ts src/data-dir-lock-failures.test.ts src/serve-failure-output.test.ts src/main.test.ts",
+        "issue": 533,
+        "log": "raw/combined-tree/533-lock-output-main.log.txt",
+        "exit": 0,
+        "files": 4,
+        "passed": 114,
+        "skipped": 6
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/api test --reporter=verbose src/testing/api-port.test.ts src/testing/api-port-platform.test.ts src/routes/thread-disconnect.test.ts src/data-dir-lock.test.ts src/data-dir-lock-failures.test.ts src/serve-failure-output.test.ts src/main.test.ts",
+        "issue": "509, 491, 533 (per-test listing rerun)",
+        "log": "raw/combined-tree/all-focused-verbose.log.txt",
+        "exit": 0,
+        "files": 7,
+        "passed": 147,
+        "skipped": 6,
+        "perFile": {
+          "src/testing/api-port.test.ts": { "passed": 14, "skipped": 0 },
+          "src/testing/api-port-platform.test.ts": { "passed": 8, "skipped": 0 },
+          "src/routes/thread-disconnect.test.ts": { "passed": 11, "skipped": 0 },
+          "src/data-dir-lock.test.ts": { "passed": 49, "skipped": 0 },
+          "src/data-dir-lock-failures.test.ts": { "passed": 39, "skipped": 0 },
+          "src/serve-failure-output.test.ts": { "passed": 8, "skipped": 0 },
+          "src/main.test.ts": { "passed": 18, "skipped": 6 }
+        },
+        "skippedPlatformGated": [
+          "built entry and the reserved Windows launcher variable (#438) > ignores the Windows-only variable elsewhere and keeps shell logging",
+          "physical Mac managed entry > rejects a malformed snapshot before loading the app or creating a store",
+          "built API entry and startup failures > releases ownership when real static route registration fails during HTTP setup (POSIX filename fixture)",
+          "native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGINT",
+          "native API shutdown: Linux CI; win32 force-kills children without JS handlers > closes its listener, releases ownership and exits once on SIGTERM",
+          "native API shutdown: Linux CI; win32 force-kills children without JS handlers > handles a real signal before readiness, holds ownership through startup and shuts down once"
+        ]
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/api test --reporter=verbose src/database-ownership.test.ts -t multiply",
+        "issue": 533,
+        "log": "raw/combined-tree/533-supplementary-database-ownership-multiply.log.txt",
+        "exit": 0,
+        "files": 1,
+        "passed": 1,
+        "skipped": 8
+      },
+      {
+        "command": "pnpm --filter @graphgoblin/api test --reporter=verbose src/reset/reset-acquisition.test.ts -t \"another hard link\"",
+        "issue": 533,
+        "log": "raw/combined-tree/533-supplementary-reset-hard-link.log.txt",
+        "exit": 0,
+        "files": 1,
+        "passed": 1,
+        "skipped": 12
+      }
+    ],
+    "typecheck": {
+      "command": "pnpm --filter @graphgoblin/api typecheck",
+      "log": "raw/combined-tree/api-typecheck.log.txt",
+      "exit": 0
+    },
+    "lint": {
+      "command": "pnpm --filter @graphgoblin/api lint",
+      "log": "raw/combined-tree/api-lint.log.txt",
+      "exit": 0
+    },
+    "notRun": ["coverage gate", "full API suite", "Linux or macOS execution", "hosted CI"]
+  },
+  "pendingGates": [
+    "opposite-family review of the combined branch",
+    "current-target hosted CI",
+    "fresh independent Astra MAX final audit",
+    "owner acceptance"
+  ]
+}

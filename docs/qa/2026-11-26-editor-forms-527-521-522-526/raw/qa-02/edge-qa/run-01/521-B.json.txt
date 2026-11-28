@@ -1,0 +1,64 @@
+{
+  "id": "521-B",
+  "issue": 521,
+  "title": "Controls: nested issue in dotted sibling; top-level refused Key",
+  "expected": "Dotted sibling owns its own nested issue; key issue stays on Key and focuses Key.",
+  "steps": [
+    "Control A: nested invalid member inside the dotted sibling Value 2; Value 1 valid.",
+    "Control B: top-level refused Key (\"bad key\") stays the Key's issue; its Value is not marked."
+  ],
+  "checks": [
+    {
+      "label": "Value 2 described by x y rule",
+      "actual": "x y: Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+      "pass": true
+    },
+    {
+      "label": "Value 1 clean",
+      "actual": {
+        "invalid": null,
+        "label": "Config overrides value 1",
+        "description": "",
+        "focused": false
+      },
+      "pass": true
+    },
+    {
+      "label": "issue link focuses Value 2 (its owner)",
+      "actual": true,
+      "pass": true
+    },
+    {
+      "label": "Key 2 described by Key \"bad key\": rule",
+      "actual": "Key \"bad key\": Codex config overrides require every key segment to use letters, digits, \"_\" or \"-\", and not __proto__, constructor or prototype.",
+      "pass": true
+    },
+    {
+      "label": "Value 2 not marked by the key issue",
+      "actual": {
+        "invalid": null,
+        "label": "Config overrides value 2",
+        "description": "",
+        "focused": false
+      },
+      "pass": true
+    },
+    {
+      "label": "key issue rows",
+      "actual": 1,
+      "observation": true
+    },
+    {
+      "label": "key issue link focuses Key 2",
+      "actual": true,
+      "pass": true
+    }
+  ],
+  "screenshots": [
+    "521-B-key-issue.png"
+  ],
+  "verdict": "PASS",
+  "durationMs": 1657,
+  "consoleErrors": [],
+  "trace": "521-B-trace.zip"
+}

@@ -1,0 +1,28 @@
+I fixed P2 with one change to the shared `abandon` helper in `apps/api/src/routes/thread-disconnect.test.ts`. The held-yield sequence now has a time limit. The focused file passed 11 of 11 tests, and the static checks passed. The new timeout path itself was never triggered in a run, so it is checked by reading the code only.
+
+**Change (lines 216–237 of the test file only)**
+- **Deadline:** an 8 s deadline now starts when the request is sent, matching the existing 8 s client timeout. Every wait in `abandon` is raced against it: arrival at the hold, the health/current reads, the close and the settlement.
+- **Cleanup on timeout:** the existing `finally` destroys the history client and releases the hold. A new outer `finally` clears the deadline timer.
+- **Unchanged:** the client's `setTimeout(8_000)`, the 20 s Vitest limits, every assertion (the order of recorded steps, close-without-finishing, settled = 0, operations, no sends, no errors), the yield test body and its cleanup, the fixture (300 events, 128-row pages, loopback port 0), the provider-disabled `createTestApp`, and all production files. `run-history.ts` was not touched. As instructed, I didn't hash it.
+
+**What happens when a wait stalls (from reading the code, not a run)**
+- **Health or current read hangs:** the deadline rejects at most 8 s after the request started. `abandon` destroys the history client and releases the held callback, which then runs. The yield test's `finally` restores `setImmediate` and `events.read`, releases again, and destroys only the test's own agent. That ends the stuck read sockets, and their errors are already caught.
+- **Close or settlement hangs:** the same cleanup runs. If settlement hangs, the callback has already been released.
+- **Deadline fires before the hold is reached:** nothing is held. The original functions are restored, and any later hold passes straight through because the release has already happened.
+- **Total time:** the test body ends within about 8 s plus synchronous cleanup, well inside the 20 s test limit. The test-local `Agent` and the abandoned request are the only HTTP clients destroyed.
+
+**Checks (run once each, after the final edit)**
+- `node --version`: v22.23.4
+- `prettier --write`: it only re-wrapped the new timer call. `prettier --check` passes.
+- typecheck and lint: pass.
+- focused test file: **1 file, 11 passed (11)**, 7.84 s.
+- `git diff --check`: clean. `git status`: only the test file is modified, and nothing is staged.
+
+**Limits**
+- **Timeout path not run:** no test makes a response stall, per the instruction not to repeat experiments and to run the file once. Adding such a test would change the 11-test count and add about 8 s.
+- **Shared helper:** the other seven tests that call `abandon` also get the 8 s limit. Before, only arrival at the hold was limited, so a correct but very slow run (over 8 s in total) would now fail. Their assertions are unchanged.
+- **Page test:** its health and current reads use Node's global agent. A stall there is now time-limited, but those sockets are not destroyed. That is outside P2.
+- **Minor behaviour shifts:** if arrival stalls, the failure message may read "Timed out holding X" instead of "Timed out waiting for X". The added races also change the order of a few internal promise steps; the order assertions still passed.
+- **Not done:** independent review, QA, package coverage and CI are still open. This run is not review acceptance.
+
+All work stayed within the authorized path and commands.
