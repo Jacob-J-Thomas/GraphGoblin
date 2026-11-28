@@ -13,6 +13,7 @@ import {
   notSentByKey,
   requestedBeforeKey,
   sameCredential,
+  WRAPPING_LABEL,
   type WriteGate,
 } from './RunControls.js';
 
@@ -175,7 +176,8 @@ export function SessionRecoveryControls({
     missing.visitId.startsWith(run.id + ':');
   const choices = events.filter((event) => event.type === 'run.resumed' && event.freshSession);
   if (!eligible && choices.length === 0 && recovery.notice === undefined) return null;
-  // Node IDs may be 64 characters: wrap them rather than widening the inspector at 390 px.
+  // Node IDs may be 64 characters: wrap them, in the prose and in the button's label, rather than
+  // widening the inspector or cutting the label short at narrow widths and enlarged text (#563).
   return (
     <div className="grid min-w-0 gap-2 wrap-anywhere">
       {eligible ? (
@@ -188,6 +190,7 @@ export function SessionRecoveryControls({
           </p>
           <Button
             variant="outline"
+            className={WRAPPING_LABEL.md}
             disabled={!recovery.answerable || recovery.pending || recovery.blocked !== undefined}
             onClick={() => recovery.choose()}
           >

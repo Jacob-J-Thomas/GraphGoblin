@@ -4,7 +4,7 @@ import { join, relative } from 'node:path';
 import { RunEventSchema, type RunEvent } from '@graphgoblin/contracts';
 import { minimalLoop } from '@graphgoblin/contracts/testing';
 import type { APIRequestContext, ElementHandle, Page, TestInfo } from '@playwright/test';
-import { approvalLoop, expect, publishLoop, test, uniqueLoopName } from './fixtures.js';
+import { approvalLoop, control, expect, publishLoop, test, uniqueLoopName } from './fixtures.js';
 
 /**
  * #563: the run inspector and the shared header reflow at narrow widths and enlarged text without
@@ -73,20 +73,23 @@ const BREAKPOINTS: Layout[] = [
 ];
 const layoutName = ({ width, text }: Layout) => `${width}px-${text}pct`;
 
-async function runStatus(request: APIRequestContext, runId: string) {
-  const response = await request.get(`/runs/${runId}`);
+async function runStatus(request: APIRequestContext, runId: string, url = '') {
+  const response = await request.get(`${url}/runs/${runId}`);
   return (await response.json()) as { status: string; finalizedAt?: string };
 }
 
-/** A finished run of a published minimal loop, as the real API records it. */
-async function finishedRun(request: APIRequestContext, name: string, loopId?: string) {
+/**
+ * A finished run of a published minimal loop, as the real API records it: on the shared gateway,
+ * or on the instance at `url`.
+ */
+async function finishedRun(request: APIRequestContext, name: string, loopId?: string, url = '') {
   const id =
-    loopId ?? (await publishLoop(request, { ...minimalLoop(), name: uniqueLoopName(name) }));
-  const started = await request.post(`/loops/${id}/runs`, { data: { input: null } });
+    loopId ?? (await publishLoop(request, { ...minimalLoop(), name: uniqueLoopName(name) }, url));
+  const started = await request.post(`${url}/loops/${id}/runs`, { data: { input: null } });
   expect(started.status()).toBe(202);
   const { run } = (await started.json()) as { run: { id: string } };
-  await expect.poll(async () => (await runStatus(request, run.id)).status).toBe('succeeded');
-  await expect.poll(async () => (await runStatus(request, run.id)).finalizedAt).toBeTruthy();
+  await expect.poll(async () => (await runStatus(request, run.id, url)).status).toBe('succeeded');
+  await expect.poll(async () => (await runStatus(request, run.id, url)).finalizedAt).toBeTruthy();
   return run.id;
 }
 
@@ -979,6 +982,250 @@ test('the complete run ID is copied from a native selection at 320 px with 200% 
   expect(await page.evaluate(() => getSelection()?.toString())).toBe(runId);
   await page.keyboard.press('ControlOrMeta+C');
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(runId);
+});
+
+/** The open dialog's footer actions, each with whether it stays inside the dialog sideways. */
+const footerActions = (page: Page) =>
+  page.evaluate(() => {
+    const dialog = document.querySelector('dialog[open]');
+    if (!dialog) throw new Error('no open dialog');
+    const sheet = dialog.getBoundingClientRect();
+    return [...dialog.querySelectorAll('footer button')].map((button) => {
+      const r = button.getBoundingClientRect();
+      return {
+        name: (button.textContent ?? '').replace(/\s+/g, ' ').trim(),
+        box: {
+          left: r.left,
+          top: r.top,
+          right: r.right,
+          bottom: r.bottom,
+          width: r.width,
+          height: r.height,
+        },
+        inside: r.left >= sheet.left - 0.5 && r.right <= sheet.right + 0.5,
+      };
+    });
+  });
+
+/** The inspector's delete-ready reviews and the confirmation each one ends with. */
+const DELETE_READY = [
+  {
+    action: 'mark',
+    trigger: 'Review delete-ready history',
+    title: 'Mark selected history delete-ready?',
+    confirm: 'Confirm delete-ready selection',
+  },
+  {
+    action: 'withdraw',
+    trigger: 'Withdraw delete-ready mark',
+    title: 'Withdraw deletion approval?',
+    confirm: 'Confirm withdrawal',
+  },
+] as const;
+
+test('the delete-ready reviews keep Cancel and the confirmation inside the dialog, reachable by real clicks, at 320 px with 200% text (#563)', async ({
+  page,
+  request,
+}, info) => {
+  // An instance of its own: a confirmation marks real history delete-ready, which the shared
+  // gateway's other specs must never see.
+  const url = String((await control(request, '/apps'))['url']);
+  const loopId = await publishLoop(
+    request,
+    { ...minimalLoop(), name: uniqueLoopName('Reflow delete-ready') },
+    url,
+  );
+  const runId = await finishedRun(request, '', loopId, url);
+  const approved = async () =>
+    Boolean(
+      ((await (await request.get(`${url}/runs/${runId}`)).json()) as { deletionApproval?: unknown })
+        .deletionApproval,
+    );
+  const visit = async (layout: Layout) => {
+    await page.setViewportSize({ width: layout.width, height: 900 });
+    await page.goto(`${url}/app/runs/${runId}`);
+    await expect(page.getByRole('heading', { name: `Run ${runId}` })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { name: /^Timeline \(\d+ events, complete\)$/ }),
+    ).toBeVisible();
+    return setText(page, layout.text, undefined);
+  };
+  const review = async (choice: (typeof DELETE_READY)[number]) => {
+    await page.getByRole('button', { name: choice.trigger, exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: choice.title });
+    await expect(dialog).toBeVisible();
+    // The preview has arrived: the confirmation can act.
+    await expect(dialog.getByRole('button', { name: choice.confirm, exact: true })).toBeEnabled();
+    await settle(page);
+    return dialog;
+  };
+
+  const cells: Record<string, { layout: Layout; metrics: Metrics }> = {};
+  const footers: Record<string, Awaited<ReturnType<typeof footerActions>>> = {};
+  for (const layout of CONTROL_LAYOUTS) {
+    const tag = await visit(layout);
+    for (const choice of DELETE_READY) {
+      const dialog = await review(choice);
+      const name = `${choice.action}-${layoutName(layout)}`;
+      const metrics = await collect(page, 'dialog[open]');
+      const actions = await footerActions(page);
+      footers[name] = actions;
+      // The footer's actions join the boxes held to the baseline where the layout is unchanged.
+      const boxes = Object.fromEntries(
+        actions.map((action) => [`footer:${action.name}`, action.box]),
+      );
+      cells[name] = { layout, metrics: { ...metrics, boxes: { ...metrics.boxes, ...boxes } } };
+      await page.screenshot({ path: info.outputPath(`delete-ready-${name}.png`) });
+      await page.keyboard.press('Escape');
+      await expect(dialog).toBeHidden();
+    }
+    await tag?.evaluate((element) => (element as Element).remove());
+  }
+  await info.attach('delete-ready footers', {
+    body: JSON.stringify(footers, null, 2),
+    contentType: 'application/json',
+  });
+  await compareWithBaseline(info, cells);
+  for (const choice of DELETE_READY) {
+    for (const layout of CONTROL_LAYOUTS) {
+      const name = `${choice.action}-${layoutName(layout)}`;
+      expectContained(cells[name]!.metrics, name);
+      const actions = footers[name]!;
+      expect
+        .soft(
+          actions.map((action) => action.name),
+          `${name}: footer actions`,
+        )
+        .toEqual(['Cancel', choice.confirm]);
+      for (const action of actions)
+        expect.soft(action.inside, `${name}: ${action.name} inside the dialog`).toBe(true);
+    }
+  }
+
+  // Real clicks reach both actions at 320 px with 200% text: Cancel writes nothing, and the
+  // confirmation applies the review.
+  await visit({ width: 320, text: 200, intended: 'reflow' });
+  for (const choice of DELETE_READY) {
+    let dialog = await review(choice);
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click({ timeout: 10_000 });
+    await expect(dialog).toBeHidden();
+    expect(await approved(), `${choice.action}: Cancel changes nothing`).toBe(
+      choice.action === 'withdraw',
+    );
+    dialog = await review(choice);
+    await dialog
+      .getByRole('button', { name: choice.confirm, exact: true })
+      .click({ timeout: 10_000 });
+    await expect(dialog).toBeHidden();
+    await expect
+      .poll(approved, { message: `${choice.action}: ${choice.confirm} applies` })
+      .toBe(choice.action === 'mark');
+  }
+});
+
+/** The longest node ID a definition can hold (64 characters), with no break opportunity in it. */
+const LONGEST_NODE_ID = `worker${'W'.repeat(58)}`;
+
+/**
+ * A run failed at `LONGEST_NODE_ID` because its inherited provider session is missing, as the
+ * real API records it (the fake harness answers the second turn with HARNESS_SESSION_MISSING).
+ */
+async function missingSessionRun(request: APIRequestContext) {
+  expect(LONGEST_NODE_ID).toHaveLength(64);
+  const base = minimalLoop();
+  const loopId = await publishLoop(request, {
+    ...base,
+    name: uniqueLoopName('Reflow missing session'),
+    nodes: [
+      base.nodes[0]!,
+      { id: 'warm', kind: 'inference', label: 'Warm', config: { prompt: { template: 'Warm' } } },
+      {
+        id: LONGEST_NODE_ID,
+        kind: 'inference',
+        label: 'Worker',
+        config: {
+          session: { policy: 'resume-previous' },
+          model: 'gpt-6-luna',
+          effort: 'low',
+          prompt: { template: 'Original task' },
+        },
+      },
+      base.nodes[1]!,
+    ],
+    edges: [
+      { id: 'e1', from: { node: 'start', port: 'out' }, to: { node: 'warm' } },
+      { id: 'e2', from: { node: 'warm', port: 'out' }, to: { node: LONGEST_NODE_ID } },
+      { id: 'e3', from: { node: LONGEST_NODE_ID, port: 'out' }, to: { node: 'done' } },
+    ],
+  });
+  await control(request, '/harness/script', {
+    turns: [
+      {},
+      {
+        announceSession: false,
+        accepted: false,
+        items: [],
+        submission: 'session-missing',
+        error: { code: 'HARNESS_SESSION_MISSING', message: 'Session removed from provider store' },
+      },
+    ],
+  });
+  const started = await request.post(`/loops/${loopId}/runs`, { data: {} });
+  expect(started.status()).toBe(202);
+  const { run } = (await started.json()) as { run: { id: string } };
+  await expect.poll(async () => (await runStatus(request, run.id)).status).toBe('failed');
+  return run.id;
+}
+
+test('Start fresh session wraps a 64-character node ID inside its label at 320 px with 200% text (#563)', async ({
+  page,
+  request,
+}, info) => {
+  const runId = await missingSessionRun(request);
+  const layout: Layout = { width: 320, text: 200, intended: 'reflow' };
+  await page.setViewportSize({ width: layout.width, height: 900 });
+  await page.goto(`/app/runs/${runId}`);
+  await expect(page.getByRole('heading', { name: `Run ${runId}` })).toBeVisible();
+  await expect(page.getByText('Failed: HARNESS_SESSION_MISSING')).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Timeline \(\d+ events, / })).toBeVisible();
+  // The accessible name is the whole label, node ID included.
+  const choose = page.getByRole('button', {
+    name: `Start fresh session for ${LONGEST_NODE_ID}`,
+    exact: true,
+  });
+  await expect(choose).toBeEnabled();
+  await setText(page, layout.text, undefined);
+  const name = layoutName(layout);
+  const metrics = await collect(page);
+  const label = await choose.evaluate((button) => {
+    const text = button.querySelector(':scope > span');
+    const own = button.getBoundingClientRect();
+    const container = button.parentElement!.getBoundingClientRect();
+    return {
+      text: text?.textContent,
+      scrollWidth: text?.scrollWidth,
+      clientWidth: text?.clientWidth,
+      button: { left: own.left, right: own.right, height: own.height },
+      container: { left: container.left, right: container.right },
+      inside: own.left >= container.left - 0.5 && own.right <= container.right + 0.5,
+    };
+  });
+  await info.attach('fresh session label', {
+    body: JSON.stringify(label, null, 2),
+    contentType: 'application/json',
+  });
+  await choose.screenshot({ path: info.outputPath(`missing-session-${name}-button.png`) });
+  await capture(page, info, `missing-session-${name}`);
+  await compareWithBaseline(info, { [`missing-session-${name}`]: { layout, metrics } });
+  expect(label.text).toBe(`Start fresh session for ${LONGEST_NODE_ID}`);
+  expect
+    .soft(label.scrollWidth, `${name}: label scrollWidth`)
+    .toBeLessThanOrEqual(label.clientWidth!);
+  expect.soft(label.inside, `${name}: button inside its container`).toBe(true);
+  expectContained(metrics, `missing session ${name}`);
+  expect.soft(await sideways(page), `${name}: scrollTo(999, 0)`).toBe(0);
+  // Nothing covers it: a real pointer would reach it (a trial click sends nothing).
+  await choose.click({ trial: true, timeout: 10_000 });
 });
 
 /**

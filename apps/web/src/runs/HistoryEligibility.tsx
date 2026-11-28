@@ -312,7 +312,7 @@ export function HistoryEligibilityControls({
             : 'Withdraw deletion approval?'
         }
         footer={
-          <div className="flex gap-2">
+          <>
             <Button
               variant="outline"
               className={WRAPPING_LABEL.md}
@@ -340,7 +340,7 @@ export function HistoryEligibilityControls({
                   ? 'Confirm delete-ready selection'
                   : 'Confirm withdrawal'}
             </Button>
-          </div>
+          </>
         }
       >
         <div className="grid gap-3 text-sm">

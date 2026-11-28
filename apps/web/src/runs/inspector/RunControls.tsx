@@ -135,12 +135,13 @@ export function expiredReviewFocus(
 
 /**
  * Buttons whose label wraps onto further lines, growing the button, where a narrow viewport or
- * enlarged text cannot hold it on one line, instead of cutting it short (#563). A label that fits
- * is the same one-line button: the minimum height is the size's own height.
+ * enlarged text cannot hold it on one line, instead of cutting it short (#563). A value in the
+ * label that has no break of its own, such as a 64-character node ID, breaks anywhere. A label that
+ * fits is the same one-line button: the minimum height is the size's own height.
  */
 export const WRAPPING_LABEL = {
-  sm: 'h-auto min-h-8 py-1.5 [&>span]:whitespace-normal pointer-coarse:h-auto pointer-coarse:min-h-11',
-  md: 'h-auto min-h-9 py-1.5 [&>span]:whitespace-normal pointer-coarse:h-auto pointer-coarse:min-h-11',
+  sm: 'h-auto min-h-8 py-1.5 [&>span]:whitespace-normal [&>span]:wrap-anywhere pointer-coarse:h-auto pointer-coarse:min-h-11',
+  md: 'h-auto min-h-9 py-1.5 [&>span]:whitespace-normal [&>span]:wrap-anywhere pointer-coarse:h-auto pointer-coarse:min-h-11',
 } as const;
 
 /** Everything a command sends, frozen when it is chosen: a refetch can replace these options. */

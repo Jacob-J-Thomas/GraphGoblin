@@ -342,9 +342,12 @@ remains the named, focusable exact JSON view.
   and the replay origin, the Resume reason, the Replay review's source run and its existing-replay
   link wrap anywhere. From 640 px the controls column takes at most half the header
   (`fit-content(50%)`): with enlarged text it used to take its full 36 rem and cover the run ID.
-- **Control labels wrap.** The run controls, script recovery, the Replay and delete-ready review
-  buttons, the history buttons (also on Runs) and the Timeline's paging buttons grow onto further
-  lines instead of ending in an ellipsis; a label that fits is the same one-line button.
+- **Control labels wrap.** The run controls, script recovery, **Start fresh session**, the Replay
+  and delete-ready review buttons, the history buttons (also on Runs) and the Timeline's paging
+  buttons grow onto further lines instead of ending in an ellipsis, and a value with no break of
+  its own in a label (a 64-character node ID) breaks anywhere; a label that fits is the same
+  one-line button. A dialog's footer is the row of its actions, so the Replay, script recovery and
+  delete-ready reviews wrap theirs onto further rows inside the dialog.
 - **Selected event and execution context.** Their titles, disclosure labels and values wrap
   anywhere, so a 16-digit sequence ("Exact recorded event #123456789012345", "Thread at event
   123456789012345") or a narrow disclosure stays inside its column.
@@ -362,7 +365,9 @@ names, the keyboard order and wide layouts are unchanged. Edge `e2e/inspector-re
 checks 12 cells (320 and 1440 px, 100 and 200% text, each with its own selected event of sequence
 10593, 123456 or 123456789012345), 639, 640 and 768 px, a replay run, a child run, a run waiting
 for input with and without an input schema (every box inside its card), the New run form, the
-longest type, native copy of the ID, the menu, the Replay review, the Tab order and Timeline keys,
+longest type, native copy of the ID, the menu, the Replay review, the mark and withdraw
+delete-ready reviews (both actions inside the dialog and reached by real clicks), a missing
+session's **Start fresh session** with a 64-character node ID, the Tab order and Timeline keys,
 and the
 shared header on Chat, Loops, the editor, Runs, Events, Settings and the inspector, comparing each
 layout intended to be unchanged with the build before the change within 0.5 px.
